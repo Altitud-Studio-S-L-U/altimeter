@@ -199,6 +199,21 @@ describe('crawler activity from access logs', () => {
     await assert.rejects(collect({ logs: [logFixture('combined.log')], days: 0 }, 'cache-days'), /whole number of days/u);
   });
 
+  test('skips the files of a folder that are empty or not access logs, and refuses a named file that is not one', async () => {
+    const errorLog = join(work, 'error.log');
+    await writeFile(errorLog, '2026/11/03 10:00:00 [error] 1234#0: *1 open() "/var/www/html/favicon.ico" failed (2: No such file or directory)\n');
+    const rotated = join(work, 'access.log.1');
+    await writeFile(rotated, '');
+    const folder = await collect({ logs: [{ path: logFixture('combined.log'), inFolder: true }, { path: errorLog, inFolder: true }, { path: rotated, inFolder: true }] }, 'cache-folder');
+    assert.deepEqual(verdicts(folder.activity), expected);
+    assert.deepEqual(folder.activity.sources.map(source => source.kind === 'access-log' && source.file), ['combined.log']);
+    assert.match(folder.activity.warnings.join('\n'), /The format of error\.log was not recognised, so it was skipped\./u);
+    assert.match(folder.activity.warnings.join('\n'), /access\.log\.1 is empty, so it was skipped\./u);
+    const named = await collect({ logs: [logFixture('combined.log'), rotated] }, 'cache-named-empty');
+    assert.deepEqual(verdicts(named.activity), expected, 'an empty file holds no request, however it was given');
+    await assert.rejects(collect({ logs: [logFixture('combined.log'), errorLog] }, 'cache-named-error'), /The format of error\.log was not recognised\. Pass --log-format/u);
+  });
+
   test('marks addresses of lists that could not be read as unverified', async () => {
     const urls = { ...lists.urls, 'openai-gptbot': `${lists.base}/lists/not-there` };
     const client = loopbackClient();

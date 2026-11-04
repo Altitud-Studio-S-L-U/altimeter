@@ -14,9 +14,18 @@ import { dnsApplies, matchingList, reverseDns, systemResolver, usableAddress, ve
 /** A problem with the inputs, such as a missing token or an unreadable file; its message is safe to print. */
 export class BotActivityError extends Error {}
 
+/** A log file found by listing a folder rather than named itself. */
+export interface FolderLogFile {
+  readonly path: string;
+  readonly inFolder: true;
+}
+
 export interface CollectBotActivityOptions {
-  /** Access log files, plain or gzip, in any supported format. */
-  readonly logs?: readonly string[];
+  /**
+   * Access log files, plain or gzip, in any supported format. A file named itself must be in a format that can be
+   * recognised; one found in a folder is skipped with a warning when it is not, and an empty file is skipped either way.
+   */
+  readonly logs?: readonly (string | FolderLogFile)[];
   /** Cloudflare GraphQL Analytics for a zone, with the token from ALTIMETER_CLOUDFLARE_API_TOKEN unless one is given. */
   readonly cloudflare?: { readonly zone: string; readonly token?: string; readonly endpoint?: string; readonly maxQueries?: number };
   /** Days before `now` the window covers (default 30). */
@@ -70,13 +79,16 @@ interface FileScan {
   readonly warnings: string[];
 }
 
-async function detect(path: string): Promise<LogFormat | undefined> {
+/** The format of a file from its first lines, and whether it holds nothing but blank lines. */
+async function detect(path: string): Promise<{ readonly format: LogFormat | undefined; readonly empty: boolean }> {
   const sample: string[] = [];
+  let empty = true;
   for await (const event of readLogLines(path)) {
+    if (!('line' in event) || event.line.trim() !== '') empty = false;
     if ('line' in event && event.line.trim() !== '') sample.push(event.line);
     if (sample.length >= 50 || 'error' in event) break;
   }
-  return detectFormat(sample);
+  return { format: detectFormat(sample), empty };
 }
 
 /** Reads one file's records within the window, calling `each` for every record that is not a duplicate. */
@@ -145,11 +157,20 @@ async function guarded<T>(name: string, task: () => Promise<T>): Promise<T> {
   }
 }
 
-/** First pass over a file: counts, fields, claimed crawler addresses and whether the addresses look like a proxy's. */
-async function scanFile(path: string, options: CollectBotActivityOptions, window: { start: number; end: number }): Promise<FileScan> {
+/**
+ * First pass over a file: counts, fields, claimed crawler addresses and whether the addresses look like a proxy's.
+ * For a file it skips, it returns the warning that says why.
+ */
+async function scanFile(path: string, inFolder: boolean, options: CollectBotActivityOptions, window: { start: number; end: number }): Promise<FileScan | string> {
   const name = cleanLine(basename(path), 120);
-  const format = options.format ?? (await guarded(name, () => detect(path)));
-  if (!format) throw new BotActivityError(`The format of ${name} was not recognised. Pass --log-format with one of: combined, common, nginx-json, iis, cloudfront, alb, cloudflare, vercel, netlify.`);
+  let format = options.format;
+  if (!format) {
+    const detected = await guarded(name, () => detect(path));
+    if (detected.empty) return `${name} is empty, so it was skipped.`;
+    if (!detected.format && inFolder) return `The format of ${name} was not recognised, so it was skipped.`;
+    if (!detected.format) throw new BotActivityError(`The format of ${name} was not recognised. Pass --log-format with one of: combined, common, nginx-json, iis, cloudfront, alb, cloudflare, vercel, netlify.`);
+    format = detected.format;
+  }
   const scan: FileScan = {
     path, name, format, lines: 0, records: 0, malformed: 0, skipped: new Map(), first: undefined, last: undefined,
     fields: { userAgent: false, clientIp: false, referer: false, host: false, bytes: false }, claims: new Map(), proxySuspected: false, warnings: [],
@@ -239,13 +260,16 @@ export async function collectBotActivity(options: CollectBotActivityOptions): Pr
       }
       warnings.push(...cloudflare.warnings);
     }
-    if (cloudflare && logs.length > 0) warnings.push('Cloudflare analytics and access logs may count the same requests twice.');
 
     const scans: FileScan[] = [];
-    for (const path of logs) {
+    for (const entry of logs) {
+      const path = typeof entry === 'string' ? entry : entry.path;
       log(`Reading ${cleanLine(basename(path), 120)}`);
-      scans.push(await scanFile(path, options, window));
+      const scan = await scanFile(path, typeof entry !== 'string', options, window);
+      if (typeof scan === 'string') warnings.push(scan);
+      else scans.push(scan);
     }
+    if (cloudflare && scans.length > 0) warnings.push('Cloudflare analytics and access logs may count the same requests twice.');
     for (const scan of scans) warnings.push(...scan.warnings);
 
     // Only the lists of crawlers whose claims carry an address that a list could verify are downloaded.
