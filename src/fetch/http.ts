@@ -51,7 +51,9 @@ export interface FetchResult {
 }
 
 export interface FetchOptions {
-  readonly method?: 'GET' | 'HEAD';
+  readonly method?: 'GET' | 'HEAD' | 'POST';
+  /** Request body for POST; dropped when a 301, 302 or 303 redirect turns the request into a GET. */
+  readonly body?: string;
   readonly headers?: Readonly<Record<string, string>>;
   /** Decoded body limit in bytes (default 15 MiB). */
   readonly maxBytes?: number;
@@ -156,6 +158,7 @@ export class HttpClient {
     const hops: Hop[] = [];
     const visited = new Set<string>();
     let method = options.method ?? 'GET';
+    let requestBody = method === 'POST' ? options.body : undefined;
     let current = url;
     const finish = (extra: Partial<FetchResult> & { error?: FetchResult['error'] }): FetchResult => ({
       requestedUrl: url,
@@ -192,6 +195,7 @@ export class HttpClient {
         response = await request(target, {
           dispatcher: this.#agent,
           method,
+          ...(requestBody === undefined ? {} : { body: requestBody }),
           signal: AbortSignal.any(signals),
           headers: {
             'user-agent': this.#userAgent,
@@ -226,7 +230,10 @@ export class HttpClient {
         if (hops.length > maxRedirects) {
           return finish({ error: { code: 'too-many-redirects', message: `More than ${maxRedirects} redirects` } });
         }
-        if (response.statusCode === 303) method = 'GET';
+        if (response.statusCode === 303 || (method === 'POST' && (response.statusCode === 301 || response.statusCode === 302))) {
+          method = 'GET';
+          requestBody = undefined;
+        }
         current = location;
         continue;
       }
