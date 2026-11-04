@@ -221,6 +221,9 @@ describe('schema-url-values', () => {
     const { finding } = failure(urlValues, { html: doc(ld({ ...product, image: '/lamp.jpg' })) }, 'relative');
     assert.equal(finding.severity, 'low');
   });
+  test('accepts relative hrefs in Microdata, which resolve to absolute URLs', () => {
+    passes(urlValues, { html: doc('', '<div itemscope itemtype="https://schema.org/Product"><a itemprop="url" href="/catalog/item">Lamp</a><img itemprop="image" src="lamp.jpg" alt=""></div>') });
+  });
   test('fails http URLs on an https site for same-site URLs only', () => {
     assert.equal(failure(urlValues, { html: doc(ld({ ...product, url: 'http://shop.example/catalog/item' })) }, 'insecure').finding.severity, 'medium');
     passes(urlValues, { html: doc(ld({ '@context': ctx, '@type': 'Organization', name: 'Acme', sameAs: ['http://old-directory.example/acme'] })) });

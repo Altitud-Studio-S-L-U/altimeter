@@ -148,7 +148,7 @@ export const organizationIdentifiers: RuleImplementation = {
         const countries = countriesOf(graph, node);
         for (const country of countries) if (!/^[A-Za-z]{2}$/u.test(country)) add('country-not-alpha2', 'addressCountry', 'addressCountry that is not a two-letter code', country);
         for (const value of texts(graph, node, 'telephone')) {
-          if (!/^(?:\+|00)/u.test(value.trim())) add('telephone-without-country-code', 'telephone', 'telephone without an international prefix (shape shown)', shape(value));
+          if (!/^\(?(?:\+|00)/u.test(value.trim())) add('telephone-without-country-code', 'telephone', 'telephone without an international prefix (shape shown)', shape(value));
         }
         for (const value of texts(graph, node, 'email')) {
           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value.trim().replace(/^mailto:/iu, ''))) add('invalid-email', 'email', 'email that is not an address (shape shown)', shape(value));

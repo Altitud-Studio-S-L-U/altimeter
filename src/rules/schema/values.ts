@@ -60,7 +60,8 @@ export const urlValues: RuleImplementation = {
           }
           const resolved = absoluteUrl(value, graph.base);
           if (resolved === undefined || (scheme !== undefined && !URL.canParse(value))) { add('invalid', 'medium', property, value, 'value that is not a valid URL'); continue; }
-          if (scheme === undefined) { add('relative', 'low', property, value, 'relative URL'); continue; }
+          // Microdata URL properties resolve to absolute URLs by the HTML standard, so only JSON-LD values are fragile.
+          if (scheme === undefined) { if (node.syntax === 'json-ld') add('relative', 'low', property, value, 'relative URL'); continue; }
           const host = hostOf(resolved)!;
           if (host !== pageHost && isStagingHost(host)) add('staging-host', 'medium', property, value, 'URL on a local, staging or IP host');
           else if (https && scheme === 'http' && sameHost(host, pageHost)) add('insecure', 'medium', property, value, 'http URL on an https site');
@@ -187,7 +188,8 @@ export const placeholderJunkValues: RuleImplementation = {
           if (entry.kind !== 'text') continue;
           const value = entry.value;
           const trimmed = value.trim();
-          if (trimmed === '') add('empty-value', 'medium', property, value, 'property emitted empty');
+          // An empty Microdata element is usually layout; an empty JSON-LD string is a template that emitted a field without data.
+          if (trimmed === '') { if (node.syntax === 'json-ld') add('empty-value', 'medium', property, value, 'property emitted empty'); }
           else if (templateLeak.test(trimmed)) add('template-leak', 'high', property, value, 'value printed from an unset variable');
           else if (templateToken.test(trimmed)) add('template-token', 'high', property, value, 'unrendered template token');
           else if (/lorem ipsum/iu.test(trimmed)) add('placeholder-text', 'high', property, value, 'filler text');
