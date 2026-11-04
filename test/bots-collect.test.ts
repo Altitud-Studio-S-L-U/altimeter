@@ -4,10 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import { gzipSync } from 'node:zlib';
-import { parseRobots } from '../src/fetch/robots.ts';
+import { parseRobots, robotsAvailability } from '../src/fetch/robots.ts';
 import type { BotActivity, BotSummary } from '../src/owner/bots/activity.ts';
 import { BotActivityError, collectBotActivity, type CollectBotActivityOptions } from '../src/owner/bots/collect.ts';
+import { botSiteInput } from '../src/owner/bots/site.ts';
 import { listServer, logFixture, loopbackClient, now, scriptedResolver } from './support/bots.ts';
+import { page, response, site as siteFacts } from './support/facts.ts';
 
 let lists: Awaited<ReturnType<typeof listServer>>;
 let work: string;
@@ -99,6 +101,38 @@ describe('crawler activity from access logs', () => {
     const { lastModified: _lastModified, ...withoutDate } = site.robots;
     const assumed = await collect({ logs: [logFixture('combined.log')], site: { ...site, robots: withoutDate } }, 'cache-assumed');
     assert.deepEqual([assumed.activity.site?.robots?.effectiveFromSource, assumed.activity.site?.robots?.effectiveFrom], ['assumed', '2026-10-05T12:00:00.000Z']);
+  });
+
+  test('compares the requests of the www host that an audited apex redirects to', async () => {
+    const rules = 'User-agent: *\nDisallow: /private/\n';
+    const robotsUrl = 'https://example.com/robots.txt';
+    const home = page('https://example.com/', { redirects: [[301, 'https://www.example.com/']] });
+    const audited = {
+      ...siteFacts({ origin: 'https://example.com', pages: [home], homeUrl: home.fetch.finalUrl, sitemaps: [{
+        url: 'https://www.example.com/sitemap.xml',
+        xml: '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://www.example.com/en/</loc></url><url><loc>https://www.example.com/en/about/</loc></url></urlset>',
+      }] }),
+      robots: {
+        url: robotsUrl, fetch: response(robotsUrl, { body: rules, headers: { 'content-type': 'text/plain' }, redirects: [[301, 'https://www.example.com/robots.txt']] }),
+        availability: robotsAvailability(200, Buffer.from(rules)),
+      },
+    };
+    const googlebot = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+    const line = (time: string, uri: string, status: number, host: string) => JSON.stringify({
+      time_iso8601: time, remote_addr: '66.249.64.10', request_method: 'GET', request_uri: uri, status: String(status), body_bytes_sent: '100', http_host: host, http_user_agent: googlebot,
+    });
+    const path = join(work, 'www-host.ndjson');
+    await writeFile(path, `${[
+      line('2026-10-20T08:00:00+00:00', '/en/', 403, 'www.example.com'), line('2026-10-20T09:00:00+00:00', '/en/about/', 403, 'www.example.com'),
+      line('2026-10-20T10:00:00+00:00', '/en/services/', 403, 'www.example.com'), line('2026-10-21T08:00:00+00:00', '/private/x', 200, 'www.example.com'),
+      line('2026-10-21T09:00:00+00:00', '/en/', 301, 'example.com'),
+    ].join('\n')}\n`);
+    const { activity } = await collect({ logs: [path], site: botSiteInput(audited) }, 'cache-www-host');
+    assert.equal(activity.site?.origin, 'https://www.example.com');
+    const summary = byId(activity, 'googlebot')!;
+    assert.deepEqual([summary.verified.hits, summary.onAllowedPaths?.hits, summary.onAllowedPaths?.statuses], [5, 3, { 403: 3 }], 'the refusals on the www host are compared');
+    assert.deepEqual([summary.coverage?.urls, summary.coverage?.fetched, summary.coverage?.ok], [2, 2, 0]);
+    assert.equal(summary.compliance?.disallowed, 1);
   });
 
   test('reads gzip files and several files together', async () => {
