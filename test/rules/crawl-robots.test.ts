@@ -211,9 +211,25 @@ describe('crawl-robots-blocks-site', () => {
   test('ignores groups for AI crawlers', () => {
     assertOutcome(run(id, { pages: [home()], robots: 'User-agent: GPTBot\nDisallow: /\n\nUser-agent: CCBot\nDisallow: /\n\nUser-agent: *\nAllow: /' }).finding, 'pass');
   });
+  test('fails critical when robots.txt disallows most URLs the crawl found, which it never fetches', () => {
+    const products = Array.from({ length: 20 }, (_, index) => `${origin}/product/${index}/`);
+    const facts: SiteFacts = { ...site({ pages: [home()], robots: 'User-agent: *\nAllow: /$\nDisallow: /', crawled: true }), crawlBlocked: products };
+    const { finding, excerpts } = run(id, facts);
+    assertFail(finding, 'critical', 'most-pages');
+    assert.deepEqual(finding.params, { blocked: 20, total: 21 });
+    assert.deepEqual(excerpts(), Array.from({ length: 5 }, () => 'disallow: /'));
+  });
+  test('does not count disallowed carts, searches, account pages and filtered URLs the crawl found', () => {
+    const robots = 'User-agent: *\nDisallow: /cart\nDisallow: /search\nDisallow: /account/\nDisallow: /*?';
+    const pages = [home(), page(`${origin}/lamps/`, { html: '<!doctype html><title>Lamps</title>' })];
+    const found = [`${origin}/cart`, `${origin}/search/lamps`, `${origin}/account/orders`, `${origin}/lamps/?color=red`, `${origin}/lamps/?sort=price`];
+    assertOutcome(run(id, { ...site({ pages, robots, crawled: true }), crawlBlocked: found }).finding, 'pass');
+  });
   test('does not apply to a staging host or without rules', () => {
     const staging = page('https://staging.example.com/', { html: '<title>Staging</title>' });
     assertOutcome(run(id, { pages: [staging], robots: 'User-agent: *\nDisallow: /' }).finding, 'not_applicable', 'private-host');
+    const found = ['a', 'b', 'c'].map(slug => `https://staging.example.com/${slug}/`);
+    assertOutcome(run(id, { ...site({ pages: [staging], robots: 'User-agent: *\nAllow: /$\nDisallow: /', crawled: true }), crawlBlocked: found }).finding, 'not_applicable', 'private-host');
     assertOutcome(run(id, { pages: [home()], robots: { status: 404 } }).finding, 'not_applicable', 'no-robots-rules');
   });
 });

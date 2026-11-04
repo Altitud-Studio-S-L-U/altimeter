@@ -1,3 +1,4 @@
+import { classifyPage } from '../../analyze/page-type.ts';
 import type { SiteFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
@@ -183,6 +184,26 @@ function privateHost(site: SiteFacts): string | undefined {
   return undefined;
 }
 
+/** Whether a URL the crawl found but did not fetch looks meant for the index: no query string, and not a utility or policy path. */
+function meantForIndex(url: string): boolean {
+  const { type } = classifyPage({ url, status: undefined, title: undefined, h1: undefined, ogType: undefined, data: undefined });
+  return new URL(url).search === '' && type !== 'utility' && type !== 'legal';
+}
+
+/**
+ * The crawled pages meant for the index, and those of them robots.txt disallows for Googlebot. The crawl never fetches
+ * a disallowed URL, so the URLs it found and left for that reason count too.
+ */
+function crawlSample(site: SiteFacts): { readonly total: number; readonly blocked: ReadonlyArray<{ readonly url: string; readonly fetched: boolean }> } {
+  const sampled = [...site.pages.values()].filter(page => page.fetch.status === 200 && page.pageType !== 'utility' && page.pageType !== 'legal');
+  const unfetched = (site.crawlBlocked ?? []).filter(url => meantForIndex(url) && robotsDecision(site, url)?.allowed === false);
+  const blocked = [
+    ...sampled.filter(page => robotsDecision(site, page.fetch.finalUrl)?.allowed === false).map(page => ({ url: page.fetch.finalUrl, fetched: true })),
+    ...unfetched.map(url => ({ url, fetched: false })),
+  ];
+  return { total: sampled.length + unfetched.length, blocked };
+}
+
 const robotsBlocksSite: RuleImplementation = {
   id: 'crawl-robots-blocks-site',
   evaluate({ site, evidence }) {
@@ -203,14 +224,15 @@ const robotsBlocksSite: RuleImplementation = {
     }
     if (google) return failure({ severity: 'critical', evidence: [cite(google, 'Googlebot')], reason: 'home-googlebot', params: { url: google.path, crawler: 'Googlebot' } });
     if (site.crawled) {
-      const sampled = [...site.pages.values()].filter(page => page.fetch.status === 200 && page.pageType !== 'utility' && page.pageType !== 'legal');
-      const blocked = sampled.filter(page => robotsDecision(site, page.fetch.finalUrl)?.allowed === false);
-      if (sampled.length > 0 && blocked.length / sampled.length > 0.5) {
-        const ids = blocked.slice(0, 5).map(page => {
-          const decision = robotsDecision(site, page.fetch.finalUrl)!;
-          return evidence.add({ kind: 'robots', url: page.fetch.finalUrl, label: 'crawled URL disallowed for Googlebot', excerpt: `${decision.rule!.type}: ${decision.rule!.pattern}`, line: decision.rule!.line });
+      const { total, blocked } = crawlSample(site);
+      if (total > 0 && blocked.length / total > 0.5) {
+        if (privateHost(site)) return notApplicable('private-host');
+        const ids = blocked.slice(0, 5).map(entry => {
+          const decision = robotsDecision(site, entry.url)!;
+          return evidence.add({ kind: 'robots', url: entry.url, label: entry.fetched ? 'crawled URL disallowed for Googlebot' : 'URL the crawl found and did not fetch because robots.txt disallows it for Googlebot',
+            excerpt: `${decision.rule!.type}: ${decision.rule!.pattern}`, line: decision.rule!.line });
         });
-        return failure({ severity: 'critical', evidence: ids, reason: 'most-pages', params: { blocked: blocked.length, total: sampled.length } });
+        return failure({ severity: 'critical', evidence: ids, reason: 'most-pages', params: { blocked: blocked.length, total } });
       }
     }
     if (bing) return failure({ severity: 'high', evidence: [cite(bing, 'Bingbot')], reason: 'home-bingbot', params: { url: bing.path, crawler: 'Bingbot' } });
