@@ -1,1 +1,295 @@
-{}
+{
+  "schema-extract-inventory": { "messages": { "fail": "The structured data inventory could not be built for this page." } },
+  "schema-jsonld-syntax-error": { "messages": { "fail": "{count} JSON-LD block(s) do not parse as JSON and are discarded whole: {error}" } },
+  "schema-jsonld-context": { "messages": {
+    "fail": "{count} JSON-LD item(s) have no schema.org @context: {items}",
+    "fail:missing-context": "{count} JSON-LD item(s) have no @context, so their terms have no schema.org meaning: {items}",
+    "fail:not-schema-org": "{count} JSON-LD item(s) declare an @context that does not resolve to schema.org: {items}"
+  } },
+  "schema-microdata-rdfa-structure": { "messages": {
+    "fail": "{count} Microdata or RDFa structure problem(s): {items}",
+    "fail:orphan-itemprop": "{count} itemprop attribute(s) sit outside any itemscope and belong to no item: {items}",
+    "fail:invalid-itemtype": "{count} itemtype value(s) are not absolute schema.org URLs: {items}",
+    "fail:missing-itemtype": "{count} top-level itemscope element(s) have no itemtype: {items}",
+    "fail:missing-itemref": "{count} itemref value(s) name ids that are not in the document: {items}",
+    "fail:unresolved-typeof": "{count} RDFa typeof value(s) have no vocab in scope: {items}"
+  } },
+  "schema-unknown-type": { "messages": { "fail": "{count} @type value(s) are not defined in the schema.org vocabulary: {items}" } },
+  "schema-unknown-property": { "messages": { "fail": "{count} propert(ies) are not defined in the schema.org vocabulary and are ignored: {items}" } },
+  "schema-domain-range-mismatch": { "messages": {
+    "fail": "{count} property use(s) fall outside schema.org's expected types: {items}",
+    "fail:domain": "{count} propert(ies) are used on types outside their schema.org domain: {items}",
+    "fail:range": "{count} value(s) have a type outside the property's schema.org range: {items}"
+  } },
+  "schema-superseded-pending-term": { "messages": {
+    "fail": "{count} schema.org term(s) are superseded, retired or pending: {items}",
+    "fail:superseded": "{count} term(s) are superseded in schema.org; use the replacement: {items}",
+    "fail:retired": "{count} term(s) were retired to the schema.org attic: {items}",
+    "fail:pending": "{count} term(s) are in schema.org's pending section and may change: {items}"
+  } },
+  "schema-url-values": { "messages": {
+    "fail": "{count} URL value(s) in the markup need attention: {items}",
+    "fail:invalid": "{count} URL value(s) are not valid URLs: {items}",
+    "fail:unsupported-scheme": "{count} URL value(s) use a scheme other than http or https: {items}",
+    "fail:relative": "{count} URL value(s) are relative or protocol-relative; they resolve against the page but are fragile: {items}",
+    "fail:insecure": "{count} same-site URL value(s) use http on an https site: {items}",
+    "fail:staging-host": "{count} URL value(s) point to a local, staging or IP host: {items}",
+    "fail:not-canonical": "The WebPage url differs from the page's canonical URL: {items}"
+  } },
+  "schema-iso8601-values": { "messages": {
+    "fail": "{count} date, time or duration value(s) are not valid ISO 8601: {items}",
+    "fail:invalid-date": "{count} date value(s) are not ISO 8601: {items}",
+    "fail:invalid-duration": "{count} duration value(s) are not ISO 8601 durations: {items}",
+    "fail:invalid-time": "{count} opening time value(s) are not hh:mm or hh:mm:ss: {items}",
+    "fail:missing-offset": "{count} date-time value(s) have no time zone offset, so Google assumes one: {items}"
+  } },
+  "schema-date-logic": { "messages": {
+    "fail": "{count} date relationship(s) are impossible or stale: {items}",
+    "fail:modified-before-published": "{count} item(s) have dateModified earlier than datePublished: {items}",
+    "fail:end-before-start": "{count} item(s) end before they start: {items}",
+    "fail:valid-through-before-valid-from": "{count} item(s) have validThrough earlier than validFrom: {items}",
+    "fail:published-in-future": "{count} publication date(s) are more than a day after the page was fetched: {items}",
+    "fail:price-valid-until-past": "{count} offer(s) have a priceValidUntil in the past, so the product snippet may not show: {items}",
+    "fail:video-expired": "{count} video(s) have an expires date in the past while the page is live: {items}"
+  } },
+  "schema-enumeration-values": { "messages": {
+    "fail": "{count} enumerated value(s) are not allowed values: {items}",
+    "fail:not-a-member": "{count} value(s) are not members of the allowed enumeration: {items}",
+    "fail:multiple-values": "{count} item(s) give several values for a single-valued property: {items}"
+  } },
+  "schema-placeholder-junk-values": { "messages": {
+    "fail": "{count} placeholder or junk value(s) in the markup: {items}",
+    "fail:empty-value": "{count} propert(ies) are emitted empty or null: {items}",
+    "fail:template-leak": "{count} value(s) were printed from unset variables: {items}",
+    "fail:template-token": "{count} value(s) contain unrendered template tokens: {items}",
+    "fail:placeholder-text": "{count} value(s) are placeholder or filler text: {items}",
+    "fail:placeholder-phone": "{count} telephone value(s) are placeholders: {items}",
+    "fail:example-domain": "{count} value(s) still point to an example domain: {items}",
+    "fail:html-in-text": "{count} text value(s) contain HTML tags or entities: {items}"
+  } },
+  "schema-js-only-markup": { "messages": {
+    "fail": "{count} structured data item(s) exist only after JavaScript rendering: {items}",
+    "fail:product-rendered-only": "{count} Product or Offer item(s) exist only after JavaScript rendering, which Google says makes Shopping crawls less frequent and reliable: {items}",
+    "fail:rendered-only": "{count} item(s) exist only after JavaScript rendering; crawlers that do not render miss them: {items}"
+  } },
+  "schema-raw-rendered-conflict": { "messages": { "fail": "{count} value(s) differ between the raw HTML and the rendered DOM: {items}" } },
+  "schema-id-dangling-or-conflicting": { "messages": {
+    "fail": "{count} @id problem(s): {items}",
+    "fail:dangling-reference": "{count} @id reference(s) point to a fragment of this page that is defined nowhere: {items}",
+    "fail:conflicting-types": "{count} @id value(s) are defined with unrelated types: {items}",
+    "fail:conflicting-values": "{count} @id value(s) carry contradicting values: {items}",
+    "fail:invalid-id": "{count} @id value(s) are not valid IRIs: {items}"
+  } },
+  "schema-entity-consistency-sitewide": { "messages": {
+    "fail": "The site's entities are described differently across pages: {items}",
+    "fail:conflicting-organization": "The site Organization has different values across pages for: {items}",
+    "fail:several-organization-ids": "The site Organization uses {items} across pages.",
+    "fail:conflicting-website-name": "The WebSite name differs across pages."
+  } },
+  "schema-inlanguage": { "messages": {
+    "fail": "{count} inLanguage value(s) are invalid or contradict the page language: {items}",
+    "fail:invalid-tag": "{count} inLanguage value(s) are not BCP 47 tags: {items}",
+    "fail:contradicts-html-lang": "{count} inLanguage value(s) contradict the html lang attribute: {items}"
+  } },
+  "schema-main-entity-page-fit": { "messages": {
+    "fail": "The main markup type may not match the page's purpose: {items}",
+    "fail:several-products": "The page carries {items} items at the top level, as a listing would; Product markup belongs on single product pages.",
+    "fail:article-on-home": "The home page carries {items} markup; check whether the page is an article.",
+    "fail:profile-page-on-home": "The home page carries ProfilePage markup; check whether it is about one person or organization."
+  } },
+  "schema-visible-content-parity": { "messages": { "fail": "{count} marked-up value(s) were not found in the page text: {items}" } },
+  "schema-blocked-or-nonindexable-carrier": { "messages": {
+    "fail": "Feature markup sits on a page or uses images Google cannot use: {items}",
+    "fail:not-200": "The page carrying {items} markup does not answer 200.",
+    "fail:noindex": "The page carrying {items} markup has a noindex directive for Googlebot.",
+    "fail:disallowed": "The page carrying {items} markup is disallowed for Googlebot in robots.txt.",
+    "fail:image-blocked": "{count} image(s) of feature items are disallowed for Googlebot-Image: {items}",
+    "fail:image-unavailable": "{count} image(s) of feature items did not load as images: {items}"
+  } },
+  "schema-organization": { "messages": {
+    "fail": "Organization markup on the home or about page needs attention: {items}",
+    "fail:missing": "No Organization markup was found on the home or about page.",
+    "fail:foreign-url": "The Organization url points to another host: {items}",
+    "fail:missing-recommended": "The site Organization lacks recommended properties: {items}"
+  } },
+  "schema-organization-logo": { "messages": {
+    "fail": "The Organization logo does not meet Google's requirements: {items}",
+    "fail:blocked": "The Organization logo is disallowed for Googlebot-Image: {items}",
+    "fail:not-200": "The Organization logo does not answer 200: {items}",
+    "fail:not-image": "The Organization logo URL does not return a supported image: {items}",
+    "fail:too-small": "The Organization logo is smaller than 112x112 pixels: {items}"
+  } },
+  "schema-organization-identifiers": { "messages": {
+    "fail": "{count} business identifier(s) are malformed: {items}",
+    "fail:malformed-identifier": "{count} identifier(s) do not match their documented format: {items}",
+    "fail:country-not-alpha2": "{count} addressCountry value(s) are not ISO 3166-1 alpha-2 codes: {items}",
+    "fail:telephone-without-country-code": "{count} telephone number(s) lack an international prefix.",
+    "fail:invalid-email": "{count} email value(s) are not email addresses.",
+    "fail:tax-id-without-country": "A tax identifier is given without an address country.",
+    "fail:vat-prefix-mismatch": "An EU VAT number does not start with the prefix of the address country."
+  } },
+  "schema-site-name-website": { "messages": {
+    "fail": "WebSite site-name markup on the home page needs attention: {items}",
+    "fail:missing": "The home page Googlebot reaches has no WebSite item with a name; Google will pick the site name from other signals.",
+    "fail:several-websites": "The home page has {items} items; Google asks for one WebSite node.",
+    "fail:url-other-host": "The WebSite url points to another host: {items}",
+    "fail:name-conflict": "The site name differs between WebSite markup and other sources: {items}"
+  } },
+  "schema-sitelinks-searchbox-obsolete": { "messages": { "fail": "WebSite carries SearchAction markup for the sitelinks search box, which Google retired in November 2024; it is harmless." } },
+  "schema-localbusiness": { "messages": {
+    "fail": "LocalBusiness markup needs attention: {items}",
+    "fail:missing-required": "LocalBusiness markup lacks required properties: {items}",
+    "fail:address-not-structured": "LocalBusiness address is plain text instead of a PostalAddress: {items}",
+    "fail:geo-precision": "LocalBusiness coordinates have fewer than 5 decimal places: {items}",
+    "fail:price-range-too-long": "LocalBusiness priceRange is 100 characters or longer: {items}"
+  } },
+  "schema-self-serving-reviews": { "messages": { "fail": "{count} review or rating item(s) describe the site's own organization, which Google does not show as review stars: {items}" } },
+  "schema-review-snippet": { "messages": {
+    "fail": "{count} review or rating item(s) miss review snippet requirements: {items}",
+    "fail:missing-item-reviewed": "{count} review or rating item(s) do not say what they review: {items}",
+    "fail:item-reviewed-without-name": "{count} reviewed item(s) have no name: {items}",
+    "fail:unsupported-item-type": "{count} review or rating item(s) describe a type review snippets do not support: {items}",
+    "fail:missing-author": "{count} review(s) have no author.",
+    "fail:author-name-too-long": "{count} review author name(s) are 100 characters or longer: {items}",
+    "fail:missing-rating": "{count} review or rating item(s) have no rating value: {items}",
+    "fail:missing-count": "{count} aggregate rating(s) have neither ratingCount nor reviewCount.",
+    "fail:invalid-count": "{count} rating count(s) are not whole numbers of at least 1: {items}",
+    "fail:malformed-rating": "{count} rating value(s) use a decimal comma: {items}",
+    "fail:out-of-bounds": "{count} rating value(s) fall outside the declared scale: {items}"
+  } },
+  "schema-review-authenticity": { "messages": {
+    "fail": "{count} signal(s) consistent with reviews that may not be genuine, for the analyst to check: {items}",
+    "fail:placeholder-author": "{count} review author name(s) read as placeholders: {items}",
+    "fail:duplicate-text": "{count} review text(s) repeat another review: {items}",
+    "fail:aggregate-mismatch": "The aggregate rating differs from the average of the marked-up reviews: {items}"
+  } },
+  "schema-product-snippet": { "messages": {
+    "fail": "{count} product snippet requirement(s) are not met: {items}",
+    "fail:missing-name": "{count} Product item(s) have no name.",
+    "fail:missing-offer-or-review": "{count} Product item(s) have none of offers, review or aggregateRating: {items}",
+    "fail:offer-without-price": "{count} offer(s) have no price: {items}",
+    "fail:malformed-price": "{count} price value(s) are not plain numbers: {items}",
+    "fail:aggregate-offer-incomplete": "{count} AggregateOffer item(s) lack lowPrice or priceCurrency: {items}",
+    "fail:invalid-currency": "{count} priceCurrency value(s) are not ISO 4217 codes: {items}"
+  } },
+  "schema-merchant-listing": { "messages": {
+    "fail": "{count} merchant listing requirement(s) are not met: {items}",
+    "fail:missing-image": "{count} Product item(s) offered for sale have no image: {items}",
+    "fail:missing-currency": "{count} offer(s) have no priceCurrency: {items}",
+    "fail:price-not-positive": "{count} offer(s) have a price of zero or less, which merchant listings do not accept: {items}",
+    "fail:missing-identifiers": "{count} Product item(s) have no gtin, mpn or brand: {items}",
+    "fail:missing-availability": "{count} offer(s) have no availability: {items}"
+  } },
+  "schema-gtin-validity": { "messages": {
+    "fail": "{count} GTIN value(s) are invalid: {items}",
+    "fail:not-numeric": "{count} GTIN value(s) contain characters other than digits: {items}",
+    "fail:wrong-length": "{count} GTIN value(s) have the wrong length: {items}",
+    "fail:repeated-digits": "{count} GTIN value(s) are one repeated digit: {items}",
+    "fail:check-digit": "{count} GTIN value(s) fail the GS1 check digit: {items}",
+    "fail:duplicate": "{count} GTIN value(s) are shared by different products: {items}"
+  } },
+  "schema-product-variants": { "messages": {
+    "fail": "{count} ProductGroup or variant problem(s): {items}",
+    "fail:missing-name": "A ProductGroup has no name.",
+    "fail:invalid-varies-by": "{count} variesBy value(s) are not supported by Google: {items}",
+    "fail:group-id-mismatch": "{count} variant(s) name a group ID that differs from productGroupID: {items}",
+    "fail:variant-without-id": "{count} variant(s) have neither sku nor gtin: {items}",
+    "fail:duplicate-variant-id": "{count} variant identifier(s) are used twice: {items}",
+    "fail:variant-without-offer": "{count} variant(s) have no offers: {items}"
+  } },
+  "schema-offer-price-specification": { "messages": {
+    "fail": "{count} sale, strikethrough or member price encoding problem(s): {items}",
+    "fail:unsupported-price-type": "{count} priceType value(s) are not StrikethroughPrice: {items}",
+    "fail:member-tier-with-price-type": "{count} price specification(s) combine validForMemberTier with priceType, which Google ignores: {items}",
+    "fail:points-without-member-tier": "{count} price specification(s) give membershipPointsEarned without validForMemberTier.",
+    "fail:price-valid-until-on-specification": "{count} price specification(s) carry priceValidUntil, which belongs on the Offer.",
+    "fail:reference-quantity-incomplete": "{count} referenceQuantity value(s) lack value or unitCode.",
+    "fail:strikethrough-only": "{count} offer(s) have a strikethrough price but no active price.",
+    "fail:not-discounted": "{count} active price(s) are not lower than the strikethrough price: {items}"
+  } },
+  "schema-shipping-details": { "messages": { "fail": "{count} shipping markup problem(s): {items}" } },
+  "schema-return-policy": { "messages": {
+    "fail": "{count} return policy markup problem(s): {items}",
+    "fail:incomplete": "{count} return polic(ies) have neither applicableCountry with returnPolicyCategory nor merchantReturnLink.",
+    "fail:finite-without-days": "{count} finite return window(s) have no merchantReturnDays.",
+    "fail:member-program-outside-organization": "{count} MemberProgram item(s) are not defined under Organization.hasMemberProgram: {items}"
+  } },
+  "schema-article": { "messages": {
+    "fail": "{count} Article markup problem(s): {items}",
+    "fail:missing-image": "{count} article item(s) have no image: {items}",
+    "fail:missing-date": "{count} news or blog article item(s) have no datePublished: {items}",
+    "fail:author-not-entity": "{count} author value(s) are plain text instead of a Person or Organization: {items}",
+    "fail:author-type": "{count} author(s) are not a Person or Organization: {items}",
+    "fail:merged-authors": "{count} Person author(s) hold several names: {items}"
+  } },
+  "schema-author-entity-quality": { "messages": {
+    "fail": "{count} author entit(ies) may be vague, merged or inconsistent: {items}",
+    "fail:broken-author-url": "{count} author url(s) answer with an error: {items}"
+  } },
+  "schema-breadcrumb": { "messages": {
+    "fail": "{count} BreadcrumbList problem(s): {items}",
+    "fail:too-few-items": "The BreadcrumbList has fewer than two items: {items}",
+    "fail:invalid-position": "{count} ListItem position(s) are missing, repeated or not whole numbers: {items}",
+    "fail:missing-name": "{count} ListItem(s) have no name: {items}",
+    "fail:missing-item": "{count} ListItem(s) other than the last have no item: {items}",
+    "fail:broken-item-url": "{count} breadcrumb item URL(s) answer with an error: {items}",
+    "fail:redirecting-item-url": "{count} breadcrumb item URL(s) redirect: {items}"
+  } },
+  "schema-profile-page": { "messages": {
+    "fail": "{count} ProfilePage problem(s): {items}",
+    "fail:several-people": "The ProfilePage is on a page that describes {items}; profile pages are about one person or organization."
+  } },
+  "schema-video": { "messages": {
+    "fail": "{count} VideoObject problem(s): {items}",
+    "fail:missing-required": "VideoObject markup lacks required properties: {items}"
+  } },
+  "schema-image-metadata": { "messages": { "fail": "{count} ImageObject licensing problem(s): {items}" } },
+  "schema-event": { "messages": {
+    "fail": "{count} Event problem(s): {items}",
+    "fail:missing-required": "Event markup lacks required properties: {items}",
+    "fail:location-without-address": "{count} event(s) have a location without address: {items}",
+    "fail:virtual-only": "{count} event(s) only have a virtual location; Google event results need a physical location: {items}"
+  } },
+  "schema-jobposting": { "messages": {
+    "fail": "{count} JobPosting problem(s): {items}",
+    "fail:expired": "{count} job posting(s) expired before the page was fetched but the page is live and indexable: {items}",
+    "fail:missing-required": "JobPosting markup lacks required properties: {items}",
+    "fail:remote-without-applicant-location": "{count} remote job posting(s) have no applicantLocationRequirements: {items}",
+    "fail:several-jobs": "The page carries {items} items; JobPosting belongs on single job pages."
+  } },
+  "schema-course-list": { "messages": { "fail": "{count} course list problem(s): {items}" } },
+  "schema-dataset": { "messages": { "fail": "{count} Dataset problem(s): {items}" } },
+  "schema-software-app": { "messages": { "fail": "{count} SoftwareApplication requirement(s) are not met: {items}" } },
+  "schema-qapage": { "messages": {
+    "fail": "{count} QAPage problem(s): {items}",
+    "fail:several-questions": "The QAPage holds {items}; Google supports one question per page.",
+    "fail:site-authored-candidate": "{count} question(s) and their answers have no author, as on a site-written FAQ: {items}"
+  } },
+  "schema-discussion-forum": { "messages": { "fail": "{count} discussion forum markup problem(s): {items}" } },
+  "schema-paywalled-content": { "messages": {
+    "fail": "{count} paywall markup problem(s): {items}",
+    "fail:non-class-selector": "{count} cssSelector value(s) are not class selectors: {items}",
+    "fail:selector-unmatched": "{count} cssSelector value(s) match no element on the page: {items}",
+    "fail:nested-sections": "{count} paywalled section(s) sit inside another one: {items}"
+  } },
+  "schema-recipe": { "messages": {
+    "fail": "{count} Recipe problem(s): {items}",
+    "fail:missing-required": "Recipe markup lacks required properties: {items}",
+    "fail:calories-without-yield": "{count} recipe(s) give nutrition.calories without recipeYield: {items}"
+  } },
+  "schema-service-offercatalog": { "messages": { "fail": "{count} Service item(s) carry ratings about the site's own services, which review snippets do not show: {items}" } },
+  "schema-faqpage-retired": { "messages": { "fail": "The page carries FAQPage markup; Google no longer shows FAQ rich results. Valid markup is harmless." } },
+  "schema-retired-feature-markup": { "messages": { "fail": "The page carries markup for retired Google features: {items}. It is harmless." } },
+  "schema-carousel-itemlist": { "messages": { "fail": "{count} carousel ItemList problem(s): {items}" } },
+  "schema-feature-opportunity": { "messages": {
+    "fail": "{count} page(s) may qualify for a Google feature they do not mark up: {items}",
+    "fail:article-markup-missing": "{count} page(s) declare og:type article but carry no Article markup: {items}",
+    "fail:product-markup-missing": "{count} page(s) declare og:type product but carry no Product markup: {items}",
+    "fail:breadcrumb-missing": "{count} deep page(s) have no BreadcrumbList markup: {items}"
+  } },
+  "schema-duplicate-feature-nodes": { "messages": {
+    "fail": "{count} entit(ies) are described by several nodes on the page: {items}",
+    "fail:conflicting-duplicate": "{count} entit(ies) are described twice with different values: {items}",
+    "fail:exact-duplicate": "{count} entit(ies) are described twice with the same values: {items}"
+  } }
+}
