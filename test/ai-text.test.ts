@@ -72,17 +72,17 @@ describe('checkQuote', () => {
 });
 
 describe('unsupportedFacts', () => {
-  const index = factIndex(`Call +376 800 800 or write to info@hotel.ad. Since 1998, 45 rooms rated 4,8/5, the best views. Open 09:00${enDash}18:00.`);
+  const index = factIndex(`Call +376 800 800 or write to info@hotel.example. Since 1998, 45 rooms rated 4,8/5, the best views. Open 09:00${enDash}18:00.`);
 
   test('accepts numbers, years, ratings, phones and emails the page shows, in other formats', () => {
-    assert.deepEqual(unsupportedFacts('Since 1998: 45 rooms rated 4.8, the best views, call 00376 800800 or info@hotel.ad', index), []);
+    assert.deepEqual(unsupportedFacts('Since 1998: 45 rooms rated 4.8, the best views, call 00376 800800 or info@hotel.example', index), []);
     assert.deepEqual(unsupportedFacts('Open 9:00-18:00, built 1998-05-01', index), []);
   });
 
   test('reports numbers, superlatives, phones and emails the page does not show', () => {
     assert.deepEqual(unsupportedFacts('46 rooms, the top hotel', index), ['46', 'top']);
     assert.deepEqual(unsupportedFacts('Call +376 900 900', index), ['+376 900 900']);
-    assert.deepEqual(unsupportedFacts('Write to bookings@hotel.ad', index), ['bookings@hotel.ad']);
+    assert.deepEqual(unsupportedFacts('Write to bookings@hotel.example', index), ['bookings@hotel.example']);
     assert.deepEqual(unsupportedFacts(`El millor hotel d${rightQuote}Andorra`, index), ['millor']);
   });
 
