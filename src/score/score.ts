@@ -31,7 +31,7 @@ export function computeScore(findings: readonly Finding[], rulesById: ReadonlyMa
   let indexabilityFailed = false;
   for (const finding of findings) {
     const rule = rulesById.get(finding.ruleId);
-    if (!rule || finding.origin === 'ai') continue;
+    if (!rule || finding.origin === 'ai' || finding.needsJudgment) continue;
     const total = totals.get(rule.category)!;
     if (finding.outcome === 'not_evaluated') total.notEvaluated += 1;
     if (finding.outcome === 'not_applicable') total.notApplicable += 1;

@@ -13,6 +13,11 @@ export type RuleResult =
     readonly params?: Readonly<Record<string, string | number>>;
     /** A machine-readable variant of the failure when a rule detects several, e.g. `relative-url`. */
     readonly reason?: string;
+    /**
+     * Set by hybrid rules when code found a candidate that only the analyst can confirm, such as hidden text that
+     * may be a legitimate UI pattern. The finding stays out of the score and `--fail-on` until it is confirmed.
+     */
+    readonly needsJudgment?: boolean;
   }
   | { readonly outcome: 'not_applicable'; readonly reason: string }
   | { readonly outcome: 'not_evaluated'; readonly reason: string };
@@ -44,6 +49,8 @@ export interface Finding {
   readonly params?: Readonly<Record<string, string | number>>;
   readonly confidence: 'high' | 'medium' | 'low';
   readonly origin: 'deterministic' | 'ai' | 'owner-data';
+  /** A candidate awaiting the analyst's confirmation; see RuleResult. */
+  readonly needsJudgment?: boolean;
 }
 
 /** Whether a collected input exists for this page or site. */
@@ -114,8 +121,9 @@ function toFinding(rule: RuleMeta, scope: FindingScope, result: RuleResult, evid
     evidence: ids,
     evidenceSignature: evidenceSignature(rule.id, scope, evidence, ids, reason),
     ...(result.outcome === 'fail' && result.params ? { params: result.params } : {}),
-    confidence: rule.method === 'deterministic' ? 'high' : 'medium',
-    origin: 'deterministic',
+    confidence: result.outcome === 'fail' && result.needsJudgment ? 'low' : rule.method === 'deterministic' ? 'high' : 'medium',
+    origin: rule.method === 'owner-data' ? 'owner-data' : 'deterministic',
+    ...(result.outcome === 'fail' && result.needsJudgment ? { needsJudgment: true } : {}),
   };
 }
 

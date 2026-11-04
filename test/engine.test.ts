@@ -77,6 +77,13 @@ describe('runRules', () => {
     assert.deepEqual(findings, []);
   });
 
+  test('marks hybrid candidates as needing judgment with low confidence', () => {
+    const candidate: RuleImplementation = { id: 'content-test-title', evaluate: ({ evidence, page }) => ({ outcome: 'fail', severity: 'medium', needsJudgment: true,
+      evidence: [evidence.add({ kind: 'html', url: page!.url, label: 'candidate' })] }) };
+    const findings = runRules({ rules: [meta({})], implementations: new Map([[candidate.id, candidate]]), site: site(pages.slice(0, 1)), evidence: new EvidenceStore() });
+    assert.deepEqual([findings[0]?.needsJudgment, findings[0]?.confidence], [true, 'low']);
+  });
+
   test('turns a crashing rule into not evaluated instead of failing the audit', () => {
     const broken: RuleImplementation = { id: 'content-test-title', evaluate: () => { throw new Error('boom'); } };
     const findings = runRules({ rules: [meta({})], implementations: new Map([[broken.id, broken]]), site: site(pages.slice(0, 1)), evidence: new EvidenceStore() });
