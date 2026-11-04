@@ -138,6 +138,7 @@ export function verifyClaim(definition: BotDefinition, address: string | undefin
     }
     if (missing) return { verdict: 'unverified', reason: 'list-unavailable' };
     if (stale) return { verdict: 'unverified', reason: 'list-stale' };
+    if (definition.checks.dnsInconclusive) return { verdict: 'unverified', reason: 'not-in-list' };
     return { verdict: 'spoofed' };
   }
   if (missing) return { verdict: 'unverified', reason: 'list-unavailable' };
