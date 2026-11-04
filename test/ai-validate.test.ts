@@ -6,6 +6,7 @@ import { packSections, passSchema, planPasses, type PassPlan } from '../src/ai/p
 import { buildCorpus, collectSiteStrings, selectPages, sliceOf } from '../src/ai/site.ts';
 import type { Proposal } from '../src/ai/types.ts';
 import { defaultMythMatcher, distinctProposals, ownerPlaceholder, recommendsNewMarket, validateAnswer, type MythMatcher, type ValidationContext } from '../src/ai/validate.ts';
+import type { Report, ReportFinding } from '../src/report/model.ts';
 import { mythMatches } from '../src/rules/myth-filter.ts';
 import { homeUrl, hotelAudit, roomsTitle, roomsUrl } from './support/analysis.ts';
 
@@ -140,6 +141,32 @@ describe('validating findings', () => {
       assessments: emptyAssessments,
     }, context(plan));
     assert.deepEqual(reasons(result), ['duplicate', 'duplicate-of-deterministic', 'contradicts-deterministic', 'contradicts-deterministic']);
+  });
+
+  test('binds each decision to the candidate whose evidence it cites when a rule has several on the page', () => {
+    const generic = audit.report.findings.find(entry => entry.ruleId === 'content-img-alt-quality' && entry.needsJudgment === true)!;
+    const longAlt = `Double room with a balcony over the valley${', with a view of the mountains'.repeat(8)}`;
+    const tooLong: ReportFinding = { ...generic, id: 'F-too-long', reason: 'too-long', evidence: ['E900'] };
+    const report: Report = {
+      ...audit.report,
+      findings: [...audit.report.findings, tooLong],
+      evidence: [...audit.report.evidence, { id: 'E900', kind: 'html', url: roomsUrl, label: 'alt text over 250 characters', excerpt: longAlt, complete: true }],
+    };
+    const base = planned('content');
+    const plan: PassPlan = { ...base, candidates: [...base.candidates, tooLong] };
+    const both: ValidationContext = { ...context(plan), report, pack: buildPack({ trusted: 'x', sections: packSections(plan, strings, report), nonce: 'n' }) };
+    const cited = generic.evidence[0]!;
+    const result = validateAnswer({
+      findings: [
+        finding({ ruleId: 'content-img-alt-quality', reasonCode: 'alt-text-too-long', evidenceIds: ['E900'], quotes: [{ evidenceId: 'E900', text: 'with a view of the mountains' }] }),
+        finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', reasonCode: 'descriptive-alt', evidenceIds: [cited], quotes: [{ evidenceId: cited, text: 'Double room with a balcony' }] }),
+        finding({ ruleId: 'content-img-alt-quality', ...quote('Double room', 'Double room with a balcony') }),
+        finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', evidenceIds: ['E900'], quotes: [{ evidenceId: 'E900', text: 'with a view of the mountains' }] }),
+      ],
+      assessments: emptyAssessments,
+    }, both);
+    assert.deepEqual(reasons(result), ['ambiguous-candidate', 'duplicate'], 'an answer that cites neither candidate decides neither, and each candidate takes one decision');
+    assert.deepEqual(result.findings.map(entry => [entry.candidate?.id, entry.outcome]), [['F-too-long', 'fail'], [generic.id, 'pass']]);
   });
 
   test('records rules the model could not assess and refuses partial answers as a whole', () => {

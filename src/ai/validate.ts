@@ -215,10 +215,22 @@ interface FindingAnswer {
   readonly discriminatingWords?: readonly string[];
 }
 
+/**
+ * The candidate an answer decides. A rule with one candidate on the scope takes the answer; with several, the
+ * answer must cite more of one candidate's evidence than of any other's.
+ */
+function candidateFor(answer: FindingAnswer, candidates: readonly ReportFinding[]): ReportFinding | Rejection {
+  if (candidates.length === 1) return candidates[0]!;
+  const shared = candidates.map(candidate => candidate.evidence.filter(id => answer.evidenceIds.includes(id)).length);
+  const most = Math.max(...shared);
+  const matched = candidates.filter((_, index) => shared[index] === most);
+  return most > 0 && matched.length === 1 ? matched[0]! : reject('ambiguous-candidate', answer.ruleId);
+}
+
 function deterministicConflict(answer: FindingAnswer, outcome: 'fail' | 'pass', absence: boolean, scope: FindingScope, page: PageInfo, context: ValidationContext): Rejection | ReportFinding | undefined {
   const existing = findingsAt(context.report, answer.ruleId, scope);
-  const candidate = existing.find(finding => finding.outcome === 'fail' && finding.needsJudgment === true);
-  if (candidate) return candidate;
+  const candidates = existing.filter(finding => finding.outcome === 'fail' && finding.needsJudgment === true);
+  if (candidates.length > 0) return candidateFor(answer, candidates);
   if (existing.some(finding => finding.outcome === 'fail')) return reject(outcome === 'fail' ? 'duplicate-of-deterministic' : 'contradicts-deterministic', answer.ruleId);
   if (existing.some(finding => finding.outcome === 'pass')) return reject(outcome === 'fail' ? 'contradicts-deterministic' : 'duplicate-of-deterministic', answer.ruleId);
   if (absence && outcome === 'fail') {
@@ -266,7 +278,8 @@ function validateFinding(raw: unknown, index: number, itemSchema: Schema, contex
   const scope: FindingScope = rule.scope === 'site' ? { kind: 'site', origin: context.report.target.origin } : { kind: 'page', url: page.key };
   const conflict = deterministicConflict(answer, outcome, absence, scope, page, context);
   if (conflict instanceof Rejection) return conflict;
-  const key = `${rule.id}|${scopeKey(scope)}`;
+  // Each candidate takes one decision; without candidates, a rule takes one claim per scope.
+  const key = conflict ? `candidate|${conflict.id}` : `${rule.id}|${scopeKey(scope)}`;
   if (seen.has(key)) return reject('duplicate', rule.id);
   seen.add(key);
   const adjustments: string[] = [];

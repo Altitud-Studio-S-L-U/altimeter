@@ -409,7 +409,7 @@ const outputContract = `## Output contract
 
 This contract replaces the "Output per finding" section of the rubric. Altimeter writes the report text from its own templates, so notes stay short.
 
-- findings: one entry per rule in scope (for page rules, about the page named above). Fields:
+- findings: one entry per rule in scope (for page rules, about the page named above). When "Deterministic results" lists several candidates for one rule, give one entry per candidate and cite that candidate's evidence ids. Fields:
   - ruleId: a rule from "Rules in scope".
   - scope: the URL of the page, exactly as its section line gives it.
   - verdict: confirmed or likely when the problem is shown; not_confirmed when the evidence shows no problem or a legitimate pattern (for a candidate, this rejects it); not_assessable when the evidence cannot decide.

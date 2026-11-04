@@ -106,6 +106,7 @@ export const dropReasons = [
   'new-fact',
   'discriminating-words',
   'duplicate',
+  'ambiguous-candidate',
   'duplicate-of-deterministic',
   'contradicts-deterministic',
   'length',
