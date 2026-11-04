@@ -4,12 +4,12 @@ import { collect } from '../collect/index.ts';
 import { EvidenceStore } from '../core/evidence.ts';
 import type { PageFacts, SiteFacts } from '../core/facts.ts';
 import type { FetchResult } from '../fetch/http.ts';
-import type { RuleMeta } from '../core/types.ts';
+import type { RuleMeta, Verification } from '../core/types.ts';
 import { publicOnly } from '../fetch/ip-guard.ts';
 import { runRules, type Finding, type FindingScope, type RuleImplementation } from '../rules/engine.ts';
 import { implementations as registered } from '../rules/registry.ts';
 import type { Report } from '../report/model.ts';
-import type { Task, TaskCheck } from '../report/tasks.ts';
+import { defaultVerification, type Task, type TaskCheck } from '../report/tasks.ts';
 import { serveStatic } from './static-server.ts';
 
 export type TaskVerdict = 'pass' | 'fail' | 'not-verifiable';
@@ -17,6 +17,8 @@ export type TaskVerdict = 'pass' | 'fail' | 'not-verifiable';
 export interface CheckResult {
   readonly check: TaskCheck;
   readonly outcome: Finding['outcome'] | 'missing';
+  /** The finding's reason, such as a missing input, or the verification a check needs when this run left it out. */
+  readonly reason?: string;
 }
 
 export interface TaskVerification {
@@ -24,7 +26,10 @@ export interface TaskVerification {
   readonly verdict: TaskVerdict;
   readonly reason?: string;
   readonly acceptance: readonly CheckResult[];
+  /** Checks that passed in the audit and fail now. */
   readonly regressions: readonly CheckResult[];
+  /** Checks that passed in the audit and that this run could not evaluate again; they leave the verdict unchanged. */
+  readonly notRechecked: readonly CheckResult[];
 }
 
 function swapOrigin(url: string, from: string, to: string): string {
@@ -75,6 +80,11 @@ function scopeKey(scope: FindingScope): string {
   return scope.kind === 'page' ? scope.url : scope.origin;
 }
 
+/** Whether a run can confirm a check: a served build shows only what needs no deployment, and no run shows field or owner data. */
+function confirms(verification: Verification, servesBuild: boolean): boolean {
+  return verification === 'local' || (verification === 'deployed' && !servesBuild);
+}
+
 export interface VerifyOptions {
   readonly report: Report;
   readonly taskIds?: readonly string[];
@@ -90,7 +100,8 @@ export interface VerifyOptions {
 
 /**
  * Re-checks tasks from a report against a local build or another origin. A task passes when all its acceptance
- * checks pass and every check that passed before on the same scope still passes.
+ * checks pass and no check that passed before on the same scope fails now. The checks this run cannot evaluate
+ * again, such as rendered checks without `render` or what only a deployment shows, are listed as not re-checked.
  */
 export async function verifyTasks(options: VerifyOptions): Promise<TaskVerification[]> {
   const tasks = options.report.tasks.filter(task => !options.taskIds || options.taskIds.includes(task.id));
@@ -127,30 +138,40 @@ export async function verifyTasks(options: VerifyOptions): Promise<TaskVerificat
       return facts;
     };
     for (const task of tasks) {
-      if (local && task.verifiableBy !== 'local') {
-        results.push({ taskId: task.id, verdict: 'not-verifiable', reason: `needs ${task.verifiableBy} verification`, acceptance: [], regressions: [] });
+      if (!confirms(task.verifiableBy, local !== undefined)) {
+        results.push({ taskId: task.id, verdict: 'not-verifiable', reason: `needs ${task.verifiableBy} verification`, acceptance: [], regressions: [], notRechecked: [] });
         continue;
       }
-      if (task.verifiableBy === 'field-28d' || task.verifiableBy === 'owner-data' || task.verifiableBy === 'manual') {
-        results.push({ taskId: task.id, verdict: 'not-verifiable', reason: `needs ${task.verifiableBy} verification`, acceptance: [], regressions: [] });
-        continue;
-      }
-      const checks = [...task.acceptance, ...task.mustRemainPassing];
-      const outcomes = new Map<string, Finding['outcome']>();
-      for (const check of checks) {
-        const url = check.scope.kind === 'page' ? check.scope.url : `${production}/`;
-        const site = await factsFor(url);
+      const findings = new Map<string, Finding>();
+      const leftOut = new Map<TaskCheck, string>();
+      for (const check of [...task.acceptance, ...task.mustRemainPassing]) {
         const rule = (options.rules ?? catalogRules).find(entry => entry.id === check.ruleId);
         if (!rule) continue;
-        const findings = runRules({ rules: [rule], implementations, site, evidence: new EvidenceStore() });
-        for (const finding of findings) outcomes.set(`${finding.ruleId} ${scopeKey(finding.scope)}`, finding.outcome);
+        const needs = defaultVerification(rule);
+        if (!confirms(needs, local !== undefined)) {
+          leftOut.set(check, `needs ${needs} verification`);
+          continue;
+        }
+        const site = await factsFor(check.scope.kind === 'page' ? check.scope.url : `${production}/`);
+        for (const finding of runRules({ rules: [rule], implementations, site, evidence: new EvidenceStore() })) findings.set(`${finding.ruleId} ${scopeKey(finding.scope)}`, finding);
       }
-      const resolve = (check: TaskCheck): CheckResult => ({ check, outcome: outcomes.get(`${check.ruleId} ${scopeKey(check.scope)}`) ?? 'missing' });
+      const resolve = (check: TaskCheck): CheckResult => {
+        const reason = leftOut.get(check);
+        if (reason) return { check, outcome: 'not_evaluated', reason };
+        const finding = findings.get(`${check.ruleId} ${scopeKey(check.scope)}`);
+        if (!finding) return { check, outcome: 'missing' };
+        return { check, outcome: finding.outcome, ...(finding.reason === undefined ? {} : { reason: finding.reason }) };
+      };
       const acceptance = task.acceptance.map(resolve);
-      const regressions = task.mustRemainPassing.map(resolve).filter(result => result.outcome !== 'pass');
+      const kept = task.mustRemainPassing.map(resolve);
+      const regressions = kept.filter(result => result.outcome === 'fail');
+      const notRechecked = kept.filter(result => result.outcome === 'not_evaluated' || result.outcome === 'missing');
       const passed = acceptance.every(result => result.outcome === 'pass' || result.outcome === 'not_applicable') && regressions.length === 0;
       const unknown = acceptance.some(result => result.outcome === 'missing' || result.outcome === 'not_evaluated');
-      results.push({ taskId: task.id, verdict: unknown ? 'not-verifiable' : passed ? 'pass' : 'fail', ...(unknown ? { reason: 'a check could not be evaluated' } : {}), acceptance, regressions });
+      results.push({
+        taskId: task.id, verdict: unknown ? 'not-verifiable' : passed ? 'pass' : 'fail', ...(unknown ? { reason: 'a check could not be evaluated' } : {}),
+        acceptance, regressions, notRechecked,
+      });
     }
   } finally {
     await local?.close();

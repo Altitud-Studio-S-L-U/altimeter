@@ -8,7 +8,9 @@ import type { CollectResult } from '../src/collect/index.ts';
 import { EvidenceStore } from '../src/core/evidence.ts';
 import { HttpClient } from '../src/fetch/http.ts';
 import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
+import { implementations as registered } from '../src/rules/registry.ts';
 import { buildReport } from '../src/report/model.ts';
+import type { TaskCheck } from '../src/report/tasks.ts';
 import { serveStatic } from '../src/verify/static-server.ts';
 import { rebaseSite, verifyExitCode, verifyTasks } from '../src/verify/index.ts';
 import { page, site } from './support/facts.ts';
@@ -68,6 +70,52 @@ describe('verify', () => {
 
   test('rejects unknown task ids', async () => {
     await assert.rejects(verifyTasks({ report, taskIds: ['T-0000000000'], staticDir: build, implementations, rules }), /Unknown task/u);
+  });
+
+  const keeping = (...ruleIds: string[]) => ({ ...report, tasks: report.tasks.map(task => ({ ...task, mustRemainPassing: ruleIds.map((ruleId): TaskCheck => ({ ruleId, scope: task.scopes[0]! })) })) });
+  const withRules = (...extra: RuleImplementation[]) => new Map([...implementations, ...extra.map(entry => [entry.id, entry] as const)]);
+
+  test('passes a fix when a check that must keep passing cannot run here, and lists it as not re-checked', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
+    const rendered = registered.get('content-title-raw-rendered-mismatch')!;
+    const [result] = await verifyTasks({ report: keeping(rendered.id), staticDir: build, implementations: withRules(rendered), rules });
+    assert.equal(result?.verdict, 'pass');
+    assert.deepEqual(result?.regressions, []);
+    assert.deepEqual(result?.notRechecked.map(entry => [entry.check.ruleId, entry.outcome, entry.reason]), [[rendered.id, 'not_evaluated', 'missing-input:rendered-dom']]);
+    assert.equal(verifyExitCode([result!]), 0);
+  });
+
+  test('fails a fix that breaks a check that passed before', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
+    const description = registered.get('content-meta-description-missing')!;
+    const [result] = await verifyTasks({ report: keeping(description.id), staticDir: build, implementations: withRules(description), rules });
+    assert.equal(result?.verdict, 'fail');
+    assert.deepEqual(result?.regressions.map(entry => [entry.check.ruleId, entry.outcome]), [[description.id, 'fail']]);
+  });
+
+  test('re-checks what only a deployment can show against an origin, never against a served build', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
+    let runs = 0;
+    // content-img-format needs a deployment: a CDN may convert the images the build holds.
+    const deployedCheck: RuleImplementation = {
+      id: 'content-img-format',
+      evaluate: () => {
+        runs += 1;
+        return { outcome: 'fail', severity: 'low', evidence: [] };
+      },
+    };
+    const served = await verifyTasks({ report: keeping(deployedCheck.id), staticDir: build, implementations: withRules(deployedCheck), rules });
+    assert.equal(served[0]?.verdict, 'pass');
+    assert.deepEqual(served[0]?.notRechecked.map(entry => [entry.check.ruleId, entry.outcome, entry.reason]), [[deployedCheck.id, 'not_evaluated', 'needs deployed verification']]);
+    assert.equal(runs, 0);
+    const server = await serveStatic(build);
+    try {
+      const deployed = await verifyTasks({ report: keeping(deployedCheck.id), origin: server.origin, implementations: withRules(deployedCheck), rules });
+      assert.equal(deployed[0]?.verdict, 'fail');
+      assert.equal(runs, 1);
+    } finally {
+      await server.close();
+    }
   });
 });
 
