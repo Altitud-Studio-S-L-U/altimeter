@@ -58,7 +58,8 @@ The programmatic shape is experimental until 1.0; `schemaVersion` changes when a
 | `id` | `E<n>`; model analysis evidence uses `A<n>`. |
 | `kind` | `http`, `redirect`, `header`, `html`, `text`, `robots`, `sitemap`, `structured-data`, `render`, `lighthouse`, `crux`, `probe`, `crawl` or `owner-data`. |
 | `url`, `line`, `path` | Where it was observed; `path` is a CSS selector or a structured data path. |
-| `label` | What was observed, written by Altimeter. |
+| `label` | What was observed, written by Altimeter in English. |
+| `labelParts` | When the label has values or joins several templates: each template of the label catalog with its `params`, so reports can write the label in Spanish or Catalan. |
 | `excerpt` | The exact value from the site: untrusted. |
 | `complete` | `false` when the excerpt was cut to 2,000 characters. |
 

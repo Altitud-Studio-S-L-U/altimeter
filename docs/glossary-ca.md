@@ -15,7 +15,7 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 - Numbers in prose take the decimal comma («0,1 s», «2,5 s», «1,91:1»). Thousands take a period from five digits («50.000»), and four-digit numbers have none («2048»). The percent sign is separated by a space («un {share} %»). Version numbers keep their dots («Lighthouse 13.6», «HTTP/1.1»), and so do values inside code or JSON examples.
 - Quotations in prose use «», straight double quotes stay only inside markup and JSON (rel="canonical"), and apostrophes are always straight (').
 - English plural hedges become Catalan ones: «valor(s)», «element(s)», «anotació(ns)», «pàgina(es)», «propietat(s)».
-- Some placeholders are filled by code with English words (`{band}`, `{scope}`, `{where}`, `{problem}`, language names, «and N more»). Templates put them after a colon or in parentheses («(franja: {band})», «(ubicació: {where})») so that the sentence stays grammatical whatever the value.
+- Code fills some placeholders with fixed words (`{band}`, `{scope}`, `{where}`, `{problem}`, language names, «i N més»), which `src/i18n/ca/values.json` translates and `Intl.DisplayNames` names; data such as URLs, numbers and text from the site stays as it is. Templates put those values after a colon or in parentheses («(franja: {band})», «(ubicació: {where})»), so that the sentence stays grammatical whatever the value.
 
 ## Crawling and indexing
 
