@@ -1570,7 +1570,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "low (desktop display only): fewer than two items on a page below the top level, a missing or repeated position, a missing name or item, an item URL known to fail or redirect",
+    "thresholds": "low (desktop display only): fewer than two items on a page below the top level, a missing or repeated position, a missing name or item, an item URL known to fail or redirect, a step after the first whose name joins a page title to the site name with a separator (\"Fractional CTO | Altitud Studio\"), since Google shows each name as one step of the trail",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/structured-data/breadcrumb",

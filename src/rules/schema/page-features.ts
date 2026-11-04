@@ -15,6 +15,21 @@ function collector(context: Parameters<RuleImplementation['evaluate']>[0], graph
   return { problems, add };
 }
 
+const titleSeparator = /^[|\-–—·:•»]$/u;
+
+/** Whether a name is a page title joined to the site name, as in "Fractional CTO | Altitud Studio". */
+function withSiteName(name: string, siteNames: readonly string[]): boolean {
+  const folded = name.normalize('NFKC').toLowerCase().trim();
+  return siteNames.some(site => {
+    const brand = site.normalize('NFKC').toLowerCase().trim();
+    if (folded === brand) return false;
+    const before = folded.endsWith(brand) ? folded.slice(0, -brand.length).trimEnd() : undefined;
+    const after = folded.startsWith(brand) ? folded.slice(brand.length).trimStart() : undefined;
+    return (before !== undefined && before.length > 1 && titleSeparator.test(before.at(-1)!))
+      || (after !== undefined && after.length > 1 && titleSeparator.test(after[0]!));
+  });
+}
+
 function missing(graph: PageGraph, node: GraphNode, properties: readonly string[]): string[] {
   return properties.filter(property => !hasPath(graph, node, property));
 }
@@ -88,6 +103,8 @@ export const breadcrumb: RuleImplementation = {
       const items = nodesAt(graph, list, 'itemListElement');
       const shallow = context.page!.pageType === 'home' || topLevelPath(graph.base);
       if (items.length < 2 && !shallow) add('too-few-items', 'low', `${items.length} item(s)`, 'BreadcrumbList with fewer than two items');
+      const siteNames = [...nodesOfType(graph, 'WebSite'), ...nodesOfType(graph, 'Organization'), ...items.slice(0, 1)]
+        .map(node => text(graph, node, 'name')).filter((name): name is string => name !== undefined && name.trim() !== '');
       const positions = new Set<number>();
       items.forEach((item, index) => {
         const position = text(graph, item, 'position');
@@ -97,6 +114,9 @@ export const breadcrumb: RuleImplementation = {
         const target = nodesAt(graph, item, 'item')[0];
         const named = has(graph, item, 'name') || (target !== undefined && has(graph, target, 'name'));
         if (!named) add('missing-name', 'low', position ?? String(index + 1), 'ListItem without name', item);
+        // Google shows each name as one step of the trail, so a page title with the site name repeats the brand there.
+        const name = text(graph, item, 'name') ?? (target ? text(graph, target, 'name') : undefined);
+        if (name !== undefined && index > 0 && withSiteName(name, siteNames)) add('name-with-site-name', 'low', name, 'breadcrumb name that carries the site name', item, 'name');
         const url = text(graph, item, 'item') ?? (target ? target.id ?? text(graph, target, 'url') : undefined);
         if (url === undefined && index < items.length - 1) add('missing-item', 'low', position ?? String(index + 1), 'ListItem other than the last without item', item);
         const absolute = absoluteUrl(url, graph.base);

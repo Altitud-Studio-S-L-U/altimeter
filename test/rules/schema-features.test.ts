@@ -109,6 +109,13 @@ describe('schema-breadcrumb', () => {
   test('is not applicable without BreadcrumbList', () => {
     assert.deepEqual(outcome(breadcrumb, on('other', { '@type': 'WebPage', name: 'x' })), ['not_applicable', 'no-breadcrumb']);
   });
+  test('reports a step named after the page title with the site name, but not the site name alone', () => {
+    const titled = trail([item(1, 'Altitud Studio', 'https://shop.example/'), item(2, 'Fractional CTO Services in Europe | Altitud Studio', 'https://shop.example/cto/')]);
+    const { finding } = failure(breadcrumb, on('other', titled), 'name-with-site-name');
+    assert.deepEqual([finding.severity, finding.params?.items], ['low', 'Fractional CTO Services in Europe | Altitud Studio']);
+    passes(breadcrumb, on('other', trail([item(1, 'Home', 'https://shop.example/'), item(2, 'Garden tools', 'https://shop.example/garden/')])));
+    passes(breadcrumb, on('other', trail([item(1, 'Altitud Studio', 'https://shop.example/'), item(2, 'Fractional CTO', 'https://shop.example/cto/')])));
+  });
 });
 
 describe('schema-profile-page', () => {
