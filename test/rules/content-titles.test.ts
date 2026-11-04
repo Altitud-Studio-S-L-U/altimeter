@@ -256,4 +256,14 @@ describe('content-title-branding', () => {
   test('is not evaluated without a declared site name', () => {
     assert.equal(run(titleBranding, [page(url, { html: doc('<title>Garden tools</title>') })]).at()?.reason, 'no-site-name');
   });
+
+  test('accepts the brand mid-title when it is the subject, as on an about page', () => {
+    assert.equal(run(titleBranding, [page(url, { html: doc(`<title>About Acme and its founder Ana Pons</title>${brand}`) })]).at()?.outcome, 'pass');
+    assert.equal(run(titleBranding, [page(url, { html: doc(`<title>Garden tools by Acme for small gardens</title>${brand}`) })]).at()?.reason, 'mid-title');
+  });
+
+  test('does not apply to a page kept out of search results', () => {
+    const noindex = doc(`<title>Legal | Acme Corporation</title><meta name="robots" content="noindex, follow">${brand}`);
+    assert.equal(run(titleBranding, [page(url, { html: noindex })]).at()?.reason, 'not-indexable-noindex');
+  });
 });

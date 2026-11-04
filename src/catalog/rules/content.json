@@ -192,7 +192,9 @@
       "rendered-dom"
     ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The page is not indexable as its own canonical (noindex, a canonical to another URL or a non-200 status): search shows no title for it."
+    ],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "industry-consensus",
@@ -267,7 +269,8 @@
     "exemptWhen": [
       "The home page h1 is a slogan or tagline and the title names the brand and service.",
       "A single h1 combines a keyword line and a tagline (for example in two spans or across a line break); it is one h1.",
-      "The page is the home page; code does not flag it and the analyst reviews it when asked."
+      "The page is the home page; code does not flag it and the analyst reviews it when asked.",
+      "The page is not indexable as its own canonical (noindex, a canonical to another URL or a non-200 status): search shows no title for it."
     ],
     "fpRisk": "medium",
     "scored": false,
@@ -333,7 +336,8 @@
     ],
     "appliesTo": "all",
     "exemptWhen": [
-      "The page is about a historical event or a period identified by that year."
+      "The page is about a historical event or a period identified by that year.",
+      "The page is not indexable as its own canonical (noindex, a canonical to another URL or a non-200 status): search shows no title for it."
     ],
     "fpRisk": "medium",
     "scored": true,
@@ -366,7 +370,10 @@
       "rendered-dom"
     ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The page is not indexable as its own canonical (noindex, a canonical to another URL or a non-200 status): search shows no title for it.",
+      "On a page about the brand (an About page, or a title that starts with \"About <brand>\"), the brand is the subject and may sit mid-title."
+    ],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",

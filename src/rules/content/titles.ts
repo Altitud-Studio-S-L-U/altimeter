@@ -73,9 +73,17 @@ export const titleRawRenderedMismatch: RuleImplementation = {
   },
 };
 
+/** Search shows a title only for a page it may index as its own canonical; on other pages its wording does not matter. */
+function outOfResults(page: PageFacts): RuleResult | undefined {
+  const state = indexability(page);
+  return state.indexable ? undefined : notApplicable(`not-indexable-${state.reason}`);
+}
+
 export const titleWidth: RuleImplementation = {
   id: 'content-title-width',
   evaluate(context) {
+    const unlisted = outOfResults(context.page!);
+    if (unlisted) return unlisted;
     const title = pageTitle(docOf(context.page!));
     if (!title) return notApplicable('no-title');
     const characters = [...title.text].length;
@@ -134,6 +142,8 @@ export const titleH1Mismatch: RuleImplementation = {
   evaluate(context) {
     const page = context.page!;
     if (isHome(context.site, page)) return notApplicable('home-page');
+    const unlisted = outOfResults(page);
+    if (unlisted) return unlisted;
     const title = pageTitle(docOf(page));
     if (!title) return notApplicable('no-title');
     const heading = mainHeading(context);
@@ -159,6 +169,8 @@ const years = (text: string) => (text.match(/(?<![\d.,])(?:199\d|20\d\d)(?![\d.,
 export const titleObsoleteYear: RuleImplementation = {
   id: 'content-title-obsolete-year',
   evaluate(context) {
+    const unlisted = outOfResults(context.page!);
+    if (unlisted) return unlisted;
     const doc = docOf(context.page!)!;
     const title = pageTitle(doc);
     const titleYears = title ? years(title.text) : [];
@@ -188,10 +200,15 @@ function occurrences(haystack: string, needle: string): number[] {
   return positions;
 }
 
+/** Titles whose subject is the brand itself: "About Acme and its founder", "Sobre Altitud Studio". */
+const aboutTheBrand = /^(?:about|sobre|acerca de|a propos de|uber|chi siamo|qui som|quienes somos)\s/u;
+
 export const titleBranding: RuleImplementation = {
   id: 'content-title-branding',
   evaluate(context) {
     const page = context.page!;
+    const unlisted = outOfResults(page);
+    if (unlisted) return unlisted;
     const title = pageTitle(docOf(page));
     if (!title) return notApplicable('no-title');
     const names = siteNames(context.site).sort((a, b) => b.length - a.length);
@@ -208,7 +225,9 @@ export const titleBranding: RuleImplementation = {
     if (share > 0.5) return { outcome: 'fail', severity: 'low', reason: 'brand-dominant', evidence, params: { brand, share: Math.round(share * 100) } };
     const segments = titleSegments(title.text).map(fold);
     const atEdge = segments[0] === fold(brand) || segments.at(-1) === fold(brand) || fold(title.text).startsWith(fold(brand)) || fold(title.text).endsWith(fold(brand));
-    if (!atEdge) return { outcome: 'fail', severity: 'low', reason: 'mid-title', evidence, params: { brand } };
+    // On a page about the brand, the brand is the subject of the title rather than a label added to it.
+    const subject = page.pageType === 'about' || aboutTheBrand.test(fold(title.text));
+    if (!atEdge && !subject) return { outcome: 'fail', severity: 'low', reason: 'mid-title', evidence, params: { brand } };
     return { outcome: 'pass', evidence };
   },
 };
