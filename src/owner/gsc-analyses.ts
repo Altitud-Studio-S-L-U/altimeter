@@ -1,3 +1,4 @@
+import { iso639_1 } from '../rules/intl/codes.ts';
 import type { GscData, SearchRow, UrlInspection } from './gsc.ts';
 
 export interface LowCtrPage {
@@ -119,11 +120,46 @@ function isBrand(query: string, brand: RegExp | undefined): boolean {
   return brand !== undefined && brand.test(fold(query));
 }
 
+// A language with an optional script and region, as URLs write a locale: en, pt-br, zh_Hant, es-419.
+const urlLocale = /^([a-z]{2})(?:[-_][a-z]{4})?(?:[-_](?:[a-z]{2}|\d{3}))?$/iu;
+const localeParameter = /^(?:lang|language|hl|locale|lng|lc)$/iu;
+
+function localeTag(value: string | undefined): string | undefined {
+  const match = value === undefined ? null : urlLocale.exec(value);
+  return match && iso639_1.has(match[1]!.toLowerCase()) ? match[0].toLowerCase().replace(/_/gu, '-') : undefined;
+}
+
+/**
+ * The locale a page URL is written for: its first path segment, its subdomain or a language parameter, when that is
+ * a language code such as en or pt-br; empty when the URL names none, as is often the case for the default language.
+ */
+function localeOf(page: string): string {
+  let url: URL;
+  try {
+    url = new URL(page, 'https://unknown.invalid/');
+  } catch {
+    return '';
+  }
+  const labels = url.hostname.split('.');
+  return localeTag(url.pathname.split('/').find(part => part !== '')) ?? (labels.length > 2 ? localeTag(labels[0]) : undefined)
+    ?? localeTag([...url.searchParams].find(([name]) => localeParameter.test(name))?.[1]) ?? '';
+}
+
+/**
+ * Non-brand queries whose impressions several pages split without one taking most clicks. Pages written for different
+ * languages or regions are not compared: they are versions of one page for different searchers, not competitors.
+ */
 export function cannibalization(data: GscData, brand: RegExp | undefined, minImpressions = 50): Cannibalization[] {
   const byQuery = new Map<string, SearchRow[]>();
-  for (const row of data.byPageQuery) byQuery.set(row.keys[1]!, [...(byQuery.get(row.keys[1]!) ?? []), row]);
+  for (const row of data.byPageQuery) {
+    const key = JSON.stringify([row.keys[1]!, localeOf(row.keys[0]!)]);
+    const rows = byQuery.get(key);
+    if (rows) rows.push(row);
+    else byQuery.set(key, [row]);
+  }
   const results: Cannibalization[] = [];
-  for (const [query, rows] of byQuery) {
+  for (const rows of byQuery.values()) {
+    const query = rows[0]!.keys[1]!;
     if (isBrand(query, brand)) continue;
     const impressions = rows.reduce((sum, row) => sum + row.impressions, 0);
     const clicks = rows.reduce((sum, row) => sum + row.clicks, 0);

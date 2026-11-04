@@ -41,6 +41,18 @@ test('detects cannibalization on non-brand queries only', () => {
   assert.deepEqual(results[0]?.pages.map(page => page.page), ['/a', '/b']);
 });
 
+test('never takes the language or region versions of a page for pages that compete', () => {
+  const site = 'https://example.com';
+  const multilingual = { ...data, byPageQuery: [
+    row([`${site}/en/seo/`, 'seo audit'], 6, 60, 5), row([`${site}/es/seo/`, 'seo audit'], 4, 40, 7), row([`${site}/ca/auditoria/`, 'seo audit'], 2, 30, 8),
+    row([`${site}/pt-br/seo/`, 'seo audit'], 1, 30, 9), row([`${site}/seo/?lang=fr`, 'seo audit'], 1, 30, 9), row([`${site}/seo/`, 'seo audit'], 1, 25, 9),
+    row([`${site}/en/blog/seo-audit/`, 'seo audit'], 5, 55, 6),
+    row(['https://en.example.com/design/', 'web design'], 5, 50, 4), row(['https://es.example.com/disseny/', 'web design'], 5, 50, 4),
+  ] };
+  assert.deepEqual(cannibalization(multilingual, undefined).map(entry => [entry.query, entry.pages.map(page => page.page)]),
+    [['seo audit', [`${site}/en/seo/`, `${site}/en/blog/seo-audit/`]]], 'only the two English pages compete');
+});
+
 test('splits brand, non-brand and anonymised traffic', () => {
   const split = brandSplit(data, brandPattern(['Example Studio SLU']));
   assert.deepEqual(split.brand, { clicks: 30, impressions: 300 });
