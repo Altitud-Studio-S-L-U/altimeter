@@ -45,7 +45,7 @@ function observe(page: PageFacts | undefined, spec: MetricSpec): FieldObservatio
  * One result per form factor with data: phone and desktop are reported separately and never averaged.
  * Origin-level data is labelled as such, since it covers every page of the origin.
  */
-function metricRule(id: string, spec: MetricSpec, severity: (observation: FieldObservation, page: PageFacts) => Severity, missing = 'no-field-data'): RuleImplementation {
+function metricRule(id: string, spec: MetricSpec, severity: (observation: FieldObservation, page: PageFacts) => Severity, missing = 'no-field-data', context: readonly string[] = []): RuleImplementation {
   return {
     id,
     evaluate({ page, evidence }: RuleContext): RuleResult[] {
@@ -55,10 +55,14 @@ function metricRule(id: string, spec: MetricSpec, severity: (observation: FieldO
         const value = formatMetric(spec, observation.value);
         const cited = fieldEvidence(evidence, observation.field, spec.name, `p75=${value}`);
         if (observation.band === 'good') return { outcome: 'pass', evidence: [cited] };
+        const related = context.flatMap(metric => {
+          const other = p75(observation.field, metric);
+          return other === undefined ? [] : [fieldEvidence(evidence, observation.field, metric, `p75=${Math.round(other)} ms`)];
+        });
         return {
           outcome: 'fail',
           severity: severity(observation, page!),
-          evidence: [cited],
+          evidence: [cited, ...related],
           params: { formFactor: observation.form, scope: scopeLabel(observation.field), value, band: bandLabel(observation.band) },
           ...(observation.field.scope === 'origin' ? { reason: 'origin-level' } : {}),
         };
@@ -74,11 +78,14 @@ export const cruxInp = metricRule('perf-crux-inp-p75', inpMetric, coreSeverity, 
 export const cruxCls = metricRule('perf-crux-cls-p75', clsMetric, coreSeverity);
 export const cruxFcp = metricRule('perf-crux-fcp-p75', fcpMetric, () => 'low');
 
-/** TTFB is a diagnostic, not a Core Web Vital: it matters most when LCP is also not good. */
+/**
+ * TTFB is a diagnostic, not a Core Web Vital: it matters most when LCP is also not good. The users' round-trip time
+ * is cited beside it, because slow connections raise TTFB without any server defect.
+ */
 export const cruxTtfb = metricRule('perf-crux-ttfb-p75', ttfbMetric, (observation, page) => {
   const lcp = p75(fieldRecord(page, observation.form), lcpMetric.name);
   return lcp !== undefined && lcp > lcpMetric.good ? 'medium' : 'low';
-});
+}, 'no-field-data', [lcpMetric.name, 'round_trip_time']);
 
 export const cruxAssessment: RuleImplementation = {
   id: 'perf-crux-cwv-assessment',
@@ -229,19 +236,6 @@ export const cruxNavigationTypes: RuleImplementation = {
   },
 };
 
-/** Context only: round-trip time describes the users' connections, never a defect of the site. */
-export const cruxRtt: RuleImplementation = {
-  id: 'perf-crux-rtt-context',
-  evaluate({ page, evidence }) {
-    const cited = formFactors.flatMap(form => {
-      const field = fieldRecord(page, form);
-      const value = p75(field, 'round_trip_time');
-      return field && value !== undefined ? [fieldEvidence(evidence, field, 'round_trip_time', `p75=${Math.round(value)} ms`)] : [];
-    });
-    return cited.length > 0 ? { outcome: 'pass', evidence: cited } : notEvaluated(missingFieldReason(page, 'no-rtt-data'));
-  },
-};
-
 const softnavPairs: ReadonlyArray<readonly [MetricSpec, string]> = [
   [lcpMetric, 'experimental_largest_contentful_paint_with_softnavs'],
   [inpMetric, 'experimental_interaction_to_next_paint_with_softnavs'],
@@ -287,5 +281,5 @@ export const cruxSoftnav: RuleImplementation = {
 };
 
 export const fieldImplementations: readonly RuleImplementation[] = [
-  cruxLcp, cruxInp, cruxCls, cruxAssessment, cruxAvailability, cruxFcp, cruxTtfb, cruxSubparts, cruxNavigationTypes, cruxRtt, cruxSoftnav,
+  cruxLcp, cruxInp, cruxCls, cruxAssessment, cruxAvailability, cruxFcp, cruxTtfb, cruxSubparts, cruxNavigationTypes, cruxSoftnav,
 ];

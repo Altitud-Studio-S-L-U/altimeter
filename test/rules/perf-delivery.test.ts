@@ -62,6 +62,11 @@ describe('perf-document-redirects', () => {
     assert.equal(findings.find(finding => finding.scope.kind === 'page' && finding.scope.url === url)?.outcome, 'pass');
   });
 
+  test('accepts hreflang URLs written without the trailing slash', () => {
+    const cluster = '<link rel="alternate" hreflang="en" href="https://example.com/en"><link rel="alternate" hreflang="es" href="https://example.com/es">';
+    assertOutcome(check(documentRedirects, page(url, { html: html(cluster), redirects: [[302, '/en/']] })), 'pass');
+  });
+
   test('fails the locale redirect when a locale URL itself redirects', () => {
     const cluster = '<link rel="alternate" hreflang="en" href="https://example.com/en/"><link rel="alternate" hreflang="es" href="https://example.com/es/">';
     const root = page(url, { html: html(cluster), redirects: [[302, '/en/']] });

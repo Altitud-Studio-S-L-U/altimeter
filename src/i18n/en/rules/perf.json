@@ -54,11 +54,6 @@
       "fail": "On {formFactor} ({scope} CrUX data), {backForward} of navigations are back/forward navigations that were not restored from the back/forward cache, against {restored} that were. The 5% gate is a tool heuristic."
     }
   },
-  "perf-crux-rtt-context": {
-    "messages": {
-      "fail": "CrUX round-trip time describes the users' connections, not the server."
-    }
-  },
   "perf-crux-softnav-experimental": {
     "messages": {
       "fail": "On {formFactor} ({scope} CrUX data), the experimental metrics that include soft navigations fall in a different band: {metrics}. They are experimental and not part of the Core Web Vitals assessment."

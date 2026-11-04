@@ -439,10 +439,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "metrics.round_trip_time.percentiles.p75 per formFactor. RTT reflects the users' connections, not the server. Never report it as a site defect. It replaced the ECT dimension (removed Sept 2024).",
-    "fixLocation": "repo",
-    "verifiableBy": "field-28d"
+    "status": "planned",
+    "notes": "Planned: context only, with no failure state, so it has no failing fixture; perf-crux-ttfb-p75 cites the round-trip time p75 beside a slow field TTFB. metrics.round_trip_time.percentiles.p75 per formFactor. RTT reflects the users' connections, not the server. Never report it as a site defect. It replaced the ECT dimension (removed Sept 2024)."
   },
   {
     "id": "perf-crux-softnav-experimental",

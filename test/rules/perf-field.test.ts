@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import {
-  cruxAssessment, cruxAvailability, cruxCls, cruxFcp, cruxInp, cruxLcp, cruxNavigationTypes, cruxRtt, cruxSoftnav, cruxSubparts, cruxTtfb,
+  cruxAssessment, cruxAvailability, cruxCls, cruxFcp, cruxInp, cruxLcp, cruxNavigationTypes, cruxSoftnav, cruxSubparts, cruxTtfb,
 } from '../../src/rules/perf/field.ts';
 import { page } from '../support/facts.ts';
 import { assertExcerpt, assertFail, assertOutcome, check, crux, goodVitals, html } from './perf-fixtures.ts';
@@ -57,6 +57,10 @@ describe('perf-crux-inp-p75 and perf-crux-cls-p75', () => {
     const cls = check(cruxCls, withCrux({ url: { DESKTOP: { metrics: { cumulative_layout_shift: 0.18 } } } }));
     assertFail(cls, 'medium');
     assert.equal(cls.finding.params?.value, '0.18');
+  });
+
+  test('are not evaluated without the metric', () => {
+    assertOutcome(check(cruxCls, withCrux({ url: { PHONE: { metrics: { largest_contentful_paint: 2000 } } } })), 'not_evaluated', 'no-field-data');
   });
 
   test('treat missing INP as not evaluated, not as a failure', () => {
@@ -126,8 +130,15 @@ describe('perf-crux-fcp-p75 and perf-crux-ttfb-p75', () => {
     assertExcerpt(slow, /p75=1200 ms/u);
   });
 
+  test('cite the round-trip time of the users beside a slow TTFB', () => {
+    const checked = check(cruxTtfb, withCrux({ url: { PHONE: { metrics: { experimental_time_to_first_byte: 1900, round_trip_time: 420 } } } }));
+    assertFail(checked, 'low');
+    assertExcerpt(checked, /^p75=420 ms$/u);
+  });
+
   test('are not evaluated without the metric', () => {
     assertOutcome(check(cruxFcp, withCrux({ url: { PHONE: { metrics: goodVitals } } })), 'not_evaluated', 'no-field-data');
+    assertOutcome(check(cruxTtfb, withCrux({ origin: { DESKTOP: { metrics: goodVitals } } })), 'not_evaluated', 'no-field-data');
   });
 });
 
@@ -178,18 +189,6 @@ describe('perf-crux-navigation-types', () => {
 
   test('is not evaluated without navigation types', () => {
     assertOutcome(check(cruxNavigationTypes, withCrux({ url: { PHONE: { metrics: goodVitals } } })), 'not_evaluated', 'no-navigation-types');
-  });
-});
-
-describe('perf-crux-rtt-context', () => {
-  test('records the round-trip time as context, never as a failure', () => {
-    const checked = check(cruxRtt, withCrux({ url: { PHONE: { metrics: { round_trip_time: 450 } } } }));
-    assertOutcome(checked, 'pass');
-    assertExcerpt(checked, /p75=450 ms/u);
-  });
-
-  test('is not evaluated without RTT data', () => {
-    assertOutcome(check(cruxRtt, withCrux({ url: { PHONE: { metrics: goodVitals } } })), 'not_evaluated', 'no-rtt-data');
   });
 });
 

@@ -68,6 +68,7 @@ function canonicalizationHop(hop: Hop): boolean {
   }
 }
 
+/** Whether an audited page links to the exact redirecting URL; a link to its target is the fix, not the problem. */
 function linkedInternally(requested: string, pages: Iterable<PageFacts>): boolean {
   const url = absoluteUrl(requested, requested);
   for (const entry of pages) {
@@ -77,15 +78,24 @@ function linkedInternally(requested: string, pages: Iterable<PageFacts>): boolea
   return false;
 }
 
+/** Two URLs of the same document, ignoring a trailing slash and the fragment. */
+function sameDocument(a: string, b: string): boolean {
+  const key = (value: string) => {
+    const url = absoluteUrl(value, value);
+    return url === undefined ? value : url.replace(/#.*$/u, '').replace(/\/+(?=$|\?)/u, '');
+  };
+  return key(a) === key(b);
+}
+
 /** A root that sends visitors to a locale home page, when every locale URL in hreflang answers directly. */
 function localeEntryPoint(page: PageFacts, pages: ReadonlyMap<string, PageFacts>): boolean {
   const requested = new URL(page.fetch.requestedUrl);
   const final = new URL(page.fetch.finalUrl);
   if (requested.pathname !== '/' || requested.search !== '' || final.pathname === '/' || page.fetch.status !== 200) return false;
   const cluster = hreflangLinks(pageDocument(page), page.fetch.finalUrl).filter(link => link.href !== undefined && link.hreflang.toLowerCase() !== 'x-default');
-  if (cluster.length < 2 || !cluster.some(link => link.href === page.fetch.finalUrl)) return false;
+  if (cluster.length < 2 || !cluster.some(link => sameDocument(link.href!, page.fetch.finalUrl))) return false;
   return cluster.every(link => {
-    const fetched = [...pages.values()].find(entry => entry.fetch.requestedUrl === link.href);
+    const fetched = [...pages.values()].find(entry => sameDocument(entry.fetch.requestedUrl, link.href!));
     return !fetched || (fetched.fetch.status === 200 && fetched.fetch.hops.length === 1);
   });
 }
