@@ -175,7 +175,7 @@
       "fail": "Una sol·licitud amb l'agent d'usuari {agent} s'ha tractat de manera diferent que una sol·licitud de navegador.",
       "fail:ua-blocked": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una resposta HTTP {status} o un desafiament, mentre que un navegador ha rebut la pàgina. Això mostra un bloqueig basat en l'agent d'usuari; el rastrejador real, verificat per IP, pot rebre un tracte diferent.",
       "fail:blocked-as-robots-says": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una resposta HTTP {status} o un desafiament, i el robots.txt també prohibeix el rastreig a {agent}, de manera que la vora de la xarxa i el robots.txt coincideixen.",
-      "fail:content-differs": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una pàgina el text de la qual només coincideix en un {similarity} % amb el del navegador."
+      "fail:content-differs": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una pàgina el text de la qual només coincideix en un {similarity, number, percent} amb el del navegador."
     }
   },
   "ai-cdn-cloudflare-detected": {
@@ -250,10 +250,10 @@
     "why": "Google renderitza JavaScript, però un estudi basat en mesures va observar que GPTBot, ClaudeBot i PerplexityBot obtenen els fitxers JavaScript sense executar-los. El contingut principal absent de l'HTML del servidor és invisible per a aquests rastrejadors.",
     "fix": "Renderitza al servidor o genera estàticament el contingut principal, els encapçalaments, els enllaços i el JSON-LD. Hidrata la interactivitat després.",
     "messages": {
-      "fail": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio} %).",
-      "fail:mostly-rendered": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio} %). Probablement els rastrejadors que no executen JavaScript veuen poca part del contingut.",
+      "fail": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio, number, percent}).",
+      "fail:mostly-rendered": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio, number, percent}). Probablement els rastrejadors que no executen JavaScript veuen poca part del contingut.",
       "fail:h1-missing": "L'HTML en brut no té cap h1; l'h1 només apareix després de la renderització, de manera que probablement els rastrejadors que no executen JavaScript no veuen l'encapçalament principal.",
-      "fail:partly-rendered": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio} %); probablement part del contingut només existeix després d'executar JavaScript."
+      "fail:partly-rendered": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio, number, percent}); probablement part del contingut només existeix després d'executar JavaScript."
     }
   },
   "ai-textual-content-for-media": {

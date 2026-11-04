@@ -121,7 +121,7 @@
       "fail": "A request with the {agent} user agent was treated differently from a browser request.",
       "fail:ua-blocked": "A request with the {agent} user agent got HTTP {status} or a challenge while a browser got the page. This shows user-agent based blocking; the real crawler, verified by IP, may be treated differently.",
       "fail:blocked-as-robots-says": "A request with the {agent} user agent got HTTP {status} or a challenge, and robots.txt also disallows {agent}, so the edge and robots.txt agree.",
-      "fail:content-differs": "A request with the {agent} user agent got a page whose text overlaps the browser's by only {similarity}%."
+      "fail:content-differs": "A request with the {agent} user agent got a page whose text overlaps the browser's by only {similarity, number, percent}."
     }
   },
   "ai-cdn-cloudflare-detected": {
@@ -167,10 +167,10 @@
   },
   "ai-js-only-content": {
     "messages": {
-      "fail": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio}%).",
-      "fail:mostly-rendered": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio}%). Crawlers that do not run JavaScript likely see little of the content.",
+      "fail": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio, number, percent}).",
+      "fail:mostly-rendered": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio, number, percent}). Crawlers that do not run JavaScript likely see little of the content.",
       "fail:h1-missing": "The raw HTML has no h1; the h1 appears only after rendering, so crawlers that do not run JavaScript likely miss the main heading.",
-      "fail:partly-rendered": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio}%); part of the content likely exists only after JavaScript."
+      "fail:partly-rendered": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio, number, percent}); part of the content likely exists only after JavaScript."
     }
   },
   "ai-textual-content-for-media": {

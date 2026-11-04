@@ -51,7 +51,7 @@ const agentReadiness: RuleImplementation = {
       if (audit.score >= 1) continue;
       results.push({
         outcome: 'fail', severity: 'low', reason: id,
-        evidence: [evidence.add({ kind: 'lighthouse', url, label: evidenceLabel('Lighthouse audit {audit}', { audit: id }), excerpt: `score ${audit.score}${audit.displayValue ? `; ${audit.displayValue}` : ''}` })],
+        evidence: [evidence.add({ kind: 'lighthouse', url, label: evidenceLabel('Lighthouse audit {audit}, with a score of {score}', { audit: id, score: audit.score }), ...(audit.displayValue ? { excerpt: audit.displayValue } : {}) })],
         params: { audit: id, title: audit.title },
       });
     }

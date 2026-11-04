@@ -23,7 +23,7 @@ const jsOnlyContent: RuleImplementation = {
     const h1Missing = rawH1.length === 0 && renderedH1 !== undefined;
     if (renderedMain.words < minimumRenderedWords && !h1Missing) return { outcome: 'not_applicable', reason: 'little-rendered-text' };
     const ratio = renderedMain.words === 0 ? 1 : Math.min(1, rawMain.words / renderedMain.words);
-    const params = { rawWords: rawMain.words, renderedWords: renderedMain.words, ratio: Math.round(ratio * 100) };
+    const params = { rawWords: rawMain.words, renderedWords: renderedMain.words, ratio };
     const counts = evidence.add({
       kind: 'render', url: page!.fetch.finalUrl,
       label: evidenceLabel('main text in the raw HTML: {rawWords} words ({rawScope}); after rendering: {renderedWords} words ({renderedScope})', { rawWords: rawMain.words, rawScope: rawMain.scope, renderedWords: renderedMain.words, renderedScope: renderedMain.scope }),

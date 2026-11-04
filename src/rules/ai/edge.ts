@@ -98,10 +98,10 @@ const edgeBlock: RuleImplementation = {
       results.push({
         outcome: 'fail', severity: stance === 'disallow' ? 'info' : 'low', reason: 'content-differs',
         evidence: [
-          probeEvidence(context, probe, evidenceLabel('text served to the {agent} user agent (word overlap with the browser response {similarity}%)', { agent: probe.agent.name, similarity: Math.round(score * 100) }), clip(parseHtml(html).bodyText, 300)),
+          probeEvidence(context, probe, evidenceLabel('text served to the {agent} user agent (word overlap with the browser response {similarity, number, percent})', { agent: probe.agent.name, similarity: score }), clip(parseHtml(html).bodyText, 300)),
           probeEvidence(context, baseline, evidenceLabel('text served to a browser user agent'), clip(parseHtml(baselineHtml!).bodyText, 300)),
         ],
-        params: { agent: probe.agent.name, similarity: Math.round(score * 100) },
+        params: { agent: probe.agent.name, similarity: score },
       });
     }
     return results.length > 0 ? results : { outcome: 'pass', evidence: [baselineId] };

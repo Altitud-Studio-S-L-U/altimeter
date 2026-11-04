@@ -140,7 +140,8 @@ describe('ai-llms-txt', () => {
     const { findings, evidence } = run('ai-llms-txt', { resources: [llms({ body, headers: { 'content-type': 'text/markdown; charset=utf-8' } })] });
     const finding = only(findings);
     assert.equal(finding.outcome, 'pass');
-    assert.match(evidence.get(finding.evidence[0]!)?.excerpt ?? '', /^HTTP 200; content-type: text\/markdown/u);
+    assert.equal(evidence.get(finding.evidence[0]!)?.label, 'llms.txt response, served as text/markdown; charset=utf-8');
+    assert.match(evidence.get(finding.evidence[0]!)?.excerpt ?? '', /^# Example/u);
   });
 
   test('absence and an HTML page for every path are not findings', () => {
