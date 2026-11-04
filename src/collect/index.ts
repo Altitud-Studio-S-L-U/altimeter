@@ -59,12 +59,14 @@ async function fetchRobots(client: HttpClient, origin: string) {
   return { url, fetch, availability };
 }
 
-async function collectSitemaps(client: HttpClient, origin: string, declared: string[]): Promise<SitemapFacts[]> {
+/** The sitemaps read, with warnings when the caps on declared and child sitemaps leave some unread. */
+async function collectSitemaps(client: HttpClient, origin: string, declared: string[]): Promise<{ sitemaps: SitemapFacts[]; warnings: string[] }> {
   const results: SitemapFacts[] = [];
   const queue: Array<{ url: string; source: SitemapFacts['source'] }> = declared.length > 0
     ? declared.slice(0, maxDeclaredSitemaps).map(url => ({ url, source: 'robots' as const }))
     : [{ url: new URL('/sitemap.xml', origin).href, source: 'default' as const }];
   const seen = new Set<string>();
+  const listed = new Set<string>();
   let children = 0;
   while (queue.length > 0) {
     const next = queue.shift()!;
@@ -74,12 +76,20 @@ async function collectSitemaps(client: HttpClient, origin: string, declared: str
     const document = fetch.status === 200 && !fetch.error ? parseSitemap(fetch.body) : undefined;
     results.push({ url: next.url, source: next.source, fetch, ...(document ? { document } : {}) });
     for (const child of document?.sitemaps ?? []) {
-      if (children >= maxChildSitemaps) break;
+      listed.add(child.loc);
+      if (children >= maxChildSitemaps) continue;
       children += 1;
       queue.push({ url: child.loc, source: 'index' });
     }
   }
-  return results;
+  // Rules that compare pages or owner data with sitemap URLs would otherwise take part of the list for all of it.
+  const warnings: string[] = [];
+  const partial = 'so checks that use sitemap URLs see only part of them';
+  if (declared.length > maxDeclaredSitemaps) warnings.push(`${declared.length} sitemaps are declared and only the first ${maxDeclaredSitemaps} were read, ${partial}.`);
+  const unread = [...listed].filter(url => !seen.has(url)).length;
+  const read = results.filter(entry => entry.source === 'index').length;
+  if (unread > 0) warnings.push(`The sitemap indexes list ${read + unread} child sitemaps and only ${read} were read, ${partial}.`);
+  return { sitemaps: results, warnings };
 }
 
 async function probe(client: HttpClient, label: string, url: string): Promise<ProbeFacts> {
@@ -219,7 +229,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       if (link.rel.includes('sitemap') && link.attrs.href) declared.push(new URL(link.attrs.href, target).href);
     }
     log('Reading sitemaps');
-    const sitemaps = await collectSitemaps(client, target.origin, [...new Set(declared)]);
+    const { sitemaps, warnings: sitemapWarnings } = await collectSitemaps(client, target.origin, [...new Set(declared)]);
+    warnings.push(...sitemapWarnings);
 
     log('Probing URL variants and an unknown path');
     const variants = await Promise.all(urlVariants(page.fetch.finalUrl).map(variant => probe(client, variant.label, variant.url)));

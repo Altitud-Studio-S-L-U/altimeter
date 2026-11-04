@@ -12,7 +12,7 @@ For the audited URL Altimeter gathers:
 | --- | --- |
 | Response and redirects | Each hop with its status, headers and timing; HTML is read up to 4 MB. |
 | robots.txt | Fetched and parsed by RFC 9309, including how each crawler's group applies. |
-| Sitemaps | Those robots.txt and the page declare, plus `/sitemap.xml`; index files are followed within the protocol limits. |
+| Sitemaps | The first 5 that robots.txt declares or the audited page and the home page link with `rel="sitemap"`, or `/sitemap.xml` when none is declared. Index files are followed to at most 10 child sitemaps in all, and each file is read up to the protocol's 50 MB. Rules that compare pages or owner data with sitemap URLs see only the URLs of these files, and the report warns when a limit left sitemaps unread. |
 | URL variants | Trailing slash, `/index.html`, upper case, a tracking parameter, a double slash, `http` and the `www` or apex host, to see whether each consolidates. |
 | Unknown URL | A random path, to see how the site answers a page that does not exist. |
 | Home page and two linked pages | Context for site-wide rules and to tell template text from page content. |

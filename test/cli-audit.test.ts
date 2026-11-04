@@ -58,12 +58,25 @@ describe('altimeter audit', () => {
     assert.deepEqual([report.run.options.provider, report.ai], ['none', undefined]);
   });
 
-  test('never writes the report inside the --source repository', async () => {
+  test('says how to sign in when Search Console is requested and no credential is stored', async () => {
+    const empty = join(work, 'no-login');
+    const result = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--gsc', '--out', 'gsc-out', '--quiet'], work,
+      { LOCALAPPDATA: empty, XDG_STATE_HOME: empty, HOME: empty, ALTIMETER_GSC_ACCESS_TOKEN: '', ALTIMETER_GSC_SA_KEY: '' });
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(await readFile(join(work, result.stdout.trim(), 'report.json'), 'utf8'));
+    assert.ok(report.run.warnings.includes('Search Console was requested but no credential was found. Run "altimeter gsc login --client <client_secret.json> --remember <dpapi|file>" or set ALTIMETER_GSC_ACCESS_TOKEN.'), report.run.warnings.join('\n'));
+  });
+
+  test('never writes the report or a dry run inside the --source repository', async () => {
     const repo = join(work, 'site-repo');
     await mkdir(repo, { recursive: true });
     const inside = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--source', repo, '--out', join(repo, 'reports')]);
     assert.equal(inside.status, 2);
     assert.match(inside.stderr, /outside the --source repository/u);
+    const dryRun = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--source', repo, '--out', join(work, 'dry-run-out'), '--dry-run', join(repo, 'prompts')]);
+    assert.equal(dryRun.status, 2, dryRun.stderr);
+    assert.equal(dryRun.stderr, '--dry-run must be outside the --source repository.\n');
+    assert.deepEqual(await readdir(repo), [], 'nothing was written in the repository');
     assert.equal((await run(['audit', `${origin}/`, '--source', join(work, 'missing')])).status, 2);
   });
 

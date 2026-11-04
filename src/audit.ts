@@ -64,7 +64,7 @@ async function withSearchConsole(collected: CollectResult, options: AuditOptions
   const client = new HttpClient();
   try {
     const token = await searchConsoleToken(client);
-    if (!token) return { ...collected, warnings: [...collected.warnings, 'Search Console was requested but no credential was found. Run "altimeter gsc login" or set ALTIMETER_GSC_ACCESS_TOKEN.'] };
+    if (!token) return { ...collected, warnings: [...collected.warnings, 'Search Console was requested but no credential was found. Run "altimeter gsc login --client <client_secret.json> --remember <dpapi|file>" or set ALTIMETER_GSC_ACCESS_TOKEN.'] };
     const inspectUrls = [...collected.site.pages.values()].filter(page => page.fetch.status === 200).map(page => page.fetch.finalUrl).slice(0, 10);
     const gsc = await fetchGscData(client, token, { url: options.url, inspectUrls, ...(options.gsc.property ? { siteUrl: options.gsc.property } : {}) });
     return { ...collected, site: { ...collected.site, owner: { ...collected.site.owner, gsc, ...(options.gsc.redactQueries ? { redactQueries: true } : {}) } } };

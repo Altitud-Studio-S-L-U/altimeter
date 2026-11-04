@@ -86,11 +86,13 @@ AI Overviews and AI Mode arrive as Google search and cannot be told apart.
 | `crawl-bots-googlebot-sitemap-coverage` | Sitemap URLs verified Googlebot did not fetch in the window. |
 | `crawl-bots-spoofed-crawlers` | Requests that used a crawler's user agent from addresses its operator does not use. |
 
-Each rule's thresholds and sources are in the [rule catalog](rules.md).
+Each rule's thresholds and sources are in the [rule catalog](rules.md). Sitemap URLs come from the sitemaps an audit
+reads, with the same limits (see [methodology](methodology.md#1-collect)); `altimeter bots` reads only those robots.txt
+declares, or `/sitemap.xml` when it declares none.
 
 ## Privacy
 
 Logs are read on your machine and never uploaded. Paths and user agents in the output are cleaned of control and
 invisible characters and treated as untrusted text. Reverse DNS sends the addresses of claimed crawler requests to
 your DNS resolver; `--no-dns` avoids it. The Cloudflare token is sent only to Cloudflare's API and never appears in
-reports, logs or error messages. Crawler activity, like all owner data, never reaches a model.
+reports, logs or error messages. Crawler activity never reaches a model.

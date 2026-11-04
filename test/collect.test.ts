@@ -77,6 +77,37 @@ describe('collect', () => {
     assert.deepEqual(target?.uaProbes?.map(probe => probe.agent.name), ['Googlebot Smartphone', 'Chrome (mobile)']);
   });
 
+  test('warns when the caps leave declared or child sitemaps unread', async () => {
+    let base = '';
+    const sitemaps = createServer((req, res) => {
+      const path = req.url ?? '/';
+      const xml = (body: string) => res.writeHead(200, { 'content-type': 'application/xml' }).end(`<?xml version="1.0" encoding="UTF-8"?>${body}`);
+      if (path === '/robots.txt') {
+        return void res.writeHead(200, { 'content-type': 'text/plain' }).end(`User-agent: *\nAllow: /\n${[1, 2, 3, 4, 5, 6, 7].map(n => `Sitemap: ${base}/declared-${n}.xml\n`).join('')}`);
+      }
+      if (path === '/declared-1.xml') {
+        return void xml(`<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${Array.from({ length: 12 }, (_, n) => `<sitemap><loc>${base}/child-${n}.xml</loc></sitemap>`).join('')}</sitemapindex>`);
+      }
+      if (path.endsWith('.xml')) return void xml(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${base}/</loc></url></urlset>`);
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><html lang="en"><title>Home</title><h1>Home</h1></html>');
+    });
+    await new Promise<void>(resolve => sitemaps.listen(0, '127.0.0.1', resolve));
+    base = `http://127.0.0.1:${(sitemaps.address() as AddressInfo).port}`;
+    try {
+      const { site, warnings } = await collect({ url: `${base}/`, policy, render: false });
+      assert.deepEqual(site.sitemaps.map(entry => new URL(entry.url).pathname), [
+        ...[1, 2, 3, 4, 5].map(n => `/declared-${n}.xml`), ...Array.from({ length: 10 }, (_, n) => `/child-${n}.xml`),
+      ]);
+      assert.deepEqual(warnings, [
+        '7 sitemaps are declared and only the first 5 were read, so checks that use sitemap URLs see only part of them.',
+        'The sitemap indexes list 12 child sitemaps and only 10 were read, so checks that use sitemap URLs see only part of them.',
+      ]);
+    } finally {
+      sitemaps.closeAllConnections();
+      await new Promise(resolve => sitemaps.close(resolve));
+    }
+  });
+
   test('renders like Googlebot and records what robots.txt blocks', { skip: findChrome() ? false : 'Chrome is not installed', timeout: 120_000 }, async () => {
     const { site, versions } = await collect({ url: `${origin}/en/about/`, policy, lighthouse: false });
     assert.match(versions.chrome ?? '', /Chrome\//u);

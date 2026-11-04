@@ -59,15 +59,30 @@ export async function saveLogin(login: StoredLogin, mode: 'dpapi' | 'file'): Pro
   return loginFile();
 }
 
-export async function loadLogin(): Promise<StoredLogin | undefined> {
-  let stored: StoredFile;
+/** A JSON object, or undefined for anything else; JSON.parse quotes the text it could not read, and that text holds secrets. */
+function objectFrom(text: string): Record<string, unknown> | undefined {
   try {
-    stored = JSON.parse(await readFile(loginFile(), 'utf8')) as StoredFile;
+    const value: unknown = JSON.parse(text);
+    return typeof value === 'object' && value !== null ? value as Record<string, unknown> : undefined;
   } catch {
     return undefined;
   }
-  const json = stored.mode === 'dpapi' ? await dpapi('unprotect', stored.payload) : stored.payload;
-  return JSON.parse(json) as StoredLogin;
+}
+
+/** The stored login, or undefined when none is stored; a file that is there but cannot be used throws a fixed message. */
+export async function loadLogin(): Promise<StoredLogin | undefined> {
+  let text: string;
+  try {
+    text = await readFile(loginFile(), 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+    throw new Error('The stored login could not be read.');
+  }
+  const stored = objectFrom(text);
+  if (typeof stored?.payload !== 'string' || (stored.mode !== 'dpapi' && stored.mode !== 'file')) throw new Error('The stored login is damaged.');
+  const login = objectFrom(stored.mode === 'dpapi' ? await dpapi('unprotect', stored.payload) : stored.payload);
+  if (typeof login?.refreshToken !== 'string' || typeof login.clientId !== 'string' || typeof login.clientSecret !== 'string') throw new Error('The stored login is damaged.');
+  return login as unknown as StoredLogin;
 }
 
 /** Whether a login is stored, without reading its secret. */

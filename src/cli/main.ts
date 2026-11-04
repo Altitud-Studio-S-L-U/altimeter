@@ -25,8 +25,8 @@ import { locateFixes } from '../source/locate.ts';
 import { verifyExitCode, verifyTasks, type CheckResult } from '../verify/index.ts';
 import { HttpClient } from '../fetch/http.ts';
 import { spkiHashes } from '../fetch/tls.ts';
-import { deleteLogin, loadLogin, loginStatus, saveLogin } from '../owner/credential-store.ts';
-import { readOAuthClient, startLoopbackLogin } from '../owner/google-auth.ts';
+import { deleteLogin, loadLogin, loginStatus, saveLogin, type StoredLogin } from '../owner/credential-store.ts';
+import { readOAuthClient, revokeToken, startLoopbackLogin, type Revocation } from '../owner/google-auth.ts';
 import { ipListCacheDirectory } from '../owner/bots/ip-ranges.ts';
 import { probeCacheDirectory } from '../probe/cache.ts';
 import { version } from '../version.ts';
@@ -47,7 +47,7 @@ Usage:
   altimeter doctor [--probe]                       Check Node.js, Chrome and the Claude Code and Codex CLIs; --probe
                                                    sends each CLI one tiny request (a little of your plan's quota).
   altimeter cache clear                            Delete cached model answers, probe runs and crawler IP lists.
-  altimeter gsc login --client <client_secret.json> [--remember <dpapi|file>]
+  altimeter gsc login --client <client_secret.json> --remember <dpapi|file>
   altimeter gsc logout | gsc status                Manage read-only Search Console access.
   altimeter bots [--cloudflare-zone <domain>] [--logs <file>]...
                                                    Show which crawlers really fetch the site, each verified by its
@@ -208,8 +208,9 @@ async function auditCommand(args: string[]): Promise<number> {
   const source = values.source === undefined ? undefined : resolve(values.source);
   if (source !== undefined) {
     if (!(await stat(source).then(info => info.isDirectory(), () => false))) throw new UsageError('--source must be the folder of the site\'s repository.');
-    // The repository is only read; a report folder inside it could end up committed with the site.
+    // The repository is only read; a report or prompt folder inside it could end up committed with the site.
     if (isInside(source, outRoot)) throw new UsageError('--out must be outside the --source repository.');
+    if (ai.dryRunDir !== undefined && isInside(source, ai.dryRunDir)) throw new UsageError('--dry-run must be outside the --source repository.');
   }
   const botActivity = botsFromCloudflare && botLogs.length > 0 ? 'cloudflare+logs' : botsFromCloudflare ? 'cloudflare' : botLogs.length > 0 ? 'logs' : 'none';
   const recordedOptions = {
@@ -329,41 +330,66 @@ async function verifyCommand(args: string[]): Promise<number> {
   return verifyExitCode(results);
 }
 
-async function gscCommand(args: string[]): Promise<number> {
+/** Dependencies tests replace; the command line uses the defaults. */
+export interface GscCommandContext {
+  readonly client?: HttpClient;
+  readonly revokeEndpoint?: string;
+  readonly stdout?: (text: string) => void;
+}
+
+/** altimeter gsc login, logout and status. */
+export async function gscCommand(args: string[], context: GscCommandContext = {}): Promise<number> {
+  const write = context.stdout ?? ((text: string) => void process.stdout.write(text));
   const [action, ...rest] = args;
   if (action === 'status') {
     const status = await loginStatus();
-    process.stdout.write(status.stored ? `A Search Console login is stored (${status.mode}, since ${status.createdAt}).\n` : 'No Search Console login is stored.\n');
+    write(status.stored ? `A Search Console login is stored (${status.mode}, since ${status.createdAt}).\n` : 'No Search Console login is stored.\n');
     return 0;
   }
   if (action === 'logout') {
-    const login = await loadLogin().catch(() => undefined);
-    if (login) {
-      const client = new HttpClient();
-      await client.fetch('https://oauth2.googleapis.com/revoke', { method: 'POST', followRedirects: false, headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token: login.refreshToken }).toString() });
-      await client.close();
+    let login: StoredLogin | undefined;
+    try {
+      login = await loadLogin();
+    } catch (error) {
+      // Nothing can revoke a login that cannot be read, so it is not worth keeping.
+      await deleteLogin();
+      throw new Error(`${error instanceof Error ? error.message : 'The stored login could not be read.'} It was deleted without being revoked; revoke it at https://myaccount.google.com/permissions.`);
     }
+    if (!login) {
+      write('No Search Console login is stored.\n');
+      return 0;
+    }
+    const client = context.client ?? new HttpClient();
+    let revocation: Revocation;
+    try {
+      revocation = await revokeToken(client, login.refreshToken, context.revokeEndpoint);
+    } finally {
+      if (!context.client) await client.close();
+    }
+    // A token Google did not revoke stays valid, so the login is kept for another attempt.
+    if (revocation.outcome === 'failed') throw new Error(`The Search Console login was not revoked (${revocation.reason}) and is still stored. Run "altimeter gsc logout" again, or revoke it at https://myaccount.google.com/permissions.`);
     await deleteLogin();
-    process.stdout.write('The stored Search Console login was revoked and deleted.\n');
+    write(revocation.outcome === 'revoked'
+      ? 'The stored Search Console login was revoked and deleted.\n'
+      : 'Google reports that the stored Search Console login had already expired or been revoked; it was deleted.\n');
     return 0;
   }
   if (action !== 'login') throw new UsageError('Use "altimeter gsc login", "gsc logout" or "gsc status".');
   const { values } = parseArgs({ args: rest, strict: true, allowPositionals: false, options: { client: { type: 'string' }, remember: { type: 'string' } } });
   if (!values.client) throw new UsageError('gsc login needs --client with the Desktop OAuth client JSON from your Google Cloud project.');
-  if (values.remember !== undefined && values.remember !== 'dpapi' && values.remember !== 'file') throw new UsageError('--remember must be dpapi (Windows) or file.');
+  // Audits read only a stored login, and the token is never printed, so a login that is not stored would be lost.
+  if (values.remember === undefined) throw new UsageError('gsc login needs --remember dpapi (Windows) or --remember file, so that audits can use the login.');
+  if (values.remember !== 'dpapi' && values.remember !== 'file') throw new UsageError('--remember must be dpapi (Windows) or file.');
+  if (values.remember === 'dpapi' && process.platform !== 'win32') throw new UsageError('--remember dpapi works only on Windows; use --remember file to keep the login in a file only you can read.');
   const oauth = await readOAuthClient(resolve(values.client));
   const client = new HttpClient();
   try {
     const login = await startLoopbackLogin(client, oauth);
     process.stderr.write(`Open this address in your browser and allow read-only access to Search Console:\n\n${login.authorizationUrl}\n\n`);
     const token = await login.token;
-    if (values.remember) {
-      if (!token.refreshToken) throw new UsageError('Google did not return a refresh token, so the login cannot be stored.');
-      const path = await saveLogin({ clientId: oauth.clientId, clientSecret: oauth.clientSecret, refreshToken: token.refreshToken, createdAt: new Date().toISOString() }, values.remember);
-      process.stdout.write(`Signed in. The login is stored in ${path}. If your OAuth consent screen is in Testing mode, Google expires it after 7 days.\n`);
-    } else {
-      process.stdout.write('Signed in for this session only. Pass the token to an audit with ALTIMETER_GSC_ACCESS_TOKEN, or log in again with --remember.\n');
-    }
+    if (!token.refreshToken) throw new UsageError('Google did not return a refresh token, so the login cannot be stored.');
+    const path = await saveLogin({ clientId: oauth.clientId, clientSecret: oauth.clientSecret, refreshToken: token.refreshToken, createdAt: new Date().toISOString() }, values.remember);
+    write(`Signed in. The login is stored in ${path}. If your OAuth consent screen is in Testing mode, Google expires it after 7 days.\n`);
     return 0;
   } finally {
     await client.close();
