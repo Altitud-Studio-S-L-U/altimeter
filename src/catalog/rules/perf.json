@@ -624,7 +624,7 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['total-blocking-time'].numericValue. Mobile scoring control points p10 200 ms, median 600 ms (desktop 150/350). Flag >600 ms mobile as high main-thread blocking. TBT is not a Core Web Vital and measures load-time blocking only. A navigation-mode Lighthouse run has no INP (the interaction-to-next-paint audit has weight 0 and needs timespan mode). Never call high TBT 'poor INP'.",
+    "notes": "lhr.audits['total-blocking-time'].numericValue. Mobile scoring control points p10 200 ms, median 600 ms (desktop 150/350). Flag >600 ms mobile as heavy main-thread blocking. TBT is not a Core Web Vital and measures load-time blocking only. A navigation-mode Lighthouse run has no INP (the interaction-to-next-paint audit has weight 0 and needs timespan mode). Never call high TBT 'poor INP'.",
     "optionalInputs": [
       "crux"
     ],
@@ -1702,7 +1702,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "interaction >200 ms = flag; >500 ms = high-risk",
+    "thresholds": "interaction >200 ms = flag; >500 ms = higher risk (still capped at medium)",
     "sources": [
       {
         "url": "https://web.dev/articles/inp",
@@ -2068,7 +2068,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "slow server response and no 103 = info/low",
+    "thresholds": "slow server response and no 103 = info",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/web-platform/early-hints",

@@ -182,8 +182,26 @@ export function originOf(url: string): string | undefined {
   }
 }
 
+const secondLevel = new Set(['co', 'com', 'org', 'net', 'gov', 'ac', 'edu', 'gob', 'nom']);
+
+/** Approximates the registrable domain, so a site's own subdomains (static., cdn.) count as first party. */
+function siteKey(url: string): string | undefined {
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    return undefined;
+  }
+  if (/^[\d.]+$|:/u.test(host)) return host;
+  const labels = host.split('.');
+  const keep = labels.length >= 3 && labels.at(-1)!.length === 2 && secondLevel.has(labels.at(-2)!) ? 3 : 2;
+  return labels.slice(-keep).join('.');
+}
+
 export function firstParty(url: string, page: PageFacts): boolean {
-  return sameSite(url, page.url) || sameSite(url, page.fetch.finalUrl);
+  if (sameSite(url, page.url) || sameSite(url, page.fetch.finalUrl)) return true;
+  const key = siteKey(url);
+  return key !== undefined && (key === siteKey(page.url) || key === siteKey(page.fetch.finalUrl));
 }
 
 // CrUX field data.

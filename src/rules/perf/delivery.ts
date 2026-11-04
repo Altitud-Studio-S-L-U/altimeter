@@ -210,8 +210,8 @@ export const httpProtocol: RuleImplementation = {
 
 /** A content hash in a file name, such as app.3f9a1c2e.js or main-B7xk29Qa.css. */
 function fingerprinted(url: string): boolean {
-  const token = /[.-_]([A-Za-z0-9_-]{8,}).(?:js|mjs|css|woff2?|png|jpe?g|webp|avif|svg|gif)$/u.exec(new URL(url).pathname)?.[1];
-  return token !== undefined && /d/u.test(token) && /[a-z]/iu.test(token);
+  const token = /[._-]([A-Za-z0-9_-]{8,})\.(?:js|mjs|css|woff2?|png|jpe?g|webp|avif|svg|gif)$/u.exec(new URL(url).pathname)?.[1];
+  return token !== undefined && /\d/u.test(token) && /[a-z]/iu.test(token);
 }
 
 export const staticCacheTtl: RuleImplementation = {

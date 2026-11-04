@@ -7,6 +7,7 @@ import type { PageFacts } from '../../src/core/facts.ts';
 import type { Severity } from '../../src/core/types.ts';
 import type { CruxFormFactor, CruxOutcome } from '../../src/data/crux.ts';
 import type { LighthouseAudit, LighthouseOutcome } from '../../src/render/lighthouse.ts';
+import { findingMessage } from '../../src/i18n/messages.ts';
 import type { Finding, RuleImplementation } from '../../src/rules/engine.ts';
 import { evaluate, site, type SiteSpec } from '../support/facts.ts';
 
@@ -127,12 +128,21 @@ export interface Checked {
 export function check(implementation: RuleImplementation, target: PageFacts, extra: Partial<SiteSpec> = {}): Checked {
   const { findings, evidence } = evaluate(implementation, site({ pages: [target], ...extra }));
   const mine = findings.filter(entry => entry.scope.kind === 'page' && entry.scope.url === target.url);
+  for (const entry of mine) assertMessage(entry);
   return {
     findings: mine,
     finding: mine[0]!,
     evidence,
     excerpts: (finding = mine[0]!) => finding.evidence.map(id => evidence.get(id)?.excerpt ?? ''),
   };
+}
+
+/** Every failure has an English message whose placeholders are all filled by the params the rule emitted. */
+export function assertMessage(finding: Finding): void {
+  if (finding.outcome !== 'fail') return;
+  const message = findingMessage('en', finding.ruleId, 'fail', finding.reason, finding.params);
+  assert.ok(message, `${finding.ruleId} has no message for ${finding.reason ?? 'fail'}`);
+  assert.doesNotMatch(message, /\{[a-zA-Z][a-zA-Z0-9]*\}/u, `${finding.ruleId}: unfilled placeholder in "${message}"`);
 }
 
 export function assertFail(checked: Checked, severity: Severity, reason?: string, finding = checked.finding): void {
