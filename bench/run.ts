@@ -82,6 +82,7 @@ async function main(): Promise<number> {
   for (const scenario of selected) {
     let first: ScenarioRun | undefined;
     const elapsed: number[] = [];
+    const earlierProblems = problems.length;
     try {
       for (let attempt = 0; attempt < options.repeat; attempt += 1) {
         const run = await executeScenario(scenario, { ca, chromePath });
@@ -105,9 +106,11 @@ async function main(): Promise<number> {
     for (const error of ruleErrors(run)) problems.push({ scenario: scenario.name, text: `rule error ${error}` });
     for (const warning of run.result.report.run.warnings) problems.push({ scenario: scenario.name, text: `collector warning: ${warning}` });
     if (run.strayHosts.length > 0) problems.push({ scenario: scenario.name, text: `requests for hosts the scenario does not serve: ${run.strayHosts.join(', ')}` });
-    const failed = graded.filter(check => !check.known && (check.verdict === 'fn' || check.verdict === 'fp' || check.verdict === 'unevaluated')).length;
-    const status = failed > 0 ? 'FAIL' : 'ok';
-    process.stdout.write(`  ${status.padEnd(5)} ${scenario.name.padEnd(30)} ${seconds(elapsed.reduce((sum, value) => sum + value, 0) / elapsed.length).padStart(7)}  ${graded.length} checks${failed > 0 ? `, ${failed} failed` : ''}\n`);
+    const failed = graded.filter(check => !check.known && check.verdict !== 'tp' && check.verdict !== 'tn').length;
+    const other = problems.length - earlierProblems;
+    const status = failed + other > 0 ? 'FAIL' : 'ok';
+    const notes = [...(failed > 0 ? [`${failed} failed`] : []), ...(other > 0 ? [`${other} other failure${other === 1 ? '' : 's'}`] : [])];
+    process.stdout.write(`  ${status.padEnd(5)} ${scenario.name.padEnd(30)} ${seconds(elapsed.reduce((sum, value) => sum + value, 0) / elapsed.length).padStart(7)}  ${graded.length} checks${notes.map(note => `, ${note}`).join('')}\n`);
     if (options.findings) {
       const port = `:${run.port}`;
       for (const finding of run.result.report.findings.filter(entry => entry.outcome === 'fail')) {
@@ -134,9 +137,12 @@ async function main(): Promise<number> {
 
   const violations = checks.filter(check => !check.known && check.verdict !== 'tp' && check.verdict !== 'tn');
   const gaps = checks.filter(check => check.known);
-  if (violations.length > 0 || problems.length > 0) {
+  if (violations.length > 0) {
     process.stdout.write('\nViolated expectations:\n');
     for (const check of violations) process.stdout.write(`  ${check.scenario}: ${check.verdict === 'unevaluated' ? 'not evaluated' : check.verdict.toUpperCase()} ${describeCheck(check)}\n`);
+  }
+  if (problems.length > 0) {
+    process.stdout.write('\nOther failures:\n');
     for (const problem of problems) process.stdout.write(`  ${problem.scenario}: ${problem.text}\n`);
   }
   if (gaps.length > 0) {

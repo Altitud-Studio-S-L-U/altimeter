@@ -9,7 +9,8 @@ import { test } from 'node:test';
 import { connect } from 'node:tls';
 import { fileURLToPath } from 'node:url';
 import { scenarios } from '../bench/scenarios/index.ts';
-import { route, loopbackLookup, loopbackPolicy } from '../bench/support/scenario.ts';
+import { checkScenario, fingerprint, type ScenarioRun } from '../bench/support/execute.ts';
+import { defineScenario, route, loopbackLookup, loopbackPolicy } from '../bench/support/scenario.ts';
 import { startVirtualHosts } from '../bench/support/server.ts';
 import { rules } from '../src/catalog/index.ts';
 import { HttpClient } from '../src/fetch/http.ts';
@@ -31,6 +32,44 @@ test('every scenario has a unique name and expectations on implemented rules', (
     }
     assert.ok(scenario.hosts.every(host => !host.endsWith('.test')), `${scenario.name}: *.test hosts count as staging hosts for several rules`);
   }
+});
+
+test('grades findings into true and false positives and negatives, and flags a rule that did not run', () => {
+  const site = { kind: 'site', origin: 'https://site.example:8443' };
+  const page = { kind: 'page', url: 'https://site.example:8443/about/' };
+  const finding = (ruleId: string, outcome: string, extra: Record<string, unknown> = {}) => ({ ruleId, outcome, scope: site, ...extra });
+  const run = {
+    scenario: defineScenario({
+      name: 'grading', summary: 'grading', hosts: ['site.example'], build: () => ({ origins: {}, url: 'https://site.example:8443/' }),
+      mustFail: [{ rule: 'crawl-sitemap-lastmod', severity: 'low' }, { rule: 'schema-organization' }, { rule: 'schema-breadcrumb', page: '/about/', reason: 'name-with-site-name' }],
+      mustNotFail: ['tech-hsts-header', 'perf-html-cdn', { rule: 'ai-llms-txt', outcome: 'not_evaluated' }, 'ai-content-signal-lines', { rule: 'content-h1-missing', page: '/about/' }],
+    }),
+    result: {
+      report: {
+        target: { url: 'https://site.example:8443/' },
+        findings: [
+          finding('crawl-sitemap-lastmod', 'fail', { severity: 'low', reason: 'missing' }),
+          finding('schema-organization', 'pass'),
+          finding('schema-breadcrumb', 'fail', { scope: page, severity: 'low', reason: 'name-with-site-name' }),
+          finding('tech-hsts-header', 'fail', { severity: 'info', reason: 'missing', message: 'No Strict-Transport-Security header.' }),
+          finding('perf-html-cdn', 'pass'),
+          finding('ai-llms-txt', 'not_evaluated', { reason: 'llms-txt-unreachable' }),
+          finding('ai-content-signal-lines', 'not_evaluated', { reason: 'missing-input:robots' }),
+          finding('content-h1-missing', 'pass', { scope: { kind: 'page', url: 'https://site.example:8443/' } }),
+        ],
+      },
+      collected: { site: { pages: new Map() } },
+    },
+    port: 8443, durationMs: 0, strayHosts: [],
+  } as unknown as ScenarioRun;
+  const checks = checkScenario(run);
+  assert.deepEqual(checks.map(check => [check.rule, check.verdict]), [
+    ['crawl-sitemap-lastmod', 'tp'], ['schema-organization', 'fn'], ['schema-breadcrumb', 'tp'],
+    ['tech-hsts-header', 'fp'], ['perf-html-cdn', 'tn'], ['ai-llms-txt', 'tn'], ['ai-content-signal-lines', 'unevaluated'], ['content-h1-missing', 'unevaluated'],
+  ]);
+  assert.match(checks[3]!.detail, /No Strict-Transport-Security header/u);
+  assert.match(checks[7]!.detail, /the rule reported on https:\/\/site\.example:8443\//u);
+  assert.ok(fingerprint(run).every(line => !line.includes(':8443')), 'the port is left out of the fingerprint');
 });
 
 test('the benchmark exits 2 and says why when Chrome is missing', () => {
