@@ -1,3 +1,4 @@
+import { describesPage } from '../../analyze/page-type.ts';
 import { decodeHtml, documentFacts, isHtmlResponse } from '../../collect/page.ts';
 import type { DocumentFacts } from '../../core/facts.ts';
 import { attribute, collapse } from '../../parse/html.ts';
@@ -175,7 +176,9 @@ const bylineMarker = /(^|[\s_-])(author|byline|autor|autora|writer)([\s_-]|$)/iu
 const bylineText = /(?:^|[\s(|·•-])(?:by|written by|por|escrito por|per|escrit per|autor|autora|author)\s*:?\s+\p{Lu}[\p{L}'’.-]+/u;
 
 function authorsOf(doc: DocumentFacts): Array<{ readonly type: string; readonly name: string }> {
-  const articles = nodesOf(doc, ['Article', 'NewsArticle', 'BlogPosting', 'TechArticle', 'Report', 'ScholarlyArticle', 'LiveBlogPosting']);
+  // A recipe page is classified as an article, so the Recipe it is about names its author as well.
+  const articles = [...nodesOf(doc, ['Article', 'NewsArticle', 'BlogPosting', 'TechArticle', 'Report', 'ScholarlyArticle', 'LiveBlogPosting']),
+    ...nodesOf(doc, ['Recipe']).filter(describesPage)];
   const byId = new Map(doc.data.nodes.filter(node => node.id).map(node => [node.id!, node]));
   const result: Array<{ type: string; name: string }> = [];
   for (const article of articles) {

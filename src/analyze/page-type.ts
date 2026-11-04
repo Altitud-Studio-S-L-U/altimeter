@@ -53,7 +53,7 @@ export function ownLanguages(doc: DocumentFacts, url: string): string[] {
 }
 
 /** Nodes that say what the page is: top-level ones and the main entity of another node, such as an ItemPage's Product. */
-const describesPage = (node: StructuredNode) => !node.nested || /\.mainEntity(?:\[\d+\])?$/u.test(node.path);
+export const describesPage = (node: StructuredNode) => !node.nested || /\.mainEntity(?:\[\d+\])?$/u.test(node.path);
 
 function segments(url: string): string[] {
   try {
