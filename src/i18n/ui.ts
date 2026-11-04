@@ -33,6 +33,8 @@ export interface UiStrings {
   readonly verified: string;
   readonly rule: string;
   readonly page: string;
+  /** What a task covers when it is about the whole site rather than some pages. */
+  readonly site: string;
   readonly status: string;
   readonly type: string;
   readonly rendered: string;
@@ -136,6 +138,7 @@ const en: UiStrings = {
   verified: 'verified {date}',
   rule: 'Rule',
   page: 'Page',
+  site: 'Site',
   status: 'Status',
   type: 'Type',
   rendered: 'Rendered',
@@ -260,6 +263,7 @@ const es: UiStrings = {
   verified: 'verificada el {date}',
   rule: 'Regla',
   page: 'Página',
+  site: 'Sitio',
   status: 'Estado',
   type: 'Tipo',
   rendered: 'Renderizada',
@@ -384,6 +388,7 @@ const ca: UiStrings = {
   verified: 'verificada el {date}',
   rule: 'Regla',
   page: 'Pàgina',
+  site: 'Lloc',
   status: 'Estat',
   type: 'Tipus',
   rendered: 'Renderitzada',

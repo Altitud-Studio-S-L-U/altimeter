@@ -263,7 +263,7 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
   // For a rule the catalog does not have, the title and desired state come from report.json, which anyone can edit.
   const lines: string[] = [`## ${task.id} · [${t.severities[task.severity]}] ${texts ? cleanLine(texts.title) : untrustedInline(task.title, 160)}`, ''];
   lines.push(`- ${t.rule}: \`${task.ruleId}\` (${t.categories[task.category]})`);
-  lines.push(`- ${t.page}: ${task.scopes.map(scope => untrustedInline(scopeLabel(scope), 160)).join(', ')}`);
+  lines.push(`- ${task.scopes.every(scope => scope.kind === 'site') ? t.site : t.page}: ${task.scopes.map(scope => untrustedInline(scopeLabel(scope), 160)).join(', ')}`);
   lines.push(`- ${t.whereToFix}: ${t.fixLocations[task.fixLocation]}`);
   lines.push(`- ${t.howToVerify}: ${t.verifications[task.verifiableBy]}`);
   lines.push(`- ${t.verifyCommand}: \`${verifyHint(task, language)}\``, '');
