@@ -19,7 +19,7 @@ function page(url: string, html: string, pageType: PageFacts['pageType'] = 'othe
 }
 
 function site(pages: PageFacts[]): SiteFacts {
-  return { origin: 'https://example.com', sitemaps: [], variants: [], siblings: [], pages: new Map(pages.map(entry => [entry.url, entry])), crawled: false, agentProbes: [] };
+  return { origin: 'https://example.com', sitemaps: [], variants: [], siblings: [], pages: new Map(pages.map(entry => [entry.url, entry])), crawled: false, agentProbes: [], resources: [], localeProbes: [] };
 }
 
 const meta = (overrides: Partial<RuleMeta>): RuleMeta => ({

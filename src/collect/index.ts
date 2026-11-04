@@ -1,6 +1,6 @@
 import type { lookup as dnsLookup } from 'node:dns';
 import { performance } from 'node:perf_hooks';
-import type { AgentProbe, PageFacts, ProbeFacts, RenderFacts, SiteFacts, SitemapFacts } from '../core/facts.ts';
+import type { AgentProbe, PageFacts, ProbeFacts, RenderFacts, ResourceFacts, ResourcePurpose, SiteFacts, SitemapFacts } from '../core/facts.ts';
 import { browserAgent, googlebotSmartphone, probeAgents, type ProbeAgent } from '../data/agents.ts';
 import { queryCrux, cruxEndpoint, type CruxFormFactor, type CruxOutcome } from '../data/crux.ts';
 import { HttpClient, defaultUserAgent } from '../fetch/http.ts';
@@ -104,6 +104,44 @@ function pickSiblings(page: PageFacts, exclude: Set<string>): string[] {
   return picks;
 }
 
+const maxResourcesPerPurpose = 4;
+
+/** Fetches favicons, Open Graph images and Organization logos the pages reference, plus /llms.txt. */
+async function collectResources(client: HttpClient, origin: string, pages: readonly PageFacts[]): Promise<ResourceFacts[]> {
+  const wanted = new Map<string, { purpose: ResourcePurpose; referencedBy?: string }>();
+  const want = (href: string | undefined, base: string, purpose: ResourcePurpose, referencedBy: string) => {
+    if (!href) return;
+    let url: string;
+    try { url = new URL(href.trim(), base).href; } catch { return; }
+    if (!/^https?:/u.test(url) || wanted.has(url)) return;
+    if ([...wanted.values()].filter(entry => entry.purpose === purpose).length >= maxResourcesPerPurpose) return;
+    wanted.set(url, { purpose, referencedBy });
+  };
+  for (const entry of pages) {
+    const doc = entry.raw;
+    if (!doc) continue;
+    const base = entry.fetch.finalUrl;
+    for (const link of doc.parsed.links) {
+      if (link.rel.includes('icon')) want(link.attrs.href, base, 'favicon', base);
+      if (link.rel.includes('apple-touch-icon')) want(link.attrs.href, base, 'apple-touch-icon', base);
+    }
+    for (const meta of doc.parsed.metas) {
+      if ((meta.attrs.property ?? '').toLowerCase() === 'og:image') want(meta.attrs.content, base, 'og-image', base);
+    }
+    for (const node of doc.data.nodes.filter(item => item.types.some(type => type === 'Organization' || type.endsWith('Business')))) {
+      const logo = node.properties.logo;
+      const value = typeof logo === 'string' ? logo : logo && typeof logo === 'object' && !Array.isArray(logo) ? (logo as Record<string, unknown>).url ?? (logo as Record<string, unknown>).contentUrl : undefined;
+      if (typeof value === 'string') want(value, base, 'logo', base);
+    }
+  }
+  if (![...wanted.values()].some(entry => entry.purpose === 'favicon')) want('/favicon.ico', origin, 'favicon', new URL('/', origin).href);
+  const results: ResourceFacts[] = [];
+  for (const [url, info] of wanted) results.push({ label: info.purpose, url, purpose: info.purpose, ...(info.referencedBy ? { referencedBy: info.referencedBy } : {}), fetch: await client.fetch(url, { maxBytes: 8 * 1024 * 1024 }) });
+  const llms = new URL('/llms.txt', origin).href;
+  results.push({ label: 'llms-txt', url: llms, purpose: 'llms-txt', fetch: await client.fetch(llms, { maxBytes: 1024 * 1024 }) });
+  return results;
+}
+
 /** Collects the facts an audit of one URL needs: the page, its home page and the site context around them. */
 export async function collect(options: CollectOptions): Promise<CollectResult> {
   const started = performance.now();
@@ -157,6 +195,15 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     const uaProbes = page.raw ? await Promise.all([googlebotSmartphone, browserAgent].map(agent => fetchAs(agent, page.fetch.finalUrl))) : [];
     if (uaProbes.length > 0) pages.set(page.url, { ...pages.get(page.url)!, uaProbes });
     const tls = target.protocol === 'https:' ? await inspectTls(target.hostname, { policy: options.policy ?? publicOnly, ...(target.port ? { port: Number(target.port) } : {}), ...(options.lookup ? { lookup: options.lookup } : {}) }) : undefined;
+    log('Fetching referenced resources and language probes');
+    const resources = await collectResources(client, target.origin, [...pages.values()]);
+    const localeProbes: ProbeFacts[] = [];
+    for (const url of [...new Set([homeUrl, page.fetch.finalUrl])]) {
+      for (const language of ['none', 'en', 'es', 'ca', 'fr', 'de']) {
+        const fetch = await client.fetch(url, { maxBytes: 256 * 1024, ...(language === 'none' ? {} : { headers: { 'accept-language': language } }) });
+        localeProbes.push({ label: `accept-language:${language}`, url, fetch });
+      }
+    }
     const siblingUrls = pickSiblings(page, new Set([page.url, page.fetch.finalUrl, homeUrl, homeFinal]));
     const siblings = await Promise.all(siblingUrls.map(url => fetchPage(client, url)));
 
@@ -219,6 +266,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       crawled: false,
       homeUrl: homeFinal,
       agentProbes,
+      resources,
+      localeProbes,
       ...(tls ? { tls } : {}),
     };
     return { site, versions, warnings, durationMs: performance.now() - started };

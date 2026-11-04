@@ -6,7 +6,7 @@ import { rule as catalogRule } from '../../src/catalog/index.ts';
 import { classifyPage } from '../../src/analyze/page-type.ts';
 import { documentFacts } from '../../src/collect/page.ts';
 import { EvidenceStore } from '../../src/core/evidence.ts';
-import type { PageFacts, ProbeFacts, RenderFacts, SiteFacts, SitemapFacts } from '../../src/core/facts.ts';
+import type { PageFacts, ProbeFacts, RenderFacts, ResourceFacts, SiteFacts, SitemapFacts } from '../../src/core/facts.ts';
 import type { PageType } from '../../src/core/types.ts';
 import type { FetchResult, HeaderMap, Hop } from '../../src/fetch/http.ts';
 import { robotsAvailability } from '../../src/fetch/robots.ts';
@@ -132,6 +132,9 @@ export interface SiteSpec {
   readonly crawled?: boolean;
   readonly homeUrl?: string;
   readonly agentProbes?: SiteFacts['agentProbes'];
+  readonly resources?: ReadonlyArray<{ readonly url: string; readonly purpose: ResourceFacts['purpose']; readonly referencedBy?: string } & ResponseSpec>;
+  /** Probes such as { label: 'accept-language:es', url, redirects: [[302, '/es/']] }. */
+  readonly localeProbes?: ReadonlyArray<{ readonly label: string; readonly url: string } & ResponseSpec>;
   readonly tls?: SiteFacts['tls'];
 }
 
@@ -173,6 +176,8 @@ export function site(spec: SiteSpec): SiteFacts {
     crawled: spec.crawled ?? false,
     ...(spec.homeUrl ? { homeUrl: spec.homeUrl } : {}),
     agentProbes: spec.agentProbes ?? [],
+    resources: (spec.resources ?? []).map(entry => ({ label: entry.purpose, url: entry.url, purpose: entry.purpose, ...(entry.referencedBy ? { referencedBy: entry.referencedBy } : {}), fetch: response(entry.url, entry) })),
+    localeProbes: (spec.localeProbes ?? []).map(entry => ({ label: entry.label, url: entry.url, fetch: response(entry.url, entry) })),
     ...(spec.tls ? { tls: spec.tls } : {}),
   };
 }

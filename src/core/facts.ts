@@ -55,6 +55,15 @@ export interface ProbeFacts {
   readonly fetch: FetchResult;
 }
 
+export type ResourcePurpose = 'favicon' | 'apple-touch-icon' | 'og-image' | 'logo' | 'llms-txt';
+
+/** A file referenced by the audited pages and fetched so its status, type and size can be checked. */
+export interface ResourceFacts extends ProbeFacts {
+  readonly purpose: ResourcePurpose;
+  /** The page that referenced it, or undefined for well-known paths such as /llms.txt. */
+  readonly referencedBy?: string;
+}
+
 export interface SiteFacts {
   readonly origin: string;
   readonly robots?: { readonly url: string; readonly fetch: FetchResult; readonly availability: RobotsAvailability };
@@ -72,4 +81,11 @@ export interface SiteFacts {
   readonly tls?: TlsFacts;
   /** The home page fetched with the user agent of each crawler that decides search and AI-answer visibility. */
   readonly agentProbes: readonly AgentProbe[];
+  /** Favicons, Open Graph images, logos and /llms.txt, fetched once each. */
+  readonly resources: readonly ResourceFacts[];
+  /**
+   * The root and the audited URL fetched with different Accept-Language headers (label `accept-language:<value>`,
+   * or `accept-language:none` without the header, as Googlebot sends it), to detect language-based redirects.
+   */
+  readonly localeProbes: readonly ProbeFacts[];
 }
