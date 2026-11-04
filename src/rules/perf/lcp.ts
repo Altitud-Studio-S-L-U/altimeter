@@ -68,6 +68,19 @@ function discovery(page: PageFacts) {
   return { summary, checklist: checklistOf(audit?.details) };
 }
 
+/**
+ * Chrome requests a lazy-loaded image only after layout, so Lighthouse may or may not count one that the server HTML
+ * names as found by the parser, from run to run. perf-lcp-lazy-loaded reports that image; the discovery check says
+ * nothing more about it.
+ */
+const lazyLoaded = (checklist: ReturnType<typeof checklistOf>) => checklist?.eagerlyLoaded?.value === false;
+
+/** The server HTML element that names the LCP image URL, where the preload scanner can find it. */
+function serverReference(page: PageFacts): DiscoveryPoint | undefined {
+  const url = lcpUrl(page, lcpTarget(page));
+  return url && page.raw ? discoveryPoints(page.raw, page.fetch.finalUrl).find(entry => entry.urls.includes(url)) : undefined;
+}
+
 function checklistEvidence(evidence: EvidenceStore, page: PageFacts, key: string, entry: { label: string; value: boolean }): string {
   const summary = labOf(page)!;
   return labEvidence(evidence, page, summary, 'lcp-discovery-insight', evidenceLabel('Lighthouse LCP request discovery check'), `${key}=${entry.value}: ${entry.label}`, `audits.lcp-discovery-insight.details.checklist.${key}`);
@@ -112,6 +125,7 @@ export const lcpNotDiscoverable: RuleImplementation = {
       // The data-src pattern is reported once, by perf-lcp-lazy-loaded.
       if (scriptLazyImage(raw, page!.fetch.finalUrl, url)) return notApplicable('script-lazy-load');
       const point = discoveryPoints(raw, page!.fetch.finalUrl).find(entry => entry.urls.includes(url));
+      if (point && lazyLoaded(checklist)) return notApplicable('lcp-lazy-loaded');
       if (point) {
         const html = elementEvidence(evidence, page!, evidenceLabel('server HTML element that references the LCP image'), point.info);
         return { outcome: 'fail', severity: 'medium', reason: 'conflicting-signals', evidence: [cited, html, targetEvidence(evidence, page!, target!)], params: { url: target!.url! } };
@@ -139,8 +153,9 @@ export const lcpFetchpriority: RuleImplementation = {
       results.push({ outcome: 'fail', severity: 'low', reason: 'overuse', evidence: cited, params: { count: high.length } });
     }
     if (!hinted) return results.length > 0 ? results : [notApplicable('no-image-lcp')];
-    // An undiscoverable LCP request is reported once, by perf-lcp-not-discoverable.
-    if (checklist?.requestDiscoverable?.value === false) return results.length > 0 ? results : [notApplicable('lcp-not-discoverable')];
+    // An undiscoverable LCP request is reported once, by perf-lcp-not-discoverable; a lazy image the server HTML names is not.
+    const undiscoverable = checklist?.requestDiscoverable?.value === false && !(lazyLoaded(checklist) && serverReference(page!));
+    if (undiscoverable) return results.length > 0 ? results : [notApplicable('lcp-not-discoverable')];
     const cited = checklistEvidence(evidence, page!, 'priorityHinted', hinted);
     if (!hinted.value) {
       const target = lcpTarget(page!);

@@ -733,7 +733,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "lcp-discovery-insight requestDiscoverable false = high; medium when the server HTML references the URL in an <img>, <source> or image preload anyway (conflicting signals). The data-src pattern is reported by perf-lcp-lazy-loaded only.",
+    "thresholds": "lcp-discovery-insight requestDiscoverable false = high; medium when the server HTML references the URL in an <img>, <source> or image preload anyway (conflicting signals). The data-src pattern is reported by perf-lcp-lazy-loaded only, and so is a lazy-loaded image that the server HTML references: Chrome requests it after layout, so the discovery check may or may not count it as found by the parser.",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-lcp",
@@ -775,7 +775,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Discoverable LCP image without fetchpriority=high (lcp-discovery-insight priorityHinted false) = medium; more than 2 images with fetchpriority=high in the HTML = low (overuse)",
+    "thresholds": "Discoverable LCP image without fetchpriority=high (lcp-discovery-insight priorityHinted false) = medium; a lazy-loaded image that the server HTML references counts as discoverable. More than 2 images with fetchpriority=high in the HTML = low (overuse)",
     "sources": [
       {
         "url": "https://web.dev/articles/fetch-priority",

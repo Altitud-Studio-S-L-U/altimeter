@@ -66,6 +66,20 @@ describe('perf-lcp-not-discoverable', () => {
     assertOutcome(checked, 'not_applicable', 'script-lazy-load');
   });
 
+  test('leaves a lazy image that the server HTML names to perf-lcp-lazy-loaded, whatever the discovery check says', () => {
+    const raw = html('', '<main><img src="/hero.jpg" loading="lazy" alt="Product photo"></main>');
+    for (const requestDiscoverable of [true, false]) {
+      const checked = check(lcpNotDiscoverable, page(url, { html: raw, userRender: heroRender, lighthouse: lab(discovery({ ...allGood, eagerlyLoaded: false, requestDiscoverable })) }));
+      assert.ok(checked.finding.outcome !== 'fail', JSON.stringify(checked.finding));
+    }
+  });
+
+  test('still fails high for a lazy image that only a script adds', () => {
+    const raw = html('', '<main><div class="hero"></div></main>');
+    const checked = check(lcpNotDiscoverable, page(url, { html: raw, userRender: heroRender, lighthouse: lab(discovery({ ...allGood, eagerlyLoaded: false, requestDiscoverable: false })) }));
+    assertFail(checked, 'high');
+  });
+
   test('does not apply without an image LCP', () => {
     assertOutcome(check(lcpNotDiscoverable, page(url, { html: html(''), lighthouse: lab({}) })), 'not_applicable', 'no-image-lcp');
   });
@@ -93,6 +107,14 @@ describe('perf-lcp-fetchpriority', () => {
   test('leaves an undiscoverable LCP image to perf-lcp-not-discoverable', () => {
     const checked = check(lcpFetchpriority, page(url, { html: html(''), lighthouse: lab(discovery({ priorityHinted: false, requestDiscoverable: false, eagerlyLoaded: true })) }));
     assertOutcome(checked, 'not_applicable', 'lcp-not-discoverable');
+  });
+
+  test('judges the hint of a lazy image that the server HTML names, whatever the discovery check says', () => {
+    const raw = html('', '<main><img src="/hero.jpg" loading="lazy" alt="Product photo"></main>');
+    for (const requestDiscoverable of [true, false]) {
+      const checked = check(lcpFetchpriority, page(url, { html: raw, userRender: heroRender, lighthouse: lab(discovery({ priorityHinted: false, requestDiscoverable, eagerlyLoaded: false })) }));
+      assertFail(checked, 'medium');
+    }
   });
 
   test('does not apply to a text LCP', () => {
