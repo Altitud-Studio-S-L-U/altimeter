@@ -170,7 +170,7 @@ export function unsupportedFacts(text: string, index: FactIndex): string[] {
   return [...new Set(missing)];
 }
 
-/** Display text from the model or the site: control, bidirectional and zero-width characters removed, one line, bounded. */
+/** Display text from the model or the site: control and invisible format characters removed, one line, bounded. */
 export function cleanDisplay(text: string, maxLength: number): string {
   return cleanText(text, Number.MAX_SAFE_INTEGER).replace(/\s+/gu, ' ').trim().slice(0, maxLength);
 }

@@ -6,7 +6,7 @@ import { performance } from 'node:perf_hooks';
 import { myths as catalogMyths } from '../catalog/index.ts';
 import type { CollectResult } from '../collect/index.ts';
 import type { EvidenceItem } from '../core/evidence.ts';
-import { findingMessage } from '../i18n/messages.ts';
+import { filledMessage } from '../i18n/messages.ts';
 import type { Report } from '../report/model.ts';
 import { analysisCacheDirectory, cacheKey, readCache, writeCache } from './cache.ts';
 import * as claude from './claude.ts';
@@ -181,7 +181,10 @@ function signature(draft: DraftFinding, strings: SiteStrings, report: Report): s
 
 function toFinding(finding: VerifiedFinding, strings: SiteStrings, report: Report): AiFinding {
   const evidenceSignature = signature(finding, strings, report);
-  const message = finding.outcome === 'fail' ? findingMessage('en', finding.rule.id, 'fail', finding.reasonCode) : undefined;
+  // The model gives no values for a template, so a finding reads its candidate's message or a template that needs none.
+  const candidate = finding.candidate;
+  const message = finding.outcome !== 'fail' ? undefined
+    : candidate ? filledMessage('en', candidate.ruleId, 'fail', candidate.reason, candidate.params) : filledMessage('en', finding.rule.id, 'fail', finding.reasonCode);
   return {
     ruleId: finding.rule.id,
     scope: finding.scope,

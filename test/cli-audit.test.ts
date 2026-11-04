@@ -81,6 +81,14 @@ describe('altimeter audit', () => {
     assert.equal((await run(['audit', `${origin}/`, '--source', join(work, 'missing')])).status, 2);
   });
 
+  test('a dry run says it planned the analysis calls and made none', async () => {
+    const result = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--out', 'dry-run-report', '--provider', 'claude', '--dry-run', 'dry-run-prompts']);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /^Model analysis: dry run, no call made \([1-9]\d* planned\); the prompts and the call plan are in the --dry-run folder\.$/mu);
+    assert.doesNotMatch(result.stdout, /verified judgments in/u);
+    assert.ok((await readdir(join(work, 'dry-run-prompts'))).includes('plan.json'));
+  });
+
   test('rejects bad analysis options', async () => {
     assert.equal((await run(['audit', `${origin}/`, '--provider', 'gpt'])).status, 2);
     assert.equal((await run(['audit', `${origin}/`, '--ai-pages', '0'])).status, 2);
@@ -176,6 +184,33 @@ describe('other commands', () => {
     assert.equal(result.status, 2);
     assert.match(result.stderr, /different rule catalogs/u);
     assert.equal((await run(['compare', path, path])).status, 0);
+  });
+
+  test('render, compare and verify refuse an edited report.json before writing or printing any of its values', async () => {
+    const audit = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--out', 'edited-out', '--quiet']);
+    const report = JSON.parse(await readFile(join(work, audit.stdout.trim(), 'report.json'), 'utf8'));
+    assert.ok(report.tasks.length > 0 && report.findings.some((finding: { outcome: string }) => finding.outcome === 'fail'));
+    const folder = join(work, 'edited');
+    await mkdir(folder, { recursive: true });
+    const save = async (name: string, value: unknown) => {
+      await writeFile(join(folder, name), JSON.stringify(value));
+      return join(folder, name);
+    };
+    const escaping = await save('escaping.json', { ...report, tasks: [{ ...report.tasks[0], id: '../../../escaped' }] });
+    const render = await run(['render', escaping, '--out', join(folder, 'a', 'b')]);
+    assert.equal(render.status, 2);
+    assert.match(render.stderr, /is not a valid Altimeter report: tasks\[0\]\.id must be a task id/u);
+    assert.deepEqual((await readdir(folder)).sort(), ['escaping.json']);
+
+    const osc = `${String.fromCharCode(27)}]52;c;aGk=${String.fromCharCode(7)}`;
+    const failing = report.findings.findIndex((finding: { outcome: string }) => finding.outcome === 'fail');
+    const tampered = await save('tampered.json', { ...report, findings: report.findings.map((finding: object, index: number) => (index === failing ? { ...finding, ruleId: `crawl-x${osc}` } : finding)) });
+    const compare = await run(['compare', tampered, tampered]);
+    assert.equal(compare.status, 2);
+    assert.match(compare.stderr, new RegExp(`findings\\[${failing}\\]\\.ruleId must be the id of a rule`, 'u'));
+    const verify = await run(['verify', await save('task.json', { ...report, tasks: [{ ...report.tasks[0], id: `T-0123456789${osc}` }] })]);
+    assert.equal(verify.status, 2);
+    for (const output of [compare.stdout, compare.stderr, verify.stdout, verify.stderr]) assert.ok(!output.includes(String.fromCharCode(27)), output);
   });
 
   test('rules, explain and doctor describe the catalog and the environment', async () => {

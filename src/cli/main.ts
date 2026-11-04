@@ -20,6 +20,7 @@ import { analysisSummary } from '../report/markdown.ts';
 import { mergeAnalysis, type Report } from '../report/model.ts';
 import { mythMatches } from '../rules/myth-filter.ts';
 import { cleanLine } from '../report/sanitize.ts';
+import { validateReport } from '../report/validate.ts';
 import { isInside, reportDirectory, writeReport } from '../report/write.ts';
 import { locateFixes } from '../source/locate.ts';
 import { verifyExitCode, verifyTasks, type CheckResult } from '../verify/index.ts';
@@ -114,9 +115,13 @@ function language(value: string | undefined): Language {
 }
 
 async function readReport(path: string): Promise<Report> {
-  const report = JSON.parse(await readFile(path, 'utf8')) as Report;
-  if (report?.schemaVersion !== 1 || report.tool?.name !== 'altimeter') throw new UsageError(`${path} is not an Altimeter report.`);
-  return report;
+  const value = JSON.parse(await readFile(path, 'utf8')) as Partial<Report> | null;
+  if (value?.schemaVersion !== 1 || value.tool?.name !== 'altimeter') throw new UsageError(`${path} is not an Altimeter report.`);
+  try {
+    return validateReport(value);
+  } catch (error) {
+    throw new UsageError(`${path} is not a valid Altimeter report: ${error instanceof Error ? error.message : 'unexpected value'}.`);
+  }
 }
 
 const providers = ['auto', 'claude', 'codex', 'none'] as const;
@@ -290,7 +295,7 @@ async function compareCommand(args: string[]): Promise<number> {
   const comparison = compareReports(await readReport(resolve(positionals[0]!)), await readReport(resolve(positionals[1]!)));
   const list = (label: string, findings: typeof comparison.fixed) => {
     process.stdout.write(`${label}: ${findings.length}\n`);
-    for (const finding of findings) process.stdout.write(`  ${finding.ruleId} · ${cleanLine(finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin, 160)}\n`);
+    for (const finding of findings) process.stdout.write(`  ${cleanLine(finding.ruleId, 80)} · ${cleanLine(finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin, 160)}\n`);
   };
   list('Fixed', comparison.fixed);
   list('New', comparison.introduced);
@@ -318,16 +323,17 @@ async function verifyCommand(args: string[]): Promise<number> {
     render: values.render === true,
   });
   const where = (entry: CheckResult) => cleanLine(entry.check.scope.kind === 'page' ? entry.check.scope.url : entry.check.scope.origin, 160);
+  const rule = (entry: CheckResult) => cleanLine(entry.check.ruleId, 80);
   for (const result of results) {
     const label = result.verdict === 'pass' ? 'PASS' : result.verdict === 'fail' ? 'FAIL' : 'NOT VERIFIABLE';
-    process.stdout.write(`${result.taskId} ${label}${result.reason ? ` (${cleanLine(result.reason)})` : ''}\n`);
+    process.stdout.write(`${cleanLine(result.taskId, 40)} ${label}${result.reason ? ` (${cleanLine(result.reason)})` : ''}\n`);
     for (const entry of [...result.acceptance.filter(check => check.outcome !== 'pass'), ...result.regressions]) {
-      process.stdout.write(`  ${entry.check.ruleId} ${entry.outcome}${entry.reason ? ` (${cleanLine(entry.reason)})` : ''} · ${where(entry)}\n`);
+      process.stdout.write(`  ${rule(entry)} ${entry.outcome}${entry.reason ? ` (${cleanLine(entry.reason)})` : ''} · ${where(entry)}\n`);
     }
     // Checks this run could not evaluate leave the verdict alone; --render or a deployment can still confirm them.
-    for (const entry of result.notRechecked) process.stdout.write(`  ${entry.check.ruleId} not re-checked (${cleanLine(entry.reason ?? entry.outcome)}) · ${where(entry)}\n`);
+    for (const entry of result.notRechecked) process.stdout.write(`  ${rule(entry)} not re-checked (${cleanLine(entry.reason ?? entry.outcome)}) · ${where(entry)}\n`);
     // A check that stops applying can mean the change removed what it checks instead of fixing it.
-    for (const entry of result.noLongerApplies) process.stdout.write(`  ${entry.check.ruleId} no longer applies${entry.reason ? ` (${cleanLine(entry.reason)})` : ''} · ${where(entry)}\n`);
+    for (const entry of result.noLongerApplies) process.stdout.write(`  ${rule(entry)} no longer applies${entry.reason ? ` (${cleanLine(entry.reason)})` : ''} · ${where(entry)}\n`);
   }
   return verifyExitCode(results);
 }

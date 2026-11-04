@@ -1119,7 +1119,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate for the analyst (medium, needs judgment) for instruction-like text aimed at AI systems in hidden elements (hidden attribute, aria-hidden, inline display:none, visibility:hidden, zero font size or off-screen indent, screen-reader classes), HTML comments, alt, title, aria-label or data-* attributes, non-display meta elements, or rendered text hidden other than by opacity. Text in pre or code is not counted. The analyst confirms intent; judgment caps it at medium.",
+    "thresholds": "Candidate for the analyst (medium, needs judgment) for instruction-like text aimed at AI systems in hidden elements (hidden attribute, aria-hidden, inline display:none, visibility:hidden, zero font size or off-screen indent, screen-reader classes), HTML comments, alt, title, aria-label or data-* attributes, non-display meta elements, or rendered text hidden other than by opacity, and for any words written in invisible Unicode tag characters (U+E0000 to U+E007F) in text, comments, those attributes or meta elements, except the tag sequence of an emoji flag. Text in pre or code is not counted. The analyst confirms intent; judgment caps it at medium.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",

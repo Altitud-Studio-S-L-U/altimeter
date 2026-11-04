@@ -282,7 +282,8 @@
     "fix": "Elimina el texto de prompt oculto; expón las afirmaciones de forma visible y veraz.",
     "messages": {
       "fail": "Textos ocultos con forma de instrucciones dirigidos a sistemas de IA: {count}; el analista confirma la intención.",
-      "fail:hidden-instructions": "Textos ocultos con forma de instrucciones dirigidos a sistemas de IA en elementos ocultos, comentarios o atributos: {count}; el analista confirma si intentan dirigir las respuestas de IA."
+      "fail:hidden-instructions": "Textos ocultos con forma de instrucciones dirigidos a sistemas de IA en elementos ocultos, comentarios o atributos: {count}; el analista confirma si intentan dirigir las respuestas de IA.",
+      "fail:invisible-text": "Textos ocultos a los lectores: {count}, entre ellos texto escrito con los caracteres invisibles del bloque Tags de Unicode, que los modelos sí pueden leer; el analista confirma si intentan dirigir las respuestas de IA."
     }
   },
   "ai-answer-readiness": {

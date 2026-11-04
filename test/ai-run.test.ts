@@ -85,6 +85,17 @@ describe('runAnalysis with a synthetic Claude Code', () => {
     for (const id of ['content-hidden-links', 'content-stale-content', 'content-title-h1-mismatch']) assert.equal(listed.includes(id), false, `${id} is decided by code and has no candidate`);
   });
 
+  test('gives a confirmed candidate its candidate\'s message, and no finding a template whose values the model cannot give', async t => {
+    const { options } = await setup(t);
+    const { report } = hotelAudit();
+    const result = await runAnalysis(options());
+    const failures = [...result.findings, ...result.unverified].filter(finding => finding.outcome === 'fail');
+    assert.ok(failures.some(finding => finding.message !== undefined));
+    for (const finding of failures) assert.doesNotMatch(finding.message ?? '', /\{[a-zA-Z][a-zA-Z0-9]*\}/u, finding.ruleId);
+    const confirmed = result.findings.find(finding => finding.ruleId === 'schema-localbusiness')!;
+    assert.equal(confirmed.message, report.findings.find(finding => finding.id === confirmed.candidateId)?.message);
+  });
+
   test('caps judged severity at medium and lowers confidence for likely verdicts and partial verification', async t => {
     const { options } = await setup(t);
     const result = await runAnalysis(options());
