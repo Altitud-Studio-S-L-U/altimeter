@@ -476,13 +476,13 @@
     }
   },
   "content-trust-pages": {
-    "title": "La información «Acerca de» y de contacto es fácil de encontrar",
+    "title": "La información «Quiénes somos» y de contacto es fácil de encontrar",
     "why": "Las directrices para evaluadores consideran parte de la fiabilidad la información clara sobre quién gestiona un sitio y cómo contactar con ellos; la cantidad esperada depende del propósito del sitio y es mayor en las tiendas y en los temas YMYL.",
-    "fix": "Enlaza desde el pie de página las páginas Acerca de, Contacto y de políticas. En la página Acerca de, indica quién gestiona el sitio, con su ubicación y sus canales de contacto.",
+    "fix": "Enlaza desde el pie de página las páginas «Quiénes somos», «Contacto» y de políticas. En la página «Quiénes somos», indica quién gestiona el sitio, con su ubicación y sus canales de contacto.",
     "messages": {
       "fail": "La página de inicio no lleva a información sobre quién gestiona el sitio.",
       "fail:no-contact": "La página de inicio no tiene enlace de contacto, sección de contacto, correo electrónico ni enlace de teléfono.",
-      "fail:no-about": "La página de inicio no tiene ningún enlace a una página o sección Acerca de; el analista debería comprobar si la propia página de inicio dice quién gestiona el sitio."
+      "fail:no-about": "La página de inicio no tiene ningún enlace a una página o sección «Quiénes somos»; el analista debería comprobar si la propia página de inicio dice quién gestiona el sitio."
     }
   },
   "content-stale-content": {

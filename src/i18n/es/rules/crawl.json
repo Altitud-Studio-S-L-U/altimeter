@@ -234,7 +234,7 @@
   "crawl-canonical-multiple": {
     "title": "Declaraciones canónicas múltiples o contradictorias",
     "why": "Google documenta que, cuando una página declara varias URLs canónicas distintas, puede ignorarlas todas y elegir una URL canónica por su cuenta.",
-    "fix": "Emite exactamente una URL canónica, en el HTML o en la cabecera, no en ambos. Causa habitual: el tema más un plugin de SEO.",
+    "fix": "Declara exactamente una URL canónica, en el HTML o en la cabecera, pero no en los dos. Causa habitual: el tema más un plugin de SEO.",
     "messages": {
       "fail": "{url} declara {count} destinos canónicos distintos: {targets}.",
       "fail:conflicting-targets": "{url} declara {count} destinos canónicos distintos ({targets}); Google puede ignorarlos todos.",

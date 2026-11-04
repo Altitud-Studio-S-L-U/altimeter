@@ -213,7 +213,7 @@
   "tech-duplicate-conflicting-head-tags": {
     "title": "No hay metadatos del head duplicados ni contradictorios (canonical, robots, description, Open Graph)",
     "why": "Cuando los metadatos del head están duplicados con valores distintos, los rastreadores eligen uno y la elección no es previsible; en las reglas robots, Google aplica la más restrictiva.",
-    "fix": "Emite cada etiqueta de metadatos una sola vez. Normalmente, esto significa eliminar el duplicado que inserta un plugin o un tema.",
+    "fix": "Incluye cada etiqueta de metadatos una sola vez. Normalmente, esto significa eliminar el duplicado que inserta un plugin o un tema.",
     "messages": {
       "fail": "{count} etiqueta(s) de metadatos se declaran más de una vez con valores distintos: {tags}."
     }
@@ -299,7 +299,7 @@
   "tech-social-og-required": {
     "title": "Etiquetas básicas de Open Graph presentes en el HTML del servidor",
     "why": "El protocolo Open Graph define og:title, og:type, og:image y og:url para las vistas previas de enlaces en las plataformas sociales y de mensajería, que leen el HTML del servidor. Google puede usar og:title y og:site_name como datos para los enlaces de título y los nombres de sitio.",
-    "fix": "Emite og:title, og:type, og:url, og:image y og:description en el servidor en todas las páginas que se puedan compartir.",
+    "fix": "Incluye og:title, og:type, og:url, og:image y og:description en el HTML del servidor de todas las páginas que se puedan compartir.",
     "messages": {
       "fail": "Las etiquetas básicas de Open Graph están incompletas en el HTML servido.",
       "fail:missing": "En el HTML servido faltan o están vacías estas etiquetas: {tags}.",

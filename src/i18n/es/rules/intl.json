@@ -54,7 +54,7 @@
   "intl-hreflang-relative-url": {
     "title": "El href de hreflang no es una URL absoluta completa",
     "why": "Google exige URLs completas, incluido el esquema, en las anotaciones hreflang del HTML, de las cabeceras HTTP y de los sitemaps.",
-    "fix": "Emite URLs completas, con el protocolo y el host, por ejemplo, https://www.example.com/ca/.",
+    "fix": "Usa URLs completas, con el protocolo y el host, por ejemplo, https://www.example.com/ca/.",
     "messages": {
       "fail": "{count} anotación(es) hreflang no usan una URL completa: {hrefs}.",
       "fail:empty-href": "{count} anotación(es) hreflang no tienen URL.",
@@ -189,7 +189,7 @@
   "intl-hreflang-cluster-inconsistent-sets": {
     "title": "Los miembros de un grupo hreflang declaran conjuntos distintos",
     "why": "Google espera el mismo conjunto hreflang en todos los miembros de un grupo. Los valores contradictorios para una misma URL son un problema; las entradas que faltan se toleran porque los pares recíprocos siguen funcionando.",
-    "fix": "Emite un conjunto idéntico en todas las versiones, a partir de una única correspondencia de traducciones.",
+    "fix": "Genera un conjunto idéntico en todas las versiones a partir de una única correspondencia de traducciones.",
     "messages": {
       "fail": "Los miembros de un grupo hreflang declaran conjuntos distintos.",
       "fail:conflicting-values": "Los miembros de un grupo hreflang asignan valores distintos a {count} URL(s), como {targets}.",
@@ -344,7 +344,7 @@
   "intl-og-locale": {
     "title": "og:locale tiene el formato correcto y es coherente con lang y hreflang",
     "why": "El protocolo Open Graph define og:locale con la forma idioma_TERRITORIO, con en_US como valor predeterminado. Solo afecta a las vistas previas en redes sociales, no al posicionamiento en Google.",
-    "fix": "Emite og:locale con un guion bajo (ca_AD) y og:locale:alternate para las demás configuraciones regionales.",
+    "fix": "Escribe og:locale con un guion bajo (ca_AD) y usa og:locale:alternate para las demás configuraciones regionales.",
     "messages": {
       "fail": "og:locale está mal formado o no coincide con el idioma de la página.",
       "fail:missing-non-english": "La página está en {language}, pero no tiene og:locale, así que las vistas previas en redes sociales suponen en_US.",

@@ -318,7 +318,7 @@
   "ai-measurement-context": {
     "title": "Cómo medir la visibilidad en IA (contexto para el informe)",
     "why": "Google y Bing informan a los propietarios del rendimiento en las funciones de IA en Search Console y en Bing Webmaster Tools, y las visitas de los rastreadores aparecen en los registros del servidor. Ninguna herramienta de terceros puede ver los sistemas internos de posicionamiento, así que el informe nunca presenta su propio muestreo como visibilidad en IA.",
-    "fix": "Conecta GSC y BWT, y segmenta en la analítica los referentes de IA.",
+    "fix": "Conecta GSC y BWT, y segmenta en la analítica los sitios de referencia de IA.",
     "messages": {
       "fail": "Search Console cuenta los clics y las impresiones de las Vistas creadas con IA y del Modo IA en el tipo de búsqueda web, así que los análisis de Search Console de {property} los incluyen sin distinguirlos, y su informe de rendimiento de IA generativa (solo impresiones) no tiene API.",
       "fail:all-sources": "Search Console cuenta los clics y las impresiones de las Vistas creadas con IA y del Modo IA en el tipo de búsqueda web, así que los análisis de Search Console de {property} los incluyen sin distinguirlos, y su informe de rendimiento de IA generativa (solo impresiones) no tiene API. El informe AI Performance de Bing tampoco tiene API. Las visitas que envían los asistentes de IA aparecen en la actividad de rastreadores, pero las visitas desde las Vistas creadas con IA y el Modo IA llegan como Búsqueda de Google y no se pueden distinguir.",
@@ -361,7 +361,7 @@
   "ai-bots-referrals": {
     "title": "Visitas que envían los asistentes de IA (contexto)",
     "why": "Los clics desde asistentes de IA llegan con el host del asistente en la cabecera Referer, y los enlaces de ChatGPT pueden llevar utm_source=chatgpt.com. Contarlos muestra qué asistentes envían visitantes. De forma predeterminada, los navegadores solo envían el origen entre sitios, y las apps o los enlaces noreferrer no envían nada, así que las cifras son mínimos.",
-    "fix": "No hay nada que corregir. Segmenta estos referentes en la analítica. Los clics desde las Vistas creadas con IA y el Modo IA de Google se cuentan en el tipo de búsqueda web de Search Console y llegan como Búsqueda de Google, así que ningún registro puede separarlos.",
+    "fix": "No hay nada que corregir. Segmenta estos sitios de referencia en la analítica. Los clics desde las Vistas creadas con IA y el Modo IA de Google se cuentan en el tipo de búsqueda web de Search Console y llegan como Búsqueda de Google, así que ningún registro puede separarlos.",
     "messages": {
       "fail": "Visitas desde asistentes de IA: {visits} ({assistants}); visitas con utm_source=chatgpt.com: {tagged}. Los clics desde las Vistas creadas con IA y el Modo IA de Google cuentan como Búsqueda de Google y no se pueden ver aquí."
     }

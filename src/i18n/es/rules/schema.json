@@ -78,7 +78,7 @@
   "schema-url-values": {
     "title": "Las propiedades con valores de URL no son válidas, son relativas, no son canónicas o filtran hosts de preproducción",
     "why": "Las propiedades con valores de URL, como url, image, logo y sameAs, deben resolverse en el recurso previsto. Los valores que apuntan a hosts de preproducción, a URLs no canónicas o a URLs no válidas envían a los consumidores a un lugar equivocado. Los valores relativos se resuelven respecto a la página y son válidos.",
-    "fix": "Emite URLs https absolutas creadas a partir del origen canónico de producción.",
+    "fix": "Usa URLs https absolutas creadas a partir del origen canónico de producción.",
     "messages": {
       "fail": "{count} valor(es) de URL del marcado requieren atención: {items}",
       "fail:invalid": "{count} valor(es) de URL no son URLs válidas: {items}",
@@ -92,7 +92,7 @@
   "schema-iso8601-values": {
     "title": "Las fechas, horas y duraciones no son ISO 8601 válidas",
     "why": "Google exige fechas, horas y duraciones ISO 8601 en los datos estructurados. Sin un desfase de zona horaria, Google supone uno, lo que puede desplazar las fechas.",
-    "fix": "Emite las fechas con un formateador ISO. En DateTime, incluye un desfase, por ejemplo, 2026-11-03T09:00:00+01:00.",
+    "fix": "Genera las fechas con un formateador ISO. En DateTime, incluye un desfase horario, por ejemplo, 2026-11-03T09:00:00+01:00.",
     "messages": {
       "fail": "{count} valor(es) de fecha, hora o duración no son ISO 8601 válidos: {items}",
       "fail:invalid-date": "{count} valor(es) de fecha no son ISO 8601: {items}",
@@ -173,7 +173,7 @@
   "schema-entity-consistency-sitewide": {
     "title": "Las entidades Organization y WebSite del sitio no son coherentes entre páginas",
     "why": "Google pide que el nombre de Organization coincida con el nombre del sitio y que el nombre del sitio se use de forma coherente. Los nombres, URLs o logotipos distintos para la misma organización en distintas páginas hacen que la entidad sea ambigua.",
-    "fix": "Emite un único nodo Organization canónico (con todos los datos en la página de inicio o en la página Acerca de) y haz referencia a su @id desde publisher/provider/author/brand en las demás páginas.",
+    "fix": "Publica un único nodo Organization canónico (con todos los datos en la página de inicio o en la página «Quiénes somos») y haz referencia a su @id desde publisher/provider/author/brand en las demás páginas.",
     "messages": {
       "fail": "Las entidades del sitio se describen de forma distinta en distintas páginas: {items}",
       "fail:conflicting-organization": "Los valores de la Organization del sitio difieren entre páginas: {items}",
@@ -231,11 +231,11 @@
   },
   "schema-organization": {
     "title": "Completitud y corrección del marcado Organization",
-    "why": "Google usa el marcado Organization de la página de inicio o de la página Acerca de para entender la organización, por ejemplo, para elegir un logotipo y para los paneles de conocimiento. No hace falta en todas las páginas y no garantiza ninguna función visible.",
+    "why": "Google usa el marcado Organization de la página de inicio o de la página «Quiénes somos» para entender la organización, por ejemplo, para elegir un logotipo y para los paneles de conocimiento. No hace falta en todas las páginas y no garantiza ninguna función visible.",
     "fix": "Añade un único nodo Organization completo en la página de inicio con un @id estable y haz referencia a él desde las demás páginas.",
     "messages": {
-      "fail": "El marcado Organization de la página de inicio o de la página Acerca de requiere atención: {items}",
-      "fail:missing": "No se ha encontrado marcado Organization en la página de inicio ni en la página Acerca de.",
+      "fail": "El marcado Organization de la página de inicio o de la página «Quiénes somos» requiere atención: {items}",
+      "fail:missing": "No se ha encontrado marcado Organization en la página de inicio ni en la página «Quiénes somos».",
       "fail:foreign-url": "La propiedad url de Organization apunta a otro host: {items}",
       "fail:missing-recommended": "Al nodo Organization del sitio le faltan propiedades recomendadas: {items}"
     }
@@ -338,7 +338,7 @@
   "schema-product-snippet": {
     "title": "Requisitos del fragmento de producto (mejoras de reseñas y precio)",
     "why": "Google exige un nombre de producto y al menos una de las propiedades review, aggregateRating u offers para los fragmentos de producto, con los precios en un formato válido.",
-    "fix": "Emite el precio como un número simple (\"price\": 1299.00) con priceCurrency \"EUR\". Usa Offer para un solo vendedor y ProductGroup para las variantes.",
+    "fix": "Indica el precio como un número simple (\"price\": 1299.00) con priceCurrency \"EUR\". Usa Offer para un solo vendedor y ProductGroup para las variantes.",
     "messages": {
       "fail": "No se cumplen {count} requisito(s) del fragmento de producto: {items}",
       "fail:missing-name": "{count} elemento(s) Product no tienen nombre.",
@@ -426,7 +426,7 @@
   "schema-article": {
     "title": "Marcado Article / NewsArticle / BlogPosting",
     "why": "Google documenta el marcado Article, NewsArticle y BlogPosting con el titular, la imagen, el autor y las fechas recomendados. No es obligatorio para las noticias destacadas ni para Discover.",
-    "fix": "Emite BlogPosting/NewsArticle con headline, un array de image, fechas ISO con desfase y nodos Person de author que enlacen a las páginas de los autores.",
+    "fix": "Usa BlogPosting/NewsArticle con headline, un array de image, fechas ISO con desfase horario y nodos Person en author que enlacen a las páginas de los autores.",
     "messages": {
       "fail": "{count} problema(s) del marcado Article: {items}",
       "fail:missing-image": "{count} elemento(s) de artículo no tienen imagen: {items}",
