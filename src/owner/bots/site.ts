@@ -28,13 +28,18 @@ export function botSiteInput(site: SiteFacts): BotSiteInput {
 const maxDeclaredSitemaps = 5;
 const maxChildSitemaps = 10;
 
+const bareHost = (url: string) => new URL(url).hostname.toLowerCase().replace(/^www\./u, '');
+
 /**
  * Fetches robots.txt and the sitemaps it declares (or /sitemap.xml), for the bots command, which runs without an
- * audit. The result has the shape of an audit's site facts, with no page collected.
+ * audit. The result has the shape of an audit's site facts, with no page collected. When robots.txt redirects to the
+ * www or apex variant of the host, that variant is the site, since it serves the rules and the sitemap URLs.
  */
-export async function fetchSiteFacts(client: HttpClient, origin: string): Promise<SiteFacts> {
+export async function fetchSiteFacts(client: HttpClient, requested: string): Promise<SiteFacts> {
+  const robotsFetch = await client.fetch(new URL('/robots.txt', requested).href, { maxRedirects: 5, maxBytes: 1024 * 1024 });
+  const finalOrigin = new URL(robotsFetch.finalUrl).origin;
+  const origin = !robotsFetch.error && finalOrigin !== requested && bareHost(finalOrigin) === bareHost(requested) ? finalOrigin : requested;
   const robotsUrl = new URL('/robots.txt', origin).href;
-  const robotsFetch = await client.fetch(robotsUrl, { maxRedirects: 5, maxBytes: 1024 * 1024 });
   const availability = robotsAvailability(robotsFetch.error ? undefined : robotsFetch.status, robotsFetch.body, robotsFetch.error?.code === 'too-many-redirects');
   const declared = availability.kind === 'parsed' ? availability.file.sitemaps.map(line => line.value).filter(value => /^https?:\/\//iu.test(value)) : [];
   const queue: Array<{ url: string; source: SitemapFacts['source'] }> = declared.length > 0
