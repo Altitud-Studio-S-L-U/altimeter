@@ -5,7 +5,7 @@
     "fix": "Afegeix grups explícits que permetin els rastrejadors de cerca i de respostes que vulguis, o elimina la regla Disallow global.",
     "messages": {
       "fail": "El grup * del robots.txt prohibeix el rastreig de tot el lloc, i els rastrejadors de cerca o de respostes amb IA sense grup propi hereten aquest bloqueig.",
-      "fail:ai-search-inherits-block": "El grup * prohibeix el rastreig de /, de manera que {count} rastrejadors de cerca o de respostes amb IA sense grup propi hereten el bloqueig ({agents}), mentre que un cercador té un grup propi que permet el rastreig."
+      "fail:ai-search-inherits-block": "El grup * prohibeix el rastreig de /, de manera que hereten el bloqueig els rastrejadors de cerca o de respostes amb IA sense grup propi ({count}; {agents}), mentre que un cercador té un grup propi que permet el rastreig."
     }
   },
   "ai-robots-oai-searchbot": {
@@ -250,10 +250,10 @@
     "why": "Google renderitza JavaScript, però un estudi basat en mesures va observar que GPTBot, ClaudeBot i PerplexityBot obtenen els fitxers JavaScript sense executar-los. El contingut principal absent de l'HTML del servidor és invisible per a aquests rastrejadors.",
     "fix": "Renderitza al servidor o genera estàticament el contingut principal, els encapçalaments, els enllaços i el JSON-LD. Hidrata la interactivitat després.",
     "messages": {
-      "fail": "L'HTML en brut conté {rawWords} paraules de text principal, enfront de {renderedWords} després de la renderització ({ratio} %).",
-      "fail:mostly-rendered": "L'HTML en brut conté {rawWords} paraules de text principal, enfront de {renderedWords} després de la renderització ({ratio} %). Probablement els rastrejadors que no executen JavaScript veuen poca part del contingut.",
+      "fail": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio} %).",
+      "fail:mostly-rendered": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio} %). Probablement els rastrejadors que no executen JavaScript veuen poca part del contingut.",
       "fail:h1-missing": "L'HTML en brut no té cap h1; l'h1 només apareix després de la renderització, de manera que probablement els rastrejadors que no executen JavaScript no veuen l'encapçalament principal.",
-      "fail:partly-rendered": "L'HTML en brut conté {rawWords} paraules de text principal, enfront de {renderedWords} després de la renderització ({ratio} %); probablement part del contingut només existeix després d'executar JavaScript."
+      "fail:partly-rendered": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio} %); probablement part del contingut només existeix després d'executar JavaScript."
     }
   },
   "ai-textual-content-for-media": {
@@ -261,8 +261,8 @@
     "why": "Google inclou entre els aspectes fonamentals per a les funcions d'IA fer que el contingut important estigui disponible en format de text. Els fets que només es mostren en imatges, vídeos, canvas o PDF sense equivalent textual són difícils d'utilitzar per a qualsevol sistema.",
     "fix": "Proporciona els fets com a text HTML, a més de text alternatiu i transcripcions.",
     "messages": {
-      "fail": "{count} elements multimèdia ({kinds}) poden contenir fets que el text de la pàgina no indica; l'analista ho confirma.",
-      "fail:media-only-facts": "{count} elements multimèdia ({kinds}) del contingut principal no tenen cap equivalent textual a prop i poden contenir fets que el text de la pàgina no indica; l'analista ho confirma."
+      "fail": "{count} element(s) multimèdia ({kinds}) poden contenir fets que el text de la pàgina no indica; l'analista ho confirma.",
+      "fail:media-only-facts": "{count} element(s) multimèdia ({kinds}) del contingut principal no tenen cap equivalent textual a prop i poden contenir fets que el text de la pàgina no indica; l'analista ho confirma."
     }
   },
   "ai-llms-txt": {
@@ -273,7 +273,7 @@
       "fail": "Cal revisar el fitxer /llms.txt.",
       "fail:content-type": "/llms.txt se serveix com a {contentType} en lloc de text/plain o text/markdown.",
       "fail:structure": "/llms.txt no segueix l'estructura proposada: {problems}.",
-      "fail:disallowed-links": "/llms.txt enllaça a {count} camins del mateix lloc que el robots.txt prohibeix rastrejar a un rastrejador de cerca."
+      "fail:disallowed-links": "/llms.txt enllaça a {count} camí(ns) del mateix lloc que el robots.txt prohibeix rastrejar a un rastrejador de cerca."
     }
   },
   "ai-hidden-llm-instructions": {
@@ -281,8 +281,8 @@
     "why": "Les polítiques de Google contra el contingut brossa inclouen els intents de manipular les respostes d'IA generativa a la Cerca. El text amb forma d'instruccions adreçat a sistemes d'IA i col·locat en text ocult, comentaris o atributs és un d'aquests intents, i també pot segrestar els agents que llegeixen la pàgina.",
     "fix": "Elimina el text d'indicacions ocult; fes les afirmacions de manera visible i veraç.",
     "messages": {
-      "fail": "S'han trobat {count} fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA; l'analista en confirma la intenció.",
-      "fail:hidden-instructions": "S'han trobat {count} fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA en elements ocults, comentaris o atributs; l'analista confirma si intenten dirigir les respostes d'IA."
+      "fail": "S'han trobat fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA ({count}); l'analista en confirma la intenció.",
+      "fail:hidden-instructions": "S'han trobat fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA en elements ocults, comentaris o atributs ({count}); l'analista confirma si l'objectiu és dirigir les respostes d'IA."
     }
   },
   "ai-answer-readiness": {
@@ -332,9 +332,9 @@
     "why": "El robots.txt només diu quins rastrejadors poden obtenir el lloc; els registres d'accés del propietari o l'analítica del CDN mostren quins ho han fet. Qualsevol pot enviar l'agent d'usuari d'un rastrejador, de manera que cada sol·licitud que diu ser d'un rastrejador es comprova amb la llista d'IP que publica l'operador o amb el DNS invers, i les dels operadors que no publiquen cap manera de comprovar-les (Meta, ByteDance, MistralAI-Training) s'indiquen com a sol·licituds que no es poden verificar, mai com a zero.",
     "fix": "No hi ha res a corregir. Compara els rastrejadors que obtenen el lloc amb la política del robots.txt: bloqueja els rastrejadors d'entrenament si no vols aquest ús, i mantén permesos els rastrejadors de cerca i de respostes si vols que et citin a les respostes d'IA.",
     "messages": {
-      "fail": "Els rastrejadors d'IA verificats han obtingut el lloc {verified} vegades ({crawlers}); unes altres {claims} sol·licituds han fet servir agents d'usuari de rastrejadors d'IA sense que s'hagin pogut verificar.",
-      "fail:seen": "Els rastrejadors d'IA verificats han obtingut el lloc {verified} vegades durant la finestra ({crawlers}); unes altres {claims} sol·licituds han fet servir agents d'usuari de rastrejadors d'IA sense que s'hagin pogut verificar.",
-      "fail:claims-only": "{claims} sol·licituds han fet servir agents d'usuari de rastrejadors d'IA, però no se n'ha pogut verificar cap, de manera que les dades no mostren quins rastrejadors d'IA han visitat realment el lloc."
+      "fail": "Els rastrejadors d'IA verificats han obtingut el lloc (sol·licituds: {verified}; {crawlers}). Sol·licituds amb agents d'usuari de rastrejadors d'IA que no s'han pogut verificar: {claims}.",
+      "fail:seen": "Els rastrejadors d'IA verificats han obtingut el lloc durant el període (sol·licituds: {verified}; {crawlers}). Sol·licituds amb agents d'usuari de rastrejadors d'IA que no s'han pogut verificar: {claims}.",
+      "fail:claims-only": "Sol·licituds amb agents d'usuari de rastrejadors d'IA: {claims}, però no se n'ha pogut verificar cap, de manera que les dades no mostren quins rastrejadors d'IA han visitat realment el lloc."
     }
   },
   "ai-bots-blocked-at-edge": {
@@ -342,16 +342,16 @@
     "why": "Google inclou entre els requisits bàsics de les funcions d'IA que el rastreig estigui permès pel robots.txt i per qualsevol infraestructura de CDN o d'allotjament, i OpenAI diu que els llocs que exclouen el seu rastrejador de cerca no es mostren a les respostes de la cerca de ChatGPT. Les sol·licituds verificades d'aquests rastrejadors que reben 401, 402, 403, 429 o un desafiament mostren que la vora de la xarxa bloqueja el rastrejador real, cosa que una prova amb un agent d'usuari manllevat no pot demostrar.",
     "fix": "Busca la regla del CDN, del tallafoc o de limitació de freqüència que respon al rastrejador i permet-lo, per exemple a AI Crawl Control de Cloudflare o amb una regla del WAF que ometi els bots verificats. Si el 402 ve del pay per crawl, eximeix-ne els rastrejadors de cerca i de respostes. Continua rebutjant les sol·licituds que no superin la verificació.",
     "messages": {
-      "fail": "S'ha rebutjat {agent} {blocked} de {total} vegades ({share}; {statuses}) tot i que el robots.txt el permet.",
-      "fail:refused": "Les sol·licituds verificades com a {agent} s'han rebutjat {blocked} de {total} vegades ({share}; {statuses}) tot i que el robots.txt permet el rastrejador, de manera que no pot llegir aquestes pàgines.",
-      "fail:payment-required": "Les sol·licituds verificades com a {agent} han rebut HTTP 402 Payment Required o un altre rebuig {blocked} de {total} vegades ({share}; {statuses}): la vora de la xarxa cobra o bloqueja un rastrejador que el robots.txt permet.",
-      "fail:unverified-claims": "Les sol·licituds que s'identifiquen com a {agent} s'han rebutjat {blocked} de {total} vegades ({share}; {statuses}); no s'han pogut verificar, de manera que pot ser que la vora de la xarxa estigui rebutjant suplantacions."
+      "fail": "Sol·licituds identificades com a {agent} que s'han rebutjat tot i que el robots.txt el permet: {blocked} de {total} ({share}; {statuses}).",
+      "fail:refused": "Sol·licituds verificades com a {agent} que s'han rebutjat tot i que el robots.txt permet el rastrejador: {blocked} de {total} ({share}; {statuses}). El rastrejador no pot llegir aquestes pàgines.",
+      "fail:payment-required": "Sol·licituds verificades com a {agent} que han rebut HTTP 402 Payment Required o un altre rebuig: {blocked} de {total} ({share}; {statuses}). La vora de la xarxa cobra o bloqueja un rastrejador que el robots.txt permet.",
+      "fail:unverified-claims": "Sol·licituds que s'identifiquen com a {agent} i que s'han rebutjat: {blocked} de {total} ({share}; {statuses}). No s'han pogut verificar, de manera que pot ser que la vora de la xarxa estigui rebutjant suplantacions."
     }
   },
   "ai-bots-search-not-seen": {
-    "title": "Cap visita verificada de cap rastrejador de cerca amb IA durant la finestra",
-    "why": "Cada cercador amb IA omple el seu índex amb el seu propi rastrejador: OAI-SearchBot per a la cerca de ChatGPT, Claude-SearchBot per a Claude, PerplexityBot per a Perplexity i DuckAssistBot per a les respostes amb IA de DuckDuckGo. Si cap d'ells no ha fet cap sol·licitud verificada durant la finestra tot i que el robots.txt els permet, cap no ha actualitzat la seva còpia del lloc en aquest temps.",
-    "fix": "Comprova que el robots.txt i el CDN permeten aquests rastrejadors (consulta ai-bots-blocked-at-edge), mantén actualitzat el mapa del lloc i aconsegueix enllaços al lloc des de pàgines que rastregen. Els llocs petits es rastregen amb menys freqüència, de manera que compara una finestra més llarga abans d'actuar.",
+    "title": "Cap visita verificada de cap rastrejador de cerca amb IA durant el període",
+    "why": "Cada cercador amb IA omple el seu índex amb el seu propi rastrejador: OAI-SearchBot per a la cerca de ChatGPT, Claude-SearchBot per a Claude, PerplexityBot per a Perplexity i DuckAssistBot per a les respostes amb IA de DuckDuckGo. Si cap d'ells no ha fet cap sol·licitud verificada durant el període tot i que el robots.txt els permet, cap no ha actualitzat la seva còpia del lloc en aquest temps.",
+    "fix": "Comprova que el robots.txt i el CDN permeten aquests rastrejadors (consulta ai-bots-blocked-at-edge), mantén actualitzat el mapa del lloc i aconsegueix enllaços al lloc des de pàgines que rastregen. Els llocs petits es rastregen amb menys freqüència, de manera que compara un període més llarg abans d'actuar.",
     "messages": {
       "fail": "Cap rastrejador de cerca amb IA no ha fet cap sol·licitud verificada en {days} dies de dades ({agents}).",
       "fail:none-seen": "Cap dels rastrejadors de cerca amb IA que el robots.txt permet ({agents}) no ha fet cap sol·licitud verificada en {days} dies de dades.",
@@ -363,7 +363,7 @@
     "why": "Els clics des d'assistents d'IA arriben amb l'amfitrió de l'assistent a la capçalera Referer, i els enllaços de ChatGPT poden portar utm_source=chatgpt.com. Comptar-los mostra quins assistents envien visitants. De manera predeterminada, els navegadors només envien l'origen entre llocs diferents, i les aplicacions o els enllaços noreferrer no envien res, de manera que les xifres són valors mínims.",
     "fix": "No hi ha res a corregir. Segmenta aquests referents a l'analítica. Els clics des de les AI Overviews i l'AI Mode de Google es compten al tipus de cerca Web de Search Console i arriben com a visites de la Cerca de Google, de manera que cap registre no els pot separar.",
     "messages": {
-      "fail": "{visits} visites han arribat des d'assistents d'IA ({assistants}), i {tagged} portaven utm_source=chatgpt.com. Els clics des de les AI Overviews i l'AI Mode de Google compten com a visites de la Cerca de Google i no es poden veure aquí."
+      "fail": "Visites que han arribat des d'assistents d'IA: {visits} ({assistants}); amb utm_source=chatgpt.com: {tagged}. Els clics des de les AI Overviews i l'AI Mode de Google compten com a visites de la Cerca de Google i no es poden veure aquí."
     }
   }
 }

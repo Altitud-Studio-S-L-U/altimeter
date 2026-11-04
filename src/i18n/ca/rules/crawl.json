@@ -700,8 +700,8 @@
     }
   },
   "crawl-bots-googlebot-sitemap-coverage": {
-    "title": "Googlebot verificat ha arribat a les URL del mapa del lloc durant la finestra",
-    "why": "Un mapa del lloc indica a Google quines pàgines considera importants el lloc i l'ajuda a rastrejar-les, tot i que no en garanteix el rastreig. Les URL del mapa del lloc que Googlebot verificat no ha obtingut mai correctament durant la finestra no s'han actualitzat a l'índex de Google en aquest temps, i pot ser que les noves encara no estiguin indexades.",
+    "title": "Googlebot verificat ha arribat a les URL del mapa del lloc durant el període",
+    "why": "Un mapa del lloc indica a Google quines pàgines considera importants el lloc i l'ajuda a rastrejar-les, tot i que no en garanteix el rastreig. Les URL del mapa del lloc que Googlebot verificat no ha obtingut mai correctament durant el període no s'han actualitzat a l'índex de Google en aquest temps, i pot ser que les noves encara no estiguin indexades.",
     "fix": "Inspecciona a Search Console les URL que falten. Enllaça-les des de pàgines que Googlebot rastreja, mantén-ne el lastmod exacte i assegura't que responen 200 ràpidament. Els registres d'un origen darrere d'un CDN no inclouen les sol·licituds que el CDN ha servit des de la memòria cau, de manera que fes servir els registres del CDN quan sigui possible.",
     "messages": {
       "fail": "Googlebot verificat ha obtingut {fetched} de {urls} URL del mapa del lloc ({share}) en {days} dies de dades.",
