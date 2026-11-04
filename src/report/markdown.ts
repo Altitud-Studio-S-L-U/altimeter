@@ -50,6 +50,37 @@ export function pageTypeText(pageType: string, language: Language): string {
   return (ui(language).pageTypes as Readonly<Record<string, string>>)[pageType] ?? pageType;
 }
 
+/** An input of the checks, as the reports name it in `language`, or undefined for an id this version does not know. */
+export function inputText(input: string, language: Language): string | undefined {
+  return (ui(language).inputs as Readonly<Record<string, string>>)[input];
+}
+
+/** Why a page could not be audited, from the kind src/analyze/auditability.ts records. */
+function notAuditableText(kind: string, language: Language): string {
+  const t = ui(language);
+  const fixed = (t.notAuditable as Readonly<Record<string, string>>)[kind];
+  if (fixed !== undefined) return fixed;
+  if (kind.startsWith('fetch-')) return format(t.fetchFailedReason, { error: localizeValue(language, 'fetchError', kind.slice('fetch-'.length)) }, language);
+  if (kind.startsWith('challenge-')) return format(t.challengeReason, { kind: kind.slice('challenge-'.length) }, language);
+  return kind;
+}
+
+/**
+ * Why checks were not evaluated, in `language`: the label of the reason a rule returned, or the inputs, page or error
+ * the engine names. Undefined for a reason this version does not know, such as one from an older report.
+ */
+export function notEvaluatedText(reason: string, language: Language): string | undefined {
+  const t = ui(language);
+  const label = (t.notEvaluatedReasons as Readonly<Record<string, string>>)[reason];
+  if (label !== undefined) return label;
+  const separator = reason.indexOf(':');
+  const [kind, detail] = separator < 0 ? [reason, ''] : [reason.slice(0, separator), reason.slice(separator + 1)];
+  if (kind === 'missing-input') return format(t.missingInputsReason, { inputs: detail.split(',').map(input => inputText(input, language) ?? input).join(', ') }, language);
+  if (kind === 'page-not-auditable') return format(t.notAuditableReason, { why: notAuditableText(detail, language) }, language);
+  if (kind === 'rule-error') return format(t.ruleErrorReason, { error: detail }, language);
+  return undefined;
+}
+
 /** Why a file was picked for a task, in `language`: each reason is a pattern of the `fileReason` value catalog. */
 export function fileReasonText(reason: string, language: Language): string {
   return reason.split('; ').map(part => localizeValue(language, 'fileReason', part)).join('; ');
@@ -189,7 +220,7 @@ export function renderMarkdown(report: Report, language: Language): string {
   lines.push('', `**${t.indexability}:** ${t.indexabilityStates[report.score.indexability]}`, '');
   lines.push(`**${t.coverage}:** ${format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable }, language)}`);
   const missing = Object.entries(report.coverage.missingInputs);
-  if (missing.length > 0) lines.push('', `${t.missingInputs}: ${missing.map(([input, count]) => `\`${input}\` (${count})`).join(', ')}`);
+  if (missing.length > 0) lines.push('', `${t.missingInputs}: ${missing.map(([input, count]) => `${inputText(input, language) ?? untrustedInline(input)} (${count})`).join(', ')}`);
   if (report.run.warnings.length > 0) lines.push('', `**${t.warnings}:**`, ...report.run.warnings.map(warning => `- ${markdownText(localizeValue(language, 'warning', warning))}`));
   lines.push('');
 
@@ -237,7 +268,10 @@ export function renderMarkdown(report: Report, language: Language): string {
     lines.push(`## ${t.notEvaluated}`, '');
     const byReason = new Map<string, number>();
     for (const finding of notEvaluated) byReason.set(finding.reason ?? 'unknown', (byReason.get(finding.reason ?? 'unknown') ?? 0) + 1);
-    for (const [reason, count] of [...byReason].sort((a, b) => b[1] - a[1])) lines.push(`- ${untrustedInline(reason)}: ${count}`);
+    for (const [reason, count] of [...byReason].sort((a, b) => b[1] - a[1])) {
+      const text = notEvaluatedText(reason, language);
+      lines.push(`- ${text === undefined ? untrustedInline(reason) : markdownText(text)}: ${count}`);
+    }
     lines.push('');
   }
 

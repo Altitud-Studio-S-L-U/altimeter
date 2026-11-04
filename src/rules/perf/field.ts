@@ -1,6 +1,6 @@
 import { evidenceLabel } from '../../core/evidence.ts';
 import type { PageFacts } from '../../core/facts.ts';
-import type { Severity } from '../../core/types.ts';
+import type { NotEvaluatedReason, Severity } from '../../core/types.ts';
 import type { CruxFormFactor } from '../../data/crux.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
 import { directivesFor, pageDocument, robotsDirectives } from '../helpers.ts';
@@ -46,7 +46,7 @@ function observe(page: PageFacts | undefined, spec: MetricSpec): FieldObservatio
  * One result per form factor with data: phone and desktop are reported separately and never averaged.
  * Origin-level data is labelled as such, since it covers every page of the origin.
  */
-function metricRule(id: string, spec: MetricSpec, severity: (observation: FieldObservation, page: PageFacts) => Severity, missing = 'no-field-data', context: readonly string[] = []): RuleImplementation {
+function metricRule(id: string, spec: MetricSpec, severity: (observation: FieldObservation, page: PageFacts) => Severity, missing: NotEvaluatedReason = 'no-field-data', context: readonly string[] = []): RuleImplementation {
   return {
     id,
     evaluate({ page, evidence }: RuleContext): RuleResult[] {

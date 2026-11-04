@@ -6,7 +6,7 @@ import { evidenceLabelText } from '../i18n/evidence.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
 import { localizeValue } from '../i18n/values.ts';
-import { aiFindingMessage, analysisSummary, evidenceWhere, formulaText, listedFailures, mythsListUrl, pageTypeText, providerLabel, ruleTitle } from './markdown.ts';
+import { aiFindingMessage, analysisSummary, evidenceWhere, formulaText, listedFailures, mythsListUrl, notEvaluatedText, pageTypeText, providerLabel, ruleTitle } from './markdown.ts';
 import type { Report, ReportFinding } from './model.ts';
 import { escapeHtml } from './sanitize.ts';
 
@@ -206,7 +206,7 @@ ${tasks ? `<ol class="tasks">${tasks}</ol>` : `<p>${escapeHtml(t.noActions)}</p>
 ${sections}
 ${pending.length > 0 ? `<h2>${escapeHtml(t.pendingReview)}</h2><p class="where">${escapeHtml(t.pendingReviewIntro)}</p><ul>${pending.map(finding => `<li>${escapeHtml(ruleTitle(language, finding.ruleId, finding.title))} <span class="where">${escapeHtml(finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin)}</span></li>`).join('')}</ul>` : ''}
 ${report.ai ? analysisHtml(report.ai, language, report.findings) : ''}
-${notEvaluated.size > 0 ? `<h2>${escapeHtml(t.notEvaluated)}</h2><ul>${[...notEvaluated].sort((a, b) => b[1] - a[1]).map(([reason, count]) => `<li><code>${escapeHtml(reason)}</code>: ${count}</li>`).join('')}</ul>` : ''}
+${notEvaluated.size > 0 ? `<h2>${escapeHtml(t.notEvaluated)}</h2><ul>${[...notEvaluated].sort((a, b) => b[1] - a[1]).map(([reason, count]) => { const text = notEvaluatedText(reason, language); return `<li>${text === undefined ? `<code>${escapeHtml(reason)}</code>` : escapeHtml(text)}: ${count}</li>`; }).join('')}</ul>` : ''}
 <h2>${escapeHtml(t.pages)}</h2>
 <div class="panel"><table><thead><tr><th>${escapeHtml(t.page)}</th><th>${escapeHtml(t.status)}</th><th>${escapeHtml(t.type)}</th><th>${escapeHtml(t.rendered)}</th></tr></thead><tbody>${pages}</tbody></table></div>
 <h2>${escapeHtml(t.method)}</h2>

@@ -1,9 +1,9 @@
-import { severities, type Severity } from '../../core/types.ts';
+import { severities, type NotEvaluatedReason, type Severity } from '../../core/types.ts';
 import type { RuleResult } from '../engine.ts';
 import { summarizeList } from '../helpers.ts';
 
 export const notApplicable = (reason: string): RuleResult => ({ outcome: 'not_applicable', reason });
-export const notEvaluated = (reason: string): RuleResult => ({ outcome: 'not_evaluated', reason });
+export const notEvaluated = (reason: NotEvaluatedReason): RuleResult => ({ outcome: 'not_evaluated', reason });
 export const pass = (evidence: readonly string[] = []): RuleResult => ({ outcome: 'pass', ...(evidence.length > 0 ? { evidence } : {}) });
 
 export function fail(

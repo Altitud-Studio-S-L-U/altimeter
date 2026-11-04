@@ -1,5 +1,5 @@
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
-import type { Severity } from '../../core/types.ts';
+import type { NotEvaluatedReason, Severity } from '../../core/types.ts';
 import type { FetchResult, HeaderMap } from '../../fetch/http.ts';
 import { isAllowed, type RobotsDecision, type RobotsFile } from '../../fetch/robots.ts';
 import type { LinkRef } from '../../parse/html.ts';
@@ -36,7 +36,7 @@ export function passed(evidence: readonly string[] = []): RuleResult {
 }
 
 export const notApplicable = (reason: string): RuleResult => ({ outcome: 'not_applicable', reason });
-export const notEvaluated = (reason: string): RuleResult => ({ outcome: 'not_evaluated', reason });
+export const notEvaluated = (reason: NotEvaluatedReason): RuleResult => ({ outcome: 'not_evaluated', reason });
 
 /** The URL without its fragment, or undefined when it does not parse. */
 export function normalizeUrl(url: string | undefined): string | undefined {

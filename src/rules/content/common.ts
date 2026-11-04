@@ -1,6 +1,7 @@
 import type { DefaultTreeAdapterTypes } from 'parse5';
 import type { EvidenceKind, EvidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
+import type { NotEvaluatedReason } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
 import { attribute, collapse, isElement, type HtmlElement, type HtmlNode } from '../../parse/html.ts';
 import type { StructuredNode } from '../../parse/structured-data.ts';
@@ -28,7 +29,7 @@ export function cite(context: RuleContext, kind: EvidenceKind, label: EvidenceLa
 }
 
 export const notApplicable = (reason: string) => ({ outcome: 'not_applicable', reason }) as const;
-export const notEvaluated = (reason: string) => ({ outcome: 'not_evaluated', reason }) as const;
+export const notEvaluated = (reason: NotEvaluatedReason) => ({ outcome: 'not_evaluated', reason }) as const;
 
 export function normalizeText(text: string): string {
   return collapse(text.normalize('NFC')).toLowerCase();

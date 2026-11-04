@@ -56,7 +56,7 @@ const english = [
   'Catalog ', 'rules implemented', 'evidence items in report.json', 'See report.json', '<build directory>', 'For each category, score', 'Pending review',
   'needs improvement', 'origin-level', 'URL-level', 'PHONE', 'carries hreflang', 'in the body', ' and 2 more', 'simulate throttling', 'Catalan', 'Spanish',
   'display-none', 'offscreen', 'contains the observed text', 'named after', 'text hidden by', '>product<', '| product |',
-  'Hidden text (colour, size', 'Chrome was not found',
+  'Hidden text (colour, size', 'Chrome was not found', 'missing-input:', '`lighthouse`', 'Lighthouse lab run',
 ];
 
 /** Translations a translator would add for the labels this report cites, so labels are checked with their values. */

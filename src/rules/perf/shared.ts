@@ -1,5 +1,6 @@
 import { evidenceLabel, joinLabels, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
+import type { NotEvaluatedReason } from '../../core/types.ts';
 import type { CruxFormFactor, CruxRecord } from '../../data/crux.ts';
 import { isElement, walk, type HtmlElement } from '../../parse/html.ts';
 import type { LighthouseAudit, LighthouseSummary } from '../../render/lighthouse.ts';
@@ -30,7 +31,7 @@ export function formatKib(bytes: number): string {
   return `${Math.round(bytes / kib)} KiB`;
 }
 
-export function notEvaluated(reason: string): RuleResult {
+export function notEvaluated(reason: NotEvaluatedReason): RuleResult {
   return { outcome: 'not_evaluated', reason };
 }
 
@@ -220,7 +221,7 @@ export function fieldRecord(page: PageFacts | undefined, form: CruxFormFactor): 
 }
 
 /** Why no field value was found: every query failed, or CrUX answered without data. */
-export function missingFieldReason(page: PageFacts | undefined, fallback = 'no-field-data'): string {
+export function missingFieldReason(page: PageFacts | undefined, fallback: NotEvaluatedReason = 'no-field-data'): NotEvaluatedReason {
   const outcomes = [...Object.values(page?.crux?.url ?? {}), ...Object.values(page?.crux?.origin ?? {})];
   const answered = outcomes.some(outcome => outcome?.status === 'ok' || outcome?.status === 'no-data');
   return !answered && outcomes.some(outcome => outcome?.status === 'error') ? 'crux-error' : fallback;

@@ -16,7 +16,7 @@ function failing(summary: LighthouseSummary, ids: readonly string[]): string[] {
   return ids.filter(id => auditFailed(summary.audits[id]));
 }
 
-function categoryResult(cite: Cite, url: string, summary: LighthouseSummary, category: string, groups: ReadonlyArray<readonly [string, readonly string[]]>): RuleResult {
+function categoryResult(cite: Cite, url: string, summary: LighthouseSummary, category: 'seo' | 'accessibility' | 'best-practices', groups: ReadonlyArray<readonly [string, readonly string[]]>): RuleResult {
   const score = summary.categories[category];
   if (score === undefined || score === null) return notEvaluated(`no-${category}-category`);
   const percent = Math.round(score * 100);
