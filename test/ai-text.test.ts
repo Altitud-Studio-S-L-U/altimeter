@@ -86,6 +86,17 @@ describe('unsupportedFacts', () => {
     assert.deepEqual(unsupportedFacts(`El millor hotel d${rightQuote}Andorra`, index), ['millor']);
   });
 
+  test('reads facts written in full-width or other digits as the same facts', () => {
+    const fullWidth = (text: string) => [...text].map(character => (character === ' ' ? ' ' : cp(character.codePointAt(0)! + 0xfee0))).join('');
+    const arabicIndic = (digits: string) => [...digits].map(digit => cp(0x0660 + Number(digit))).join('');
+    assert.deepEqual(unsupportedFacts(`rated ${fullWidth('4.9')} by ${fullWidth('2000')} clients`, index), ['4.9', '2000']);
+    assert.deepEqual(unsupportedFacts(`Call ${fullWidth('+376 900 900')}`, index), ['+376 900 900']);
+    assert.deepEqual(unsupportedFacts(`${arabicIndic('46')} rooms, the ${fullWidth('top')} hotel`, index), ['46', 'top']);
+    assert.deepEqual(unsupportedFacts(`Since ${fullWidth('1998')}, ${arabicIndic('45')} rooms`, index), [], 'a fact the page shows counts in any digits');
+    assert.equal(fold(`${fullWidth('Room')} ${arabicIndic('12')} ${cp(0xfb01)}nest`), 'room 12 finest');
+    assert.equal(fold(`Acme${cp(0x2122)}`), `acme${cp(0x2122)}`, 'a sign such as the trade mark keeps its form, so it still separates words');
+  });
+
   test('folds case and accents for facts', () => {
     assert.equal(fold(`L${middleDot}EXCEL${middleDot}L${eAcute}NCIA`), `l${middleDot}excel${middleDot}lencia`);
   });

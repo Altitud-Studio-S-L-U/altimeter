@@ -5,7 +5,7 @@ import { buildPack } from '../src/ai/pack.ts';
 import { packSections, passSchema, planPasses, type PassPlan } from '../src/ai/passes.ts';
 import { buildCorpus, collectSiteStrings, selectPages, sliceOf } from '../src/ai/site.ts';
 import type { Proposal } from '../src/ai/types.ts';
-import { defaultMythMatcher, distinctProposals, recommendsNewMarket, validateAnswer, type MythMatcher, type ValidationContext } from '../src/ai/validate.ts';
+import { defaultMythMatcher, distinctProposals, ownerPlaceholder, recommendsNewMarket, validateAnswer, type MythMatcher, type ValidationContext } from '../src/ai/validate.ts';
 import { mythMatches } from '../src/rules/myth-filter.ts';
 import { homeUrl, hotelAudit, roomsTitle, roomsUrl } from './support/analysis.ts';
 
@@ -58,6 +58,9 @@ function content(findings: readonly Record<string, unknown>[], options: Paramete
 }
 
 const reasons = (result: ReturnType<typeof validateAnswer>) => result.dropped.map(entry => entry.reason);
+
+/** ASCII text in its full-width forms, which look alike but are other characters. */
+const fullWidth = (text: string) => [...text].map(character => (character === ' ' ? ' ' : String.fromCodePoint(character.codePointAt(0)! + 0xfee0))).join('');
 
 describe('validating findings', () => {
   test('keeps well-founded claims and caps judged severity, for the analyst\'s own rules and for candidates', () => {
@@ -185,6 +188,19 @@ describe('validating proposals', () => {
     assert.equal(description.placeholders, 1);
   });
 
+  test('replaces links without a scheme or with one in capitals too, and reads numbers in any digits', () => {
+    const result = serp([
+      proposal('title', 'Valley rooms | Hotel Example | HTTPS://EVIL.EXAMPLE'),
+      proposal('meta-description', 'Our 45 rooms look over the valley of Andorra la Vella. Book at www.evil.example today.'),
+      proposal('meta-description', `Our ${fullWidth('46')} rooms look over the valley of Andorra la Vella, with breakfast in the garden room.`),
+    ]);
+    assert.deepEqual(reasons(result), ['new-fact']);
+    assert.deepEqual(result.proposals.map(entry => (entry.kind === 'json-ld' ? undefined : [entry.text, entry.placeholders])), [
+      [`Valley rooms | Hotel Example | ${ownerPlaceholder}`, 1],
+      [`Our 45 rooms look over the valley of Andorra la Vella. Book at ${ownerPlaceholder} today.`, 1],
+    ]);
+  });
+
   test('keeps proposals for different pages distinct', () => {
     const make = (scope: string): Proposal => ({ kind: 'title', pass: 'serp', scope, text: 'Rooms | Valley', language: 'en', evidenceIds: [], notes, placeholders: 0 });
     const result = distinctProposals([make(roomsUrl), make(homeUrl), make(roomsUrl)]);
@@ -210,6 +226,34 @@ describe('validating proposals', () => {
     }, context(plan));
     assert.deepEqual(reasons(kept), []);
     assert.equal(kept.proposals[0]?.placeholders, 0);
+  });
+
+  test('replaces every link the crawled pages do not show, wherever a JSON-LD proposal puts it and however it is written', () => {
+    const plan = planned('schema');
+    const jsonLd = (value: unknown) => ({ kind: 'json-ld', scope: roomsUrl, jsonLd: JSON.stringify(value), evidenceIds: [id('"@type":"Hotel"')], notes });
+    const base = { '@context': 'https://schema.org', '@type': 'Hotel', name: 'Hotel Example' };
+    const invented = {
+      ...base, '@id': '//evil.example/#org', url: '/book-now', sameAs: ['www.evil.example', 'HTTPS://EVIL.EXAMPLE/'], slogan: 'www.evil.example',
+      description: 'Our 45 rooms look over the valley of Andorra la Vella, book at https://evil.example/book or www.evil.example.',
+    };
+    const known = {
+      ...base, '@id': '#hotel', url: roomsUrl, image: '/img/room.jpg', sameAs: ['//www.instagram.com/hotelexample/'],
+      description: 'Our 45 rooms look over the valley of Andorra la Vella; see https://www.instagram.com/hotelexample/.',
+      containsPlace: { '@id': '_:room', '@type': 'https://schema.org/HotelRoom', name: 'Double room' },
+      makesOffer: { '@type': 'Offer', availability: 'https://schema.org/InStock' },
+    };
+    const rated = { ...base, aggregateRating: { '@type': 'AggregateRating', ratingValue: fullWidth('4.9') } };
+    const result = validateAnswer({ findings: [], proposals: [jsonLd(invented), jsonLd(known), jsonLd(rated)] }, context(plan));
+    assert.deepEqual(reasons(result), ['new-fact'], 'a rating in full-width digits is a number the page does not show');
+    const [first, second] = result.proposals.map(entry => (entry.kind === 'json-ld' ? { value: JSON.parse(entry.jsonLd) as unknown, placeholders: entry.placeholders } : undefined));
+    assert.deepEqual(first, {
+      value: {
+        ...base, '@id': ownerPlaceholder, url: ownerPlaceholder, sameAs: [ownerPlaceholder, ownerPlaceholder], slogan: ownerPlaceholder,
+        description: `Our 45 rooms look over the valley of Andorra la Vella, book at ${ownerPlaceholder} or ${ownerPlaceholder}.`,
+      },
+      placeholders: 7,
+    });
+    assert.deepEqual(second, { value: known, placeholders: 0 }, 'links on the page stay, written relative to it or not');
   });
 });
 

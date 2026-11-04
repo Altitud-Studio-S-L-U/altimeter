@@ -3,6 +3,7 @@ import { severities, type Myth, type RuleMeta, type Severity } from '../core/typ
 import type { Report, ReportFinding } from '../report/model.ts';
 import type { FindingScope } from '../rules/engine.ts';
 import { mythMatches } from '../rules/myth-filter.ts';
+import { rangesOf } from '../rules/schema/vocabulary.ts';
 import type { EvidencePack } from './pack.ts';
 import { judgmentCap, languageRules, type PassPlan } from './passes.ts';
 import { validateSchema, type Schema } from './schema.ts';
@@ -300,14 +301,33 @@ const titleLength = { min: 10, max: 70 };
 const descriptionLength = { min: 50, max: 160 };
 export const ownerPlaceholder = 'OWNER_TO_SUPPLY';
 
+/** Whether a URL reference names one the collected pages reference: resolved against the page, with either scheme when it has none. */
+function knownLink(reference: string, page: PageInfo, context: ValidationContext): boolean {
+  const forms = reference.startsWith('//') ? [`https:${reference}`, `http:${reference}`]
+    : /^www\./iu.test(reference) ? [`https://${reference}`, `http://${reference}`] : [reference];
+  return forms.some(form => {
+    let absolute: string;
+    try {
+      absolute = new URL(form, page.finalUrl).href;
+    } catch {
+      return false;
+    }
+    const normalized = normalizeUrl(absolute);
+    return normalized !== undefined && context.corpus.links.has(normalized);
+  });
+}
+
+/** A full stop or comma after a URL ends the sentence, not the URL. */
+const trailingPunctuation = /[.,;:!?]+$/u;
+
 /** URLs not referenced by any collected page become OWNER_TO_SUPPLY, so a proposal never invents a link. */
-function replaceUnknownUrls(text: string, context: ValidationContext): { text: string; placeholders: number } {
+function replaceUnknownUrls(text: string, page: PageInfo, context: ValidationContext): { text: string; placeholders: number } {
   let placeholders = 0;
-  const replaced = text.replace(urlPattern, url => {
-    const normalized = normalizeUrl(url);
-    if (normalized !== undefined && context.corpus.links.has(normalized)) return url;
+  const replaced = text.replace(urlPattern, match => {
+    const url = match.replace(trailingPunctuation, '');
+    if (knownLink(url, page, context)) return match;
     placeholders += 1;
-    return ownerPlaceholder;
+    return `${ownerPlaceholder}${match.slice(url.length)}`;
   });
   return { text: replaced, placeholders };
 }
@@ -328,7 +348,7 @@ function validateSerpProposal(raw: unknown, index: number, itemSchema: Schema, c
   counts.set(answer.kind, count);
   if (count > 2) return reject('too-many', answer.kind);
   const corpus = context.corpus.pages.get(page.key);
-  const urls = replaceUnknownUrls(cleanDisplay(answer.text, 300), context);
+  const urls = replaceUnknownUrls(cleanDisplay(answer.text, 300), page, context);
   const text = urls.text;
   const bounds = answer.kind === 'title' ? titleLength : descriptionLength;
   const length = [...text].length;
@@ -386,23 +406,44 @@ interface JsonLdReview {
   readonly retired: string[];
 }
 
+/** Terms of the schema.org vocabulary, such as https://schema.org/InStock, which name no page. */
+const vocabularyTerm = /^https?:\/\/schema\.org\//iu;
+const webReference = /^(?:https?:\/\/|\/\/|www\.)/iu;
+const otherScheme = /^(?!https?:)[a-z][a-z\d+.-]*:/iu;
+
+/** Keys whose values are URLs even when relative: @id, the item of a breadcrumb and properties with a URL range but no Text range. */
+function holdsUrls(key: string): boolean {
+  if (key === '@id' || key === 'item') return true;
+  const ranges = rangesOf(key);
+  return ranges.includes('URL') && !ranges.includes('Text');
+}
+
+/** Whether a whole JSON-LD string names a link: any value of a key that holds URLs, or a lone web address in another property. */
+function namesLink(value: string, key: string): boolean {
+  // An @id may also be a blank node or a URN, which names no page.
+  if (holdsUrls(key)) return value !== '' && (key !== '@id' || !(value.startsWith('_:') || otherScheme.test(value)));
+  return webReference.test(value) && !/\s/u.test(value);
+}
+
 /** Walks a proposed JSON-LD value: unknown URLs become placeholders, facts must be visible, retired features are refused. */
 function reviewJsonLd(value: unknown, key: string, context: ValidationContext, page: PageInfo, review: { placeholders: number; missing: string[]; retired: string[] }): unknown {
   const facts = context.corpus.pages.get(page.key)?.facts;
   if (typeof value === 'string') {
-    if (value === ownerPlaceholder || key === '@context') return value;
-    if (/^https?:\/\//iu.test(value.trim())) {
-      const normalized = normalizeUrl(value.trim());
-      if (normalized !== undefined && context.corpus.links.has(normalized)) return value;
+    const trimmed = value.trim();
+    if (value === ownerPlaceholder || key === '@context' || key === '@type' || vocabularyTerm.test(trimmed)) return value;
+    if (namesLink(trimmed, key)) {
+      if (knownLink(trimmed, page, context)) return value;
       review.placeholders += 1;
       return ownerPlaceholder;
     }
-    if (key === '@type' || key === '@id') return value;
+    if (key === '@id') return value;
+    const urls = replaceUnknownUrls(value, page, context);
+    review.placeholders += urls.placeholders;
     if (facts) {
-      if (contactKeys.has(key) && !facts.text.includes(fold(value))) review.missing.push(value);
-      else review.missing.push(...unsupportedFacts(value, facts));
+      if (contactKeys.has(key) && !facts.text.includes(fold(urls.text))) review.missing.push(urls.text);
+      else review.missing.push(...unsupportedFacts(urls.text, facts));
     }
-    return value;
+    return urls.text;
   }
   if (typeof value === 'number') {
     if (facts) review.missing.push(...unsupportedFacts(String(value), facts));
