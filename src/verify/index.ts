@@ -119,7 +119,8 @@ export async function verifyTasks(options: VerifyOptions): Promise<TaskVerificat
       const cached = byUrl.get(productionUrl);
       if (cached) return cached;
       const target = swapOrigin(productionUrl, production, origin);
-      const host = new URL(origin).hostname;
+      // The policy compares host names without the brackets of an IPv6 literal.
+      const host = new URL(origin).hostname.replace(/^\[|\]$/gu, '');
       options.log?.(`Checking ${target}`);
       const collected = await collect({
         url: target,

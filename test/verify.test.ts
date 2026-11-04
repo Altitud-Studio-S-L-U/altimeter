@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
@@ -70,6 +72,26 @@ describe('verify', () => {
 
   test('rejects unknown task ids', async () => {
     await assert.rejects(verifyTasks({ report, taskIds: ['T-0000000000'], staticDir: build, implementations, rules }), /Unknown task/u);
+  });
+
+  test('checks an origin on the IPv6 loopback address', async context => {
+    const server = createServer((req, res) => {
+      if (req.url === '/') res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><title>Home</title>');
+      else res.writeHead(404).end();
+    });
+    try {
+      await new Promise<void>((resolve, reject) => server.once('error', reject).listen(0, '::1', resolve));
+    } catch {
+      context.skip('this machine has no IPv6 loopback address');
+      return;
+    }
+    try {
+      const [result] = await verifyTasks({ report, origin: `http://[::1]:${(server.address() as AddressInfo).port}`, implementations, rules });
+      assert.equal(result?.verdict, 'pass');
+    } finally {
+      server.closeAllConnections();
+      await new Promise(resolve => server.close(resolve));
+    }
   });
 
   const keeping = (...ruleIds: string[]) => ({ ...report, tasks: report.tasks.map(task => ({ ...task, mustRemainPassing: ruleIds.map((ruleId): TaskCheck => ({ ruleId, scope: task.scopes[0]! })) })) });
