@@ -258,6 +258,12 @@
     "document": "document",
     "other": "altre recurs"
   },
+  "schema-breadcrumb/items": {
+    "none": "sense posició"
+  },
+  "schema-product-variants/items": {
+    "variant": "variant sense nom"
+  },
   "schemes": {
     "cctld": "ccTLD",
     "subdomain": "subdomini",

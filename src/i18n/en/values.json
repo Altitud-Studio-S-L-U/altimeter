@@ -258,6 +258,12 @@
     "document": "document",
     "other": "other"
   },
+  "schema-breadcrumb/items": {
+    "none": "none"
+  },
+  "schema-product-variants/items": {
+    "variant": "variant"
+  },
   "schemes": {
     "cctld": "cctld",
     "subdomain": "subdomain",

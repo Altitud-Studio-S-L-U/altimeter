@@ -415,7 +415,7 @@ export const reviewAuthenticity: RuleImplementation = {
       const value = plainNumber(text(graph, aggregate, 'ratingValue') ?? '');
       if (scores.length < 2 || count !== scores.length || value === undefined) continue;
       const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-      if (Math.abs(average - value) > 0.15) add('aggregate-mismatch', String(value), evidenceLabel('aggregate rating differs from the average {average} of the marked-up reviews', { average: average.toFixed(2) }), aggregate, 'ratingValue', String(value));
+      if (Math.abs(average - value) > 0.15) add('aggregate-mismatch', String(value), evidenceLabel('aggregate rating differs from the average {average, number, ::.00} of the marked-up reviews', { average }), aggregate, 'ratingValue', String(value));
     }
     return report(problems);
   },

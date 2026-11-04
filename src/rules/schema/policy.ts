@@ -125,7 +125,9 @@ export const blockedOrNonindexableCarrier: RuleImplementation = {
     const subject = first.types.join('+');
     if (page.fetch.status !== 200) {
       problems.push({ reason: 'not-200', severity: 'medium', subject, also: [cite(context, graph, first, evidenceLabel('feature markup on the page'))],
-        evidence: context.evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: evidenceLabel('final HTTP status of the page'), excerpt: String(page.fetch.status ?? 'no response') }) });
+        evidence: page.fetch.status === undefined
+          ? context.evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: evidenceLabel('page request that got no response ({fetchError})', { fetchError: page.fetch.error?.code ?? 'connection' }) })
+          : context.evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: evidenceLabel('final HTTP status of the page'), excerpt: `HTTP ${page.fetch.status}` }) });
     }
     const directives = robotsDirectives(page.fetch.headers, graph.doc);
     if (directivesFor(directives).has('noindex')) {
@@ -155,7 +157,9 @@ export const blockedOrNonindexableCarrier: RuleImplementation = {
         const fetched = context.site.resources.find(resource => resource.url === image);
         if (fetched && (fetched.fetch.status !== 200 || !/^image\//iu.test(fetched.fetch.headers['content-type']?.[0] ?? 'image/'))) {
           problems.push({ reason: 'image-unavailable', severity: 'high', subject: image, also: [cite(context, graph, node, evidenceLabel('{property} of a feature item', { property }), property, image)],
-            evidence: context.evidence.add({ kind: 'http', url: image, label: evidenceLabel('response for the image'), excerpt: `${fetched.fetch.status ?? 'no response'} ${fetched.fetch.headers['content-type']?.[0] ?? ''}`.trim() }) });
+            evidence: fetched.fetch.status === undefined
+              ? context.evidence.add({ kind: 'http', url: image, label: evidenceLabel('request for the image that got no response ({fetchError})', { fetchError: fetched.fetch.error?.code ?? 'connection' }) })
+              : context.evidence.add({ kind: 'http', url: image, label: evidenceLabel('response for the image'), excerpt: `${fetched.fetch.status} ${fetched.fetch.headers['content-type']?.[0] ?? ''}`.trim() }) });
         }
       }
     }
