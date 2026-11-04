@@ -5,6 +5,8 @@ import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { clearCache } from '../ai/cache.ts';
+import { call as callClaude } from '../ai/claude.ts';
+import { call as callCodex } from '../ai/codex.ts';
 import { describeProviders } from '../ai/providers.ts';
 import { runAnalysis } from '../ai/run.ts';
 import { audit, auditExitCode } from '../audit.ts';
@@ -36,7 +38,8 @@ Usage:
                                                    Re-check tasks against a local build or another origin.
   altimeter rules [--category <name>] [--stale]    List the rule catalog.
   altimeter explain <rule-id>                      Show a rule and its sources.
-  altimeter doctor                                 Check Node.js, Chrome and the Claude Code and Codex CLIs.
+  altimeter doctor [--probe]                       Check Node.js, Chrome and the Claude Code and Codex CLIs; --probe
+                                                   sends each CLI one tiny request (a little of your plan's quota).
   altimeter cache clear                            Delete cached model answers.
   altimeter gsc login --client <client_secret.json> [--remember <dpapi|file>]
   altimeter gsc logout | gsc status                Manage read-only Search Console access.
@@ -348,24 +351,48 @@ function explainCommand(args: string[]): number {
 
 const providerNames = { claude: 'Claude Code', codex: 'Codex' } as const;
 
-async function doctorCommand(): Promise<number> {
+/** The smallest request that exercises the flags, the system prompt and a schema with every keyword type in use. */
+const probeSchema = {
+  type: 'object',
+  properties: {
+    ok: { type: 'boolean' },
+    language: { type: 'string', minLength: 2, maxLength: 2, pattern: '^[a-z]{2}$' },
+    words: { type: 'array', items: { type: 'string', maxLength: 20 }, minItems: 1, maxItems: 3 },
+  },
+  required: ['ok', 'language', 'words'],
+  additionalProperties: false,
+} as const;
+
+async function doctorCommand(args: string[]): Promise<number> {
+  const { values } = parseArgs({ args, strict: true, allowPositionals: false, options: { probe: { type: 'boolean' } } });
   const chrome = findChrome();
   const major = Number(process.versions.node.split('.')[0]);
   process.stdout.write(`Node.js ${process.versions.node}${major >= 24 ? '' : ' (Altimeter needs 24 or newer)'}\n`);
   process.stdout.write(`Chrome: ${chrome ? 'found' : 'not found; set CHROME_PATH to enable rendering and Lighthouse'}\n`);
   process.stdout.write(`Chrome UX Report key: ${process.env.ALTIMETER_GOOGLE_API_KEY ? 'set' : 'not set (lab data only)'}\n`);
-  // Only --version runs here: no prompt is sent, so checking costs nothing.
+  let failed = false;
+  // Without --probe only --version runs: no prompt is sent, so checking costs nothing.
   for (const provider of await describeProviders()) {
     const name = providerNames[provider.name];
     if (!provider.found) {
       process.stdout.write(`${name}: not found${provider.problem ? ` (${cleanLine(provider.problem, 200)})` : ''}\n`);
       continue;
     }
-    const state = provider.verified ? 'a verified version' : 'not in the verified table; runs with the minimal flag set';
+    const state = provider.verified ? 'a verified version' : 'not in the verified table';
     process.stdout.write(`${name}: ${cleanLine(provider.version ?? 'unknown version')}, ${state} (${cleanLine(provider.path ?? '', 200)})\n`);
     for (const warning of provider.warnings) process.stdout.write(`  ! ${cleanLine(warning, 300)}\n`);
+    if (!values.probe) continue;
+    const call = provider.name === 'claude' ? callClaude : callCodex;
+    try {
+      const result = await call({ prompt: 'Connectivity check for Altimeter. Set ok to true, language to the two-letter code of your default answer language, and words to ["ready"].', schema: probeSchema, timeoutMs: 180_000 });
+      const cost = result.costUsd === undefined ? '' : `, USD ${result.costUsd.toFixed(4)}`;
+      process.stdout.write(`  probe: answered with ${cleanLine(result.model ?? 'the default model', 80)}${cost}\n`);
+    } catch (error) {
+      failed = true;
+      process.stdout.write(`  probe failed: ${cleanLine(error instanceof Error ? error.message : 'unknown error', 300)}\n`);
+    }
   }
-  return major >= 24 ? 0 : 2;
+  return major < 24 || failed ? 2 : 0;
 }
 
 async function cacheCommand(args: string[]): Promise<number> {
@@ -394,7 +421,7 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
       case 'gsc': return await gscCommand(rest);
       case 'rules': return rulesCommand(rest);
       case 'explain': return explainCommand(rest);
-      case 'doctor': return await doctorCommand();
+      case 'doctor': return await doctorCommand(rest);
       case 'cache': return await cacheCommand(rest);
       default:
         throw new UsageError(`Unknown command: ${command}. Run "altimeter --help".`);
