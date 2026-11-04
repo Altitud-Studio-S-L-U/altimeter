@@ -15,7 +15,7 @@ test('decodes with the declared charset', () => {
   assert.match(decodeHtml({ 'content-type': ['text/html'] }, latin1), /Café/u);
   const header = Buffer.from('<title>Caf\xe9</title>', 'latin1');
   assert.match(decodeHtml({ 'content-type': ['text/html; charset=windows-1252'] }, header), /Café/u);
-  assert.match(decodeHtml({}, Buffer.from('﻿<title>Ação</title>', 'utf8')), /^<title>Ação/u);
+  assert.match(decodeHtml({}, Buffer.from('\uFEFF<title>Ação</title>', 'utf8')), /^<title>Ação/u);
 });
 
 test('builds the URL variants that should consolidate to the audited URL', () => {

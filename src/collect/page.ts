@@ -21,9 +21,9 @@ export function decodeHtml(headers: HeaderMap, body: Buffer): string {
   const fromMeta = /<meta[^>]+charset\s*=\s*["']?([\w.:-]+)/iu.exec(head)?.[1];
   const label = (fromHeader ?? fromMeta ?? 'utf-8').toLowerCase();
   try {
-    return new TextDecoder(label).decode(body).replace(/^﻿/u, '');
+    return new TextDecoder(label).decode(body).replace(/^\uFEFF/u, '');
   } catch {
-    return new TextDecoder('utf-8').decode(body).replace(/^﻿/u, '');
+    return new TextDecoder('utf-8').decode(body).replace(/^\uFEFF/u, '');
   }
 }
 

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { cleanLine, cleanText, escapeHtml, jsonForScript, untrustedBlock, untrustedInline } from '../src/report/sanitize.ts';
 
 test('removes control characters, bidirectional overrides, zero-width characters and terminal escapes', () => {
-  assert.equal(cleanText('safe‮evil​text\u0007'), 'safeeviltext');
+  assert.equal(cleanText('safe\u202Eevil\u200Btext\u0007'), 'safeeviltext');
   assert.equal(cleanText('\u001B[31mred\u001B[0m and \u001B]8;;https://evil.example\u0007link\u001B]8;;\u0007'), 'red and link');
   assert.equal(cleanText('line one\r\nline two\tcell'), 'line one\nline two\tcell');
   assert.equal(cleanText('x'.repeat(10), 4), 'xxxx…');

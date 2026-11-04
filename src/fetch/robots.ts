@@ -59,7 +59,7 @@ const misspellings: Readonly<Record<string, 'user-agent' | 'disallow'>> = {
 export function parseRobots(input: string | Uint8Array): RobotsFile {
   const bytes = typeof input === 'string' ? Buffer.from(input, 'utf8') : Buffer.from(input);
   const truncated = bytes.length > robotsByteLimit;
-  const text = bytes.subarray(0, robotsByteLimit).toString('utf8').replace(/^﻿/u, '');
+  const text = bytes.subarray(0, robotsByteLimit).toString('utf8').replace(/^\uFEFF/u, '');
   const groups: Array<{ userAgents: string[]; rules: RobotsRule[]; line: number }> = [];
   const sitemaps: RobotsLine[] = [];
   const unsupported: RobotsLine[] = [];
