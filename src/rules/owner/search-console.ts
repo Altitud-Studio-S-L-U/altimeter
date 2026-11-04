@@ -6,12 +6,15 @@ import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
 import { summarizeList } from '../helpers.ts';
 
 /**
- * Evidence `path` of excerpts that list the owner's search queries. Queries can hold personal data, so reports written
- * with --redact-queries drop these excerpts and analyst calls never receive them.
+ * Evidence `path` of excerpts that list the owner's search queries. Queries can hold personal data: with
+ * --redact-queries they become numbered labels, and analyst calls never receive owner data.
  */
 export const searchQueriesPath = 'search-queries';
 
 const gscOf = (context: RuleContext): GscData => context.site.owner!.gsc!;
+
+/** The query as written, or a numbered label when the owner asked for a report without queries. */
+const queryLabel = (context: RuleContext, query: string, index: number) => (context.site.owner?.redactQueries ? `query ${index + 1}` : query);
 
 function normalized(url: string): string {
   try {
@@ -190,7 +193,7 @@ const lowCtr: RuleImplementation = {
         context.evidence.add({ kind: 'owner-data', url: page.page, label: `Search Console performance of the page from ${gsc.period.start} to ${gsc.period.end}`,
           excerpt: `impressions=${page.impressions}; clicks=${page.clicks}; ctr=${percent(page.ctr)}; position=${page.position.toFixed(1)}; site CTR at that position=${percent(page.expectedCtr)}` }),
         context.evidence.add({ kind: 'owner-data', url: page.page, label: 'queries with the most impressions for the page', path: searchQueriesPath,
-          excerpt: page.topQueries.map(query => `${query.query} (${query.impressions} impressions, position ${query.position.toFixed(1)})`).join('\n') }),
+          excerpt: page.topQueries.map((query, index) => `${queryLabel(context, query.query, index)} (${query.impressions} impressions, position ${query.position.toFixed(1)})`).join('\n') }),
       ],
       params: { page: page.page, impressions: page.impressions, position: page.position.toFixed(1), ctr: percent(page.ctr), expected: percent(page.expectedCtr) },
     }));
@@ -210,11 +213,11 @@ const competingPages: RuleImplementation = {
     if (gsc.byPageQuery.length === 0) return noSearchData;
     const found = cannibalization(gsc, brandOf(context)).slice(0, 5);
     if (found.length === 0) return { outcome: 'pass' };
-    return found.map(entry => ({
+    return found.map((entry, index) => ({
       outcome: 'fail' as const, severity: 'info' as const,
       evidence: [context.evidence.add({ kind: 'owner-data', label: `pages sharing the impressions of one query (${entry.impressions} impressions)`, path: searchQueriesPath,
-        excerpt: [entry.query, ...entry.pages.map(page => `${page.page}: ${percent(page.impressionShare)} of impressions, ${percent(page.clickShare)} of clicks, position ${page.position.toFixed(1)}`)].join('\n') })],
-      params: { query: entry.query, count: entry.pages.length, pages: summarizeList(entry.pages.map(page => page.page), 3) },
+        excerpt: [queryLabel(context, entry.query, index), ...entry.pages.map(page => `${page.page}: ${percent(page.impressionShare)} of impressions, ${percent(page.clickShare)} of clicks, position ${page.position.toFixed(1)}`)].join('\n') })],
+      params: { query: queryLabel(context, entry.query, index), count: entry.pages.length, pages: summarizeList(entry.pages.map(page => page.page), 3) },
     }));
   },
 };
@@ -227,9 +230,9 @@ const nearFirstPage: RuleImplementation = {
     const found = strikingDistance(gsc).slice(0, 10);
     if (found.length === 0) return { outcome: 'pass' };
     const id = context.evidence.add({ kind: 'owner-data', label: 'queries at positions 11 to 20 with their pages', path: searchQueriesPath,
-      excerpt: found.map(entry => `${entry.query} -> ${entry.page} (position ${entry.position.toFixed(1)}, ${entry.impressions} impressions)`).join('\n') });
+      excerpt: found.map((entry, index) => `${queryLabel(context, entry.query, index)} -> ${entry.page} (position ${entry.position.toFixed(1)}, ${entry.impressions} impressions)`).join('\n') });
     const first = found[0]!;
-    return { outcome: 'fail', severity: 'info', evidence: [id], params: { count: found.length, query: first.query, page: first.page, position: first.position.toFixed(1) } };
+    return { outcome: 'fail', severity: 'info', evidence: [id], params: { count: found.length, query: queryLabel(context, first.query, 0), page: first.page, position: first.position.toFixed(1) } };
   },
 };
 

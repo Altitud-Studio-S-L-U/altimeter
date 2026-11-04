@@ -15,7 +15,8 @@ let work: string;
 
 function run(args: string[], cwd = work): Promise<{ status: number | null; stdout: string; stderr: string }> {
   return new Promise(resolve => {
-    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true });
+    // No test may reach a real Claude Code or Codex: they would spend the user's quota.
+    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true, env: { ...process.env, ALTIMETER_PROVIDER: 'none' } });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', chunk => (stdout += chunk));
@@ -51,6 +52,13 @@ describe('altimeter audit', () => {
     const report = JSON.parse(await readFile(join(work, folder, 'report.json'), 'utf8'));
     assert.equal(report.target.origin, origin);
     assert.equal(report.run.options.render, false);
+    assert.deepEqual([report.run.options.provider, report.ai], ['none', undefined]);
+  });
+
+  test('rejects bad analysis options', async () => {
+    assert.equal((await run(['audit', `${origin}/`, '--provider', 'gpt'])).status, 2);
+    assert.equal((await run(['audit', `${origin}/`, '--ai-pages', '0'])).status, 2);
+    assert.equal((await run(['audit', `${origin}/`, '--verifier', 'both'])).status, 2);
   });
 
   test('refuses private addresses unless asked', async () => {

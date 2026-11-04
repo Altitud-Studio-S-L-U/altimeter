@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { EvidenceStore } from '../core/evidence.ts';
+import type { EvidenceItem } from '../core/evidence.ts';
 import type { Category, FixLocation, InputId, RuleMeta, RuleSource, Severity, Verification } from '../core/types.ts';
 import { findingMessage } from '../i18n/messages.ts';
 import type { Finding, FindingScope } from '../rules/engine.ts';
@@ -51,7 +51,12 @@ export function defaultVerification(rule: RuleMeta): Verification {
   return 'local';
 }
 
-function groupKey(finding: Finding, evidence: EvidenceStore): string {
+/** Where task building reads evidence: the audit's store, or the evidence list of a saved report. */
+export interface EvidenceLookup {
+  get(id: string): EvidenceItem | undefined;
+}
+
+function groupKey(finding: Finding, evidence: EvidenceLookup): string {
   const facts = finding.evidence.map(id => evidence.get(id)).filter(Boolean).map(item => [item!.kind, item!.label, item!.excerpt ?? '', item!.path ?? '']);
   facts.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   const site = finding.scope.kind === 'site' ? finding.scope.origin : '';
@@ -64,13 +69,13 @@ function scopeKey(scope: FindingScope): string {
 
 /**
  * Turns failed checks into tasks for people and coding agents. Findings with the same rule, reason and evidence
- * on several pages become one task, which usually means one template fix. Candidates that still need the
- * analyst's judgment never become tasks.
+ * on several pages become one task, which usually means one template fix. Candidates become tasks only once the
+ * model analysis confirmed them and its verifier supported that.
  */
-export function buildTasks(findings: readonly Finding[], rulesById: ReadonlyMap<string, RuleMeta>, evidence: EvidenceStore): Task[] {
+export function buildTasks(findings: readonly Finding[], rulesById: ReadonlyMap<string, RuleMeta>, evidence: EvidenceLookup): Task[] {
   const groups = new Map<string, Finding[]>();
   for (const finding of findings) {
-    if (finding.outcome !== 'fail' || finding.needsJudgment || !rulesById.has(finding.ruleId)) continue;
+    if (finding.outcome !== 'fail' || (finding.needsJudgment && finding.judgment !== 'confirmed') || !rulesById.has(finding.ruleId)) continue;
     const key = groupKey(finding, evidence);
     groups.set(key, [...(groups.get(key) ?? []), finding]);
   }

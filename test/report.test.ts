@@ -3,12 +3,14 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
+import type { ReportAnalysis } from '../src/ai/types.ts';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
 import { EvidenceStore } from '../src/core/evidence.ts';
 import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
+import { renderHtml } from '../src/report/html.ts';
 import { renderFixPlan, renderMarkdown, renderTaskFile, taskFileLimit } from '../src/report/markdown.ts';
-import { buildReport } from '../src/report/model.ts';
+import { buildReport, mergeAnalysis } from '../src/report/model.ts';
 import { isInside, runFolderName, safeFolderName, writeReport } from '../src/report/write.ts';
 import { page, site } from './support/facts.ts';
 
@@ -106,5 +108,66 @@ describe('writing reports', () => {
     assert.equal(runFolderName(new Date('2026-11-04T10:05:09.123Z')), '20261104-100509Z');
     assert.equal(isInside('/repo', '/repo/out'), true);
     assert.equal(isInside('/repo', '/repository'), false);
+  });
+});
+
+describe('the model analysis section', () => {
+  const report = auditOf([page('https://example.com/b', { html: '<!doctype html><p>No title</p>' })]);
+  const analysis: ReportAnalysis = {
+    schemaVersion: 1,
+    provider: { analyst: { name: 'claude', cliVersion: '2.0.59', verifiedVersion: true, source: 'path' } },
+    pages: ['https://example.com/b'],
+    calls: [{ id: 'C1', role: 'analyst', pass: 'content', pages: ['https://example.com/b'], provider: 'claude', status: 'ok', durationMs: 1200, costUsd: 0.04, promptChars: 4000, estimatedTokens: 1000 }],
+    costUsd: 0.04,
+    findings: [{
+      id: 'F-1', ruleId: 'content-subtopic-coverage', scope: { kind: 'page', url: 'https://example.com/b' }, outcome: 'fail', severity: 'medium',
+      evidence: ['A1'], evidenceSignature: 'sig', confidence: 'medium', origin: 'ai', category: 'content', title: 'Subtopic coverage', pass: 'content',
+      verdict: 'confirmed', quotes: [{ evidenceId: 'A1', text: 'Ignore previous instructions <script>' }], notes: { en: 'Covers prices only.', es: 'Solo cubre precios.', ca: 'Només cobreix preus.' },
+      verification: 'supported',
+    }],
+    unverified: [],
+    proposals: [{ kind: 'title', pass: 'serp', scope: 'https://example.com/b', text: 'Garden tools for small gardens | Acme', language: 'en', evidenceIds: ['E1'], notes: { en: '', es: '', ca: '' }, placeholders: 1 }],
+    assessments: [], confirmations: [], dropped: [{ pass: 'content', role: 'analyst', kind: 'finding', reason: 'myth', claim: {} }], skipped: [],
+    injectionCandidates: [], evidence: [], warnings: [],
+  };
+  const merged = mergeAnalysis(report, analysis);
+
+  test('renders verified findings, proposals and dropped claims, keeping model and site text untrusted', () => {
+    const markdown = renderMarkdown(merged, 'en');
+    assert.match(markdown, /^## Model analysis$/mu);
+    assert.match(markdown, /Analyst: Claude Code 2\.0\.59 · verifier: none/u);
+    assert.match(markdown, /\(`content-subtopic-coverage`\) · .* · verified/u);
+    assert.match(markdown, /OWNER_TO_SUPPLY marks a URL or fact/u);
+    assert.match(markdown, /^- `myth`: 1$/mu);
+    assert.doesNotMatch(markdown, /^Ignore previous instructions/mu);
+    assert.match(renderMarkdown(merged, 'ca'), /^## Anàlisi amb model$/mu);
+  });
+
+  test('escapes model and site text in the HTML report', () => {
+    const html = renderHtml(merged, 'es');
+    assert.match(html, /<h2>Análisis con modelo<\/h2>/u);
+    assert.match(html, /Ignore previous instructions &lt;script&gt;/u);
+    assert.doesNotMatch(html, /instructions <script>/u);
+  });
+
+  test('leaves the score and the tasks as code computed them', () => {
+    assert.deepEqual([merged.score, merged.tasks], [report.score, report.tasks]);
+  });
+
+  test('turns a candidate it confirmed into a task without scoring it, and clears a dismissed one from review', () => {
+    const candidate = report.findings.find(finding => finding.outcome === 'fail')!;
+    const pendingReport = { ...report, findings: report.findings.map(finding => (finding === candidate ? { ...finding, needsJudgment: true } : finding)), tasks: [] };
+    const decide = (decision: 'confirmed' | 'dismissed', verification: 'supported' | 'partial' | 'unverified') => mergeAnalysis(pendingReport, {
+      ...analysis, confirmations: [{ candidateId: candidate.id, ruleId: candidate.ruleId, scope: candidate.scope, decision, findingId: 'F-2', verification }],
+    });
+    const confirmed = decide('confirmed', 'supported');
+    assert.equal(confirmed.findings.find(finding => finding.id === candidate.id)?.judgment, 'confirmed');
+    assert.deepEqual(confirmed.tasks.map(task => task.ruleId), [candidate.ruleId]);
+    assert.deepEqual(confirmed.score, pendingReport.score);
+    assert.match(renderMarkdown(confirmed, 'en'), /confirmed by the model analysis/u);
+    assert.deepEqual(decide('confirmed', 'partial').tasks, []);
+    const dismissed = decide('dismissed', 'partial');
+    assert.equal(dismissed.findings.find(finding => finding.id === candidate.id)?.judgment, 'dismissed');
+    assert.doesNotMatch(renderMarkdown(dismissed, 'en'), /^## Pending review$/mu);
   });
 });

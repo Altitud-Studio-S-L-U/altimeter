@@ -135,6 +135,16 @@ describe('Search Console performance rules', () => {
     assert.deepEqual([drop?.severity, drop?.params?.page, drop?.params?.before, drop?.params?.now], ['low', `${origin}/b`, 60, 4]);
   });
 
+  test('write numbered labels instead of queries when the owner asks for a shareable report', () => {
+    const facts = (id: string) => evaluate(rule(id), site({ pages: [page(url, { html: html() })], owner: { gsc: performance, redactQueries: true } }));
+    const shared = facts('content-gsc-cannibalization');
+    assert.equal(shared.findings[0]?.params?.query, 'query 1');
+    const lowCtr = facts('content-gsc-low-ctr');
+    const excerpts = lowCtr.findings.flatMap(finding => finding.evidence.map(id => lowCtr.evidence.get(id)?.excerpt ?? '')).join('\n');
+    assert.doesNotMatch(excerpts, /custom software|software development/u);
+    assert.match(excerpts, /^query 1 \(600 impressions/mu);
+  });
+
   test('do not apply to a property without search data', () => {
     for (const id of ['content-gsc-low-ctr', 'content-gsc-cannibalization', 'content-gsc-striking-distance', 'content-gsc-traffic-drop']) {
       assert.equal(check(id, gsc()).first?.reason, 'no-search-data', id);
