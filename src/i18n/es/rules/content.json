@@ -506,7 +506,7 @@
     "messages": {}
   },
   "content-gsc-low-ctr": {
-    "title": "Páginas cuyo porcentaje de clics está muy por debajo de la norma del sitio",
+    "title": "Páginas cuyo porcentaje de clics (CTR) está muy por debajo de lo habitual en el sitio",
     "why": "Una página que aparece a menudo, pero recibe pocos clics para su posición, suele tener un título o un fragmento que no se ajusta a lo que buscan los usuarios. La comparación usa el CTR propio del sitio en cada posición, no una curva del sector.",
     "fix": "Reescribe el título y la metadescripción para las consultas indicadas, sin dejar de ser fiel a la página. Comprueba si un resultado enriquecido u otra página del sitio que se ajusta mejor se lleva los clics.",
     "messages": {

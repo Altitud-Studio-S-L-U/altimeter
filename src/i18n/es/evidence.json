@@ -612,7 +612,7 @@
   "shippingRate without currency": "shippingRate sin currency",
   "shippingRate without value or maxValue": "shippingRate sin value ni maxValue",
   "ShippingService without shippingConditions": "ShippingService sin shippingConditions",
-  "site Organization @id": "@id de la Organization del sitio",
+  "site Organization @id": "@id del nodo Organization del sitio",
   "site Organization node": "nodo Organization del sitio",
   "site root redirecting to a locale URL": "raíz del sitio que redirige a una URL de configuración regional",
   "sitemap at the default location": "sitemap en la ubicación predeterminada",

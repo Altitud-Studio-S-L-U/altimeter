@@ -176,7 +176,7 @@
     "fix": "Publica un único nodo Organization canónico (con todos los datos en la página de inicio o en la página «Quiénes somos») y haz referencia a su @id desde publisher/provider/author/brand en las demás páginas.",
     "messages": {
       "fail": "Las entidades del sitio se describen de forma distinta en distintas páginas: {items}",
-      "fail:conflicting-organization": "Los valores de la Organization del sitio difieren entre páginas: {items}",
+      "fail:conflicting-organization": "Los valores del nodo Organization del sitio difieren entre páginas: {items}",
       "fail:several-organization-ids": "La Organization del sitio usa {items} en distintas páginas.",
       "fail:conflicting-website-name": "El nombre de WebSite difiere entre páginas."
     }
@@ -299,7 +299,7 @@
     }
   },
   "schema-self-serving-reviews": {
-    "title": "Reseñas o valoraciones en beneficio propio en la Organization o el LocalBusiness del propio sitio",
+    "title": "Reseñas o valoraciones en beneficio propio en el marcado Organization o LocalBusiness del propio sitio",
     "why": "Google no muestra resultados enriquecidos de reseñas para las reseñas que una empresa u organización publica sobre sí misma, incluidas las reseñas insertadas desde widgets.",
     "fix": "Elimina aggregateRating/review del marcado Organization/LocalBusiness del propietario. Mantén el marcado de reseñas en Product, en obras creativas afines a Service o en reseñas de entidades de terceros cuando sean aptas.",
     "messages": {
@@ -575,7 +575,7 @@
   "schema-service-offercatalog": {
     "title": "El marcado Service / OfferCatalog es solo vocabulario (sin resultado enriquecido de Google)",
     "why": "Service y OfferCatalog son tipos de schema.org sin resultado enriquecido de Google. Describen la empresa para otros consumidores; las valoraciones en beneficio propio que llevan no se muestran.",
-    "fix": "Mantén el marcado Service exacto y vinculado a la Organization. No esperes ni prometas una función en las SERP.",
+    "fix": "Mantén el marcado Service exacto y vinculado al nodo Organization. No esperes ni prometas una función en las SERP.",
     "messages": {
       "fail": "{count} elemento(s) Service llevan valoraciones sobre los propios servicios del sitio, que los fragmentos de reseña no muestran: {items}"
     }
