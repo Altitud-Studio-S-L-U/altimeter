@@ -282,6 +282,25 @@ describe('validating proposals', () => {
     });
     assert.deepEqual(second, { value: known, placeholders: 0 }, 'links on the page stay, written relative to it or not');
   });
+
+  test('takes as a schema.org term only a whole term, and checks the links a type or a context names', () => {
+    const plan = planned('schema');
+    const jsonLd = (value: unknown) => ({ kind: 'json-ld', scope: roomsUrl, jsonLd: JSON.stringify(value), evidenceIds: [id('"@type":"Hotel"')], notes });
+    const base = { '@context': 'https://schema.org', '@type': 'Hotel', name: 'Hotel Example' };
+    const result = validateAnswer({
+      findings: [],
+      proposals: [
+        jsonLd({ ...base, '@context': ['https://schema.org', { '@vocab': 'https://schema.org/' }, 'https://evil.example/context.jsonld'], '@type': ['Hotel', 'https://evil.example/Hotel'], url: 'https://schema.org/../book' }),
+        jsonLd({ ...base, description: 'https://schema.org/Hotel Our 45 rooms look over the valley of Andorra la Vella, book at https://evil.example/book' }),
+        jsonLd({ ...base, description: 'https://schema.org/Hotel The best rooms in Andorra la Vella, rated 4.9 by 2000 guests' }),
+      ],
+    }, context(plan));
+    assert.deepEqual(reasons(result), ['new-fact'], 'a superlative or a rating after a schema.org address is still a fact the page must show');
+    assert.deepEqual(result.proposals.map(entry => (entry.kind === 'json-ld' ? [JSON.parse(entry.jsonLd), entry.placeholders] : undefined)), [
+      [{ ...base, '@context': ['https://schema.org', { '@vocab': 'https://schema.org/' }, ownerPlaceholder], '@type': ['Hotel', ownerPlaceholder], url: ownerPlaceholder }, 3],
+      [{ ...base, description: `${ownerPlaceholder} Our 45 rooms look over the valley of Andorra la Vella, book at ${ownerPlaceholder}` }, 2],
+    ]);
+  });
 });
 
 describe('validating language claims', () => {

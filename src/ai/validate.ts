@@ -4,7 +4,7 @@ import { severities, type Myth, type RuleMeta, type Severity } from '../core/typ
 import type { Report, ReportFinding } from '../report/model.ts';
 import type { FindingScope } from '../rules/engine.ts';
 import { mythMatches } from '../rules/myth-filter.ts';
-import { rangesOf } from '../rules/schema/vocabulary.ts';
+import { isTerm, rangesOf } from '../rules/schema/vocabulary.ts';
 import type { EvidencePack } from './pack.ts';
 import { judgmentCap, languageRules, type PassPlan } from './passes.ts';
 import { validateSchema, type Schema } from './schema.ts';
@@ -433,8 +433,14 @@ interface JsonLdReview {
   readonly retired: string[];
 }
 
-/** Terms of the schema.org vocabulary, such as https://schema.org/InStock, which name no page. */
-const vocabularyTerm = /^https?:\/\/schema\.org\//iu;
+const vocabularyIri = /^https?:\/\/schema\.org(?:\/([^\s/?#]*))?$/iu;
+
+/** The schema.org vocabulary itself or one of its terms, such as https://schema.org/InStock, which name no page. */
+function vocabularyTerm(value: string): boolean {
+  const match = vocabularyIri.exec(value);
+  return match !== null && (match[1] === undefined || match[1] === '' || isTerm(match[1]));
+}
+
 const webReference = /^(?:https?:\/\/|\/\/|www\.)/iu;
 const otherScheme = /^(?!https?:)[a-z][a-z\d+.-]*:/iu;
 
@@ -457,13 +463,14 @@ function reviewJsonLd(value: unknown, key: string, context: ValidationContext, p
   const facts = context.corpus.pages.get(page.key)?.facts;
   if (typeof value === 'string') {
     const trimmed = value.trim();
-    if (value === ownerPlaceholder || key === '@context' || key === '@type' || vocabularyTerm.test(trimmed)) return value;
+    if (value === ownerPlaceholder || vocabularyTerm(trimmed)) return value;
     if (namesLink(trimmed, key)) {
       if (knownLink(trimmed, page, context)) return value;
       review.placeholders += 1;
       return ownerPlaceholder;
     }
-    if (key === '@id') return value;
+    // A type, an id or a context entry that names no address states no fact.
+    if (key === '@id' || key === '@type' || key === '@context') return value;
     const urls = replaceUnknownUrls(value, page, context);
     review.placeholders += urls.placeholders;
     if (facts) {
