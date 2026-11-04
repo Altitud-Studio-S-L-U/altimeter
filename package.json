@@ -4,25 +4,65 @@
   "description": "Evidence-based SEO audits: primary-source rules, crawl and Core Web Vitals evidence, and Claude Code or Codex analysis verified against that evidence.",
   "type": "module",
   "license": "MIT",
-  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/", "provenance": true },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true
+  },
   "author": "Altitud Studio SLU (https://altitudstudio.ad)",
-  "engines": { "node": ">=24" },
-  "bin": { "altimeter": "./dist/cli/main.js" },
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "altimeter": "./dist/cli/main.js"
+  },
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md", "CHANGELOG.md", "LICENSE"],
-  "repository": { "type": "git", "url": "git+https://github.com/Altitud-Studio-S-L-U/altimeter.git" },
-  "bugs": { "url": "https://github.com/Altitud-Studio-S-L-U/altimeter/issues" },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Altitud-Studio-S-L-U/altimeter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Altitud-Studio-S-L-U/altimeter/issues"
+  },
   "homepage": "https://github.com/Altitud-Studio-S-L-U/altimeter#readme",
-  "keywords": ["seo", "seo-audit", "technical-seo", "core-web-vitals", "structured-data", "hreflang", "lighthouse", "crawler", "search-console", "cli"],
+  "keywords": [
+    "seo",
+    "seo-audit",
+    "technical-seo",
+    "core-web-vitals",
+    "structured-data",
+    "hreflang",
+    "lighthouse",
+    "crawler",
+    "search-console",
+    "cli"
+  ],
   "scripts": {
     "build": "node scripts/clean.mjs dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test"
   },
-  "devDependencies": { "@types/node": "24.19.2", "typescript": "7.0.2" }
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "parse5": "8.1.0",
+    "saxes": "6.0.0",
+    "undici": "8.12.3"
+  }
 }
