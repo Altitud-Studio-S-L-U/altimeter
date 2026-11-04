@@ -2,10 +2,23 @@ import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
+import { Launcher } from 'chrome-launcher';
 import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser } from '../src/render/chrome.ts';
 
 const chrome = findChrome();
 if (!chrome && process.env.CI) throw new Error('Chrome is required on CI');
+
+test('findChrome reports a missing Chrome instead of throwing, as chrome-launcher does on Linux', t => {
+  const saved = process.env.CHROME_PATH;
+  delete process.env.CHROME_PATH;
+  t.after(() => {
+    if (saved !== undefined) process.env.CHROME_PATH = saved;
+  });
+  t.mock.method(Launcher, 'getFirstInstallation', () => {
+    throw new Error('The CHROME_PATH environment variable must be set to a Chrome/Chromium executable no older than Chrome stable.');
+  });
+  assert.equal(findChrome(), undefined);
+});
 
 const page = `<!doctype html><html lang="en"><head><title>Render test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">

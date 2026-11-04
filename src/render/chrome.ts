@@ -88,7 +88,13 @@ export interface RenderResult {
 }
 
 export function findChrome(): string | undefined {
-  return process.env.CHROME_PATH || Launcher.getFirstInstallation();
+  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+  try {
+    return Launcher.getFirstInstallation();
+  } catch {
+    // On Linux chrome-launcher throws when it finds no installation; elsewhere it returns undefined.
+    return undefined;
+  }
 }
 
 export interface AuditBrowser {
@@ -318,11 +324,17 @@ function collectOverlays(limit: number): { overlays: Overlay[]; scrollLocked: bo
 
 async function settle(page: Page, idleMs = 500, timeoutMs = 5000): Promise<void> {
   await page.waitForNetworkIdle({ idleTime: idleMs, timeout: timeoutMs }).catch(() => {});
-  // Let CSS transitions and animations started by observers finish, so revealed content is measured revealed.
+  // Observers learn about a scroll or a resize only in the next frames, so wait for two frames before looking for
+  // the CSS transitions and animations they start, then let those finish: revealed content is measured revealed.
   await page.evaluate(() => Promise.race([
-    Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => undefined))),
-    new Promise(resolve => setTimeout(resolve, 3000)),
-  ])).catch(() => {});
+    new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0)))),
+    new Promise(resolve => setTimeout(resolve, 1000)),
+  ]))
+    .then(() => page.evaluate(() => Promise.race([
+      Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => undefined))),
+      new Promise(resolve => setTimeout(resolve, 3000)),
+    ])))
+    .catch(() => {});
 }
 
 export interface RenderOptions {
