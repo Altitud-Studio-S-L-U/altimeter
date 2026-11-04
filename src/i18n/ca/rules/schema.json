@@ -1,1 +1,638 @@
-{}
+{
+  "schema-extract-inventory": {
+    "title": "Extreu tots els elements de dades estructurades en les tres sintaxis, en brut i renderitzats",
+    "why": "Google llegeix JSON-LD, Microdata i RDFa, al head o al body, de l'HTML en brut i del renderitzat. Un inventari de tots els elements de les dues versions és l'entrada de totes les altres regles de dades estructurades.",
+    "fix": "No cal cap correcció; aquesta és la base d'evidències que citen totes les altres regles schema-*.",
+    "messages": {
+      "fail": "No s'ha pogut construir l'inventari de dades estructurades d'aquesta pàgina."
+    }
+  },
+  "schema-jsonld-syntax-error": {
+    "title": "El bloc JSON-LD no és JSON vàlid",
+    "why": "Un bloc JSON-LD que no és JSON vàlid es descarta sencer, i els informes de Google no inclouen els elements que no poden analitzar, de manera que l'error passa desapercebut.",
+    "fix": "Serialitza amb un codificador JSON (JSON.stringify / json_encode) en lloc de plantilles de cadenes. Escapa '</' com a '<\\/' dins de les cadenes.",
+    "messages": {
+      "fail": "{count} bloc(s) JSON-LD no s'analitzen com a JSON i es descarten sencers: {error}"
+    }
+  },
+  "schema-jsonld-context": {
+    "title": "El JSON-LD no té @context o en té un que no és de schema.org",
+    "why": "Segons JSON-LD 1.1, els termes només s'expandeixen a IRI de schema.org mitjançant un @context. Sense un context de schema.org que es pugui resoldre, els tipus i les propietats no tenen cap significat definit.",
+    "fix": "Fes servir \"@context\": \"https://schema.org\" a cada objecte de nivell superior o una sola vegada a l'embolcall @graph.",
+    "messages": {
+      "fail": "{count} element(s) JSON-LD no tenen @context de schema.org: {items}",
+      "fail:missing-context": "{count} element(s) JSON-LD no tenen @context, de manera que els seus termes no tenen significat de schema.org: {items}",
+      "fail:not-schema-org": "{count} element(s) JSON-LD declaren un @context que no es resol a schema.org: {items}"
+    }
+  },
+  "schema-microdata-rdfa-structure": {
+    "title": "Microdata o RDFa amb una estructura defectuosa",
+    "why": "Microdata i RDFa expressen els elements de dades estructurades mitjançant atributs d'elements HTML. Les propietats fora de qualsevol element de dades estructurades o els tipus que no es poden resoldre no es llegeixen com a part de l'entitat prevista.",
+    "fix": "Embolcalla les propietats en l'itemscope correcte amb itemtype=\"https://schema.org/Type\", o migra a JSON-LD.",
+    "messages": {
+      "fail": "{count} problema(es) d'estructura de Microdata o RDFa: {items}",
+      "fail:orphan-itemprop": "{count} atribut(s) itemprop són fora de qualsevol itemscope i no pertanyen a cap element de dades estructurades: {items}",
+      "fail:invalid-itemtype": "{count} valor(s) itemtype no són URL absolutes de schema.org: {items}",
+      "fail:missing-itemtype": "{count} element(s) itemscope de nivell superior no tenen itemtype: {items}",
+      "fail:missing-itemref": "{count} valor(s) itemref indiquen ids que no són al document: {items}",
+      "fail:unresolved-typeof": "{count} valor(s) typeof d'RDFa no tenen cap vocab en el seu àmbit: {items}"
+    }
+  },
+  "schema-unknown-type": {
+    "title": "@type no és un terme del vocabulari actual de schema.org",
+    "why": "Els consumidors no reconeixen un @type que no és un terme del vocabulari actual de schema.org, sovint per un error ortogràfic, de manera que l'element no és apte per a les funcions que requereixen aquest tipus.",
+    "fix": "Fes servir el nom exacte del tipus de schema.org, amb les majúscules i minúscules correctes; el suggeriment del validador sol ser correcte.",
+    "messages": {
+      "fail": "{count} valor(s) @type no estan definits al vocabulari de schema.org: {items}"
+    }
+  },
+  "schema-unknown-property": {
+    "title": "Propietat no definida a schema.org",
+    "why": "Una propietat que schema.org no defineix s'ignora. Quan és una propietat obligatòria d'una funció de Google mal escrita, l'element deixa de ser apte.",
+    "fix": "Canvia-li el nom pel de la propietat definida o elimina-la.",
+    "messages": {
+      "fail": "{count} propietat(s) no estan definides al vocabulari de schema.org i s'ignoren: {items}"
+    }
+  },
+  "schema-domain-range-mismatch": {
+    "title": "Propietat feta servir en un tipus fora del seu domini, o valor d'un tipus inesperat",
+    "why": "schema.org descriu els tipus esperats com a orientació i accepta text on s'espera una entitat. Les discrepàncies només importen quan una funció de Google requereix un tipus concret, cosa que comproven les regles de cada funció.",
+    "fix": "Mou la propietat al node correcte o imbrica-hi un node amb el tipus adequat en lloc d'una cadena.",
+    "messages": {
+      "fail": "{count} ús(os) de propietats queden fora dels tipus esperats de schema.org: {items}",
+      "fail:domain": "{count} propietat(s) es fan servir en tipus fora del seu domini de schema.org: {items}",
+      "fail:range": "{count} valor(s) tenen un tipus fora del rang de la propietat a schema.org: {items}"
+    }
+  },
+  "schema-superseded-pending-term": {
+    "title": "Terme de schema.org substituït, retirat o pendent",
+    "why": "schema.org marca alguns termes com a substituïts o retirats i d'altres com a pendents. Els termes substituïts encara funcionen, però tenen substituts; els termes pendents poden canviar.",
+    "fix": "Substitueix-lo pel terme que el substitueix.",
+    "messages": {
+      "fail": "{count} terme(s) de schema.org estan substituïts, retirats o pendents: {items}",
+      "fail:superseded": "{count} terme(s) estan substituïts a schema.org; fes servir el substitut: {items}",
+      "fail:retired": "{count} terme(s) s'han retirat a la secció attic de schema.org: {items}",
+      "fail:pending": "{count} terme(s) són a la secció pending de schema.org i poden canviar: {items}"
+    }
+  },
+  "schema-url-values": {
+    "title": "Les propietats amb valor d'URL no són vàlides, són relatives o no canòniques, o exposen amfitrions de proves",
+    "why": "Les propietats amb valor d'URL, com url, image, logo i sameAs, s'han de resoldre en el recurs previst. Els valors que apunten a amfitrions de proves, a URL no canòniques o a URL no vàlides envien els consumidors a un lloc equivocat. Els valors relatius es resolen respecte de la pàgina i són vàlids.",
+    "fix": "Emet URL https absolutes construïdes a partir de l'origen canònic de producció.",
+    "messages": {
+      "fail": "{count} valor(s) d'URL del marcatge requereixen atenció: {items}",
+      "fail:invalid": "{count} valor(s) d'URL no són URL vàlides: {items}",
+      "fail:unsupported-scheme": "{count} valor(s) d'URL fan servir un esquema diferent d'http o https: {items}",
+      "fail:relative": "{count} valor(s) d'URL són relatius o relatius al protocol; es resolen respecte de la pàgina, però són fràgils: {items}",
+      "fail:insecure": "{count} valor(s) d'URL del mateix lloc fan servir http en un lloc https: {items}",
+      "fail:staging-host": "{count} valor(s) d'URL apunten a un amfitrió local, de proves o d'IP: {items}",
+      "fail:not-canonical": "La url de WebPage és diferent de la URL canònica de la pàgina: {items}"
+    }
+  },
+  "schema-iso8601-values": {
+    "title": "Les dates, les hores i les durades no són ISO 8601 vàlides",
+    "why": "Google requereix dates, hores i durades ISO 8601 a les dades estructurades. Sense una diferència horària, Google en suposa una, cosa que pot desplaçar les dates.",
+    "fix": "Emet les dates amb un formatador ISO. Per a DateTime, inclou-hi la diferència horària, per exemple 2026-11-03T09:00:00+01:00.",
+    "messages": {
+      "fail": "{count} valor(s) de data, hora o durada no són ISO 8601 vàlids: {items}",
+      "fail:invalid-date": "{count} valor(s) de data no són ISO 8601: {items}",
+      "fail:invalid-duration": "{count} valor(s) de durada no són durades ISO 8601: {items}",
+      "fail:invalid-time": "{count} valor(s) d'horari d'obertura no són hh:mm ni hh:mm:ss: {items}",
+      "fail:missing-offset": "{count} valor(s) de data i hora no tenen diferència horària, de manera que Google en suposa una: {items}"
+    }
+  },
+  "schema-date-logic": {
+    "title": "Les relacions entre dates són impossibles o estan desactualitzades",
+    "why": "Google documenta que un fragment de producte pot no mostrar-se quan priceValidUntil és una data passada i que mantenir actives les ofertes de feina caducades pot provocar una acció manual. Les seqüències de dates impossibles també fan que el marcatge no sigui fiable.",
+    "fix": "Genera les dates a partir de les marques de temps reals de publicació i de modificació del CMS. Elimina o actualitza priceValidUntil. Fes caducar les ofertes de feina amb un validThrough passat, amb un 404/410 o eliminant el marcatge.",
+    "messages": {
+      "fail": "{count} relació(ns) entre dates són impossibles o estan desactualitzades: {items}",
+      "fail:modified-before-published": "{count} element(s) tenen un dateModified anterior a datePublished: {items}",
+      "fail:end-before-start": "{count} element(s) acaben abans de començar: {items}",
+      "fail:valid-through-before-valid-from": "{count} element(s) tenen un validThrough anterior a validFrom: {items}",
+      "fail:published-in-future": "{count} data(es) de publicació són més d'un dia posteriors al moment en què es va obtenir la pàgina: {items}",
+      "fail:price-valid-until-past": "{count} oferta(es) tenen un priceValidUntil passat, de manera que pot ser que el fragment de producte no es mostri: {items}",
+      "fail:video-expired": "{count} vídeo(s) tenen una data expires passada mentre la pàgina és activa: {items}"
+    }
+  },
+  "schema-enumeration-values": {
+    "title": "Els valors enumerats no són membres d'enumeracions de schema.org",
+    "why": "Google requereix membres d'enumeracions de schema.org per a propietats com availability, itemCondition i employmentType. El text lliure o diversos valors contradictoris no s'entenen.",
+    "fix": "Fes correspondre els estats del CMS amb la URL de l'enumeració de schema.org.",
+    "messages": {
+      "fail": "{count} valor(s) enumerats no són valors permesos: {items}",
+      "fail:not-a-member": "{count} valor(s) no són membres de l'enumeració permesa: {items}",
+      "fail:multiple-values": "{count} element(s) donen diversos valors per a una propietat d'un sol valor: {items}"
+    }
+  },
+  "schema-placeholder-junk-values": {
+    "title": "Valors provisionals, de plantilla o brossa al marcatge",
+    "why": "Les polítiques de dades estructurades de Google requereixen que el marcatge descrigui la pàgina amb exactitud. Els marcadors de plantilla, les URL d'example.com o el text provisional mostren que el marcatge es va publicar sense omplir.",
+    "fix": "Corregeix la plantilla perquè els camps sense dades s'ometin en lloc d'emetre's buits.",
+    "messages": {
+      "fail": "{count} valor(s) provisionals o brossa al marcatge: {items}",
+      "fail:empty-value": "{count} propietat(s) s'emeten buides o nul·les: {items}",
+      "fail:template-leak": "{count} valor(s) s'han imprès a partir de variables no definides: {items}",
+      "fail:template-token": "{count} valor(s) contenen marcadors de plantilla sense renderitzar: {items}",
+      "fail:placeholder-text": "{count} valor(s) són text provisional o de farciment: {items}",
+      "fail:placeholder-phone": "{count} valor(s) de telèfon són provisionals: {items}",
+      "fail:example-domain": "{count} valor(s) encara apunten a un domini d'exemple: {items}",
+      "fail:html-in-text": "{count} valor(s) de text contenen etiquetes o entitats HTML: {items}"
+    }
+  },
+  "schema-js-only-markup": {
+    "title": "Les dades estructurades i les metaetiquetes clau només existeixen després de la renderització amb JavaScript",
+    "why": "Google admet les dades estructurades injectades per JavaScript, però documenta que el marcatge Product generat dinàmicament fa que els rastrejos de Shopping siguin menys freqüents i menys fiables. Els rastrejadors que no executen JavaScript, inclosos la majoria dels rastrejadors d'IA, no en veuen res.",
+    "fix": "Renderitza el JSON-LD al servidor, sobretot el preu i la disponibilitat de Product.",
+    "messages": {
+      "fail": "{count} element(s) de dades estructurades només existeixen després de la renderització amb JavaScript: {items}",
+      "fail:product-rendered-only": "{count} element(s) Product o Offer només existeixen després de la renderització amb JavaScript, cosa que, segons Google, fa que els rastrejos de Shopping siguin menys freqüents i fiables: {items}",
+      "fail:rendered-only": "{count} element(s) només existeixen després de la renderització amb JavaScript; els rastrejadors que no renderitzen no els veuen: {items}"
+    }
+  },
+  "schema-raw-rendered-conflict": {
+    "title": "El marcatge en brut i el renderitzat no coincideixen",
+    "why": "Quan l'HTML del servidor i el DOM renderitzat tenen valors de dades estructurades diferents, els consumidors que llegeixen versions diferents reben informació diferent, com preus o dates.",
+    "fix": "Genera el marcatge a partir d'una única font de veritat i evita una reemissió al client que en divergeixi.",
+    "messages": {
+      "fail": "{count} valor(s) són diferents a l'HTML en brut i al DOM renderitzat: {items}"
+    }
+  },
+  "schema-id-dangling-or-conflicting": {
+    "title": "Hi ha referències @id sense resoldre o un @id té dades contradictòries",
+    "why": "JSON-LD enllaça els nodes mitjançant @id. Les referències a valors @id no definits, o un @id amb propietats contradictòries, deixen ambigu el graf d'entitats.",
+    "fix": "Defineix cada entitat una sola vegada amb un IRI estable (per exemple, https://example.com/#organization) i fes-hi referència des dels altres punts amb @id.",
+    "messages": {
+      "fail": "{count} problema(es) amb @id: {items}",
+      "fail:dangling-reference": "{count} referència(es) @id apunten a un fragment d'aquesta pàgina que no està definit enlloc: {items}",
+      "fail:conflicting-types": "{count} valor(s) @id estan definits amb tipus no relacionats: {items}",
+      "fail:conflicting-values": "{count} valor(s) @id tenen valors contradictoris: {items}",
+      "fail:invalid-id": "{count} valor(s) @id no són IRI vàlids: {items}"
+    }
+  },
+  "schema-entity-consistency-sitewide": {
+    "title": "Les entitats Organization i WebSite del lloc no són coherents entre pàgines",
+    "why": "Google demana que el nom d'Organization coincideixi amb el nom del lloc i que el nom del lloc es faci servir de manera coherent. Noms, URL o logotips diferents per a la mateixa organització en diverses pàgines fan que l'entitat sigui ambigua.",
+    "fix": "Emet un sol node Organization canònic (amb les dades completes a la pàgina d'inici o a la pàgina «Qui som») i fes referència al seu @id des de les propietats publisher/provider/author/brand de les altres pàgines.",
+    "messages": {
+      "fail": "Les entitats del lloc es descriuen de manera diferent entre pàgines: {items}",
+      "fail:conflicting-organization": "L'Organization del lloc té valors diferents entre pàgines per a: {items}",
+      "fail:several-organization-ids": "L'Organization del lloc fa servir identificadors diferents entre pàgines: {items}.",
+      "fail:conflicting-website-name": "El nom de WebSite és diferent entre pàgines."
+    }
+  },
+  "schema-inlanguage": {
+    "title": "L'inLanguage de les dades estructurades falta o no és coherent amb la llengua de la pàgina",
+    "why": "schema.org defineix inLanguage amb codis BCP 47. Cap funció de Google no el requereix, però un valor que contradiu la llengua de la pàgina és una dada errònia per als consumidors.",
+    "fix": "Estableix inLanguage amb l'etiqueta BCP 47 de la pàgina (per exemple, \"es\", \"ca-AD\", \"en-GB\").",
+    "messages": {
+      "fail": "{count} valor(s) inLanguage no són vàlids o contradiuen la llengua de la pàgina: {items}",
+      "fail:invalid-tag": "{count} valor(s) inLanguage no són etiquetes BCP 47: {items}",
+      "fail:contradicts-html-lang": "{count} valor(s) inLanguage contradiuen l'atribut lang de l'html: {items}"
+    }
+  },
+  "schema-main-entity-page-fit": {
+    "title": "El tipus de marcatge principal no correspon al propòsit de la pàgina",
+    "why": "Les polítiques de Google requereixen que el marcatge sigui representatiu de la pàgina: JobPosting només a les pàgines d'una sola oferta de feina, Event només per a esdeveniments en una ubicació física i QAPage només per a preguntes d'usuaris amb respostes. Un tipus que no correspon al propòsit de la pàgina és un ús indegut.",
+    "fix": "Marca allò que és realment el tema principal de la pàgina. Fes servir ItemList/CollectionPage als llistats i fes servir el marcatge de carrusel/ItemList només on Google el documenta.",
+    "messages": {
+      "fail": "Pot ser que el tipus de marcatge principal no correspongui al propòsit de la pàgina: {items}",
+      "fail:several-products": "Elements de nivell superior a la pàgina: {items}, com en un llistat; el marcatge Product correspon a les pàgines d'un sol producte.",
+      "fail:article-on-home": "La pàgina d'inici té marcatge {items}; comprova si la pàgina és un article.",
+      "fail:profile-page-on-home": "La pàgina d'inici té marcatge ProfilePage; comprova si tracta d'una sola persona o organització."
+    }
+  },
+  "schema-visible-content-parity": {
+    "title": "Els valors marcats coincideixen amb el contingut visible de la pàgina",
+    "why": "Les polítiques de dades estructurades de Google prohibeixen marcar contingut que els usuaris no poden veure i demanen que el marcatge coincideixi amb el text visible. Els valors com les valoracions, els preus o les respostes que estan ocults o són diferents són una infracció de les polítiques.",
+    "fix": "Mostra als usuaris la informació marcada, o elimina-la del marcatge.",
+    "messages": {
+      "fail": "No s'han trobat {count} valor(s) marcats al text de la pàgina: {items}"
+    }
+  },
+  "schema-misleading-or-spammy": {
+    "title": "Marcatge enganyós, irrellevant o que suplanta la identitat",
+    "why": "Les polítiques de dades estructurades de Google prohibeixen el marcatge enganyós, irrellevant o que suplanta la identitat. Una acció manual per dades estructurades elimina l'elegibilitat per a resultats enriquits; Google afirma que no afecta el posicionament.",
+    "fix": "Elimina el marcatge problemàtic. Si hi ha una acció manual, corregeix el problema i sol·licita una revisió a Search Console.",
+    "messages": {}
+  },
+  "schema-blocked-or-nonindexable-carrier": {
+    "title": "El marcatge és en una pàgina que Google no pot fer servir, o les seves imatges estan bloquejades",
+    "why": "Google demana que no es bloquegin les pàgines amb dades estructurades amb el robots.txt, noindex o controls d'accés, i requereix que les URL d'imatge de les dades estructurades siguin rastrejables i indexables.",
+    "fix": "Desbloqueja la pàgina i les seves imatges per a Googlebot. Posa un marcatge idèntic a totes les versions duplicades.",
+    "messages": {
+      "fail": "Hi ha marcatge per a funcions de Google en una pàgina o amb imatges que Google no pot fer servir: {items}",
+      "fail:not-200": "La pàgina que conté el marcatge {items} no respon 200.",
+      "fail:noindex": "La pàgina que conté el marcatge {items} té una directiva noindex per a Googlebot.",
+      "fail:disallowed": "El robots.txt prohibeix a Googlebot el rastreig de la pàgina que conté el marcatge {items}.",
+      "fail:image-blocked": "{count} imatge(s) d'elements per a funcions de Google tenen el rastreig prohibit per a Googlebot-Image: {items}",
+      "fail:image-unavailable": "{count} imatge(s) d'elements per a funcions de Google no s'han carregat com a imatges: {items}"
+    }
+  },
+  "schema-organization": {
+    "title": "Completesa i correcció del marcatge Organization",
+    "why": "Google fa servir el marcatge Organization de la pàgina d'inici o de la pàgina «Qui som» per entendre l'organització, per exemple per triar un logotip i per als panells de coneixement. No cal a totes les pàgines i no garanteix cap funció visible.",
+    "fix": "Afegeix un sol node Organization complet a la pàgina d'inici amb un @id estable i fes-hi referència des de les altres pàgines.",
+    "messages": {
+      "fail": "El marcatge Organization de la pàgina d'inici o de la pàgina «Qui som» requereix atenció: {items}",
+      "fail:missing": "No s'ha trobat marcatge Organization a la pàgina d'inici ni a la pàgina «Qui som».",
+      "fail:foreign-url": "La url d'Organization apunta a un altre amfitrió: {items}",
+      "fail:missing-recommended": "A l'Organization del lloc li falten propietats recomanades: {items}"
+    }
+  },
+  "schema-organization-logo": {
+    "title": "El logotip d'Organization no compleix els requisits de Google",
+    "why": "Google requereix un logotip d'Organization d'almenys 112 per 112 píxels, rastrejable i indexable, en un format que admeti Google Imatges. Google no estableix cap requisit de relació d'aspecte.",
+    "fix": "Fes servir un logotip de mapa de bits o SVG gairebé quadrat de ≥112×112 px que es llegeixi bé sobre fons blanc, en una URL estable i rastrejable.",
+    "messages": {
+      "fail": "El logotip d'Organization no compleix els requisits de Google: {items}",
+      "fail:blocked": "El logotip d'Organization té el rastreig prohibit per a Googlebot-Image: {items}",
+      "fail:not-200": "El logotip d'Organization no respon 200: {items}",
+      "fail:not-image": "La URL del logotip d'Organization no retorna una imatge compatible: {items}",
+      "fail:too-small": "El logotip d'Organization és més petit de 112x112 píxels: {items}"
+    }
+  },
+  "schema-organization-identifiers": {
+    "title": "Els identificadors empresarials estan mal formats",
+    "why": "Google documenta propietats d'identificadors com vatID, taxID, duns, leiCode i iso6523Code, i propietats d'adreça amb codis de país ISO 3166-1 alpha-2. Els valors mal formats no es poden fer servir.",
+    "fix": "Fes servir els formats documentats. Google prefereix iso6523Code ('0199:<LEI>', '0060:<DUNS>') a duns/leiCode.",
+    "messages": {
+      "fail": "{count} identificador(s) empresarial(s) estan mal formats: {items}",
+      "fail:malformed-identifier": "{count} identificador(s) no coincideixen amb el seu format documentat: {items}",
+      "fail:country-not-alpha2": "{count} valor(s) addressCountry no són codis ISO 3166-1 alpha-2: {items}",
+      "fail:telephone-without-country-code": "{count} número(s) de telèfon no tenen prefix internacional.",
+      "fail:invalid-email": "{count} valor(s) email no són adreces de correu electrònic.",
+      "fail:tax-id-without-country": "S'indica un identificador fiscal sense país a l'adreça.",
+      "fail:vat-prefix-mismatch": "Un número d'IVA de la UE no comença amb el prefix del país de l'adreça."
+    }
+  },
+  "schema-site-name-website": {
+    "title": "Marcatge WebSite del nom del lloc absent o mal configurat a la pàgina d'inici",
+    "why": "Google llegeix el nom del lloc del marcatge WebSite de la pàgina d'inici, és a dir, de l'URI arrel del domini o del subdomini, no d'un subdirectori. WebSite.url hauria de ser la pàgina d'inici canònica. Quan l'arrel redirigeix, el nom del lloc reflecteix la pàgina a què arriba Googlebot.",
+    "fix": "Afegeix {\"@type\":\"WebSite\",\"name\":\"Brand\",\"alternateName\":[\"BRAND\",\"example.com\"],\"url\":\"https://example.com/\"} a la pàgina d'inici, combinat amb qualsevol node WebSite existent.",
+    "messages": {
+      "fail": "El marcatge WebSite del nom del lloc de la pàgina d'inici requereix atenció: {items}",
+      "fail:missing": "La pàgina d'inici a què arriba Googlebot no té cap element WebSite amb nom; Google triarà el nom del lloc a partir d'altres senyals.",
+      "fail:several-websites": "La pàgina d'inici té diversos elements WebSite ({items}); Google en demana un sol node.",
+      "fail:url-other-host": "La url de WebSite apunta a un altre amfitrió: {items}",
+      "fail:name-conflict": "El nom del lloc és diferent entre el marcatge WebSite i altres fonts: {items}"
+    }
+  },
+  "schema-sitelinks-searchbox-obsolete": {
+    "title": "SearchAction per al quadre de cerca d'enllaços de lloc és obsolet",
+    "why": "Google va retirar el quadre de cerca d'enllaços de lloc a tot el món el novembre del 2024. El marcatge SearchAction és inofensiu, i la seva absència no és mai un problema.",
+    "fix": "Neteja opcional. Google diu que no cal eliminar-lo i que no causa errors a Search Console.",
+    "messages": {
+      "fail": "WebSite té marcatge SearchAction per al quadre de cerca d'enllaços de lloc, que Google va retirar el novembre del 2024; és inofensiu."
+    }
+  },
+  "schema-localbusiness": {
+    "title": "Completesa i validesa del marcatge LocalBusiness",
+    "why": "Google documenta el marcatge LocalBusiness amb name i address obligatoris i propietats recomanades com geo, telephone, openingHoursSpecification i priceRange, fent servir el subtipus més específic.",
+    "fix": "Un LocalBusiness per a cada ubicació física, a la pàgina de la ubicació, amb el NAP complet que coincideixi amb la pàgina visible i amb el Google Business Profile.",
+    "messages": {
+      "fail": "El marcatge LocalBusiness requereix atenció: {items}",
+      "fail:missing-required": "Al marcatge LocalBusiness li falten propietats obligatòries: {items}",
+      "fail:address-not-structured": "L'address de LocalBusiness és text pla en lloc d'un PostalAddress: {items}",
+      "fail:geo-precision": "Les coordenades de LocalBusiness tenen menys de 5 decimals: {items}",
+      "fail:price-range-too-long": "El priceRange de LocalBusiness té 100 caràcters o més: {items}"
+    }
+  },
+  "schema-self-serving-reviews": {
+    "title": "Ressenyes o valoracions interessades a l'Organization o el LocalBusiness del mateix lloc",
+    "why": "Google no mostra resultats enriquits de ressenyes per a les ressenyes que una empresa o organització publica sobre si mateixa, incloses les ressenyes incrustades des de ginys.",
+    "fix": "Elimina aggregateRating/review del marcatge Organization/LocalBusiness del propietari. Mantén el marcatge de ressenyes a Product, a obres creatives relacionades amb serveis o a ressenyes d'entitats de tercers quan siguin aptes.",
+    "messages": {
+      "fail": "{count} element(s) de ressenya o de valoració descriuen la mateixa organització del lloc; Google no els mostra com a estrelles de ressenyes: {items}"
+    }
+  },
+  "schema-review-snippet": {
+    "title": "Requisits de Review i AggregateRating",
+    "why": "Google documenta les propietats obligatòries de Review i AggregateRating i els tipus d'elements que poden descriure. Les valoracions fora de l'escala declarada o sense els camps obligatoris fan que el fragment no sigui apte.",
+    "fix": "Imbrica Review/AggregateRating dins del Product/Recipe/etc. ressenyat i indica l'escala explícitament si no és 1–5.",
+    "messages": {
+      "fail": "{count} element(s) de ressenya o de valoració no compleixen els requisits dels fragments de ressenyes: {items}",
+      "fail:missing-item-reviewed": "{count} element(s) de ressenya o de valoració no indiquen què ressenyen: {items}",
+      "fail:item-reviewed-without-name": "{count} element(s) ressenyats no tenen nom: {items}",
+      "fail:unsupported-item-type": "{count} element(s) de ressenya o de valoració descriuen un tipus que els fragments de ressenyes no admeten: {items}",
+      "fail:missing-author": "{count} ressenya(es) no tenen autor.",
+      "fail:author-name-too-long": "{count} nom(s) d'autor de ressenyes tenen 100 caràcters o més: {items}",
+      "fail:missing-rating": "{count} element(s) de ressenya o de valoració no tenen el valor de la valoració: {items}",
+      "fail:missing-count": "{count} valoració(ns) agregada(es) no tenen ni ratingCount ni reviewCount.",
+      "fail:invalid-count": "{count} recompte(s) de valoracions no són nombres enters iguals o superiors a 1: {items}",
+      "fail:malformed-rating": "{count} valor(s) de valoració fan servir una coma decimal: {items}",
+      "fail:out-of-bounds": "{count} valor(s) de valoració queden fora de l'escala declarada: {items}"
+    }
+  },
+  "schema-review-authenticity": {
+    "title": "Les ressenyes semblen falses, incentivades sense indicar-ho o no es mostren",
+    "why": "Des del juliol del 2026, les directrius de Google sobre fragments de ressenyes exclouen les ressenyes falses i les ressenyes incentivades sense indicar-ho. La regla informa de senyals compatibles amb això, mai d'una acusació.",
+    "fix": "Marca només les ressenyes genuïnes d'usuaris que es veuen a la pàgina. Indica els incentius de manera clara i destacada.",
+    "messages": {
+      "fail": "{count} senyal(s) compatibles amb ressenyes que potser no són genuïnes, perquè els revisi l'analista: {items}",
+      "fail:placeholder-author": "{count} nom(s) d'autor de ressenyes semblen provisionals: {items}",
+      "fail:duplicate-text": "{count} text(os) de ressenyes repeteixen una altra ressenya: {items}",
+      "fail:aggregate-mismatch": "La valoració agregada és diferent de la mitjana de les ressenyes marcades: {items}"
+    }
+  },
+  "schema-product-snippet": {
+    "title": "Requisits dels fragments de producte (millores de ressenyes o de preu)",
+    "why": "Google requereix un nom de producte i almenys un dels elements review, aggregateRating o offers per als fragments de producte, amb els preus en un format vàlid.",
+    "fix": "Emet el preu com un nombre simple (\"price\": 1299.00) amb priceCurrency \"EUR\". Fes servir Offer per a un sol venedor i ProductGroup per a les variants.",
+    "messages": {
+      "fail": "No es compleixen {count} requisit(s) dels fragments de producte: {items}",
+      "fail:missing-name": "{count} element(s) Product no tenen nom.",
+      "fail:missing-offer-or-review": "{count} element(s) Product no tenen ni offers, ni review, ni aggregateRating: {items}",
+      "fail:offer-without-price": "{count} oferta(es) no tenen preu: {items}",
+      "fail:malformed-price": "{count} valor(s) de preu no són nombres simples: {items}",
+      "fail:aggregate-offer-incomplete": "A {count} element(s) AggregateOffer els falta lowPrice o priceCurrency: {items}",
+      "fail:invalid-currency": "{count} valor(s) priceCurrency no són codis ISO 4217: {items}"
+    }
+  },
+  "schema-merchant-listing": {
+    "title": "Requisits de les fitxes de comerciant (espais de Shopping)",
+    "why": "Google documenta les propietats obligatòries i recomanades per a les fitxes de comerciant als espais de Shopping, inclosos un preu superior a zero, la disponibilitat i els identificadors de producte.",
+    "fix": "Renderitza al servidor un node Product + Offer complet que coincideixi amb el quadre de compra visible. Afegeix-hi un GTIN quan el producte en tingui.",
+    "messages": {
+      "fail": "No es compleixen {count} requisit(s) de les fitxes de comerciant: {items}",
+      "fail:missing-image": "{count} element(s) Product en venda no tenen imatge: {items}",
+      "fail:missing-currency": "{count} oferta(es) no tenen priceCurrency: {items}",
+      "fail:price-not-positive": "{count} oferta(es) tenen un preu de zero o menys, que les fitxes de comerciant no accepten: {items}",
+      "fail:missing-identifiers": "{count} element(s) Product no tenen gtin, mpn ni brand: {items}",
+      "fail:missing-availability": "{count} oferta(es) no tenen availability: {items}"
+    }
+  },
+  "schema-gtin-validity": {
+    "title": "Els valors GTIN no tenen la longitud correcta o fallen el dígit de control",
+    "why": "Google accepta GTIN-8, 12, 13 i 14 a les dades estructurades. GS1 defineix les longituds i el dígit de control; els valors no vàlids no identifiquen cap producte.",
+    "fix": "Fes servir el GTIN que assigna el fabricant o omet la propietat. No te n'inventis mai cap.",
+    "messages": {
+      "fail": "{count} valor(s) GTIN no són vàlids: {items}",
+      "fail:not-numeric": "{count} valor(s) GTIN contenen caràcters que no són dígits: {items}",
+      "fail:wrong-length": "{count} valor(s) GTIN tenen una longitud incorrecta: {items}",
+      "fail:repeated-digits": "{count} valor(s) GTIN són un sol dígit repetit: {items}",
+      "fail:check-digit": "{count} valor(s) GTIN no superen el dígit de control de GS1: {items}",
+      "fail:duplicate": "{count} valor(s) GTIN són compartits per productes diferents: {items}"
+    }
+  },
+  "schema-product-variants": {
+    "title": "Marcatge ProductGroup i de variants",
+    "why": "Google documenta ProductGroup amb hasVariant, variesBy i productGroupID per als productes que es venen en variants. Els identificadors que no coincideixen o els valors variesBy no vàlids trenquen l'agrupació.",
+    "fix": "Modela les variants com a ProductGroup.hasVariant[Product] amb referències inverses isVariantOf i Offers per a cada variant.",
+    "messages": {
+      "fail": "{count} problema(es) de ProductGroup o de variants: {items}",
+      "fail:missing-name": "Un ProductGroup no té nom.",
+      "fail:invalid-varies-by": "Google no admet {count} valor(s) variesBy: {items}",
+      "fail:group-id-mismatch": "{count} variant(s) indiquen un identificador de grup diferent de productGroupID: {items}",
+      "fail:variant-without-id": "{count} variant(s) no tenen ni sku ni gtin: {items}",
+      "fail:duplicate-variant-id": "{count} identificador(s) de variant es fan servir dues vegades: {items}",
+      "fail:variant-without-offer": "{count} variant(s) no tenen offers: {items}"
+    }
+  },
+  "schema-offer-price-specification": {
+    "title": "Els preus de rebaixa, ratllats i per a membres estan codificats incorrectament",
+    "why": "Google documenta com marcar els preus de rebaixa, els preus ratllats i els preus per a membres amb UnitPriceSpecification i dates de validesa. Una codificació incorrecta mostra un preu equivocat.",
+    "fix": "Posa el preu vigent a offers.price i el preu anterior en una UnitPriceSpecification amb priceType StrikethroughPrice.",
+    "messages": {
+      "fail": "{count} problema(es) de codificació de preus de rebaixa, ratllats o per a membres: {items}",
+      "fail:unsupported-price-type": "{count} valor(s) priceType no són StrikethroughPrice: {items}",
+      "fail:member-tier-with-price-type": "{count} especificació(ns) de preu combinen validForMemberTier amb priceType, cosa que Google ignora: {items}",
+      "fail:points-without-member-tier": "{count} especificació(ns) de preu indiquen membershipPointsEarned sense validForMemberTier.",
+      "fail:price-valid-until-on-specification": "{count} especificació(ns) de preu tenen priceValidUntil, que correspon a l'Offer.",
+      "fail:reference-quantity-incomplete": "A {count} valor(s) referenceQuantity els falta value o unitCode.",
+      "fail:strikethrough-only": "{count} oferta(es) tenen un preu ratllat, però cap preu vigent.",
+      "fail:not-discounted": "{count} preu(s) vigent(s) no són inferiors al preu ratllat: {items}"
+    }
+  },
+  "schema-shipping-details": {
+    "title": "Marcatge d'enviament (OfferShippingDetails de l'oferta i ShippingService de l'organització)",
+    "why": "Google documenta OfferShippingDetails per a les ofertes i les polítiques d'enviament per a l'organització. La configuració de Merchant Center i de Search Console té prioritat sobre el marcatge.",
+    "fix": "Defineix la política estàndard una sola vegada sota Organization (en una pàgina de política d'enviament). Fes servir shippingDetails a les ofertes només per a les excepcions.",
+    "messages": {
+      "fail": "{count} problema(es) del marcatge d'enviament: {items}"
+    }
+  },
+  "schema-return-policy": {
+    "title": "Marcatge MerchantReturnPolicy",
+    "why": "Google documenta MerchantReturnPolicy per a l'oferta o per a l'organització. El marcatge de l'oferta té prioritat sobre el de l'organització, i la configuració de Merchant Center té prioritat sobre tots dos.",
+    "fix": "Afegeix una sola política per a l'organització a la pàgina de devolucions. Sobreescriu-la per oferta només per a les excepcions.",
+    "messages": {
+      "fail": "{count} problema(es) del marcatge de política de devolucions: {items}",
+      "fail:incomplete": "{count} política(es) de devolucions no tenen ni applicableCountry amb returnPolicyCategory ni merchantReturnLink.",
+      "fail:finite-without-days": "{count} termini(s) de devolució finit(s) no tenen merchantReturnDays.",
+      "fail:member-program-outside-organization": "{count} element(s) MemberProgram no estan definits sota Organization.hasMemberProgram: {items}"
+    }
+  },
+  "schema-article": {
+    "title": "Marcatge Article / NewsArticle / BlogPosting",
+    "why": "Google documenta el marcatge Article, NewsArticle i BlogPosting amb headline, image, author i dates recomanats. No és obligatori per a Top Stories ni per a Discover.",
+    "fix": "Emet BlogPosting/NewsArticle amb headline, una matriu image, dates ISO amb diferència horària i nodes Person d'author que enllacin a les pàgines d'autor.",
+    "messages": {
+      "fail": "{count} problema(es) del marcatge Article: {items}",
+      "fail:missing-image": "{count} element(s) d'article no tenen imatge: {items}",
+      "fail:missing-date": "{count} element(s) d'article de notícies o de blog no tenen datePublished: {items}",
+      "fail:author-not-entity": "{count} valor(s) d'author són text pla en lloc de Person o Organization: {items}",
+      "fail:author-type": "{count} autor(s) no són Person ni Organization: {items}",
+      "fail:merged-authors": "{count} autor(s) Person contenen diversos noms: {items}"
+    }
+  },
+  "schema-author-entity-quality": {
+    "title": "Les entitats d'autor són imprecises, fusionades o incoherents",
+    "why": "Google recomana un node Person o Organization per autor, amb un name i una url o un sameAs que l'identifiquin. Els noms fusionats o els autors provisionals impedeixen la desambiguació. No és un mecanisme de posicionament.",
+    "fix": "Un node Person per autor amb un @id estable, una url a la pàgina de perfil de l'autor i sameAs als perfils externs.",
+    "messages": {
+      "fail": "{count} entitat(s) d'autor poden ser imprecises, fusionades o incoherents: {items}",
+      "fail:broken-author-url": "{count} url d'autor responen amb un error: {items}"
+    }
+  },
+  "schema-breadcrumb": {
+    "title": "Requisits de BreadcrumbList",
+    "why": "Google documenta BreadcrumbList amb almenys dos elements i les seves posicions. Des del gener del 2025, Google només mostra les rutes de navegació als resultats en ordinadors, de manera que l'impacte es limita als ordinadors.",
+    "fix": "Genera la ruta a partir de la jerarquia del lloc per la qual naveguen els usuaris, amb URL canòniques absolutes.",
+    "messages": {
+      "fail": "{count} problema(es) de BreadcrumbList: {items}",
+      "fail:too-few-items": "El BreadcrumbList té menys de dos elements: {items}",
+      "fail:invalid-position": "{count} posició(ns) de ListItem falten, estan repetides o no són nombres enters: {items}",
+      "fail:missing-name": "{count} ListItem no tenen nom: {items}",
+      "fail:missing-item": "{count} ListItem que no són l'últim no tenen item: {items}",
+      "fail:broken-item-url": "{count} URL d'elements de la ruta de navegació responen amb un error: {items}",
+      "fail:redirecting-item-url": "{count} URL d'elements de la ruta de navegació redirigeixen: {items}",
+      "fail:name-with-site-name": "{count} nom(s) de la ruta de navegació inclouen el nom del lloc com ho fan els títols de les pàgines: {items}. Google mostra cada nom com un pas de la ruta, de manera que fes servir l'etiqueta curta de la pàgina."
+    }
+  },
+  "schema-profile-page": {
+    "title": "Requisits i elegibilitat del marcatge ProfilePage",
+    "why": "Google documenta ProfilePage per a les pàgines sobre una sola persona o organització, amb mainEntity obligatori. Les pàgines d'equip que enumeren moltes persones no són pàgines de perfil.",
+    "fix": "Afegeix ProfilePage + Person (amb @id) a les pàgines d'autor o d'equip i fes referència a aquest @id des d'Article.author.",
+    "messages": {
+      "fail": "{count} problema(es) de ProfilePage: {items}",
+      "fail:several-people": "El ProfilePage és en una pàgina que descriu {items}; les pàgines de perfil tracten d'una sola persona o organització."
+    }
+  },
+  "schema-video": {
+    "title": "Requisits de VideoObject",
+    "why": "Google documenta les propietats obligatòries de VideoObject, incloses name, thumbnailUrl i uploadDate, i només indexa vídeos a les pàgines de visualització. Una miniatura bloquejada fa que el vídeo no sigui apte.",
+    "fix": "Proporciona una URL de miniatura estable i contentUrl. Col·loca el marcatge a la pàgina on el vídeo és el contingut principal.",
+    "messages": {
+      "fail": "{count} problema(es) de VideoObject: {items}",
+      "fail:missing-required": "Al marcatge VideoObject li falten propietats obligatòries: {items}"
+    }
+  },
+  "schema-image-metadata": {
+    "title": "Metadades de llicència i de crèdit d'ImageObject",
+    "why": "Google mostra els detalls de llicència a Google Imatges quan el marcatge ImageObject o les metadades IPTC proporcionen una llicència, una pàgina per adquirir la llicència, un creador o un crèdit. Només és rellevant per als llocs que concedeixen llicències d'imatges.",
+    "fix": "Afegeix license i acquireLicensePage per a les fotografies per a les quals ofereixes llicència. Afegeix creditText/creator per a l'atribució.",
+    "messages": {
+      "fail": "{count} problema(es) de llicència d'ImageObject: {items}"
+    }
+  },
+  "schema-event": {
+    "title": "Requisits d'Event",
+    "why": "Google documenta el marcatge Event amb name, startDate i location obligatoris, per a esdeveniments en una ubicació física. Fer servir Event per a promocions o horaris comercials és un ús indegut.",
+    "fix": "Un node Event per a cada actuació o data, amb l'adreça completa del recinte. Fes servir eventStatus per a les cancel·lacions i els canvis de data en lloc d'eliminar l'esdeveniment.",
+    "messages": {
+      "fail": "{count} problema(es) d'Event: {items}",
+      "fail:missing-required": "Al marcatge Event li falten propietats obligatòries: {items}",
+      "fail:location-without-address": "{count} esdeveniment(s) tenen una location sense address: {items}",
+      "fail:virtual-only": "{count} esdeveniment(s) només tenen una ubicació virtual; els resultats d'esdeveniments de Google necessiten una ubicació física: {items}"
+    }
+  },
+  "schema-jobposting": {
+    "title": "Requisits i política de JobPosting",
+    "why": "Google documenta JobPosting per a les pàgines d'una sola oferta de feina, amb propietats obligatòries i validThrough. Mantenir actives les ofertes caducades pot provocar una acció manual.",
+    "fix": "Quan una oferta es tanqui, elimina el marcatge, estableix un validThrough passat o retorna 404/410, i notifica-ho mitjançant la Indexing API (admesa per a JobPosting).",
+    "messages": {
+      "fail": "{count} problema(es) de JobPosting: {items}",
+      "fail:expired": "{count} oferta(es) de feina van caducar abans que s'obtingués la pàgina, però la pàgina és activa i indexable: {items}",
+      "fail:missing-required": "Al marcatge JobPosting li falten propietats obligatòries: {items}",
+      "fail:remote-without-applicant-location": "{count} oferta(es) de feina en remot no tenen applicantLocationRequirements: {items}",
+      "fail:several-jobs": "La pàgina té diversos elements ({items}); JobPosting correspon a les pàgines d'una sola oferta de feina."
+    }
+  },
+  "schema-course-list": {
+    "title": "Requisits de la llista de cursos (carrusel)",
+    "why": "Google va retirar el resultat enriquit d'informació de cursos el 2025; el carrusel de llista de cursos es manté, amb un ItemList d'almenys tres cursos.",
+    "fix": "Afegeix un ItemList a la pàgina del catàleg de cursos que enllaci ≥3 pàgines de detall de Course, cadascuna amb name, description i provider.",
+    "messages": {
+      "fail": "{count} problema(es) de la llista de cursos: {items}"
+    }
+  },
+  "schema-dataset": {
+    "title": "Requisits de Dataset",
+    "why": "Google va retirar progressivament els resultats de Dataset de la Cerca el 2025 i va aclarir que el marcatge Dataset el fa servir Dataset Search. Les seves directrius requereixen un nom i una descripció de 50 a 5000 caràcters.",
+    "fix": "Afegeix Dataset amb una descripció de 50–5000 caràcters i una distribució DataDownload.",
+    "messages": {
+      "fail": "{count} problema(es) de Dataset: {items}"
+    }
+  },
+  "schema-software-app": {
+    "title": "Requisits de SoftwareApplication",
+    "why": "Google requereix una valoració o una ressenya i un preu d'oferta per als resultats enriquits d'aplicacions de programari. Les pàgines sense valoracions genuïnes d'usuaris no hi poden optar.",
+    "fix": "Afegeix el preu de l'Offer i valoracions genuïnes d'usuaris que es vegin a la pàgina.",
+    "messages": {
+      "fail": "No es compleixen {count} requisit(s) de SoftwareApplication: {items}"
+    }
+  },
+  "schema-qapage": {
+    "title": "Requisits i elegibilitat de QAPage",
+    "why": "Google documenta QAPage per a les pàgines on els usuaris fan una pregunta i altres la responen. No és per a les PMF redactades pel lloc; reetiquetar una pàgina de PMF com a QAPage és un ús indegut.",
+    "fix": "Fes servir QAPage només en fils de preguntes i respostes de la comunitat. Per a les discussions generals, fes servir DiscussionForumPosting.",
+    "messages": {
+      "fail": "{count} problema(es) de QAPage: {items}",
+      "fail:several-questions": "El QAPage conté {items}; Google admet una pregunta per pàgina.",
+      "fail:site-authored-candidate": "{count} pregunta(es) i les seves respostes no tenen autor, com en una pàgina de PMF redactada pel lloc: {items}"
+    }
+  },
+  "schema-discussion-forum": {
+    "title": "Requisits de DiscussionForumPosting / SocialMediaPosting",
+    "why": "Google documenta DiscussionForumPosting i SocialMediaPosting per al contingut de fòrums i de xarxes socials creat pels usuaris, no per als articles redactats pel lloc.",
+    "fix": "Fes-los servir per als fils de fòrums o de la comunitat. Fes servir Article/BlogPosting per al contingut editorial.",
+    "messages": {
+      "fail": "{count} problema(es) del marcatge de fòrums de discussió: {items}"
+    }
+  },
+  "schema-paywalled-content": {
+    "title": "Marcatge de contingut amb mur de pagament",
+    "why": "Google documenta el marcatge de mur de pagament amb isAccessibleForFree i cssSelector perquè servir el contingut complet a Googlebot però no als usuaris no es tracti com a encobriment.",
+    "fix": "Embolcalla la secció restringida en una classe (per exemple, .paywall) i declara hasPart {WebPageElement, isAccessibleForFree:false, cssSelector:'.paywall'}.",
+    "messages": {
+      "fail": "{count} problema(es) del marcatge de mur de pagament: {items}",
+      "fail:non-class-selector": "{count} valor(s) cssSelector no són selectors de classe: {items}",
+      "fail:selector-unmatched": "{count} valor(s) cssSelector no coincideixen amb cap element de la pàgina: {items}",
+      "fail:nested-sections": "{count} secció(ns) amb mur de pagament són dins d'una altra: {items}"
+    }
+  },
+  "schema-recipe": {
+    "title": "Requisits de Recipe (editors)",
+    "why": "Google documenta el marcatge Recipe amb name i image obligatoris i propietats recomanades per als resultats enriquits de receptes.",
+    "fix": "Fes servir instruccions HowToStep i durades ISO. Proporciona imatges en 3 relacions d'aspecte.",
+    "messages": {
+      "fail": "{count} problema(es) de Recipe: {items}",
+      "fail:missing-required": "Al marcatge Recipe li falten propietats obligatòries: {items}",
+      "fail:calories-without-yield": "{count} recepta(es) indiquen nutrition.calories sense recipeYield: {items}"
+    }
+  },
+  "schema-service-offercatalog": {
+    "title": "El marcatge Service / OfferCatalog només és vocabulari (sense resultat enriquit de Google)",
+    "why": "Service i OfferCatalog són tipus de schema.org sense cap resultat enriquit de Google. Descriuen l'empresa per a altres consumidors; les valoracions interessades que hi figuren no es mostren.",
+    "fix": "Mantén el marcatge Service exacte i enllaçat amb l'Organization. No esperis ni prometis cap funció a la pàgina de resultats.",
+    "messages": {
+      "fail": "{count} element(s) Service tenen valoracions sobre els serveis del mateix lloc, que els fragments de ressenyes no mostren: {items}"
+    }
+  },
+  "schema-faqpage-retired": {
+    "title": "El marcatge FAQPage ja no produeix resultats enriquits de Google (informatiu)",
+    "why": "Google va limitar els resultats enriquits de PMF als llocs governamentals i de salut reconeguts l'agost del 2023, va deixar de mostrar-los a la Cerca a partir del 7 de maig de 2026 i en va eliminar la documentació el 15 de juny de 2026. El marcatge FAQPage vàlid és inofensiu; altres consumidors el poden llegir.",
+    "fix": "No cal fer res. Mantén-lo si és exacte i visible (altres consumidors el poden llegir). No l'afegeixis mai per aconseguir resultats enriquits de Google.",
+    "messages": {
+      "fail": "La pàgina té marcatge FAQPage; Google ja no mostra resultats enriquits de PMF. El marcatge vàlid és inofensiu."
+    }
+  },
+  "schema-retired-feature-markup": {
+    "title": "Marcatge per a funcions de Google retirades o eliminades",
+    "why": "Google ha retirat diversos resultats enriquits, entre els quals HowTo, els anuncis especials, la informació de cursos, ClaimReview, el sou estimat, els vídeos educatius, les fitxes de vehicles i els problemes de pràctica. El marcatge per a aquests resultats és inofensiu i no obté cap funció de Google.",
+    "fix": "No cal eliminar-lo. Google diu que el marcatge no admès no causa cap problema i que el seu ús fora de la Cerca de Google no es veu afectat. Elimina'l només per reduir el manteniment.",
+    "messages": {
+      "fail": "La pàgina té marcatge per a funcions de Google retirades: {items}. És inofensiu."
+    }
+  },
+  "schema-carousel-itemlist": {
+    "title": "Marcatge ItemList de carrusel a les pàgines de resum",
+    "why": "Google documenta el marcatge ItemList per als carrusels a les pàgines de resum, una versió beta limitada per regió i tipus de consulta, amb almenys tres elements en URL diferents.",
+    "fix": "Posa ItemList només a la pàgina de resum, amb referències a les URL de les pàgines de detall.",
+    "messages": {
+      "fail": "{count} problema(es) d'ItemList de carrusel: {items}"
+    }
+  },
+  "schema-feature-opportunity": {
+    "title": "Falten funcions de Google aplicables al tipus de pàgina",
+    "why": "La galeria de cerca de Google enumera les funcions de dades estructurades que s'admeten actualment. Quan una pàgina clarament pot optar a una, com les fitxes de comerciant en una pàgina de producte, el marcatge que falta és una oportunitat.",
+    "fix": "Implementa la funció a què es pot optar amb totes les propietats obligatòries i amb propietats recomanades exactes. Google prefereix «menys propietats, però completes i exactes» a moltes d'incompletes.",
+    "messages": {
+      "fail": "{count} pàgina(es) poden optar a una funció de Google que no marquen: {items}",
+      "fail:article-markup-missing": "{count} pàgina(es) declaren og:type article, però no tenen marcatge Article: {items}",
+      "fail:product-markup-missing": "{count} pàgina(es) declaren og:type product, però no tenen marcatge Product: {items}",
+      "fail:breadcrumb-missing": "{count} pàgina(es) profundes no tenen marcatge BreadcrumbList: {items}"
+    }
+  },
+  "schema-url-inspection-rich-results": {
+    "title": "Veredicte de Google sobre els resultats enriquits de la URL indexada",
+    "why": "L'API d'inspecció d'URL de Search Console retorna el veredicte de Google sobre els resultats enriquits de la versió indexada d'una URL. Els elements amb errors no poden aparèixer com a resultats enriquits.",
+    "fix": "Corregeix primer els elements ERROR i després torna a sol·licitar la indexació a Search Console.",
+    "messages": {
+      "fail": "Google indica problemes de resultats enriquits per a {url}: {items}.",
+      "fail:errors": "Google ha trobat {count} error(s) als resultats enriquits de {url}, que n'impedeixen la visualització: {items}.",
+      "fail:warnings": "Google ha trobat {count} advertiment(s) als resultats enriquits de {url}: {items}."
+    }
+  },
+  "schema-duplicate-feature-nodes": {
+    "title": "Diversos nodes contradictoris per a la mateixa entitat d'una funció en una sola pàgina",
+    "why": "Diversos nodes que descriuen la mateixa entitat amb valors diferents, com dos nodes Product amb preus diferents, deixen que els consumidors triïn. Google demana que s'afegeixin les propietats al node existent.",
+    "fix": "Desactiva l'emissor duplicat (tema, connector o gestor d'etiquetes) i mantén un sol node complet per entitat, enllaçat per @id.",
+    "messages": {
+      "fail": "{count} entitat(s) es descriuen amb diversos nodes a la pàgina: {items}",
+      "fail:conflicting-duplicate": "{count} entitat(s) es descriuen dues vegades amb valors diferents: {items}",
+      "fail:exact-duplicate": "{count} entitat(s) es descriuen dues vegades amb els mateixos valors: {items}"
+    }
+  }
+}
