@@ -67,7 +67,13 @@ export async function loadLogin(): Promise<StoredLogin | undefined> {
     return undefined;
   }
   const json = stored.mode === 'dpapi' ? await dpapi('unprotect', stored.payload) : stored.payload;
-  return JSON.parse(json) as StoredLogin;
+  let login: Partial<StoredLogin> | null = null;
+  try {
+    login = JSON.parse(json) as Partial<StoredLogin> | null;
+  } catch {}
+  // A fixed message: JSON.parse quotes the text it could not read, and that text holds the secrets.
+  if (typeof login?.refreshToken !== 'string' || typeof login.clientId !== 'string' || typeof login.clientSecret !== 'string') throw new Error('The stored login is damaged.');
+  return login as StoredLogin;
 }
 
 /** Whether a login is stored, without reading its secret. */

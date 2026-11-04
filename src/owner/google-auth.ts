@@ -152,3 +152,28 @@ export async function refreshAccessToken(client: HttpClient, oauth: OAuthClient,
   const payload = await tokenRequest(client, oauth.tokenUri, { grant_type: 'refresh_token', refresh_token: refreshToken, client_id: oauth.clientId, client_secret: oauth.clientSecret });
   return { token: payload.access_token, expiresAt: Date.now() + (payload.expires_in ?? 3600) * 1000, refreshToken, source: 'oauth' };
 }
+
+export const googleRevokeEndpoint = 'https://oauth2.googleapis.com/revoke';
+
+/** What Google did with a token: revoked it, found it already invalid, or left it as it was, with a reason safe to show. */
+export type Revocation = { readonly outcome: 'revoked' | 'already-invalid' } | { readonly outcome: 'failed'; readonly reason: string };
+
+/** Asks Google to revoke a token; it answers 200 when it did and 400 invalid_token when the token had expired or was revoked. */
+export async function revokeToken(client: HttpClient, token: string, endpoint = googleRevokeEndpoint): Promise<Revocation> {
+  const result = await client.fetch(endpoint, {
+    method: 'POST',
+    followRedirects: false,
+    headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+    body: new URLSearchParams({ token }).toString(),
+    maxBytes: 64 * 1024,
+  });
+  if (result.error) return { outcome: 'failed', reason: `Google could not be reached: ${result.error.code}` };
+  if (result.status === 200) return { outcome: 'revoked' };
+  let error: unknown;
+  try {
+    error = (JSON.parse(result.body.toString('utf8')) as { error?: unknown }).error;
+  } catch {}
+  if (result.status === 400 && error === 'invalid_token') return { outcome: 'already-invalid' };
+  // Google's error codes are safe to show; the rest of the response never is.
+  return { outcome: 'failed', reason: `Google answered ${result.status}${typeof error === 'string' && /^[a-z_]{1,40}$/u.test(error) ? ` ${error}` : ''}` };
+}

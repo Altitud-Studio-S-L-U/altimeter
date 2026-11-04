@@ -24,8 +24,8 @@ import { isInside, reportDirectory, writeReport } from '../report/write.ts';
 import { locateFixes } from '../source/locate.ts';
 import { verifyExitCode, verifyTasks } from '../verify/index.ts';
 import { HttpClient } from '../fetch/http.ts';
-import { deleteLogin, loadLogin, loginStatus, saveLogin } from '../owner/credential-store.ts';
-import { readOAuthClient, startLoopbackLogin } from '../owner/google-auth.ts';
+import { deleteLogin, loadLogin, loginStatus, saveLogin, type StoredLogin } from '../owner/credential-store.ts';
+import { readOAuthClient, revokeToken, startLoopbackLogin, type Revocation } from '../owner/google-auth.ts';
 import { ipListCacheDirectory } from '../owner/bots/ip-ranges.ts';
 import { probeCacheDirectory } from '../probe/cache.ts';
 import { version } from '../version.ts';
@@ -321,22 +321,48 @@ async function verifyCommand(args: string[]): Promise<number> {
   return verifyExitCode(results);
 }
 
-async function gscCommand(args: string[]): Promise<number> {
+/** Dependencies tests replace; the command line uses the defaults. */
+export interface GscCommandContext {
+  readonly client?: HttpClient;
+  readonly revokeEndpoint?: string;
+  readonly stdout?: (text: string) => void;
+}
+
+/** altimeter gsc login, logout and status. */
+export async function gscCommand(args: string[], context: GscCommandContext = {}): Promise<number> {
+  const write = context.stdout ?? ((text: string) => void process.stdout.write(text));
   const [action, ...rest] = args;
   if (action === 'status') {
     const status = await loginStatus();
-    process.stdout.write(status.stored ? `A Search Console login is stored (${status.mode}, since ${status.createdAt}).\n` : 'No Search Console login is stored.\n');
+    write(status.stored ? `A Search Console login is stored (${status.mode}, since ${status.createdAt}).\n` : 'No Search Console login is stored.\n');
     return 0;
   }
   if (action === 'logout') {
-    const login = await loadLogin().catch(() => undefined);
-    if (login) {
-      const client = new HttpClient();
-      await client.fetch('https://oauth2.googleapis.com/revoke', { method: 'POST', followRedirects: false, headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token: login.refreshToken }).toString() });
-      await client.close();
+    let login: StoredLogin | undefined;
+    try {
+      login = await loadLogin();
+    } catch (error) {
+      // Nothing can revoke a login that cannot be read, so it is not worth keeping.
+      await deleteLogin();
+      throw new Error(`${error instanceof Error ? error.message : 'The stored login could not be read.'} It was deleted without being revoked; revoke it at https://myaccount.google.com/permissions.`);
     }
+    if (!login) {
+      write('No Search Console login is stored.\n');
+      return 0;
+    }
+    const client = context.client ?? new HttpClient();
+    let revocation: Revocation;
+    try {
+      revocation = await revokeToken(client, login.refreshToken, context.revokeEndpoint);
+    } finally {
+      if (!context.client) await client.close();
+    }
+    // A token Google did not revoke stays valid, so the login is kept for another attempt.
+    if (revocation.outcome === 'failed') throw new Error(`The Search Console login was not revoked (${revocation.reason}) and is still stored. Run "altimeter gsc logout" again, or revoke it at https://myaccount.google.com/permissions.`);
     await deleteLogin();
-    process.stdout.write('The stored Search Console login was revoked and deleted.\n');
+    write(revocation.outcome === 'revoked'
+      ? 'The stored Search Console login was revoked and deleted.\n'
+      : 'Google reports that the stored Search Console login had already expired or been revoked; it was deleted.\n');
     return 0;
   }
   if (action !== 'login') throw new UsageError('Use "altimeter gsc login", "gsc logout" or "gsc status".');
@@ -352,9 +378,9 @@ async function gscCommand(args: string[]): Promise<number> {
     if (values.remember) {
       if (!token.refreshToken) throw new UsageError('Google did not return a refresh token, so the login cannot be stored.');
       const path = await saveLogin({ clientId: oauth.clientId, clientSecret: oauth.clientSecret, refreshToken: token.refreshToken, createdAt: new Date().toISOString() }, values.remember);
-      process.stdout.write(`Signed in. The login is stored in ${path}. If your OAuth consent screen is in Testing mode, Google expires it after 7 days.\n`);
+      write(`Signed in. The login is stored in ${path}. If your OAuth consent screen is in Testing mode, Google expires it after 7 days.\n`);
     } else {
-      process.stdout.write('Signed in for this session only. Pass the token to an audit with ALTIMETER_GSC_ACCESS_TOKEN, or log in again with --remember.\n');
+      write('Signed in for this session only. Pass the token to an audit with ALTIMETER_GSC_ACCESS_TOKEN, or log in again with --remember.\n');
     }
     return 0;
   } finally {
