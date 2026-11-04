@@ -1,3 +1,4 @@
+import type { ReportAnalysis } from '../ai/types.ts';
 import { catalogHash, rules as catalogRules } from '../catalog/index.ts';
 import type { CollectResult } from '../collect/index.ts';
 import type { EvidenceItem, EvidenceStore } from '../core/evidence.ts';
@@ -56,6 +57,16 @@ export interface Report {
   readonly findings: readonly ReportFinding[];
   readonly evidence: readonly EvidenceItem[];
   readonly tasks: readonly Task[];
+  /**
+   * The Claude Code or Codex analysis, when one ran. Its findings never change the score, the tasks or
+   * --fail-on; the candidates it confirmed or dismissed are listed in ai.confirmations.
+   */
+  readonly ai?: ReportAnalysis;
+}
+
+/** Adds an analysis to a report, replacing any earlier one; every other field stays as built. */
+export function mergeAnalysis(report: Report, analysis: ReportAnalysis): Report {
+  return { ...report, ai: analysis };
 }
 
 export interface BuildReportInput {
