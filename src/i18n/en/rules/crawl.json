@@ -492,5 +492,35 @@
     "messages": {
       "fail": "{count} of {total} sitemap URLs had no impressions in the 28 days read, for example {examples}."
     }
+  },
+  "crawl-bots-blocked-at-edge": {
+    "messages": {
+      "fail": "Verified {agent} requests got {count} errors or refusals out of {total} ({share}; {statuses}).",
+      "fail:refused": "Verified {agent} requests were refused {count} of {total} times ({share}; {statuses}), so the crawler could not read those pages.",
+      "fail:server-errors": "Verified {agent} requests got a server error {count} of {total} times ({share}; {statuses})."
+    }
+  },
+  "crawl-bots-robots-compliance": {
+    "messages": {
+      "fail": "Verified {agent} fetched paths robots.txt disallows {count} times.",
+      "fail:disallowed": "Verified {agent} fetched paths the current robots.txt disallows {count} times after its {hours}-hour caching window, counting from {since}, when the file took effect.",
+      "fail:assumed-unchanged": "Verified {agent} fetched paths the current robots.txt disallows {count} times, assuming robots.txt has not changed since {since}; give the date it changed if it did."
+    }
+  },
+  "crawl-bots-googlebot-sitemap-coverage": {
+    "messages": {
+      "fail": "Verified Googlebot fetched {fetched} of {urls} sitemap URLs ({share}) in {days} days of data.",
+      "fail:not-seen": "No verified Googlebot request appears in {days} days of data, so none of the {urls} sitemap URLs was fetched.",
+      "fail:low-coverage": "Verified Googlebot fetched only {fetched} of {urls} sitemap URLs ({share}) in {days} days of data.",
+      "fail:partial-coverage": "Verified Googlebot fetched {fetched} of {urls} sitemap URLs ({share}) in {days} days of data."
+    }
+  },
+  "crawl-bots-spoofed-crawlers": {
+    "messages": {
+      "fail": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents}).",
+      "fail:served": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents}), and {served} of them were served, so the edge trusts user agents.",
+      "fail:refused": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents}); the edge refused most of them.",
+      "fail:present": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents})."
+    }
   }
 }

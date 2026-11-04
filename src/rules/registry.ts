@@ -3,12 +3,13 @@ import { implementations as ai } from './ai/index.ts';
 import { implementations as content } from './content/index.ts';
 import { implementations as crawl } from './crawl/index.ts';
 import { implementations as intl } from './intl/index.ts';
+import { implementations as ownerBots } from './owner/bots.ts';
 import { implementations as owner } from './owner/search-console.ts';
 import { implementations as perf } from './perf/index.ts';
 import { implementations as schema } from './schema/index.ts';
 import { implementations as tech } from './tech/index.ts';
 
-const all = [...crawl, ...content, ...perf, ...schema, ...intl, ...tech, ...ai, ...owner];
+const all = [...crawl, ...content, ...perf, ...schema, ...intl, ...tech, ...ai, ...owner, ...ownerBots];
 
 export const implementations: ReadonlyMap<string, RuleImplementation> = new Map(all.map(implementation => [implementation.id, implementation]));
 
