@@ -69,7 +69,8 @@
     "unknown": "desconeguda"
   },
   "embeds": {
-    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} sol·licituds, {size}, fil principal {time}"
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests, plural, one {# sol·licitud} other {# sol·licituds}}, {size}, fil principal {time}",
+    "{name}: {requests} request, {size}, main thread {time}": "{name}: {requests, plural, one {# sol·licitud} other {# sol·licituds}}, {size}, fil principal {time}"
   },
   "entities": {
     "{entity}: main thread {time}, transfer {size}": "{entity}: fil principal {time}, transferència {size}"
@@ -269,7 +270,9 @@
     "origin-level": "nivell d'origen"
   },
   "scripts": {
-    "not attributed": "sense atribuir"
+    "not attributed": "sense atribuir",
+    "{url} (first party, {time})": "{url} (propi, {time})",
+    "{url} (third party, {time})": "{url} (de tercers, {time})"
   },
   "second": {
     "html": "HTML",
@@ -331,9 +334,9 @@
     "error": "error"
   },
   "subparts": {
-    "time to first byte {share}": "temps fins al primer byte {share}",
-    "resource load delay {share}": "retard de càrrega del recurs {share}",
-    "element render delay {share}": "retard de renderització de l'element {share}"
+    "time to first byte {share}%": "temps fins al primer byte {share}\u00a0%",
+    "resource load delay {share}%": "retard de càrrega del recurs {share}\u00a0%",
+    "element render delay {share}%": "retard de renderització de l'element {share}\u00a0%"
   },
   "tech-favicon-file-valid/problem": {
     "not-200": "no respon 200",

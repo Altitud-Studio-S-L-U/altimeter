@@ -69,7 +69,8 @@
     "unknown": "desconocida"
   },
   "embeds": {
-    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} solicitudes, {size}, hilo principal {time}"
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests, plural, one {# solicitud} other {# solicitudes}}, {size}, hilo principal {time}",
+    "{name}: {requests} request, {size}, main thread {time}": "{name}: {requests, plural, one {# solicitud} other {# solicitudes}}, {size}, hilo principal {time}"
   },
   "entities": {
     "{entity}: main thread {time}, transfer {size}": "{entity}: hilo principal {time}, transferencia {size}"
@@ -269,7 +270,9 @@
     "origin-level": "nivel de origen"
   },
   "scripts": {
-    "not attributed": "sin atribuir"
+    "not attributed": "sin atribuir",
+    "{url} (first party, {time})": "{url} (propio, {time})",
+    "{url} (third party, {time})": "{url} (de terceros, {time})"
   },
   "second": {
     "html": "HTML",
@@ -331,9 +334,9 @@
     "error": "error"
   },
   "subparts": {
-    "time to first byte {share}": "tiempo hasta el primer byte {share}",
-    "resource load delay {share}": "retraso de carga del recurso {share}",
-    "element render delay {share}": "retraso de renderizado del elemento {share}"
+    "time to first byte {share}%": "tiempo hasta el primer byte {share}\u00a0%",
+    "resource load delay {share}%": "retraso de carga del recurso {share}\u00a0%",
+    "element render delay {share}%": "retraso de renderizado del elemento {share}\u00a0%"
   },
   "tech-favicon-file-valid/problem": {
     "not-200": "no responde 200",

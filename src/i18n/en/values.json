@@ -69,7 +69,8 @@
     "unknown": "unknown"
   },
   "embeds": {
-    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} requests, {size}, main thread {time}"
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} requests, {size}, main thread {time}",
+    "{name}: {requests} request, {size}, main thread {time}": "{name}: {requests} request, {size}, main thread {time}"
   },
   "entities": {
     "{entity}: main thread {time}, transfer {size}": "{entity}: main thread {time}, transfer {size}"
@@ -269,7 +270,9 @@
     "origin-level": "origin-level"
   },
   "scripts": {
-    "not attributed": "not attributed"
+    "not attributed": "not attributed",
+    "{url} (first party, {time})": "{url} (first party, {time})",
+    "{url} (third party, {time})": "{url} (third party, {time})"
   },
   "second": {
     "html": "html",
@@ -331,9 +334,9 @@
     "error": "error"
   },
   "subparts": {
-    "time to first byte {share}": "time to first byte {share}",
-    "resource load delay {share}": "resource load delay {share}",
-    "element render delay {share}": "element render delay {share}"
+    "time to first byte {share}%": "time to first byte {share}%",
+    "resource load delay {share}%": "resource load delay {share}%",
+    "element render delay {share}%": "element render delay {share}%"
   },
   "tech-favicon-file-valid/problem": {
     "not-200": "not-200",

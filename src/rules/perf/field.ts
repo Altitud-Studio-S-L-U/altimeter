@@ -5,7 +5,7 @@ import type { CruxFormFactor } from '../../data/crux.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
 import { directivesFor, pageDocument, robotsDirectives } from '../helpers.ts';
 import {
-  band, bandLabel, fieldEvidence, fieldRecord, formFactors, missingFieldReason, notApplicable, notEvaluated, p75, percent, scopeLabel,
+  band, bandLabel, fieldEvidence, fieldRecord, formFactors, missingFieldReason, notApplicable, notEvaluated, p75, scopeLabel,
   type Band, type FieldRecord,
 } from './shared.ts';
 
@@ -64,7 +64,7 @@ function metricRule(id: string, spec: MetricSpec, severity: (observation: FieldO
           outcome: 'fail',
           severity: severity(observation, page!),
           evidence: [cited, ...related],
-          params: { formFactor: observation.form, scope: scopeLabel(observation.field), value, band: bandLabel(observation.band) },
+          params: { formFactor: observation.form, scope: scopeLabel(observation.field), value: spec.unit === 'score' ? Math.round(observation.value * 100) / 100 : value, band: bandLabel(observation.band) },
           ...(observation.field.scope === 'origin' ? { reason: 'origin-level' } : {}),
         };
       });
@@ -135,14 +135,16 @@ export const cruxAvailability: RuleImplementation = {
   evaluate({ page, evidence }) {
     const levels = formFactors.map(form => ({ form, field: fieldRecord(page, form) }));
     const withData = levels.filter(level => level.field !== undefined);
-    const cited = withData.map(level => fieldEvidence(evidence, level.field!, 'record', `${level.form}: ${scopeLabel(level.field!)} data`));
+    const cited = withData.map(level => fieldEvidence(evidence, level.field!, 'record'));
     if (withData.some(level => level.field!.scope === 'url')) return { outcome: 'pass', evidence: cited };
     if (withData.length > 0) {
       return { outcome: 'fail', severity: 'info', reason: 'origin-only', evidence: cited, params: { formFactors: withData.map(level => level.form).join(', ') } };
     }
     if (missingFieldReason(page) === 'crux-error') return notEvaluated('crux-error');
     const status = page!.fetch.status;
-    const hop = evidence.add({ kind: 'http', url: page!.url, label: evidenceLabel('final response status of the audited URL'), excerpt: `HTTP ${status ?? 'none'}` });
+    const hop = status === undefined
+      ? evidence.add({ kind: 'http', url: page!.url, label: evidenceLabel('audited URL that got no response') })
+      : evidence.add({ kind: 'http', url: page!.url, label: evidenceLabel('final response status of the audited URL'), excerpt: `HTTP ${status}` });
     if (status !== 200) return { outcome: 'fail', severity: 'info', reason: 'not-eligible-status', evidence: [hop], params: { status: status ?? 'none' } };
     if (noindex(page!)) {
       const robots = evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('robots directives of the audited URL'), excerpt: 'noindex' });
@@ -171,6 +173,7 @@ export interface Shares {
 /** The subparts whose share passes the web.dev guideline; the shares are approximate, never absolute targets. */
 export function flaggedSubparts(shares: Shares): string[] {
   const flagged: string[] = [];
+  const percent = (share: number) => `${Math.round(share * 100)}%`;
   if (shares.ttfb > subpartLimits.ttfb) flagged.push(`time to first byte ${percent(shares.ttfb)}`);
   if (shares.loadDelay > subpartLimits.loadDelay) flagged.push(`resource load delay ${percent(shares.loadDelay)}`);
   if (shares.renderDelay > subpartLimits.renderDelay) flagged.push(`element render delay ${percent(shares.renderDelay)}`);
@@ -228,7 +231,7 @@ export const cruxNavigationTypes: RuleImplementation = {
       const excerpt = Object.entries(types).map(([type, fraction]) => `${type}=${fraction.toFixed(3)}`).join(', ');
       const cited = fieldEvidence(evidence, field, 'navigation_types', excerpt);
       if (missed > restored && missed + restored >= 0.05) {
-        results.push({ outcome: 'fail', severity: 'low', evidence: [cited], params: { formFactor: form, scope: scopeLabel(field), backForward: percent(missed), restored: percent(restored) } });
+        results.push({ outcome: 'fail', severity: 'low', evidence: [cited], params: { formFactor: form, scope: scopeLabel(field), backForward: missed, restored } });
       } else {
         results.push({ outcome: 'pass', evidence: [cited] });
       }

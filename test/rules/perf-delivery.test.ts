@@ -6,7 +6,7 @@ import {
   textCompression, unloadHandlers,
 } from '../../src/rules/perf/delivery.ts';
 import { evaluate, headers, page, site } from '../support/facts.ts';
-import { assertExcerpt, assertFail, assertOutcome, check, html, lab, requests, table } from './perf-fixtures.ts';
+import { assertExcerpt, assertFail, assertLabel, assertOutcome, check, html, lab, requests, table } from './perf-fixtures.ts';
 
 const url = 'https://example.com/';
 const longText = `<main><h1>Guide</h1><p>${'Plain words about the topic. '.repeat(80)}</p></main>`;
@@ -117,7 +117,7 @@ describe('perf-text-compression', () => {
   test('fails medium on uncompressed HTML', () => {
     const checked = check(textCompression, page(url, { html: html('', longText) }));
     assertFail(checked, 'medium', 'document');
-    assertExcerpt(checked, /^content-encoding: \(absent\)$/u);
+    assertLabel(checked, /^compression of the HTML response \(no content-encoding header\)$/u);
   });
 
   test('fails low on uncompressed first-party text assets and ignores images', () => {
@@ -132,7 +132,7 @@ describe('perf-text-compression', () => {
     });
     assertFail(checked, 'low', 'assets');
     assert.equal(checked.finding.params?.count, 2);
-    assertExcerpt(checked, /transferSize=6200 bytes/u);
+    assertLabel(checked, /transferred uncompressed: 6200 bytes transferred for 6000 bytes of content$/u);
   });
 
   test('is not evaluated without a response', () => {

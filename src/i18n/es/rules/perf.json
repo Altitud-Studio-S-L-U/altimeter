@@ -22,8 +22,8 @@
     "why": "Cumulative Layout Shift es una de las Core Web Vitals. web.dev define como bueno un valor de 0,1 o menos y como deficiente uno de más de 0,25 en el percentil 75. El CLS de campo abarca toda la vida de la página, así que puede ser peor que el CLS de laboratorio.",
     "fix": "Indica el tamaño de las imágenes, los iframes y los anuncios, reserva espacio para la interfaz que se inserta tarde (banners de cookies) o superponla, usa animaciones con transform, ajusta las fuentes alternativas y mantén las páginas aptas para la bfcache.",
     "messages": {
-      "fail": "El CLS de campo en el p75 es {value} en {formFactor} (datos de CrUX: {scope}), en el rango {band}; se considera bueno un valor de 0,1 o menos.",
-      "fail:origin-level": "El CLS de campo en el p75 es {value} en {formFactor}, en el rango {band}; se considera bueno un valor de 0,1 o menos. Son datos de CrUX ({scope}), que abarcan todas las páginas del origen, no solo esta URL."
+      "fail": "El CLS de campo en el p75 es {value, number, ::.00} en {formFactor} (datos de CrUX: {scope}), en el rango {band}; se considera bueno un valor de 0,1 o menos.",
+      "fail:origin-level": "El CLS de campo en el p75 es {value, number, ::.00} en {formFactor}, en el rango {band}; se considera bueno un valor de 0,1 o menos. Son datos de CrUX ({scope}), que abarcan todas las páginas del origen, no solo esta URL."
     }
   },
   "perf-crux-cwv-assessment": {
@@ -78,7 +78,7 @@
     "why": "CrUX indica cuántas navegaciones hacia atrás y hacia delante se sirven desde la caché de atrás y adelante. web.dev incluye la bfcache entre las mejoras más eficaces, porque las páginas restauradas se cargan al instante.",
     "fix": "Ejecuta perf-bfcache-eligibility. Elimina los detectores de eventos unload, evita no-store cuando no sea necesario y cierra las conexiones abiertas en pagehide.",
     "messages": {
-      "fail": "En {formFactor} (datos de CrUX: {scope}), el {backForward} de las navegaciones son navegaciones hacia atrás o hacia delante que no se han restaurado desde la caché de atrás y adelante, frente al {restored} que sí. El umbral del 5 % es una heurística de la herramienta."
+      "fail": "En {formFactor} (datos de CrUX: {scope}), el {backForward, number, percent} de las navegaciones son navegaciones hacia atrás o hacia delante que no se han restaurado desde la caché de atrás y adelante, frente al {restored, number, percent} que sí. El umbral del 5 % es una heurística de la herramienta."
     }
   },
   "perf-crux-softnav-experimental": {
@@ -132,8 +132,8 @@
     "why": "El CLS de laboratorio solo abarca los cambios de diseño durante la carga de la página y suele ser inferior al CLS de campo, así que un resultado de laboratorio limpio no refuta un valor de campo deficiente.",
     "fix": "Consulta perf-cls-culprits.",
     "messages": {
-      "fail": "El CLS de laboratorio es {value} ({conditions}), por encima de 0,1. El CLS de laboratorio solo abarca la carga de la página.",
-      "fail:field-precedence": "El CLS de laboratorio es {value} ({conditions}), por encima de 0,1. Hay CLS de campo, así que el resultado de campo decide el estado y este valor de laboratorio es un diagnóstico."
+      "fail": "El CLS de laboratorio es {value, number, ::.000} ({conditions}), por encima de 0,1. El CLS de laboratorio solo abarca la carga de la página.",
+      "fail:field-precedence": "El CLS de laboratorio es {value, number, ::.000} ({conditions}), por encima de 0,1. Hay CLS de campo, así que el resultado de campo decide el estado y este valor de laboratorio es un diagnóstico."
     }
   },
   "perf-lcp-lazy-loaded": {
@@ -284,8 +284,8 @@
     "why": "Lighthouse 13.6 atribuye en cls-culprits-insight los cambios de diseño a causas como los elementos multimedia sin dimensiones, el contenido insertado y las fuentes web. El elemento desplazado a menudo no es la causa.",
     "fix": "Corrige la causa que indica el análisis: dimensiones, espacio reservado, métricas de las fuentes alternativas, animaciones con transform.",
     "messages": {
-      "fail": "El peor grupo de cambios de diseño de laboratorio obtiene {score} ({clusters} grupos por encima de 0,05). Causas raíz que atribuye Lighthouse: {causes}.",
-      "fail:no-root-cause": "El peor grupo de cambios de diseño de laboratorio obtiene {score} ({clusters} grupos por encima de 0,05) y Lighthouse no ha atribuido ninguna causa raíz; el elemento desplazado no es necesariamente la causa."
+      "fail": "El peor grupo de cambios de diseño de laboratorio obtiene {score, number, ::.000} ({clusters, plural, one {# grupo} other {# grupos}} por encima de 0,05). Causas raíz que atribuye Lighthouse: {causes}.",
+      "fail:no-root-cause": "El peor grupo de cambios de diseño de laboratorio obtiene {score, number, ::.000} ({clusters, plural, one {# grupo} other {# grupos}} por encima de 0,05) y Lighthouse no ha atribuido ninguna causa raíz; el elemento desplazado no es necesariamente la causa."
     }
   },
   "perf-embed-reserved-space": {

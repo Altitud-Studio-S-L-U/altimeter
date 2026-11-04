@@ -30,10 +30,6 @@ export function formatKib(bytes: number): string {
   return `${Math.round(bytes / kib)} KiB`;
 }
 
-export function percent(fraction: number): string {
-  return `${Math.round(fraction * 100)}%`;
-}
-
 export function notEvaluated(reason: string): RuleResult {
   return { outcome: 'not_evaluated', reason };
 }
@@ -249,15 +245,16 @@ export function scopeLabel(field: FieldRecord): string {
   return field.scope === 'url' ? 'URL-level' : 'origin-level';
 }
 
-export function fieldEvidence(evidence: EvidenceStore, field: FieldRecord, metric: string, excerpt: string): string {
+export function fieldEvidence(evidence: EvidenceStore, field: FieldRecord, metric: string, excerpt?: string): string {
   const { record } = field;
   const { first, last } = record.collectionPeriod;
   const facts = { metric, formFactor: record.formFactor, scope: scopeLabel(field) };
+  const label = first && last ? evidenceLabel('CrUX {metric}, {formFactor}, {scope}, {first} to {last}', { ...facts, first, last }) : evidenceLabel('CrUX {metric}, {formFactor}, {scope}', facts);
   return evidence.add({
     kind: 'crux',
     url: record.key,
-    label: first && last ? evidenceLabel('CrUX {metric}, {formFactor}, {scope}, {first} to {last}', { ...facts, first, last }) : evidenceLabel('CrUX {metric}, {formFactor}, {scope}', facts),
-    excerpt: record.normalizedUrl && record.normalizedUrl !== record.key ? `${excerpt} (CrUX matched ${record.normalizedUrl})` : excerpt,
+    label: record.normalizedUrl && record.normalizedUrl !== record.key ? joinLabels(label, evidenceLabel('(CrUX matched {url})', { url: record.normalizedUrl })) : label,
+    ...(excerpt === undefined ? {} : { excerpt }),
     path: `metrics.${metric}`,
   });
 }

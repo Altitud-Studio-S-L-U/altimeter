@@ -68,13 +68,18 @@ export const clsCulprits: RuleImplementation = {
     const worst = candidates[0]!;
     const causes = [...new Set(candidates.flatMap(cluster => cluster.causes))];
     const cited = [
-      labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('worst layout shift cluster'), `cluster score=${worst.score.toFixed(3)}`),
-      ...worst.shifts.slice(0, 3).map(shift => labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('element moved by a layout shift'),
-        `${asNode(shift.node)?.snippet ?? asNode(shift.node)?.selector ?? 'unknown element'} (score ${(num(shift.score) ?? 0).toFixed(3)})`)),
+      labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('worst layout shift cluster, with a score of {score, number, ::.000}', { score: worst.score })),
+      ...worst.shifts.slice(0, 3).map(shift => {
+        const moved = asNode(shift.node)?.snippet ?? asNode(shift.node)?.selector;
+        const score = num(shift.score) ?? 0;
+        return moved === undefined
+          ? labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('element Lighthouse does not identify, moved by a layout shift with a score of {score, number, ::.000}', { score }))
+          : labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('element moved by a layout shift with a score of {score, number, ::.000}', { score }), moved);
+      }),
       ...causes.slice(0, 5).map(entry => labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('layout shift root cause attributed by Lighthouse'), entry)),
     ];
     const severity = worst.score >= 0.1 ? 'medium' : 'low';
-    const params = { score: worst.score.toFixed(3), clusters: candidates.length, causes: causes.length > 0 ? summarizeList(causes) : 'none attributed' };
+    const params = { score: Math.round(worst.score * 1000) / 1000, clusters: candidates.length, causes: causes.length > 0 ? summarizeList(causes) : 'none attributed' };
     // Without an attributed root cause the moved element is not the culprit; the analyst has to name it.
     if (causes.length === 0) return { outcome: 'fail', severity, reason: 'no-root-cause', needsJudgment: true, evidence: cited, params };
     return { outcome: 'fail', severity, evidence: cited, params };
