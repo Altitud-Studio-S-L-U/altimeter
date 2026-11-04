@@ -67,10 +67,12 @@ export function providerLabel(summary: ProviderSummary | undefined, nobody: stri
   return summary ? `${providerNames[summary.name]} ${summary.cliVersion}${summary.model ? ` (${summary.model})` : ''}` : nobody;
 }
 
-/** One line on what the analysis kept and what it cost. */
+/** One line on what the analysis kept and what it cost; for a dry run, how many calls it planned and that none ran. */
 export function analysisSummary(analysis: ReportAnalysis, language: Language): string {
   const strings = ui(language).analysis;
-  const calls = analysis.calls.filter(call => call.status !== 'skipped');
+  const planned = analysis.calls.filter(call => call.status === 'planned').length;
+  if (planned > 0 && planned === analysis.calls.length) return format(strings.dryRunLine, { calls: planned });
+  const calls = analysis.calls.filter(call => call.status !== 'skipped' && call.status !== 'planned');
   // Codex reports no cost, so a total of zero there means unknown rather than free.
   const priced = calls.some(call => call.costUsd !== undefined);
   const cost = new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(analysis.costUsd);

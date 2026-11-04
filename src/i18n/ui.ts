@@ -81,6 +81,8 @@ export interface AnalysisStrings {
   readonly nobody: string;
   readonly summaryLine: string;
   readonly costPart: string;
+  /** The summary line of a dry run, which writes the prompts and calls no provider. */
+  readonly dryRunLine: string;
   readonly verified: string;
   readonly none: string;
   readonly quote: string;
@@ -178,6 +180,7 @@ const en: UiStrings = {
     nobody: 'none',
     summaryLine: 'Model analysis: {findings} problems and {proposals} proposals from {judgments} verified judgments in {calls} calls ({cached} from cache){costPart}.',
     costPart: ', USD {cost}',
+    dryRunLine: 'Model analysis: dry run, no call made ({calls} planned); the prompts and the call plan are in the --dry-run folder.',
     verified: 'Verified findings',
     none: 'The analysis found no problem in its verified judgments.',
     quote: 'Quote',
@@ -301,6 +304,7 @@ const es: UiStrings = {
     nobody: 'ninguno',
     summaryLine: 'Análisis con modelo: {findings} problemas y {proposals} propuestas en {judgments} juicios verificados, con {calls} llamadas ({cached} desde la caché){costPart}.',
     costPart: ', {cost} USD',
+    dryRunLine: 'Análisis con modelo: simulación, sin ninguna llamada realizada (previstas: {calls}); los prompts y el plan de llamadas están en la carpeta de --dry-run.',
     verified: 'Hallazgos verificados',
     none: 'El análisis no ha encontrado ningún problema en sus juicios verificados.',
     quote: 'Cita',
@@ -424,6 +428,7 @@ const ca: UiStrings = {
     nobody: 'cap',
     summaryLine: 'Anàlisi amb model. Problemes: {findings}; propostes: {proposals}; judicis verificats: {judgments}; crides: {calls} (des de la memòria cau: {cached}){costPart}.',
     costPart: '; cost: {cost} USD',
+    dryRunLine: 'Anàlisi amb model. Simulació, sense cap crida feta (previstes: {calls}); les indicacions i el pla de crides són a la carpeta de --dry-run.',
     verified: 'Troballes verificades',
     none: 'L\'anàlisi no ha trobat cap problema en els seus judicis verificats.',
     quote: 'Cita',

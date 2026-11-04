@@ -13,7 +13,7 @@ import { runRules, type Finding, type RuleImplementation } from '../src/rules/en
 import { implementations as registered } from '../src/rules/registry.ts';
 import { compareReports } from '../src/report/compare.ts';
 import { renderHtml } from '../src/report/html.ts';
-import { renderFixPlan, renderMarkdown, renderTaskFile, taskFileLimit } from '../src/report/markdown.ts';
+import { analysisSummary, renderFixPlan, renderMarkdown, renderTaskFile, taskFileLimit } from '../src/report/markdown.ts';
 import { buildReport, mergeAnalysis, type ReportFinding } from '../src/report/model.ts';
 import { markdownText } from '../src/report/sanitize.ts';
 import { buildTasks } from '../src/report/tasks.ts';
@@ -333,6 +333,18 @@ describe('the model analysis section', () => {
 
   test('leaves the score and the tasks as code computed them', () => {
     assert.deepEqual([merged.score, merged.tasks], [report.score, report.tasks]);
+  });
+
+  test('says that a dry run planned its calls and made none', () => {
+    const dryRun: ReportAnalysis = {
+      ...analysis, provider: {}, costUsd: 0, findings: [], proposals: [], dropped: [],
+      calls: (['content', 'serp', 'schema'] as const).map((pass, index) => ({ id: `C${index + 1}`, role: 'analyst', pass, pages: ['https://example.com/b'], status: 'planned', durationMs: 0, promptChars: 4000, estimatedTokens: 1000 })),
+    };
+    assert.equal(analysisSummary(dryRun, 'en'), 'Model analysis: dry run, no call made (3 planned); the prompts and the call plan are in the --dry-run folder.');
+    assert.match(analysisSummary(dryRun, 'es'), /^Análisis con modelo: simulación, sin ninguna llamada realizada \(previstas: 3\)/u);
+    assert.match(analysisSummary(dryRun, 'ca'), /^Anàlisi amb model\. Simulació, sense cap crida feta \(previstes: 3\)/u);
+    assert.match(analysisSummary(analysis, 'en'), /in 1 calls \(0 from cache\), USD 0\.04\.$/u);
+    assert.match(renderMarkdown(mergeAnalysis(report, dryRun), 'en'), /^Model analysis: dry run, no call made \(3 planned\)/mu);
   });
 
   test('turns a candidate it confirmed into a task without scoring it, and clears a dismissed one from review', () => {

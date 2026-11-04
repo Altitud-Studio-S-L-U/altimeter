@@ -81,6 +81,14 @@ describe('altimeter audit', () => {
     assert.equal((await run(['audit', `${origin}/`, '--source', join(work, 'missing')])).status, 2);
   });
 
+  test('a dry run says it planned the analysis calls and made none', async () => {
+    const result = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--out', 'dry-run-report', '--provider', 'claude', '--dry-run', 'dry-run-prompts']);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /^Model analysis: dry run, no call made \([1-9]\d* planned\); the prompts and the call plan are in the --dry-run folder\.$/mu);
+    assert.doesNotMatch(result.stdout, /verified judgments in/u);
+    assert.ok((await readdir(join(work, 'dry-run-prompts'))).includes('plan.json'));
+  });
+
   test('rejects bad analysis options', async () => {
     assert.equal((await run(['audit', `${origin}/`, '--provider', 'gpt'])).status, 2);
     assert.equal((await run(['audit', `${origin}/`, '--ai-pages', '0'])).status, 2);
