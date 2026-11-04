@@ -112,6 +112,8 @@ Only deterministic checks count. For each category the score is 100 × (1 − fa
 
 ## Documentation
 
+- [Methodology](docs/methodology.md): what is collected, how rules are evaluated, the score and the tasks.
+- [Output format](docs/output-format.md): `report.json`, the task files and the exit codes.
 - [Rule catalog](docs/rules.md): every rule with its severity, method, status and sources, and the myths list.
 - [SECURITY.md](SECURITY.md): the trust model for audited sites, model analysis and tokens.
 - [CONTRIBUTING.md](CONTRIBUTING.md): local checks and how to change the catalog.
