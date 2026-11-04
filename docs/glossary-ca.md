@@ -25,41 +25,33 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 | crawler | rastrejador | AI crawler = rastrejador d'IA; AI search and answer crawler = rastrejador de cerca i de respostes amb IA |
 | crawlability | rastrejabilitat | as «indexabilitat» in the report |
 | crawl budget, crawl rate | pressupost de rastreig, freqüència de rastreig | |
-| crawl trap | trampa de rastreig | |
 | fetch (verb, noun) | obtenir, obtenció | fetcher = agent d'obtenció; retrieve = recuperar |
 | index, indexing | indexar, indexació | indexable, no indexable |
 | render, rendering | renderitzar, renderització | rendered DOM = DOM renderitzat; client-side = al client; server-side = al servidor |
 | raw HTML, server HTML | HTML en brut, HTML del servidor | as «dades en brut» |
 | canonical, canonicalization | canònic, canònica; canonicalització | the canonical = la canònica; canonical URL = URL canònica |
 | redirect (noun, verb) | redirecció, redirigir | redirect chain = cadena de redireccions; loop = bucle; hop = salt |
-| status code | codi d'estat | |
 | soft 404 | soft 404 | Google's label, kept |
 | sitemap | mapa del lloc | sitemap index = índex de mapes del lloc; the Sitemaps protocol, sitemap.xml and the Sitemap directive keep their names |
 | robots.txt group | grup | the * group = el grup * |
-| directive | directiva | |
 | disallow (verb, noun) | prohibir el rastreig; regla Disallow | «El robots.txt prohibeix el rastreig a {agent}» |
 | allow (a crawler) | permetre | «Permet OAI-SearchBot»; allowed = permès |
-| block | bloquejar | |
 | user agent | agent d'usuari | |
 | token (robots.txt product token) | identificador | not «testimoni», which is for authentication |
 | robots meta tag | metaetiqueta robots | |
 | header (HTTP) | capçalera | |
 | request, response | sol·licitud, resposta | |
 | host | amfitrió | preferred host = amfitrió preferit; hostname = nom d'amfitrió |
-| origin | origen | |
 | path | camí | |
-| query string, parameter | cadena de consulta, paràmetre | |
 | trailing slash | barra final | |
 | fully qualified URL, absolute URL | URL completa, URL absoluta | |
 | the edge (CDN) | la vora de la xarxa | |
-| firewall, proxy | tallafoc, servidor intermediari | |
 | staging | entorn de proves | |
 | internal link, followed link | enllaç intern, enllaç que es pot seguir | not «enllaç seguit», which reads as «consecutive» |
 | anchor text | text d'ancoratge | |
 | homepage | pàgina d'inici | |
 | duplicate, near-duplicate | duplicat, gairebé duplicat | |
 | cluster | clúster | |
-| server log | registre del servidor | |
 
 ## Search appearance and content
 
@@ -87,7 +79,6 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 | doorway pages, scaled content abuse | pàgines porta, abús de contingut a gran escala | |
 | thin (content, pages) | amb poc contingut | |
 | people-first, helpful content | contingut centrat en les persones, contingut útil | |
-| clickbait | esquer de clics | |
 | evergreen content | contingut perenne | |
 | byline | signatura | |
 | about page | pàgina «Qui som» | |
@@ -111,16 +102,11 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 | cache | memòria cau | back/forward cache = memòria cau endavant/enrere (bfcache) |
 | first-party, third-party | propi, de tercers | |
 | main thread | fil principal | |
-| font, stylesheet | font, full d'estil | |
 | hero image | imatge destacada | |
 | embed, facade | element incrustat, façana | |
 | consent banner, cookie | bàner de consentiment, galeta | |
 | interstitial, overlay, pop-up | intersticial, capa superposada, finestra emergent | |
-| mixed content | contingut mixt | |
 | plugin, widget | connector, giny | |
-| framework, router | marc de treball, encaminador | app shell = esquelet de l'aplicació |
-| event listener | detector d'esdeveniments | |
-| touch target | àrea tàctil | |
 
 ## International
 
@@ -131,7 +117,6 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 | language | llengua | language version = versió lingüística; language code = codi de llengua |
 | locale | configuració regional | |
 | subtag, script | subetiqueta, sistema d'escriptura | |
-| region, country | regió, país | |
 | fallback | alternativa, de reserva | |
 
 ## AI search
@@ -144,7 +129,6 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 | grounding | fonamentació | |
 | opt out (of) | excloure (de) | |
 | prompt injection | injecció d'indicacions | prompt = indicació |
-| foundation model | model fundacional | |
 | challenge (bot check) | desafiament | |
 
 ## Report vocabulary
@@ -155,5 +139,4 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 | evidence | evidència | |
 | owner, owner data | propietari, dades del propietari | |
 | candidate, analyst | candidat, analista | «l'analista ho hauria de confirmar» |
-| threshold | llindar | |
 | sample, sampled | mostra, de la mostra | |
