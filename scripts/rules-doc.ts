@@ -5,6 +5,14 @@ import { categories } from '../src/core/types.ts';
 import { ui } from '../src/i18n/ui.ts';
 
 const target = fileURLToPath(new URL('../docs/rules.md', import.meta.url));
+const readme = fileURLToPath(new URL('../README.md', import.meta.url));
+const badgePattern = /\[!\[Rules\]\(https:\/\/img\.shields\.io\/badge\/rules-\d+%20with%20primary%20sources-2b4c7e\)\]\(docs\/rules\.md\)/u;
+
+/** The README badge with the number of rules that run: those in this version and those that read owner data. */
+export function rulesBadge(): string {
+  const count = rules.filter(rule => rule.status !== 'planned').length;
+  return `[![Rules](https://img.shields.io/badge/rules-${count}%20with%20primary%20sources-2b4c7e)](docs/rules.md)`;
+}
 
 function cell(value: string): string {
   return value.replace(/\|/gu, '\\|').replace(/\s+/gu, ' ').trim();
@@ -39,7 +47,7 @@ export function renderRulesDoc(): string {
 
 export async function rulesDocInSync(): Promise<boolean> {
   try {
-    return (await readFile(target, 'utf8')) === renderRulesDoc();
+    return (await readFile(target, 'utf8')) === renderRulesDoc() && (await readFile(readme, 'utf8')).includes(rulesBadge());
   } catch {
     return false;
   }
@@ -47,5 +55,8 @@ export async function rulesDocInSync(): Promise<boolean> {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   await writeFile(target, renderRulesDoc(), 'utf8');
-  process.stdout.write(`Wrote docs/rules.md (${rules.length} rules, ${myths.length} myths)\n`);
+  const text = await readFile(readme, 'utf8');
+  if (!badgePattern.test(text)) throw new Error('README.md has no rules badge to update.');
+  await writeFile(readme, text.replace(badgePattern, rulesBadge()), 'utf8');
+  process.stdout.write(`Wrote docs/rules.md (${rules.length} rules, ${myths.length} myths) and the README badge\n`);
 }

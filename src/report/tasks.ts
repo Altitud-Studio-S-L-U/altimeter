@@ -67,11 +67,16 @@ export interface EvidenceLookup {
   get(id: string): EvidenceItem | undefined;
 }
 
+/**
+ * A defect repeated on several pages is usually one template fix, so page findings group by the shape of their
+ * evidence while the observed values differ from page to page. Site findings keep the values, which tell them apart.
+ */
 function groupKey(finding: Finding, evidence: EvidenceLookup): string {
-  const facts = finding.evidence.map(id => evidence.get(id)).filter(Boolean).map(item => [item!.kind, item!.label, item!.excerpt ?? '', item!.path ?? '']);
-  facts.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  const site = finding.scope.kind === 'site' ? finding.scope.origin : '';
-  return JSON.stringify([finding.ruleId, finding.reason ?? '', site, facts]);
+  const page = finding.scope.kind === 'page';
+  const shape = (value: string) => value.replace(/\d+/gu, '#');
+  const items = finding.evidence.map(id => evidence.get(id)).filter((item): item is EvidenceItem => item !== undefined);
+  const facts = [...new Set(items.map(item => JSON.stringify(page ? [item.kind, shape(item.label), shape(item.path ?? '')] : [item.kind, item.label, item.excerpt ?? '', item.path ?? ''])))].sort();
+  return JSON.stringify([finding.ruleId, finding.reason ?? '', page ? '' : (finding.scope as { readonly origin: string }).origin, facts]);
 }
 
 function scopeKey(scope: FindingScope): string {

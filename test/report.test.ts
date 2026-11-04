@@ -56,6 +56,23 @@ describe('buildReport', () => {
     assert.ok(report.findings.every(finding => finding.id === `F-${finding.evidenceSignature}`));
   });
 
+  test('groups one defect seen on several pages with different values into one task, but keeps site findings apart', () => {
+    const rule = catalogRules.find(entry => entry.id === 'content-title-width')!;
+    const evidence = new EvidenceStore();
+    const cite = (url: string, title: string) => [evidence.add({ kind: 'html', url, label: 'title element', excerpt: title, line: 3 })];
+    const pageFinding = (url: string, title: string) => ({ ruleId: rule.id, scope: { kind: 'page' as const, url }, outcome: 'fail' as const, severity: 'low' as const,
+      reason: 'short', evidence: cite(url, title), evidenceSignature: url, confidence: 'high' as const, origin: 'deterministic' as const });
+    const siteRule = catalogRules.find(entry => entry.id === 'crawl-host-variant-consolidation')!;
+    const siteFinding = (variant: string) => ({ ruleId: siteRule.id, scope: { kind: 'site' as const, origin: 'https://example.com' }, outcome: 'fail' as const, severity: 'low' as const,
+      reason: 'temporary-redirect', evidence: [evidence.add({ kind: 'redirect', url: variant, label: 'hop 1', excerpt: `307 ${variant}` })], evidenceSignature: variant, confidence: 'high' as const, origin: 'deterministic' as const });
+    const findings = [pageFinding('https://example.com/a', 'Shop'), pageFinding('https://example.com/b', 'Blog'), siteFinding('https://example.com/a/index.html'), siteFinding('https://example.com/a')];
+    const collected: CollectResult = { site: site({ pages: [] }), versions: {}, warnings: [], durationMs: 1 };
+    const report = buildReport({ collected, findings, evidence, implemented: 2, language: 'en', startedAt: new Date('2026-11-04T10:00:00Z'), targetUrl: 'https://example.com/a', options: {} });
+    const byRule = (id: string) => report.tasks.filter(task => task.ruleId === id);
+    assert.deepEqual(byRule(rule.id).map(task => task.scopes.length), [2]);
+    assert.equal(byRule(siteRule.id).length, 2);
+  });
+
   test('keeps task ids stable across runs', () => {
     const pages = () => [page('https://example.com/b', { html: '<!doctype html><p>No title</p>' })];
     assert.equal(auditOf(pages()).tasks[0]!.id, auditOf(pages()).tasks[0]!.id);
