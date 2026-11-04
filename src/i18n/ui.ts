@@ -65,6 +65,7 @@ export interface AnalysisStrings {
   readonly by: string;
   readonly nobody: string;
   readonly summaryLine: string;
+  readonly costPart: string;
   readonly verified: string;
   readonly none: string;
   readonly quote: string;
@@ -146,7 +147,8 @@ const en: UiStrings = {
     intro: 'A model read the pages listed here and judged what code cannot. Every finding below quotes the evidence it rests on, passed validation in code and was checked by a verifier. These findings do not change the score, the tasks or --fail-on.',
     by: 'Analyst: {analyst} · verifier: {verifier} · pages: {pages}',
     nobody: 'none',
-    summaryLine: 'Model analysis: {findings} problems and {proposals} proposals from {judgments} verified judgments in {calls} calls ({cached} from cache), USD {cost}.',
+    summaryLine: 'Model analysis: {findings} problems and {proposals} proposals from {judgments} verified judgments in {calls} calls ({cached} from cache){costPart}.',
+    costPart: ', USD {cost}',
     verified: 'Verified findings',
     none: 'The analysis found no problem in its verified judgments.',
     quote: 'Quote',
@@ -254,7 +256,8 @@ const es: UiStrings = {
     intro: 'Un modelo ha leído las páginas que se indican y ha juzgado lo que el código no puede. Cada hallazgo de esta sección cita la evidencia en la que se apoya, ha superado la validación en código y lo ha comprobado un verificador. Estos hallazgos no cambian la puntuación, las tareas ni --fail-on.',
     by: 'Analista: {analyst} · verificador: {verifier} · páginas: {pages}',
     nobody: 'ninguno',
-    summaryLine: 'Análisis con modelo: {findings} problemas y {proposals} propuestas en {judgments} juicios verificados, con {calls} llamadas ({cached} desde la caché), {cost} USD.',
+    summaryLine: 'Análisis con modelo: {findings} problemas y {proposals} propuestas en {judgments} juicios verificados, con {calls} llamadas ({cached} desde la caché){costPart}.',
+    costPart: ', {cost} USD',
     verified: 'Hallazgos verificados',
     none: 'El análisis no ha encontrado ningún problema en sus juicios verificados.',
     quote: 'Cita',
@@ -362,7 +365,8 @@ const ca: UiStrings = {
     intro: 'Un model ha llegit les pàgines que s\'indiquen i ha jutjat el que el codi no pot. Cada troballa d\'aquesta secció cita l\'evidència en què es basa, ha superat la validació en codi i l\'ha comprovada un verificador. Aquestes troballes no canvien la puntuació, les tasques ni --fail-on.',
     by: 'Analista: {analyst} · verificador: {verifier} · pàgines: {pages}',
     nobody: 'cap',
-    summaryLine: 'Anàlisi amb model: {findings} problemes i {proposals} propostes en {judgments} judicis verificats, amb {calls} crides ({cached} des de la memòria cau), {cost} USD.',
+    summaryLine: 'Anàlisi amb model: {findings} problemes i {proposals} propostes en {judgments} judicis verificats, amb {calls} crides ({cached} des de la memòria cau){costPart}.',
+    costPart: ', {cost} USD',
     verified: 'Troballes verificades',
     none: 'L\'anàlisi no ha trobat cap problema en els seus judicis verificats.',
     quote: 'Cita',

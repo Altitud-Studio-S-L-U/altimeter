@@ -32,12 +32,16 @@ export function providerLabel(summary: ProviderSummary | undefined, nobody: stri
 
 /** One line on what the analysis kept and what it cost. */
 export function analysisSummary(analysis: ReportAnalysis, language: Language): string {
+  const strings = ui(language).analysis;
   const calls = analysis.calls.filter(call => call.status !== 'skipped');
-  return format(ui(language).analysis.summaryLine, {
+  // Codex reports no cost, so a total of zero there means unknown rather than free.
+  const priced = calls.some(call => call.costUsd !== undefined);
+  const cost = new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(analysis.costUsd);
+  return format(strings.summaryLine, {
     findings: analysis.findings.filter(finding => finding.outcome === 'fail').length, proposals: analysis.proposals.length,
     judgments: analysis.findings.length + analysis.confirmations.length, calls: calls.length,
     cached: calls.filter(call => call.status === 'cached').length,
-    cost: new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(analysis.costUsd),
+    costPart: priced ? format(strings.costPart, { cost }) : '',
   });
 }
 
