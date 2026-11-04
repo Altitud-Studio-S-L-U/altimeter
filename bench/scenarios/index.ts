@@ -20,6 +20,7 @@ import sitemapMissing from './sitemap-missing.ts';
 import studioCrawl from './studio-crawl.ts';
 import studioEs from './studio-es.ts';
 import studioHome from './studio-home.ts';
+import studioLab from './studio-lab.ts';
 import studioPolished from './studio-polished.ts';
 import studioRoot from './studio-root.ts';
 import studioService from './studio-service.ts';
@@ -28,7 +29,7 @@ import transportProblems from './transport-problems.ts';
 
 /** Every scenario, in the order the benchmark runs them: the studio as the tuned site serves it, then the real problems. */
 export const scenarios: readonly Scenario[] = [
-  studioHome, studioRoot, studioService, studioEs, studioCrawl, studioPolished,
+  studioHome, studioRoot, studioService, studioEs, studioCrawl, studioPolished, studioLab,
   localeRedirects, localeUnreachable, localeAdaptive, sitemapMissing, markupMismatch, faqNotVisible, imageProblems, lcpLazy, legalInSitemap,
   consentProblems, pageStructure, hiddenText, jsOnlyContent, deliveryProblems, thinService, mediaProblems, aiCrawlersBlocked, headerConflicts,
   transportProblems, cruxNoData,

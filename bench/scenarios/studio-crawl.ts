@@ -16,8 +16,10 @@ export default defineScenario({
     // Legal pages: noindex, follow on purpose, linked from the footer and left out of the sitemap.
     ...legal.map(page => ({ rule: 'crawl-meta-robots-noindex', page })), 'crawl-sitemap-url-quality', 'crawl-internal-links-broken-redirected',
     ...legal.map(page => ({ rule: 'crawl-page-nofollow', page })), 'intl-hreflang-target-noindex', 'crawl-canonical-signal-consistency',
+    { rule: 'crawl-snippet-restrictions', page: '/en/legal/' }, { rule: 'intl-hreflang-on-non-canonical-page', page: '/en/legal/' },
+    { rule: 'schema-blocked-or-nonindexable-carrier', page: '/en/legal/' },
     // The About page fulfils its purpose with a few hundred words; Google sets no minimum.
-    'content-boilerplate-ratio', { rule: 'content-originality', page: '/en/about/' }, 'content-scaled-doorway', 'content-trust-pages',
+    'content-boilerplate-ratio', { rule: 'content-originality', page: '/en/about/' }, 'content-scaled-doorway', 'content-trust-pages', 'crawl-soft-404',
     // Home, About and Open Source share one Open Graph image, which is not duplicate content.
     { rule: 'tech-social-og-image', page: '/en/about/' }, { rule: 'tech-social-og-image', page: '/en/' }, 'crawl-duplicate-clusters',
     'content-title-duplicate', 'content-meta-description-duplicate', 'content-title-boilerplate',

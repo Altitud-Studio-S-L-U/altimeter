@@ -28,8 +28,10 @@ export default defineScenario({
     'schema-jsonld-syntax-error', 'schema-unknown-property', 'schema-feature-opportunity',
     // Decorative images with alt="" next to their text, shown twice, lazy-loaded with srcset.
     'content-img-alt-missing', 'content-img-alt-quality', 'content-img-lazy-misuse', 'content-img-filename', 'content-img-format',
+    'content-img-css-background', 'ai-textual-content-for-media',
     // Analytics injected only after consent, and a cookie banner whose headings sit outside <main>.
     'tech-consent-mode-ordering', 'tech-cmp-blocks-content', 'tech-intrusive-interstitial', 'content-heading-level-skips',
+    'perf-render-blocking', 'content-cloaking-ua', 'content-title-multiple',
     // Sections at opacity 0 until scrolled into view by an IntersectionObserver; present in the HTML.
     'content-hidden-text', 'content-hidden-links', 'crawl-js-lazy-content', 'crawl-js-content-dependency', 'ai-js-only-content', 'content-filler-before-mc',
     // text/html without a charset, with <meta charset> first in the head.
@@ -43,6 +45,7 @@ export default defineScenario({
     'ai-cdn-cloudflare-managed-robots', 'ai-content-signal-lines', 'ai-llms-txt', 'crawl-robots-blocks-site', 'crawl-robots-parse-errors',
     // No X-Robots-Tag, Content-Language or Link header.
     'intl-content-language-signal-conflict', 'intl-hreflang-http-header-format', 'crawl-robots-directives-conflict', 'intl-hreflang-source-conflict',
+    'ai-aipref-signals',
     // One h1 that joins a keyword line and a tagline.
     'content-h1-missing', 'content-h1-empty-or-image', 'content-title-h1-mismatch', 'tech-duplicate-conflicting-head-tags',
     // The shared Open Graph image.

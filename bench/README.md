@@ -1,6 +1,6 @@
 # Integrated benchmark
 
-`npm run bench` audits 26 synthetic sites end to end, over HTTPS and with Chrome, and checks each audit against what the scenario declares. It prints true and false positives and negatives per rule with precision and recall, then every expectation that did not hold. It exits 0 when every expectation holds, 1 when one does not, and 2 when Chrome is missing or an argument is wrong.
+`npm run bench` audits 27 synthetic sites end to end, over HTTPS and with Chrome, and checks each audit against what the scenario declares. It prints true and false positives and negatives per rule with precision and recall, then every expectation that did not hold. It exits 0 when every expectation holds, 1 when one does not, and 2 when Chrome is missing or an argument is wrong.
 
 ```sh
 npm run bench
@@ -16,7 +16,7 @@ It needs Chrome or Chromium (found as the CLI finds it, or through `CHROME_PATH`
 - **One port, both protocols.** Each scenario gets a fresh loopback port that answers plain HTTP and HTTPS: the first byte of a connection decides, since 0x16 opens a TLS handshake. URL variants, `http://` upgrades and `www` counterparts therefore keep the same explicit port, as the collector builds them. The `Host` header picks the site and SNI picks the certificate.
 - **Nothing leaves the machine.** The scenario's host names resolve to 127.0.0.1 through the `lookup` option that `audit()` passes to the HTTP client, the TLS probe and Chrome's guarded proxy. Every other name fails to resolve, and the network policy admits private addresses only for those names. The sites use the reserved `.example` domain because Altimeter treats `*.test` hosts as staging hosts and skips several rules for them.
 - **Real certificates, generated per run.** `test/support/certificates.ts` creates a CA in memory and a leaf for each scenario's hosts; servers send the leaf with the CA. The audit receives the CA through its `ca` option: the HTTP client and the TLS probe trust it besides the default roots, and Chrome accepts the chain through `--ignore-certificate-errors-spki-list`. No key is written to disk.
-- **The real pipeline.** Every scenario runs through `audit()` with Chrome rendering, no model provider and crawls without a delay. Lighthouse runs, once, only in the scenario that needs it.
+- **The real pipeline.** Every scenario runs through `audit()` with Chrome rendering, no model provider and crawls without a delay. Lighthouse runs, once, only in the two scenarios that need it.
 
 ## Expectations and the scores
 
@@ -39,6 +39,7 @@ The shared site is an invented engineering studio in English and Spanish (`bench
 | `studio-es` | The Spanish home: language signals, hreflang and translated metadata. |
 | `studio-crawl` | A crawl: noindex, follow legal pages in the footer and out of the sitemap, a short About page, one shared Open Graph image. |
 | `studio-polished` | The expected findings fixed: 301 redirects, `lastmod`, `sameAs`, short breadcrumb names, a CSP with a script hash. |
+| `studio-lab` | The service page under Lighthouse: an eager hero image with a priority hint and sized lazy images below it. |
 | `locale-redirects` | A cacheable 301 root chosen by Accept-Language without `Vary`, and `/en/` sending Spanish speakers to `/es/`. |
 | `locale-unreachable` | Spanish URLs that send every visitor without the language cookie, crawlers included, to `/en/`. |
 | `locale-adaptive` | The root answering 200 in Spanish or English depending on Accept-Language. |
@@ -85,7 +86,7 @@ Each false-positive trap of the tuned site appears in its correct form, where th
 | No `X-Robots-Tag`, `Content-Language` or `Link` header | `studio-home` | `header-conflicts` |
 | One h1 that joins a keyword line and a tagline | `studio-home` | `page-structure` |
 | One Open Graph image shared by several pages | `studio-crawl` | `media-problems` |
-| The same lazy images twice on the home | `studio-home`, `studio-crawl` | `image-problems`, `lcp-lazy` |
+| The same lazy images twice on the home | `studio-home`, `studio-crawl`, `studio-lab` | `image-problems`, `lcp-lazy` |
 | The brand query observed on a non-Google engine | not applicable | not applicable |
 
 Not applicable, and why:
