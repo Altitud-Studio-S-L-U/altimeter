@@ -131,11 +131,13 @@ describe('Spanish and Catalan reports', () => {
     }
   });
 
-  test('keep a label in English, values included, while its template has no translation', () => {
+  test('show the English text a report stored for a label whose template this version does not write', () => {
     const audit = report();
     const evidence = audit.evidence.find(item => item.label.startsWith('CrUX'))!;
-    const withoutTranslation = { ...audit, evidence: audit.evidence.map(item => (item === evidence ? { ...item, labelParts: [{ template: 'CrUX {metric} ({formFactor})', params: { metric: 'LCP', formFactor: 'PHONE' } }] } : item)) };
-    assert.ok(renderMarkdown(withoutTranslation, 'es').includes('CrUX LCP (PHONE)'));
+    const fromAnotherVersion = { ...audit, evidence: audit.evidence.map(item => (item === evidence
+      ? { ...item, label: 'CrUX LCP (PHONE)', labelParts: [{ template: 'CrUX {metric} ({formFactor})', params: { metric: 'LCP', formFactor: 'PHONE' } }] }
+      : item)) };
+    assert.ok(renderMarkdown(fromAnotherVersion, 'es').includes('CrUX LCP (PHONE)'));
   });
 
   test('bots.md carries no English data sources or limits in Spanish and Catalan', () => {

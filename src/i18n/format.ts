@@ -25,17 +25,12 @@ interface Parsed {
   readonly problems: readonly string[];
 }
 
-const simpleArgument = /\{([a-zA-Z][a-zA-Z0-9]*)\}/yu;
-const typedArgument = /\{([a-zA-Z][a-zA-Z0-9]*)\s*,\s*([a-zA-Z]+)\s*([,}])/yu;
-const styleText = /\s*([^{}]*?)\s*\}/yu;
-const pluralSelector = /\s*(=\d+|zero|one|two|few|many|other)\s*\{/yu;
-const pluralEnd = /\s*\}/yu;
 const pluralCategories = new Set(['zero', 'one', 'two', 'few', 'many', 'other']);
-
-function sticky(pattern: RegExp, text: string, index: number): RegExpExecArray | null {
-  pattern.lastIndex = index;
-  return pattern.exec(text);
-}
+/** Plural arguments inside the branches of others; the catalogs nest at most two. */
+const maxNesting = 8;
+const isLetter = (character: string | undefined) => character !== undefined && /^[a-zA-Z]$/u.test(character);
+const isDigit = (character: string | undefined) => character !== undefined && /^[0-9]$/u.test(character);
+const isSpace = (character: string | undefined) => character !== undefined && /^\s$/u.test(character);
 
 function numberStyle(text: string): NumberStyle | undefined {
   if (text === 'percent') return { percent: true, key: 'percent' };
@@ -59,12 +54,17 @@ function numberStyle(text: string): NumberStyle | undefined {
  * Reads a template: `{name}` for a value, `{name, number, <style>}` for a formatted number and
  * `{name, plural, one {...} other {...}}` for a count, whose branches hold text, values and `#`, the count itself.
  * `other` is required, `=0` style branches match a count exactly, and any other brace is plain text. A malformed
- * argument stays as text and is listed as a problem.
+ * argument stays as text and is listed as a problem. A library caller can pass any text as a template, so the parser
+ * uses no regular expression that backtracks, reads each brace once and stops reading plural arguments nested deeper
+ * than maxNesting.
  */
 class Parser {
   readonly text: string;
   index = 0;
   readonly problems: string[] = [];
+  /** Each brace read as an argument, by its index, so that no brace is read twice whatever encloses it. */
+  readonly read = new Map<number, { readonly argument: Argument | undefined; readonly end: number }>();
+  depth = 0;
 
   constructor(text: string) {
     this.text = text;
@@ -86,7 +86,7 @@ class Parser {
         this.index += 1;
         continue;
       }
-      const argument = character === '{' ? this.argument() : undefined;
+      const argument = character === '{' ? this.argumentAt() : undefined;
       if (argument) {
         flush();
         pieces.push(argument);
@@ -99,45 +99,101 @@ class Parser {
     return pieces;
   }
 
+  /** The index of the first character at or after `index` that is not white space. */
+  skipSpace(index: number): number {
+    let next = index;
+    while (isSpace(this.text[next])) next += 1;
+    return next;
+  }
+
+  /** The word at `index`: a letter followed by letters, and by digits too when `digits` is set. */
+  word(index: number, digits: boolean): string | undefined {
+    if (!isLetter(this.text[index])) return undefined;
+    let end = index + 1;
+    while (isLetter(this.text[end]) || (digits && isDigit(this.text[end]))) end += 1;
+    return this.text.slice(index, end);
+  }
+
+  /** A plural branch selector at `index`, `=N` or a plural category, and the index after its opening brace. */
+  selector(index: number): { readonly key: string; readonly end: number } | undefined {
+    let end = index;
+    if (this.text[index] === '=') {
+      end += 1;
+      while (isDigit(this.text[end])) end += 1;
+      if (end === index + 1) return undefined;
+    } else {
+      const category = this.word(index, false);
+      if (category === undefined || !pluralCategories.has(category)) return undefined;
+      end += category.length;
+    }
+    const open = this.skipSpace(end);
+    return this.text[open] === '{' ? { key: this.text.slice(index, end), end: open + 1 } : undefined;
+  }
+
+  /** The argument whose brace is at the current index, read once: a malformed one stays text everywhere it is reached. */
+  argumentAt(): Argument | undefined {
+    const start = this.index;
+    const known = this.read.get(start);
+    if (known) {
+      if (known.argument) this.index = known.end;
+      return known.argument;
+    }
+    const argument = this.argument();
+    this.read.set(start, { argument, end: this.index });
+    return argument;
+  }
+
   argument(): Argument | undefined {
     const start = this.index;
-    const simple = sticky(simpleArgument, this.text, start);
-    if (simple) {
-      this.index = start + simple[0].length;
-      return { kind: 'value', name: simple[1]!, source: simple[0] };
+    const name = this.word(start + 1, true);
+    if (name === undefined) return undefined;
+    let index = start + 1 + name.length;
+    if (this.text[index] === '}') {
+      this.index = index + 1;
+      return { kind: 'value', name, source: this.text.slice(start, this.index) };
     }
-    const typed = sticky(typedArgument, this.text, start);
-    if (!typed) return undefined;
-    const [head, name, type, after] = typed as unknown as readonly [string, string, string, string];
+    index = this.skipSpace(index);
+    if (this.text[index] !== ',') return undefined;
+    index = this.skipSpace(index + 1);
+    const type = this.word(index, false);
+    if (type === undefined) return undefined;
+    index = this.skipSpace(index + type.length);
+    const after = this.text[index];
+    if (after !== ',' && after !== '}') return undefined;
+    index += 1;
     if (type === 'number') {
       if (after === '}') {
-        this.index = start + head.length;
-        return { kind: 'value', name, source: head };
+        this.index = index;
+        return { kind: 'value', name, source: this.text.slice(start, index) };
       }
-      const styled = sticky(styleText, this.text, start + head.length);
-      const style = styled ? numberStyle(styled[1]!) : undefined;
-      if (!styled || !style) return this.malformed(start, `{${name}, number, ...} has an unknown style`);
-      this.index = start + head.length + styled[0].length;
+      let close = index;
+      while (close < this.text.length && this.text[close] !== '{' && this.text[close] !== '}') close += 1;
+      const style = this.text[close] === '}' ? numberStyle(this.text.slice(index, close).trim()) : undefined;
+      if (!style) return this.malformed(start, `{${name}, number, ...} has an unknown style`);
+      this.index = close + 1;
       return { kind: 'value', name, style, source: this.text.slice(start, this.index) };
     }
     if (type !== 'plural') return this.malformed(start, `{${name}, ${type}} is not a known argument type`);
     if (after !== ',') return this.malformed(start, `{${name}, plural} has no branches`);
-    this.index = start + head.length;
+    if (this.depth >= maxNesting) return this.malformed(start, `{${name}, plural, ...} is nested more than ${maxNesting} deep`);
+    this.index = index;
     const branches = new Map<string, readonly Piece[]>();
     for (;;) {
-      const end = sticky(pluralEnd, this.text, this.index);
-      if (end) {
-        this.index += end[0].length;
+      const next = this.skipSpace(this.index);
+      if (this.text[next] === '}') {
+        this.index = next + 1;
         break;
       }
-      const selector = sticky(pluralSelector, this.text, this.index);
+      const selector = this.selector(next);
       if (!selector) return this.malformed(start, `{${name}, plural, ...} has a malformed branch`);
-      this.index += selector[0].length;
+      this.index = selector.end;
+      this.depth += 1;
       const branch = this.pieces(true);
+      this.depth -= 1;
       if (this.text[this.index] !== '}') return this.malformed(start, `{${name}, plural, ...} has an unclosed branch`);
       this.index += 1;
-      if (branches.has(selector[1]!)) return this.malformed(start, `{${name}, plural, ...} repeats its ${selector[1]} branch`);
-      branches.set(selector[1]!, branch);
+      if (branches.has(selector.key)) return this.malformed(start, `{${name}, plural, ...} repeats its ${selector.key} branch`);
+      branches.set(selector.key, branch);
     }
     if (!branches.has('other')) return this.malformed(start, `{${name}, plural, ...} has no other branch`);
     return { kind: 'plural', name, branches, source: this.text.slice(start, this.index) };

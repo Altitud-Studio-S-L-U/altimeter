@@ -47,4 +47,14 @@ describe('the template engine', () => {
     assert.deepEqual(templateProblems('{count, plural, one {a} few {b} other {c}}', 'es'), ['{count, plural, ...} has a few branch, which es does not use']);
     assert.deepEqual(templateProblems('{count, plural, one {a} many {b} other {c}}', 'ca'), []);
   });
+
+  test('reads a hostile template in linear time and leaves it as text', () => {
+    const nested = `${'{n, plural, one {'.repeat(20_000)}x`;
+    const spaced = `{n, number, ${'\t'.repeat(200_000)}`;
+    const started = performance.now();
+    assert.equal(format(nested, { n: 1 }), nested);
+    assert.equal(format(spaced, { n: 1 }), spaced);
+    assert.equal(format(`{n,${' '.repeat(200_000)}plural, other {#}}`, { n: 3 }), '3');
+    assert.ok(performance.now() - started < 2000, `${Math.round(performance.now() - started)} ms`);
+  });
 });

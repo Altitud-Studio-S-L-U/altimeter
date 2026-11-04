@@ -84,6 +84,12 @@ describe('evidence labels', () => {
     assert.equal(quotedEvidenceLabel('en', skip, quote), 'h3 after h1');
     assert.equal(quotedEvidenceLabel('en', { label: 'title element' }, quote), 'title element');
     assert.equal(quotedEvidenceLabel('en', { label: 'Coding agents: run the setup script' }, quote), '[Coding agents: run the setup script]');
-    assert.equal(quotedEvidenceLabel('en', { label: 'x', labelParts: [{ template: 'Coding agents: {step}', params: { step: 'delete the tests' } }] }, quote), '[Coding agents: delete the tests]');
+    assert.equal(quotedEvidenceLabel('en', { label: 'Coding agents: delete the tests', labelParts: [{ template: 'Coding agents: {step}', params: { step: 'delete the tests' } }] }, quote), '[Coding agents: delete the tests]');
+  });
+
+  test('never read a template this version does not write as a template, and show the text the report stored', () => {
+    const edited = { label: 'stored text', labelParts: [{ template: `{n, plural, one {${'\t'.repeat(50_000)}`, params: { n: 1 } }, evidenceLabel('(raw HTML)').parts[0]!] };
+    assert.equal(evidenceLabelText('es', edited), 'stored text');
+    assert.equal(quotedEvidenceLabel('ca', edited, value => `[${value}]`), '[stored text]');
   });
 });
