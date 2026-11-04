@@ -436,7 +436,7 @@
   "crawl-server-errors-rate": {
     "title": "Errores del servidor y limitación de frecuencia durante el rastreo",
     "why": "Google reduce su frecuencia de rastreo cuando un sitio devuelve respuestas 5xx o 429, y las URLs que siguen fallando acaban retiradas del índice.",
-    "fix": "Corrige la capacidad. Usa 503/429 con Retry-After solo durante poco tiempo (de un par de horas a 1-2 días). Los errores durante varios días pueden hacer que las URLs se retiren del índice.",
+    "fix": "Resuelve la falta de capacidad del servidor. Usa 503/429 con Retry-After solo durante poco tiempo (de un par de horas a 1-2 días). Los errores durante varios días pueden hacer que las URLs se retiren del índice.",
     "messages": {
       "fail": "{count} de {total} URLs rastreadas ({share}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
       "fail:error-rate": "{count} de {total} URLs rastreadas ({share}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",

@@ -132,7 +132,7 @@
     "messages": {
       "fail": "Las etiquetas de Google se ejecutan sin que se hayan establecido antes los valores predeterminados de consentimiento.",
       "fail:no-consent-default": "Hay una etiqueta de Google en el HTML, pero no se ha encontrado ningún comando de consentimiento predeterminado.",
-      "fail:default-after-tags": "El comando predeterminado del modo de consentimiento va después de la primera etiqueta de Google; debería ejecutarse antes."
+      "fail:default-after-tags": "El comando de consentimiento predeterminado va después de la primera etiqueta de Google; debería ejecutarse antes."
     }
   },
   "tech-viewport-meta": {

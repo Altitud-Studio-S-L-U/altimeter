@@ -105,7 +105,7 @@
     }
   },
   "intl-hreflang-missing-return-link": {
-    "title": "El enlace hreflang no tiene reciprocidad (falta el enlace recíproco)",
+    "title": "El enlace hreflang no tiene enlace recíproco",
     "why": "Google ignora las anotaciones hreflang entre dos páginas salvo que cada una enlace a la otra. Los pares recíprocos siguen funcionando aunque otros no lo sean.",
     "fix": "Genera el mismo conjunto completo de entradas hreflang en todos los miembros del grupo a partir de una única fuente de verdad (la correspondencia de traducciones del CMS).",
     "messages": {
@@ -223,7 +223,7 @@
     }
   },
   "intl-hreflang-source-conflict": {
-    "title": "El hreflang del HTML, de la cabecera HTTP y del sitemap no coinciden",
+    "title": "Las anotaciones hreflang del HTML, de la cabecera HTTP y del sitemap no coinciden",
     "why": "Google lee hreflang del HTML, de las cabeceras HTTP y de los sitemaps. Se permite usar varios métodos; los valores contradictorios entre ellos, no.",
     "fix": "Elige un método. Google los trata como equivalentes, y usar varios no aporta ninguna ventaja y añade mantenimiento. Si se mantienen varios, genéralos a partir de los mismos datos.",
     "messages": {
@@ -235,7 +235,7 @@
   "intl-hreflang-sitemap-format": {
     "title": "Las anotaciones hreflang del sitemap están mal formadas",
     "why": "Google documenta el formato xhtml:link para hreflang en los sitemaps: cada <url> incluye todas las alternativas, incluida ella misma, dentro de los límites de tamaño del sitemap.",
-    "fix": "Declara el espacio de nombres, repite el conjunto completo dentro de cada <url>, incluido el enlace a sí misma, y divide los sitemaps que superen los límites.",
+    "fix": "Declara el espacio de nombres, repite el conjunto completo dentro de cada <url>, incluido el enlace a la propia URL, y divide los sitemaps que superen los límites.",
     "messages": {
       "fail": "{count} anotación(es) hreflang del sitemap están mal formadas ({sitemaps}).",
       "fail:namespace": "{count} sitemap(s) contienen enlaces hreflang que no están en el espacio de nombres xhtml (xmlns:xhtml=\"http://www.w3.org/1999/xhtml\"), así que no se leen: {sitemaps}.",

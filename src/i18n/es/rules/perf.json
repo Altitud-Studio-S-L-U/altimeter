@@ -223,7 +223,7 @@
     "fix": "Activa Brotli (o zstd) con gzip como alternativa en el servidor o el CDN para los tipos MIME de texto.",
     "messages": {
       "fail": "Las respuestas de texto se envían sin compresión gzip, Brotli ni zstd.",
-      "fail:document": "La respuesta HTML ({size} descodificada) se envía sin compresión gzip, Brotli ni zstd.",
+      "fail:document": "La respuesta HTML, de {size} una vez descodificada, se envía sin compresión gzip, Brotli ni zstd.",
       "fail:assets": "{count} recursos de texto propios se envían sin compresión: {urls}."
     }
   },
@@ -456,7 +456,7 @@
   "perf-html-cdn": {
     "title": "HTML no servido desde un CDN o una caché perimetral",
     "why": "Servir el HTML desde un CDN o una caché perimetral reduce el TTFB para los usuarios lejanos. La detección se basa en las cabeceras de respuesta y es heurística, así que la regla dice que no se han detectado marcadores de CDN, no que no exista un CDN.",
-    "fix": "Sirve a través de un CDN; almacena brevemente en la caché perimetral el HTML estático o anónimo; evita los parámetros de consulta únicos que se saltan la caché.",
+    "fix": "Sirve el sitio a través de un CDN; almacena brevemente en la caché perimetral el HTML estático o anónimo; evita los parámetros de consulta únicos que se saltan la caché.",
     "messages": {
       "fail": "No se han detectado marcadores de CDN en las cabeceras de respuesta de {count} páginas HTML auditadas. Algunos CDN eliminan sus marcadores, así que esto no demuestra que no se use un CDN."
     }

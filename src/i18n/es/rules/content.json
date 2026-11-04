@@ -31,7 +31,7 @@
   "content-title-duplicate": {
     "title": "Títulos idénticos en varias páginas indexables",
     "why": "Google documenta que los títulos idénticos o casi idénticos en varias páginas dificultan que los usuarios distingan los resultados y son un motivo habitual de reescritura de títulos.",
-    "fix": "Haz que cada título describa el contenido específico de esa página, por ejemplo, añadiendo del h1 de la página la entidad, la temporada, la variante de producto o la ubicación que la distinguen.",
+    "fix": "Haz que cada título describa el contenido específico de esa página, por ejemplo, añadiendo lo que la distingue según su h1: la entidad, la temporada, la variante de producto o la ubicación.",
     "messages": {
       "fail": "{count} páginas indexables comparten el título «{title}»: {urls}.",
       "fail:identical": "{count} páginas indexables comparten el título «{title}»: {urls}.",
@@ -434,7 +434,7 @@
   "content-preferred-image": {
     "title": "Imagen preferida representativa (og:image / primaryImageOfPage)",
     "why": "Google documenta og:image y primaryImageOfPage como formas de indicar la imagen preferida de una página, y recomienda imágenes grandes para Discover.",
-    "fix": "Especifica una imagen relevante y de alta calidad para cada página mediante primaryImageOfPage u og:image, no el logotipo. Para Discover, usa imágenes de ≥1200 px de ancho y 16:9.",
+    "fix": "Especifica una imagen relevante y de alta calidad para cada página mediante primaryImageOfPage u og:image, no el logotipo. Para Discover, usa imágenes de ≥1200 px de ancho en formato 16:9.",
     "messages": {
       "fail": "La imagen preferida de la página se podría mejorar.",
       "fail:missing": "La página no declara ninguna imagen preferida (og:image ni primaryImageOfPage).",

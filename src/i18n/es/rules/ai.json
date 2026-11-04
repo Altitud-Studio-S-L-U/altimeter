@@ -188,7 +188,7 @@
     }
   },
   "ai-cdn-cloudflare-managed-robots": {
-    "title": "Hay un bloque del robots.txt gestionado de Cloudflare o de Bot Preference Sync",
+    "title": "Hay un bloque de robots.txt gestionado por Cloudflare o por Bot Preference Sync",
     "why": "Cloudflare puede anteponer un bloque gestionado a robots.txt. Su lista predeterminada documentada solo contiene tokens de entrenamiento, así que no afecta a la visibilidad en la búsqueda salvo que se edite para bloquear rastreadores de búsqueda.",
     "fix": "Revisa la política para rastreadores de IA en el panel de Cloudflare. El robots.txt gestionado se está sustituyendo por Bot Preference Sync, que solo escribe directivas cuando una categoría está configurada como block o disallow.",
     "messages": {
@@ -328,7 +328,7 @@
     }
   },
   "ai-bots-crawl-activity": {
-    "title": "Rastreadores de IA que han obtenido realmente el sitio, verificados (contexto)",
+    "title": "Rastreadores de IA verificados que han obtenido realmente el sitio (contexto)",
     "why": "robots.txt solo dice qué rastreadores pueden obtener el sitio; los registros de acceso del propietario o las analíticas del CDN muestran cuáles lo han hecho. Cualquiera puede enviar el user-agent de un rastreador, así que cada declaración se comprueba con la lista de IP o el DNS inverso que publica el operador, y los operadores que no publican ninguna comprobación (Meta, ByteDance, MistralAI-Training) se indican como declaraciones que no se pueden verificar, nunca como cero.",
     "fix": "No hay nada que corregir. Compara los rastreadores que obtienen el sitio con la política de robots.txt: bloquea los rastreadores de entrenamiento si no quieres ese uso, y mantén permitidos los rastreadores de búsqueda y de respuestas si quieres citas en las respuestas de IA.",
     "messages": {

@@ -236,8 +236,8 @@
     "messages": {
       "fail": "El marcado Organization de la página de inicio o de la página Acerca de requiere atención: {items}",
       "fail:missing": "No se ha encontrado marcado Organization en la página de inicio ni en la página Acerca de.",
-      "fail:foreign-url": "La url de Organization apunta a otro host: {items}",
-      "fail:missing-recommended": "A la Organization del sitio le faltan propiedades recomendadas: {items}"
+      "fail:foreign-url": "La propiedad url de Organization apunta a otro host: {items}",
+      "fail:missing-recommended": "Al nodo Organization del sitio le faltan propiedades recomendadas: {items}"
     }
   },
   "schema-organization-logo": {
@@ -267,19 +267,19 @@
     }
   },
   "schema-site-name-website": {
-    "title": "Falta el marcado de nombre del sitio WebSite en la página de inicio o está mal configurado",
+    "title": "Falta el marcado WebSite con el nombre del sitio en la página de inicio o está mal configurado",
     "why": "Google lee el nombre del sitio del marcado WebSite de la página de inicio, es decir, del URI raíz del dominio o del subdominio, no de un subdirectorio. WebSite.url debería ser la página de inicio canónica. Cuando la raíz redirige, el nombre del sitio refleja la página a la que llega Googlebot.",
     "fix": "Añade {\"@type\":\"WebSite\",\"name\":\"Brand\",\"alternateName\":[\"BRAND\",\"example.com\"],\"url\":\"https://example.com/\"} a la página de inicio, combinado con cualquier nodo WebSite que ya exista.",
     "messages": {
-      "fail": "El marcado de nombre del sitio WebSite de la página de inicio requiere atención: {items}",
+      "fail": "El marcado WebSite con el nombre del sitio de la página de inicio requiere atención: {items}",
       "fail:missing": "La página de inicio a la que llega Googlebot no tiene ningún elemento WebSite con nombre; Google elegirá el nombre del sitio a partir de otras señales.",
       "fail:several-websites": "La página de inicio tiene varios elementos WebSite ({items}); Google pide un solo nodo WebSite.",
-      "fail:url-other-host": "La url de WebSite apunta a otro host: {items}",
+      "fail:url-other-host": "La propiedad url de WebSite apunta a otro host: {items}",
       "fail:name-conflict": "El nombre del sitio difiere entre el marcado WebSite y otras fuentes: {items}"
     }
   },
   "schema-sitelinks-searchbox-obsolete": {
-    "title": "SearchAction para el cuadro de búsqueda de enlaces de sitio está obsoleto",
+    "title": "El SearchAction del cuadro de búsqueda de enlaces de sitio está obsoleto",
     "why": "Google retiró el cuadro de búsqueda de enlaces de sitio en todo el mundo en noviembre de 2024. El marcado SearchAction es inofensivo, y su ausencia nunca es un problema.",
     "fix": "Limpieza opcional. Google indica que no hace falta eliminarlo y que no provoca errores en Search Console.",
     "messages": {
