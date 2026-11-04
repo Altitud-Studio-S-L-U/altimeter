@@ -37,6 +37,21 @@ export function untrustedInline(value: string, maxLength = 200): string {
   return text === '' ? '(empty)' : `${fence}${padded}${fence}`;
 }
 
+const markdownEntities: Readonly<Record<string, string>> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
+
+/**
+ * One line of untrusted text for Markdown prose. Every character that could open code, emphasis, a link, an image,
+ * an HTML tag or an entity is escaped, and so is a start that could open a heading or a list, so viewers show the
+ * text as written and render nothing from it. An underscore inside a word cannot open emphasis and is left alone.
+ */
+export function markdownText(value: string, maxLength = 300): string {
+  return cleanLine(value, maxLength)
+    .replace(/[\\`*[\]~|$]|(?<![\p{L}\p{N}])_|_(?![\p{L}\p{N}])/gu, '\\$&')
+    .replace(/[&<>]/gu, character => markdownEntities[character]!)
+    .replace(/^[#+=-]/u, '\\$&')
+    .replace(/^(\d+)([.)])/u, '$1\\$2');
+}
+
 const htmlEscapes: Readonly<Record<string, string>> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 export function escapeHtml(value: string): string {

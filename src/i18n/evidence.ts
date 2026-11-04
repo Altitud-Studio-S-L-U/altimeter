@@ -4,7 +4,7 @@ import enLabels from './en/evidence.json' with { type: 'json' };
 import esLabels from './es/evidence.json' with { type: 'json' };
 import { format } from './format.ts';
 import type { Language } from './messages.ts';
-import { localizeParams } from './values.ts';
+import { isCatalogWord, localizeParams, localizeValue } from './values.ts';
 
 export type LabelCatalog = Readonly<Record<string, string>>;
 
@@ -25,5 +25,24 @@ export function evidenceLabelText(language: Language, item: Pick<EvidenceItem, '
     const template = catalog[part.template];
     if (template === undefined) return format(part.template, part.params);
     return format(template, part.params === undefined ? undefined : localizeParams(language, part.params));
+  }).join(' ');
+}
+
+/**
+ * An evidence label as evidenceLabelText writes it, with every value that is data rather than a word of the value
+ * catalog, such as a URL, an id or text from the site, passed through `quote`. A label or template that the English
+ * catalog does not have comes from an edited report.json or another version, so all of it is quoted.
+ */
+export function quotedEvidenceLabel(language: Language, item: Pick<EvidenceItem, 'label' | 'labelParts'>, quote: (value: string) => string, catalog: LabelCatalog = labelCatalogs[language]): string {
+  if (!item.labelParts) return labelCatalogs.en[item.label] === undefined ? quote(item.label) : evidenceLabelText(language, item, catalog);
+  return item.labelParts.map(part => {
+    if (labelCatalogs.en[part.template] === undefined) return quote(format(part.template, part.params));
+    const translation = language === 'en' ? undefined : catalog[part.template];
+    const values = Object.fromEntries(Object.entries(part.params ?? {}).map(([name, value]) => {
+      if (typeof value === 'number') return [name, value];
+      const shown = translation === undefined ? value : localizeValue(language, name, value);
+      return [name, isCatalogWord(name, value) ? shown : quote(shown)];
+    }));
+    return format(translation ?? part.template, values);
   }).join(' ');
 }

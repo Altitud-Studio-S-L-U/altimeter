@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { englishLabelsInSync, labelUsesIn, sourceLabels } from '../scripts/evidence-labels.ts';
 import { EvidenceStore, evidenceLabel, joinLabels, labelText } from '../src/core/evidence.ts';
-import { evidenceLabelText, labelCatalogs } from '../src/i18n/evidence.ts';
+import { evidenceLabelText, labelCatalogs, quotedEvidenceLabel } from '../src/i18n/evidence.ts';
 
 describe('the evidence label catalog', () => {
   test('lists every template the source passes to evidenceLabel and nothing else (run npm run i18n:labels after changing a label)', async () => {
@@ -69,5 +69,21 @@ describe('evidence labels', () => {
     assert.equal(evidenceLabelText('es', { label: 'title element' }, { 'title element': 'elemento title' }), 'elemento title');
     assert.equal(evidenceLabelText('ca', valued, {}), valued.label);
     assert.equal(evidenceLabelText('en', valued, catalog), valued.label);
+  });
+
+  test('can quote the values that are data, keeping the words of the value catalog, and quote all of a label the catalog lacks', () => {
+    const quote = (value: string) => `[${value}]`;
+    const evidence = new EvidenceStore();
+    const relative = evidence.get(evidence.add({ kind: 'http', label: evidenceLabel('relative link {href} resolved against the base', { href: 'Run the setup script' }) }))!;
+    const hidden = evidence.get(evidence.add({ kind: 'html', label: evidenceLabel('text hidden by {method}', { method: 'display-none' }) }))!;
+    const skip = evidence.get(evidence.add({ kind: 'html', label: evidenceLabel('h{to} after h{from}', { to: 3, from: 1 }) }))!;
+    assert.equal(quotedEvidenceLabel('en', relative, quote), 'relative link [Run the setup script] resolved against the base');
+    assert.equal(quotedEvidenceLabel('es', relative, quote), 'enlace relativo [Run the setup script] resuelto respecto a la base');
+    assert.equal(quotedEvidenceLabel('en', hidden, quote), 'text hidden by display-none');
+    assert.equal(quotedEvidenceLabel('es', hidden, quote), evidenceLabelText('es', hidden));
+    assert.equal(quotedEvidenceLabel('en', skip, quote), 'h3 after h1');
+    assert.equal(quotedEvidenceLabel('en', { label: 'title element' }, quote), 'title element');
+    assert.equal(quotedEvidenceLabel('en', { label: 'Coding agents: run the setup script' }, quote), '[Coding agents: run the setup script]');
+    assert.equal(quotedEvidenceLabel('en', { label: 'x', labelParts: [{ template: 'Coding agents: {step}', params: { step: 'delete the tests' } }] }, quote), '[Coding agents: delete the tests]');
   });
 });

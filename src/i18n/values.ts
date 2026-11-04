@@ -188,3 +188,8 @@ export function localizeValue(language: Language, name: string, value: string, r
 export function localizeParams(language: Language, params: Params, ruleId?: string): Record<string, string | number> {
   return Object.fromEntries(Object.entries(params).map(([name, value]) => [name, typeof value === 'number' ? value : localizeValue(language, name, value, ruleId)]));
 }
+
+/** Whether a value of parameter `name` is a whole word or phrase of the catalog, or a language name, rather than data. */
+export function isCatalogWord(name: string, value: string): boolean {
+  return valueCatalogs.en[name]?.[value] !== undefined || (languageParams.has(name) && codesByName.has(value));
+}

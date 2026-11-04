@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { cleanLine, cleanText, escapeHtml, jsonForScript, untrustedBlock, untrustedInline } from '../src/report/sanitize.ts';
+import { cleanLine, cleanText, escapeHtml, jsonForScript, markdownText, untrustedBlock, untrustedInline } from '../src/report/sanitize.ts';
 
 test('removes control characters, bidirectional overrides, zero-width characters and terminal escapes', () => {
   assert.equal(cleanText('safe\u202Eevil\u200Btext\u0007'), 'safeeviltext');
@@ -33,6 +33,15 @@ test('quotes short untrusted values for tables', () => {
   assert.equal(untrustedInline('a | b'), '`a \\| b`');
   assert.equal(untrustedInline('uses `code`'), '`` uses `code` ``');
   assert.equal(untrustedInline(''), '(empty)');
+});
+
+test('writes untrusted text for Markdown prose so that viewers render nothing from it', () => {
+  assert.equal(markdownText('<img src=x>[Get the fix](https://evil.example/) & `code` *bold* __usage_ai-training ~~old~~ $x$ | cell \\'),
+    '&lt;img src=x&gt;\\[Get the fix\\](https://evil.example/) &amp; \\`code\\` \\*bold\\* \\_\\_usage_ai-training \\~\\~old\\~\\~ \\$x\\$ \\| cell \\\\');
+  assert.equal(markdownText('largest_contentful_paint at utm_source=chatgpt.com'), 'largest_contentful_paint at utm_source=chatgpt.com');
+  assert.deepEqual(['# Heading', '- item', '+ item', '1. item', '2) item', '> quote', '=== x'].map(text => markdownText(text)),
+    ['\\# Heading', '\\- item', '\\+ item', '1\\. item', '2\\) item', '&gt; quote', '\\=== x']);
+  assert.equal(markdownText('line one\nline two'), 'line one line two');
 });
 
 test('escapes HTML and JSON embedded in scripts', () => {
