@@ -1,7 +1,19 @@
+import { X509Certificate, createHash } from 'node:crypto';
 import type { lookup as dnsLookup } from 'node:dns';
-import { connect, type PeerCertificate } from 'node:tls';
+import { connect, getCACertificates, type PeerCertificate } from 'node:tls';
 import { addressAllowed, publicOnly, type NetworkPolicy } from './ip-guard.ts';
 import { guardedLookup } from './http.ts';
+
+/** Node's default roots plus the given PEM certificates, because a `ca` option alone replaces the default roots. */
+export function trustedRoots(extra: string): string[] {
+  return [...getCACertificates('default'), extra];
+}
+
+/** Base64 SHA-256 of the public key of each certificate in a PEM bundle, the form Chrome's SPKI allowlist takes. */
+export function spkiHashes(pem: string): string[] {
+  return (pem.match(/-----BEGIN CERTIFICATE-----[^-]+-----END CERTIFICATE-----/gu) ?? [])
+    .map(block => createHash('sha256').update(new X509Certificate(block).publicKey.export({ type: 'spki', format: 'der' })).digest('base64'));
+}
 
 export interface TlsFacts {
   readonly host: string;
@@ -32,7 +44,7 @@ function chainLength(certificate: PeerCertificate & { issuerCertificate?: PeerCe
 }
 
 /** Opens a TLS connection like a browser would and reports what the certificate looks like. */
-export function inspectTls(host: string, options: { port?: number; policy?: NetworkPolicy; lookup?: typeof dnsLookup; timeoutMs?: number; ca?: string } = {}): Promise<TlsFacts> {
+export function inspectTls(host: string, options: { port?: number; policy?: NetworkPolicy; lookup?: typeof dnsLookup; timeoutMs?: number; ca?: string | readonly string[] } = {}): Promise<TlsFacts> {
   const port = options.port ?? 443;
   const policy = options.policy ?? publicOnly;
   return new Promise(resolve => {
@@ -47,7 +59,7 @@ export function inspectTls(host: string, options: { port?: number; policy?: Netw
       rejectUnauthorized: false,
       lookup: guardedLookup(policy, options.lookup) as never,
       timeout: options.timeoutMs ?? 10_000,
-      ...(options.ca ? { ca: options.ca } : {}),
+      ...(options.ca ? { ca: options.ca as string | string[] } : {}),
     }, () => {
       const certificate = socket.getPeerCertificate(true);
       const validTo = certificate.valid_to ? new Date(certificate.valid_to) : undefined;

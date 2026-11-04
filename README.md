@@ -44,6 +44,7 @@ altimeter doctor
 altimeter audit https://example.com/                 # the page and its site context
 altimeter audit https://example.com/ --crawl         # crawl up to 100 pages politely (robots.txt, 2 requests in flight)
 altimeter audit https://example.com/ --lang es       # write the report in Spanish (en, es or ca)
+altimeter audit https://staging.example.com/ --allow-private-network --ca staging-ca.pem   # a staging site behind a private CA
 ```
 
 Each run writes a folder under `altimeter-report/<host>/<UTC time>/`:

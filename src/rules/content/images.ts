@@ -96,10 +96,12 @@ export const imgAltQuality: RuleImplementation = {
     const images = imagesOf(doc, page.fetch.finalUrl).filter(image => (image.alt ?? '').trim() !== '');
     if (images.length === 0) return notApplicable('no-alt-text');
     const results: RuleResult[] = [];
+    // Hyphens and underscores separate words in file names, so an alt copied from the name may keep them or not.
+    const spaced = (value: string) => value.replace(/[-_]+/gu, ' ').replace(/\s+/gu, ' ').trim();
     const filename = images.filter(image => {
       const alt = fold(image.alt!.trim());
-      const name = fold(stripExtension(image.src ? basename(image.src) : '')).replace(/[-_]+/gu, ' ').trim();
-      return cameraOrHash.test(image.alt!.trim()) || (name !== '' && (alt === name || alt === fold(basename(image.src ?? ''))));
+      const name = spaced(fold(stripExtension(image.src ? basename(image.src) : '')));
+      return cameraOrHash.test(image.alt!.trim()) || (name !== '' && (spaced(alt) === name || alt === fold(basename(image.src ?? ''))));
     });
     if (filename.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'filename', params: { count: filename.length }, evidence: citeImages(context, doc, filename, 'alt text that repeats the file name') });
     const generic = images.filter(image => genericAlts.has(fold(image.alt!.trim())));

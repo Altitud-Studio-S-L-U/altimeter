@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import type { LookupAddress } from 'node:dns';
 import { createServer, type Server } from 'node:http';
+import { createServer as createHttpsServer } from 'node:https';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
 import { Launcher } from 'chrome-launcher';
 import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser } from '../src/render/chrome.ts';
+import { createTestCertificates } from './support/certificates.ts';
 
 const chrome = findChrome();
 if (!chrome && process.env.CI) throw new Error('Chrome is required on CI');
@@ -168,5 +171,46 @@ describe('renderPage', { skip: chrome ? false : 'Chrome is not installed' }, () 
     const result = await renderPage(audit!, 'http://169.254.169.254/latest/meta-data/', { mode: 'user', userAgent, timeoutMs: 15_000 });
     assert.ok(result.error !== undefined || result.status !== 200);
     assert.ok(audit!.proxy.refused.some(decision => decision.host === '169.254.169.254'));
+  });
+});
+
+describe('launchAuditBrowser with an extra CA', { skip: chrome ? false : 'Chrome is not installed' }, () => {
+  const { ca, leaf } = createTestCertificates(['site.test']);
+  const policy = { allowPrivate: false, privateHosts: new Set(['site.test']) };
+  const lookup = ((_host: string, _options: unknown, callback: (error: null, addresses: LookupAddress[]) => void) => {
+    callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  }) as never;
+  const serve = async (cert: string) => {
+    const secure = createHttpsServer({ key: leaf.key, cert }, (_req, res) => res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
+      .end('<!doctype html><html lang="en"><head><title>Private CA</title></head><body><h1>Served over TLS</h1></body></html>'));
+    await new Promise<void>(resolve => secure.listen(0, '127.0.0.1', resolve));
+    return secure;
+  };
+
+  test('trusts a server whose chain includes the CA, and still refuses one that sends only its leaf', async () => {
+    const withChain = await serve(leaf.chain);
+    const leafOnly = await serve(leaf.cert);
+    const trusting = await launchAuditBrowser({ policy, lookup, ca: ca.cert });
+    const plain = await launchAuditBrowser({ policy, lookup });
+    try {
+      const url = (server: typeof withChain) => `https://site.test:${(server.address() as AddressInfo).port}/`;
+      const trusted = await renderPage(trusting, url(withChain), { mode: 'googlebot', userAgent });
+      assert.equal(trusted.status, 200);
+      assert.equal(trusted.error, undefined);
+      assert.match(trusted.html, /Served over TLS/u);
+      assert.match((await renderPage(trusting, url(leafOnly), { mode: 'googlebot', userAgent })).error?.message ?? '', /ERR_CERT_AUTHORITY_INVALID/u);
+      assert.match((await renderPage(plain, url(withChain), { mode: 'googlebot', userAgent })).error?.message ?? '', /ERR_CERT_AUTHORITY_INVALID/u);
+    } finally {
+      await trusting.close();
+      await plain.close();
+      for (const server of [withChain, leafOnly]) {
+        server.closeAllConnections();
+        await new Promise(resolve => server.close(resolve));
+      }
+    }
+  });
+
+  test('refuses a CA option that holds no certificate', async () => {
+    await assert.rejects(launchAuditBrowser({ policy, lookup, ca: 'not a certificate' }), /no PEM certificate/u);
   });
 });

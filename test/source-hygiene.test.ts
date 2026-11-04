@@ -30,7 +30,7 @@ function invisible(codePoint: number): boolean {
 
 test('sources contain no invisible, control or bidirectional characters (write them as escapes)', () => {
   const problems: string[] = [];
-  for (const directory of ['src', 'test', 'scripts', 'docs', '.github']) {
+  for (const directory of ['src', 'test', 'scripts', 'bench', 'docs', '.github']) {
     let list: string[];
     try {
       list = files(join(root, directory));

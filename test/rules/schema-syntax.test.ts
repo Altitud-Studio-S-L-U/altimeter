@@ -146,6 +146,13 @@ describe('schema-unknown-property', () => {
   test('fails other undefined properties at low severity', () => {
     assert.equal(failure(unknownProperty, { html: doc(ld({ '@context': ctx, '@type': 'Organization', name: 'Acme', logoUrl: 'https://shop.example/l.png' })) }).finding.severity, 'low');
   });
+  test('accepts the -input and -output annotations of Action properties, and only those', () => {
+    const search = (annotation: string) => ({ '@context': ctx, '@type': 'WebSite', name: 'Shop', url: 'https://shop.example/',
+      potentialAction: { '@type': 'SearchAction', target: 'https://shop.example/search?q={term}', [annotation]: 'required name=term' } });
+    passes(unknownProperty, { html: doc(ld(search('query-input'))) });
+    assert.equal(failure(unknownProperty, { html: doc(ld(search('quary-input'))) }).finding.params?.items, 'quary-input');
+    assert.equal(failure(unknownProperty, { html: doc(ld({ '@context': ctx, '@type': 'Product', name: 'x', 'name-input': 'required' })) }).finding.params?.items, 'name-input');
+  });
   test('is not applicable without schema.org markup', () => {
     assert.deepEqual(outcome(unknownProperty, { html: doc('') }), ['not_applicable', 'no-schema-org-markup']);
   });

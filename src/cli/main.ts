@@ -24,6 +24,7 @@ import { isInside, reportDirectory, writeReport } from '../report/write.ts';
 import { locateFixes } from '../source/locate.ts';
 import { verifyExitCode, verifyTasks } from '../verify/index.ts';
 import { HttpClient } from '../fetch/http.ts';
+import { spkiHashes } from '../fetch/tls.ts';
 import { deleteLogin, loadLogin, loginStatus, saveLogin } from '../owner/credential-store.ts';
 import { readOAuthClient, startLoopbackLogin } from '../owner/google-auth.ts';
 import { ipListCacheDirectory } from '../owner/bots/ip-ranges.ts';
@@ -77,6 +78,8 @@ Audit options:
   --lab-runs <1-7>           Lighthouse runs; the median run is kept (default 3).
   --fail-on <level>          Exit 1 when a check fails at critical, high, medium or low (default none).
   --allow-private-network    Allow private and loopback addresses, for local or staging sites.
+  --ca <file>                Also trust the PEM certificates in <file>, such as a staging site's private CA. Chrome
+                             accepts them only when the server sends one in its certificate chain.
   --quiet                    Print only the report folder.
 
 Model analysis options (Claude Code or Codex, run with your own login; the pages analysed are sent to it):
@@ -167,7 +170,7 @@ async function auditCommand(args: string[]): Promise<number> {
       'redact-queries': { type: 'boolean' }, source: { type: 'string' }, provider: { type: 'string' }, verifier: { type: 'string' }, model: { type: 'string' },
       'ai-pages': { type: 'string' }, 'ai-max-calls': { type: 'string' }, keyword: { type: 'string', multiple: true }, 'dry-run': { type: 'string' },
       'use-api-keys': { type: 'boolean' }, 'no-ai-cache': { type: 'boolean' }, bing: { type: 'boolean' }, 'bing-site': { type: 'string' },
-      'bots-from': { type: 'string', multiple: true }, 'bots-days': { type: 'string' }, 'no-bots-dns': { type: 'boolean' },
+      'bots-from': { type: 'string', multiple: true }, 'bots-days': { type: 'string' }, 'no-bots-dns': { type: 'boolean' }, ca: { type: 'string' },
     },
   });
   if (positionals.length !== 1) throw new UsageError('audit needs exactly one URL.');
@@ -197,6 +200,8 @@ async function auditCommand(args: string[]): Promise<number> {
   // Paths are checked now: a missing log should stop the run before the crawl, not after it.
   const botLogs = await logFiles(botsFrom.filter(entry => entry.toLowerCase() !== 'cloudflare'));
   const botsDays = wholeNumber(values['bots-days'], 30, 1, 400, '--bots-days');
+  const ca = values.ca === undefined ? undefined : await readFile(values.ca, 'utf8').catch(() => { throw new UsageError(`--ca: ${values.ca} cannot be read.`); });
+  if (ca !== undefined && spkiHashes(ca).length === 0) throw new UsageError('--ca must be a PEM file with at least one certificate.');
   const ai = analysisOptions(values);
   const outRoot = resolve(values.out ?? 'altimeter-report');
   const source = values.source === undefined ? undefined : resolve(values.source);
@@ -209,12 +214,13 @@ async function auditCommand(args: string[]): Promise<number> {
   const recordedOptions = {
     crawl: values.crawl === true, maxPages, searchConsole: useGsc, bing: useBing, botActivity, redactQueries, source: source !== undefined, render: values['no-render'] !== true,
     lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true,
-    provider: ai.provider, verifier: ai.verifier, aiPages: ai.aiPages, aiMaxCalls: ai.maxCalls, dryRun: ai.dryRunDir !== undefined,
+    extraCa: ca !== undefined, provider: ai.provider, verifier: ai.verifier, aiPages: ai.aiPages, aiMaxCalls: ai.maxCalls, dryRun: ai.dryRunDir !== undefined,
   };
   const result = await audit({
     url: url.href,
     language: lang,
     ...(values['allow-private-network'] ? { policy: { allowPrivate: true } } : {}),
+    ...(ca === undefined ? {} : { ca }),
     render: values['no-render'] !== true,
     lighthouse: recordedOptions.lighthouse,
     labRuns,

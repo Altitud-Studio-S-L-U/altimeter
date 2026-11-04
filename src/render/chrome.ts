@@ -7,6 +7,7 @@ import { performance } from 'node:perf_hooks';
 import { Launcher } from 'chrome-launcher';
 import puppeteer, { type Browser, type HTTPRequest, type Page } from 'puppeteer-core';
 import type { NetworkPolicy } from '../fetch/ip-guard.ts';
+import { spkiHashes } from '../fetch/tls.ts';
 import { startGuardedProxy, type GuardedProxy } from './proxy.ts';
 
 export interface Viewport {
@@ -104,10 +105,23 @@ export interface AuditBrowser {
   close(): Promise<void>;
 }
 
+export interface LaunchOptions {
+  readonly policy: NetworkPolicy;
+  readonly executablePath?: string;
+  readonly lookup?: typeof dnsLookup;
+  /**
+   * Extra CA certificates (PEM). Chrome takes no CA by flag, so it accepts any chain the server sends that includes
+   * one of these certificates; a server that sends only its leaf is still refused.
+   */
+  readonly ca?: string;
+}
+
 /** Launches Chrome over a pipe (no debugging port), with all traffic through the guarded proxy. */
-export async function launchAuditBrowser(options: { policy: NetworkPolicy; executablePath?: string; lookup?: typeof dnsLookup }): Promise<AuditBrowser> {
+export async function launchAuditBrowser(options: LaunchOptions): Promise<AuditBrowser> {
   const executablePath = options.executablePath ?? findChrome();
   if (!executablePath) throw new Error('Chrome or Chromium was not found. Install it or set CHROME_PATH.');
+  const trusted = options.ca === undefined ? [] : spkiHashes(options.ca);
+  if (options.ca !== undefined && trusted.length === 0) throw new Error('The extra CA holds no PEM certificate.');
   const proxy = await startGuardedProxy(options.policy, options.lookup);
   const userDataDir = await mkdtemp(join(tmpdir(), 'altimeter-chrome-'));
   let browser: Browser;
@@ -131,6 +145,8 @@ export async function launchAuditBrowser(options: { policy: NetworkPolicy; execu
         '--mute-audio',
         '--hide-scrollbars',
         '--lang=en-US',
+        // Honoured only with --user-data-dir, which the userDataDir option adds.
+        ...(trusted.length > 0 ? [`--ignore-certificate-errors-spki-list=${trusted.join(',')}`] : []),
       ],
     });
   } catch (error) {

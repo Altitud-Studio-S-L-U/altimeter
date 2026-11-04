@@ -75,6 +75,14 @@ describe('content-img-alt-quality', () => {
     assert.deepEqual(excerpts(at()), ['<img src="/uploads/IMG_4521.jpg" alt="IMG_4521">']);
   });
 
+  test('fails low when the alt is the file name without its extension, hyphens and all', () => {
+    for (const alt of ['data-platforms', 'data_platforms', 'Data platforms']) {
+      const { at } = run(imgAltQuality, [page(url, { html: doc(`<img src="/images/data-platforms.png" alt="${alt}">`) })]);
+      assert.deepEqual([at()?.severity, at()?.reason], ['low', 'filename'], alt);
+    }
+    assert.equal(run(imgAltQuality, [page(url, { html: doc('<img src="/images/data-platforms.png" alt="Dashboard of a data platform">') })]).at()?.outcome, 'pass');
+  });
+
   test('hands generic alt text to the analyst', () => {
     const { at } = run(imgAltQuality, [page(url, { html: doc('<img src="/a.jpg" alt="photo">') })]);
     assert.deepEqual([at()?.reason, at()?.needsJudgment], ['generic', true]);

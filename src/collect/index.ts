@@ -7,7 +7,7 @@ import { HttpClient, defaultUserAgent } from '../fetch/http.ts';
 import { publicOnly, type NetworkPolicy } from '../fetch/ip-guard.ts';
 import { isAllowed, robotsAvailability, type RobotsAvailability } from '../fetch/robots.ts';
 import { parseSitemap } from '../fetch/sitemap.ts';
-import { inspectTls } from '../fetch/tls.ts';
+import { inspectTls, trustedRoots } from '../fetch/tls.ts';
 import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser, type RenderMode } from '../render/chrome.ts';
 import { runLighthouse } from '../render/lighthouse.ts';
 import { crawlSite } from './crawl.ts';
@@ -29,6 +29,8 @@ export interface CollectOptions {
   readonly chromePath?: string;
   readonly log?: (message: string) => void;
   readonly lookup?: typeof dnsLookup;
+  /** Extra CA certificates (PEM) trusted besides the default roots, such as the private CA of a staging site. */
+  readonly ca?: string;
   readonly cruxEndpoint?: string;
   /** Crawl the site from the audited page, its home page and the sitemaps. */
   readonly crawl?: boolean;
@@ -181,7 +183,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
   target.hash = '';
   if (target.protocol !== 'http:' && target.protocol !== 'https:') throw new Error('Only http and https URLs can be audited.');
   const userAgent = options.userAgent ?? defaultUserAgent;
-  const client = new HttpClient({ policy: options.policy ?? publicOnly, userAgent, ...(options.lookup ? { lookup: options.lookup } : {}) });
+  const ca = options.ca === undefined ? undefined : trustedRoots(options.ca);
+  const client = new HttpClient({ policy: options.policy ?? publicOnly, userAgent, ...(options.lookup ? { lookup: options.lookup } : {}), ...(ca ? { ca } : {}) });
   const robotsCache = new Map<string, Promise<RobotsAvailability>>();
   const robotsFor = (origin: string) => {
     let cached = robotsCache.get(origin);
@@ -224,7 +227,7 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     const agentProbes = await Promise.all(probeAgents.map(agent => fetchAs(agent, homeUrl)));
     const uaProbes = page.raw ? await Promise.all([googlebotSmartphone, browserAgent].map(agent => fetchAs(agent, page.fetch.finalUrl))) : [];
     if (uaProbes.length > 0) pages.set(page.url, { ...pages.get(page.url)!, uaProbes });
-    const tlsOptions = { policy: options.policy ?? publicOnly, ...(target.port ? { port: Number(target.port) } : {}), ...(options.lookup ? { lookup: options.lookup } : {}) };
+    const tlsOptions = { policy: options.policy ?? publicOnly, ...(target.port ? { port: Number(target.port) } : {}), ...(options.lookup ? { lookup: options.lookup } : {}), ...(ca ? { ca } : {}) };
     const counterpart = hostCounterpart(target.hostname);
     const [tls, counterpartTls] = target.protocol === 'https:'
       ? await Promise.all([inspectTls(target.hostname, tlsOptions), counterpart ? inspectTls(counterpart, tlsOptions) : undefined])
@@ -270,7 +273,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     const wantRender = options.render ?? chromePath !== undefined;
     if (wantRender && !chromePath) warnings.push('Chrome was not found, so rendered checks were not evaluated.');
     if (wantRender && chromePath) {
-      browser = await launchAuditBrowser({ policy: options.policy ?? publicOnly, executablePath: chromePath, ...(options.lookup ? { lookup: options.lookup } : {}) });
+      browser = await launchAuditBrowser({ policy: options.policy ?? publicOnly, executablePath: chromePath, ...(options.lookup ? { lookup: options.lookup } : {}),
+        ...(options.ca === undefined ? {} : { ca: options.ca }) });
       versions.chrome = browser.version;
       const robotsAllows = async (url: string) => {
         const parsed = new URL(url);

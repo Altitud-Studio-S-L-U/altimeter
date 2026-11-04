@@ -13,6 +13,8 @@ npm run check
 
 `npm run check` type-checks the project and runs the tests. Tests run the TypeScript sources directly, so no build step is needed; `npm run build` produces the published `dist/`. Continuous integration runs the same checks on Linux and Windows with Node.js 26 and 24 for every pull request.
 
+`npm run bench` runs the integrated benchmark: about 25 synthetic sites served over HTTPS on loopback, each audited end to end with Chrome, and a table of precision and recall per rule. It needs Chrome or Chromium (`CHROME_PATH`), fails rather than skips without it, and takes a few minutes; CI runs it after `npm run check`. Run it when you change a rule, and see [bench/README.md](bench/README.md) to add a scenario.
+
 ## Before opening a pull request
 
 - Keep the change focused and preserve public contracts outside its scope.
