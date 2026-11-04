@@ -54,6 +54,11 @@ describe('crawl-robots-blocks-render-resources', () => {
     const facts = one({ html: doc('<main></main>'), rendered: { html: doc('<main><h1>Products</h1></main>'), blockedByRobots: [`${origin}/api/items`] }, unblockedRender: doc(body) });
     assertFail(run(id, facts).finding, 'high', 'content-missing');
   });
+  test('passes when the blocked request only builds a consent banner', () => {
+    const banner = `<div id="onetrust-banner-sdk"><p>${prose(40, 'cookies')}</p></div><div role="dialog" aria-modal="true"><p>${prose(30, 'preferences')}</p></div>`;
+    const facts = one({ html: doc(body), rendered: { html: doc(body), blockedByRobots: ['https://cdn.consent.example/sdk.js'] }, unblockedRender: doc(`${body}${banner}`) });
+    assertOutcome(run(id, facts).finding, 'pass');
+  });
   test('does not apply when nothing was blocked and is not evaluated without the unblocked render', () => {
     assertOutcome(run(id, one({ html: doc(body), rendered: doc(body) })).finding, 'not_applicable', 'nothing-blocked');
     assertOutcome(run(id, one({ html: doc(body), rendered: { html: doc(body), blockedByRobots: [`${origin}/app.js`] } })).finding, 'not_evaluated', 'no-unblocked-render');
@@ -128,6 +133,15 @@ describe('crawl-js-content-dependency', () => {
   });
   test('does not apply to pages with little rendered text', () => {
     assertOutcome(run(id, one({ html: doc('<p>Hi</p>'), rendered: doc('<p>Hi</p>') })).finding, 'not_applicable', 'little-rendered-text');
+  });
+  test('measures the main content, so a consent banner and its dialog added by scripts do not count', () => {
+    const main = `<main><h1>Our services</h1><p>${prose(150, 'service')}</p></main>`;
+    const consent = `<div id="onetrust-consent-sdk"><div id="onetrust-banner-sdk"><p>${prose(60, 'banner')}</p></div><div id="onetrust-pc-sdk" role="dialog" aria-modal="true"><p>${prose(140, 'prefs')}</p></div></div>`;
+    assertOutcome(run(id, one({ html: doc(main), rendered: doc(`${main}${consent}`) })).finding, 'pass');
+    assertOutcome(run(id, one({ html: doc('<main><p>Hi</p></main>'), rendered: doc(`<main><p>Hi</p></main>${consent}`) })).finding, 'not_applicable', 'little-rendered-text');
+  });
+  test('finds the rendered text anywhere in the raw HTML, even where it waits hidden', () => {
+    assertOutcome(run(id, one({ html: doc(`<main></main><div hidden><p>${prose(50)}</p></div>`), rendered: doc(body) })).finding, 'pass');
   });
 });
 
