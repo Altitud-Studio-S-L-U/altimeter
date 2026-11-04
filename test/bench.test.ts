@@ -1,15 +1,51 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import type { LookupAddress } from 'node:dns';
 import { X509Certificate } from 'node:crypto';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { connect } from 'node:tls';
+import { fileURLToPath } from 'node:url';
+import { scenarios } from '../bench/scenarios/index.ts';
 import { route, loopbackLookup, loopbackPolicy } from '../bench/support/scenario.ts';
 import { startVirtualHosts } from '../bench/support/server.ts';
+import { rules } from '../src/catalog/index.ts';
 import { HttpClient } from '../src/fetch/http.ts';
 import { trustedRoots } from '../src/fetch/tls.ts';
+import { implementations } from '../src/rules/registry.ts';
 import { createTestCa } from './support/certificates.ts';
 
 const day = 86_400_000;
+const root = fileURLToPath(new URL('..', import.meta.url));
+
+test('every scenario has a unique name and expectations on implemented rules', () => {
+  assert.equal(new Set(scenarios.map(scenario => scenario.name)).size, scenarios.length);
+  for (const scenario of scenarios) {
+    const expected = [...scenario.mustFail.map(entry => entry.rule), ...scenario.mustNotFail.map(entry => (typeof entry === 'string' ? entry : entry.rule))];
+    assert.ok(expected.length > 0, `${scenario.name} expects something`);
+    for (const rule of expected) {
+      const meta = rules.find(entry => entry.id === rule);
+      assert.ok(meta && meta.status !== 'planned' && implementations.has(rule), `${scenario.name}: ${rule} is an implemented rule`);
+    }
+    assert.ok(scenario.hosts.every(host => !host.endsWith('.test')), `${scenario.name}: *.test hosts count as staging hosts for several rules`);
+  }
+});
+
+test('the benchmark exits 2 and says why when Chrome is missing', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'altimeter-bench-'));
+  try {
+    const result = spawnSync(process.execPath, ['bench/run.ts'], {
+      cwd: root, env: { ...process.env, CHROME_PATH: join(folder, 'no-chrome') }, encoding: 'utf8', windowsHide: true, timeout: 60_000,
+    });
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /needs Chrome or Chromium/u);
+    assert.equal(result.stdout, '');
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
 
 test('one loopback port answers plain HTTP and HTTPS, routed by Host and with the certificate SNI asks for', async () => {
   const ca = createTestCa();
