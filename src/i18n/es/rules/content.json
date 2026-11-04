@@ -536,5 +536,21 @@
     "messages": {
       "fail": "{page} ha bajado de {before} a {now} clics respecto a los 28 días anteriores."
     }
+  },
+  "content-bing-low-ctr": {
+    "title": "Páginas cuyo CTR en Bing está muy por debajo de lo habitual en el sitio",
+    "why": "Una página que Bing muestra a menudo pero en la que pocas personas hacen clic suele tener un título o un fragmento que no coincide con lo que buscan. La comparación usa el CTR de las demás páginas del sitio en una posición similar en Bing, no una curva del sector.",
+    "fix": "Reescribe el título y la metadescripción para las consultas indicadas, sin dejar de describir la página con exactitud. Comprueba en Bing si un resultado más completo u otra página del sitio se lleva los clics.",
+    "messages": {
+      "fail": "{page} ha obtenido {impressions} impresiones en Bing en la posición {position} con un CTR del {ctr}, frente al {expected} de las demás páginas del sitio en esa posición, del {start} al {end}."
+    }
+  },
+  "content-bing-ai-performance": {
+    "title": "Las citas en Copilot solo están en Bing Webmaster Tools",
+    "why": "El informe AI Performance de Bing Webmaster Tools muestra con qué frecuencia Microsoft Copilot, los resúmenes generados con IA de Bing y algunas integraciones de socios citan las páginas del sitio, y para qué consultas de fundamentación. La API de Bing Webmaster no tiene ningún método para ese informe, así que una auditoría no puede incluirlo.",
+    "fix": "Abre el informe AI Performance del sitio en Bing Webmaster Tools para ver el total de citas, las páginas citadas y las consultas de fundamentación. Bing indica que las consultas de fundamentación son una muestra de la actividad de citas.",
+    "messages": {
+      "fail": "Las citas de {site} en Microsoft Copilot y en los resúmenes generados con IA de Bing solo están en el informe AI Performance de Bing Webmaster Tools (https://www.bing.com/webmasters); la API de Bing Webmaster no tiene ningún método para él, así que esta auditoría no las incluye."
+    }
   }
 }

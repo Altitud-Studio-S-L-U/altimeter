@@ -678,5 +678,83 @@
     "messages": {
       "fail": "{count} de {total} URL del mapa del lloc no han tingut cap impressió en els 28 dies llegits, per exemple {examples}."
     }
+  },
+  "crawl-bots-blocked-at-edge": {
+    "title": "Sol·licituds verificades de Googlebot o Bingbot rebutjades o amb errors",
+    "why": "Google tracta els codis 401 i 403 com una pàgina inexistent i elimina aquestes URL del seu índex, i redueix el rastreig quan rep 429 o errors del servidor. Les sol·licituds verificades com a Googlebot o Bingbot que reben aquestes respostes mostren que una regla del CDN, del tallafoc o del servidor bloqueja el rastrejador real, cosa que una prova des de fora no pot demostrar.",
+    "fix": "Busca la regla que respon al rastrejador (WAF, protecció contra bots, limitació de freqüència, bloqueig geogràfic) i eximeix els rastrejadors verificats pel DNS invers o pels intervals d'IP que publiquen. No facis servir 401 ni 403 per limitar la freqüència de rastreig, i corregeix els errors del servidor que rep el rastrejador.",
+    "messages": {
+      "fail": "Les sol·licituds verificades de {agent} han rebut {count} errors o rebuigs de {total} ({share}; {statuses}).",
+      "fail:refused": "Les sol·licituds verificades de {agent} s'han rebutjat {count} de {total} vegades ({share}; {statuses}), de manera que el rastrejador no ha pogut llegir aquestes pàgines.",
+      "fail:server-errors": "Les sol·licituds verificades de {agent} han rebut un error del servidor {count} de {total} vegades ({share}; {statuses})."
+    }
+  },
+  "crawl-bots-robots-compliance": {
+    "title": "Rastrejadors verificats que han obtingut camins que el robots.txt prohibeix",
+    "why": "L'RFC 9309 exigeix que els rastrejadors segueixin les regles del robots.txt que llegeixen i que no en facin servir una còpia de la memòria cau durant més de 24 hores; alguns operadors documenten terminis més llargs (Amazon, fins a 30 dies; DuckAssistBot, 72 hores). Les sol·licituds verificades de camins prohibits després d'aquest termini volen dir que el rastrejador ha vist un robots.txt diferent del que es serveix ara, o que l'ignora.",
+    "fix": "Comprova que tots els amfitrions i protocols serveixen el mateix robots.txt i que els patrons Disallow coincideixen amb els camins tal com apareixen als registres (majúscules i codificació). Si un rastrejador verificat el continua ignorant, bloqueja'l a la vora de la xarxa pels intervals d'IP que publica. Les obtencions que demana un usuari (ChatGPT-User, Claude-User, Perplexity-User) no segueixen el robots.txt i no es compten.",
+    "messages": {
+      "fail": "{agent} verificat ha obtingut {count} vegades camins que el robots.txt prohibeix.",
+      "fail:disallowed": "{agent} verificat ha obtingut {count} vegades camins que el robots.txt actual prohibeix després del seu termini de memòria cau de {hours} hores, comptant des del {since}, quan el fitxer va entrar en vigor.",
+      "fail:assumed-unchanged": "{agent} verificat ha obtingut {count} vegades camins que el robots.txt actual prohibeix, suposant que el robots.txt no ha canviat des del {since}; indica la data en què va canviar, si ho va fer."
+    }
+  },
+  "crawl-bots-googlebot-sitemap-coverage": {
+    "title": "Googlebot verificat ha arribat a les URL del mapa del lloc durant la finestra",
+    "why": "Un mapa del lloc indica a Google quines pàgines considera importants el lloc i l'ajuda a rastrejar-les, tot i que no en garanteix el rastreig. Les URL del mapa del lloc que Googlebot verificat no ha obtingut correctament durant la finestra no s'han actualitzat a l'índex de Google en aquest temps, i pot ser que les noves encara no estiguin indexades.",
+    "fix": "Inspecciona a Search Console les URL que falten. Enllaça-les des de pàgines que Googlebot rastreja, mantén-ne el lastmod exacte i assegura't que responen 200 ràpidament. Els registres d'un origen darrere d'un CDN no inclouen les sol·licituds que el CDN ha servit des de la memòria cau, de manera que fes servir els registres del CDN quan sigui possible.",
+    "messages": {
+      "fail": "Googlebot verificat ha obtingut {fetched} de {urls} URL del mapa del lloc ({share}) en {days} dies de dades.",
+      "fail:not-seen": "No apareix cap sol·licitud de Googlebot verificat en {days} dies de dades, de manera que no s'ha obtingut cap de les {urls} URL del mapa del lloc.",
+      "fail:low-coverage": "Googlebot verificat només ha obtingut {fetched} de {urls} URL del mapa del lloc ({share}) en {days} dies de dades.",
+      "fail:partial-coverage": "Googlebot verificat ha obtingut {fetched} de {urls} URL del mapa del lloc ({share}) en {days} dies de dades."
+    }
+  },
+  "crawl-bots-spoofed-crawlers": {
+    "title": "Sol·licituds que fan servir l'agent d'usuari d'un rastrejador però no superen les comprovacions del seu operador",
+    "why": "Qualsevol pot enviar l'agent d'usuari de Googlebot o de GPTBot, i Google i Common Crawl adverteixen que els seus se suplanten. Les sol·licituds que diuen ser d'un rastrejador però no superen la comprovació de la llista d'IP o del DNS invers que publica el seu operador són suplantacions, sovint de bots que n'extreuen el contingut, i un tallafoc que confia en els agents d'usuari les serveix mentre pot rebutjar el rastrejador real.",
+    "fix": "Verifica els rastrejadors a la vora de la xarxa pel DNS invers o per les llistes d'IP que publiquen els operadors (els CDN ofereixen regles de bots verificats) en lloc de permetre o bloquejar agents d'usuari, i rebutja les sol·licituds que no superin la verificació.",
+    "messages": {
+      "fail": "{spoofed} de {checked} sol·licituds de rastrejadors comprovades no han superat les comprovacions dels seus operadors ({share}; {agents}).",
+      "fail:served": "{spoofed} de {checked} sol·licituds de rastrejadors comprovades no han superat les comprovacions dels seus operadors ({share}; {agents}), i se n'han servit {served}, de manera que la vora de la xarxa confia en els agents d'usuari.",
+      "fail:refused": "{spoofed} de {checked} sol·licituds de rastrejadors comprovades no han superat les comprovacions dels seus operadors ({share}; {agents}); la vora de la xarxa n'ha rebutjat la majoria.",
+      "fail:present": "{spoofed} de {checked} sol·licituds de rastrejadors comprovades no han superat les comprovacions dels seus operadors ({share}; {agents})."
+    }
+  },
+  "crawl-bing-crawl-issues": {
+    "title": "Problemes de rastreig que Bing indica per al lloc",
+    "why": "Bing Webmaster Tools llista les URL amb què Bingbot ha tingut problemes: errors del servidor i del client, errors de DNS, temps d'espera esgotats, bloquejos del robots.txt, redireccions i programari maliciós. Bing no pot indexar el contingut actual d'una URL que no pot obtenir, i avisa els usuaris abans que visitin una pàgina que marca per programari maliciós.",
+    "fix": "Comença pel tipus més greu: elimina el programari maliciós i tanca la via per on va entrar, i després demana una nova avaluació a Bing Webmaster Tools; corregeix els errors del servidor, els errors de DNS i els temps d'espera per a Bingbot; restaura o redirigeix les URL 4xx que enllacen altres pàgines; fes que els enllaços apuntin a la URL final en lloc d'una redirecció. Bing indica que un problema corregit pot trigar uns quants dies a sortir de la llista.",
+    "messages": {
+      "fail": "Bing llista {count} URL amb el problema de rastreig {issue}, per exemple {examples}.",
+      "fail:malware": "Bing marca {count} URL perquè contenen programari maliciós, per exemple {examples}.",
+      "fail:server-error": "Bing ha rebut errors del servidor (5xx) per a {count} URL, per exemple {examples}.",
+      "fail:dns-error": "Bing no ha pogut resoldre el nom d'amfitrió de {count} URL, per exemple {examples}.",
+      "fail:timeout": "Bing ha esgotat el temps d'espera en obtenir {count} URL, per exemple {examples}.",
+      "fail:client-error": "Bing ha rebut errors 4xx per a {count} URL, {linked} de les quals tenen enllaços entrants, per exemple {examples}.",
+      "fail:important-url-blocked": "El robots.txt impedeix a Bingbot l'accés a {count} URL que Bing considera importants, per exemple {examples}.",
+      "fail:blocked-by-robots": "El robots.txt impedeix a Bingbot l'accés a {count} URL, per exemple {examples}.",
+      "fail:permanent-redirect": "Bing ha trobat una redirecció 301 a {count} URL, per exemple {examples}.",
+      "fail:temporary-redirect": "Bing ha trobat una redirecció 302 a {count} URL, per exemple {examples}."
+    }
+  },
+  "crawl-bing-page-issues": {
+    "title": "Bing no indica problemes de rastreig a les pàgines auditades",
+    "why": "La llista de problemes de rastreig de Bing i els detalls del seu índex indiquen què ha rebut Bingbot per a cada URL. Una pàgina auditada pensada per a la cerca que Bingbot no ha pogut obtenir, o que el robots.txt li bloqueja, pot faltar o estar desactualitzada a Bing encara que funcioni en un navegador.",
+    "fix": "Corregeix el que ha trobat Bingbot: busca les seves sol·licituds a la pàgina als registres del servidor i del CDN (errors, temps d'espera, bloquejos del tallafoc) i revisa les regles del robots.txt que s'apliquen a Bingbot. Després, envia la URL a Bing Webmaster Tools perquè Bing la torni a rastrejar.",
+    "messages": {
+      "fail": "Bing indica {issues} per a {url}.",
+      "fail:malware": "Bing marca {url} perquè conté programari maliciós ({issues}).",
+      "fail:server-error": "Bing ha rebut un error del servidor per a {url} (estat HTTP {status}; {issues}); en aquesta auditoria: {live}.",
+      "fail:dns-error": "Bing no ha pogut resoldre el nom d'amfitrió de {url} ({issues}); en aquesta auditoria: {live}.",
+      "fail:timeout": "Bing ha esgotat el temps d'espera en obtenir {url} ({issues}); en aquesta auditoria: {live}.",
+      "fail:client-error": "Bing ha rebut un error del client per a {url} (estat HTTP {status}; {issues}); en aquesta auditoria: {live}.",
+      "fail:important-url-blocked": "Bing considera important {url}, però el robots.txt impedeix a Bingbot l'accés a aquesta URL ({issues}).",
+      "fail:blocked-by-robots": "El robots.txt impedeix a Bingbot l'accés a {url} ({issues}).",
+      "fail:permanent-redirect": "Bing ha trobat una redirecció 301 a {url} ({issues}); en aquesta auditoria: {live}.",
+      "fail:temporary-redirect": "Bing ha trobat una redirecció 302 a {url} ({issues}); en aquesta auditoria: {live}.",
+      "fail:not-reproduced": "Bing indica {issues} per a {url}, però aquesta auditoria no ho ha reproduït ({live}): el problema s'ha corregit després del rastreig de Bing, és intermitent o només afecta Bingbot.",
+      "fail:robots-allows-now": "Bing indica {issues} per a {url}, però el robots.txt que ha llegit aquesta auditoria permet que Bingbot l'obtingui, de manera que el problema hauria de desaparèixer quan Bing torni a llegir el robots.txt."
+    }
   }
 }

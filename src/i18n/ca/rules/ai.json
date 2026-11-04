@@ -241,7 +241,9 @@
     "title": "Control d'IA generativa de Search Console (no es pot detectar des de fora)",
     "why": "Google ofereix un control a Search Console sobre com s'utilitza el contingut a les funcions d'IA generativa. S'aplica a tot el lloc i no es veu des de fora, de manera que el seu estat només es pot saber des de la Search Console del propietari.",
     "fix": "Deixa'l en Include tret que el propietari vulgui sortir de les funcions d'IA de Google. Els llocs exclosos no reben trànsit ni impressions d'aquestes funcions.",
-    "messages": {}
+    "messages": {
+      "fail": "Search Console té un paràmetre per a tot el lloc que l'exclou d'AI Overviews, d'AI Mode i d'AI Overviews a Discover. Ni les pàgines, ni el robots.txt, ni l'API de Search Console no el mostren, de manera que aquesta auditoria no en pot saber l'estat per a {property}; comprova-ho a la configuració de la propietat. No canvia l'entrenament, que controla l'identificador Google-Extended del robots.txt."
+    }
   },
   "ai-js-only-content": {
     "title": "Contingut principal absent de l'HTML del servidor (invisible per als rastrejadors d'IA que no executen JavaScript)",
@@ -317,6 +319,51 @@
     "title": "Com mesurar la visibilitat en IA (context per a l'informe)",
     "why": "Google i Bing informen els propietaris del rendiment a les funcions d'IA a Search Console i a Bing Webmaster Tools, i les visites dels rastrejadors apareixen als registres del servidor. Cap eina de tercers no pot veure els sistemes de classificació interns, de manera que l'informe no presenta mai el seu propi mostreig com a visibilitat en IA.",
     "fix": "Connecta GSC i BWT, i segmenta els referents d'IA a l'analítica web.",
-    "messages": {}
+    "messages": {
+      "fail": "Search Console compta els clics i les impressions d'AI Overviews i d'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API.",
+      "fail:all-sources": "Search Console compta els clics i les impressions d'AI Overviews i d'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API. L'informe AI Performance de Bing tampoc no té API. Les visites que envien els assistents d'IA apareixen a l'activitat de rastrejadors, però les visites des d'AI Overviews i AI Mode arriben com a Cerca de Google i no es poden distingir.",
+      "fail:without-bing": "Search Console compta els clics i les impressions d'AI Overviews i d'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API. Les dades de Bing Webmaster Tools (--bing) hi afegirien les dades de cerca de Bing i remetrien al seu informe AI Performance, que llista les citacions a Copilot.",
+      "fail:without-bots": "Search Console compta els clics i les impressions d'AI Overviews i d'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API. Els registres d'accés o les analítiques de Cloudflare (--bots-from) mostrarien quins rastrejadors d'IA obtenen realment el lloc i les visites que envien els assistents d'IA.",
+      "fail:without-both": "Search Console compta els clics i les impressions d'AI Overviews i d'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API. Les dades de Bing Webmaster Tools (--bing) i els registres d'accés o les analítiques de Cloudflare (--bots-from) hi afegirien les dades de cerca de Bing, les visites dels rastrejadors d'IA i les visites que els assistents han enviat realment al lloc."
+    }
+  },
+  "ai-bots-crawl-activity": {
+    "title": "Rastrejadors d'IA que han obtingut realment el lloc, verificats (context)",
+    "why": "El robots.txt només diu quins rastrejadors poden obtenir el lloc; els registres d'accés del propietari o les analítiques del CDN mostren quins ho han fet. Qualsevol pot enviar l'agent d'usuari d'un rastrejador, de manera que cada declaració es comprova amb la llista d'IP o el DNS invers que publica l'operador, i els operadors que no publiquen cap comprovació (Meta, ByteDance, MistralAI-Training) s'indiquen com a declaracions que no es poden verificar, mai com a zero.",
+    "fix": "No hi ha res a corregir. Compara els rastrejadors que obtenen el lloc amb la política del robots.txt: bloqueja els rastrejadors d'entrenament si no vols aquest ús, i mantén permesos els rastrejadors de cerca i de respostes si vols citacions a les respostes d'IA.",
+    "messages": {
+      "fail": "Els rastrejadors d'IA verificats han obtingut el lloc {verified} vegades ({crawlers}); unes altres {claims} sol·licituds han fet servir agents d'usuari de rastrejadors d'IA sense estar verificades.",
+      "fail:seen": "Els rastrejadors d'IA verificats han obtingut el lloc {verified} vegades a la finestra ({crawlers}); unes altres {claims} sol·licituds han fet servir agents d'usuari de rastrejadors d'IA sense estar verificades.",
+      "fail:claims-only": "{claims} sol·licituds han fet servir agents d'usuari de rastrejadors d'IA, però no se n'ha pogut verificar cap, de manera que les dades no mostren quins rastrejadors d'IA han visitat realment el lloc."
+    }
+  },
+  "ai-bots-blocked-at-edge": {
+    "title": "El servidor o el CDN rebutja rastrejadors de cerca i de respostes amb IA que el robots.txt permet",
+    "why": "Google inclou entre els requisits bàsics de les funcions d'IA que el rastreig estigui permès pel robots.txt i per qualsevol infraestructura de CDN o d'allotjament, i OpenAI indica que els llocs que exclouen el seu rastrejador de cerca no es mostren a les respostes de cerca de ChatGPT. Les sol·licituds verificades d'aquests rastrejadors que reben 401, 402, 403, 429 o un desafiament mostren que la vora de la xarxa bloqueja el rastrejador real, cosa que una prova amb un agent d'usuari manllevat no pot demostrar.",
+    "fix": "Busca la regla del CDN, del tallafoc o de limitació de freqüència que respon al rastrejador i permet-lo, per exemple a AI Crawl Control de Cloudflare o amb una regla del WAF que ometi els bots verificats. Si el 402 ve del pagament per rastreig, eximeix els rastrejadors de cerca i de respostes. Continua rebutjant les sol·licituds que no superin la verificació.",
+    "messages": {
+      "fail": "{agent} s'ha rebutjat {blocked} de {total} vegades ({share}; {statuses}) tot i que el robots.txt el permet.",
+      "fail:refused": "Les sol·licituds verificades de {agent} s'han rebutjat {blocked} de {total} vegades ({share}; {statuses}) tot i que el robots.txt permet el rastrejador, de manera que no pot llegir aquestes pàgines.",
+      "fail:payment-required": "Les sol·licituds verificades de {agent} han rebut HTTP 402 Payment Required o un altre rebuig {blocked} de {total} vegades ({share}; {statuses}): la vora de la xarxa cobra o bloqueja un rastrejador que el robots.txt permet.",
+      "fail:unverified-claims": "Les sol·licituds que diuen ser de {agent} s'han rebutjat {blocked} de {total} vegades ({share}; {statuses}); no s'han pogut verificar, de manera que la vora de la xarxa pot estar rebutjant suplantacions."
+    }
+  },
+  "ai-bots-search-not-seen": {
+    "title": "Cap visita verificada de cap rastrejador de cerca amb IA a la finestra",
+    "why": "Cada cercador amb IA omple el seu índex amb el seu propi rastrejador: OAI-SearchBot per a la cerca de ChatGPT, Claude-SearchBot per a Claude, PerplexityBot per a Perplexity i DuckAssistBot per a les respostes amb IA de DuckDuckGo. Si cap d'ells no ha fet cap sol·licitud verificada durant la finestra tot i que el robots.txt els permet, cap no n'ha actualitzat la còpia del lloc en aquest temps.",
+    "fix": "Comprova que el robots.txt i el CDN permeten aquests rastrejadors (consulta ai-bots-blocked-at-edge), mantén el mapa del lloc actualitzat i aconsegueix enllaços al lloc des de pàgines que rastregen. Els llocs petits es rastregen amb menys freqüència, de manera que compara una finestra més llarga abans d'actuar.",
+    "messages": {
+      "fail": "Cap rastrejador de cerca amb IA no ha fet cap sol·licitud verificada en {days} dies de dades ({agents}).",
+      "fail:none-seen": "Cap dels rastrejadors de cerca amb IA que el robots.txt permet ({agents}) no ha fet cap sol·licitud verificada en {days} dies de dades.",
+      "fail:unverified-only": "Hi ha sol·licituds que diuen venir de rastrejadors de cerca amb IA ({agents}) en {days} dies de dades, però no se n'ha pogut verificar cap."
+    }
+  },
+  "ai-bots-referrals": {
+    "title": "Visites que envien els assistents d'IA (context)",
+    "why": "Els clics des d'assistents d'IA arriben amb l'amfitrió de l'assistent a la capçalera Referer, i els enllaços de ChatGPT poden portar utm_source=chatgpt.com. Comptar-los mostra quins assistents envien visitants. De manera predeterminada, els navegadors només envien l'origen entre llocs, i les apps o els enllaços noreferrer no envien res, de manera que les xifres són mínims.",
+    "fix": "No hi ha res a corregir. Segmenta aquests referents a l'analítica. Els clics des d'AI Overviews i AI Mode de Google es compten al tipus de cerca web de Search Console i arriben com a Cerca de Google, de manera que cap registre no els pot separar.",
+    "messages": {
+      "fail": "{visits} visites han arribat des d'assistents d'IA ({assistants}), i {tagged} portaven utm_source=chatgpt.com. Els clics des d'AI Overviews i AI Mode de Google compten com a Cerca de Google i no es poden veure aquí."
+    }
   }
 }
