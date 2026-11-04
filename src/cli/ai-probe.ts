@@ -48,8 +48,8 @@ export interface AiProbeContext {
   readonly stdout?: (text: string) => void;
   readonly stderr?: (text: string) => void;
   readonly cwd?: string;
-  /** Reads Search Console for --from-gsc; by default with the credential an audit would use. */
-  readonly searchConsole?: (origin: string) => Promise<GscData>;
+  /** Reads Search Console for --from-gsc for the home page as served; by default with the credential an audit would use. */
+  readonly searchConsole?: (homeUrl: string) => Promise<GscData>;
   /** Timeouts, pause, cache folder and clock for the run; tests only. */
   readonly probe?: Partial<Omit<ProbeOptions, 'plan' | 'language' | 'env' | 'refresh' | 'log'>>;
 }
@@ -82,12 +82,12 @@ function enginesOf(value: string | undefined): ProbeEngine[] {
 }
 
 /** Read-only Search Console access with the credential an audit with --gsc would use. */
-async function readSearchConsole(origin: string): Promise<GscData> {
+async function readSearchConsole(homeUrl: string): Promise<GscData> {
   const client = new HttpClient();
   try {
     const token = await searchConsoleToken(client);
     if (!token) throw new Error('no Search Console credential was found. Run "altimeter gsc login --client <client_secret.json> --remember <dpapi|file>" or set ALTIMETER_GSC_ACCESS_TOKEN.');
-    return await fetchGscData(client, token, { url: `${origin}/` });
+    return await fetchGscData(client, token, { url: homeUrl });
   } finally {
     await client.close();
   }
@@ -129,7 +129,10 @@ export async function aiProbeCommand(args: string[], context: AiProbeContext = {
     let searchConsole: PlanInput['searchConsole'];
     if (values['from-gsc'] === true) {
       try {
-        searchConsole = { data: await (context.searchConsole ?? readSearchConsole)(origin) };
+        // The property is chosen for the URL the home page is served from, as an audit chooses it after redirects.
+        const served = site.pages[0]?.url;
+        const homeUrl = served !== undefined && /^https?:\/\//iu.test(served) ? served : `${origin}/`;
+        searchConsole = { data: await (context.searchConsole ?? readSearchConsole)(homeUrl) };
       } catch (error) {
         searchConsole = { problem: error instanceof Error ? error.message : 'unknown error' };
       }

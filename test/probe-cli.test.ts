@@ -164,7 +164,9 @@ describe('altimeter ai-probe', () => {
       byPage: [], byQuery: [{ keys: ['altitud studio'], clicks: 50, impressions: 400, ctr: 0.125, position: 1 }, { keys: ['technical seo andorra'], clicks: 3, impressions: 120, ctr: 0.025, position: 9.2 }],
       byPageQuery: [], byCountry: [], byDevice: [], previousByPage: [], inspections: [], sitemaps: [], truncated: false,
     };
-    const used = await run([origin, '--from-gsc'], { searchConsole: async () => data });
+    const asked: string[] = [];
+    const used = await run([origin, '--from-gsc'], { searchConsole: async homeUrl => { asked.push(homeUrl); return data; } });
+    assert.deepEqual(asked, [`${origin}/`], 'Search Console is read for the home page as served');
     assert.match(used.stdout, /Q1 \[Search Console, non-brand\] technical seo andorra/u);
     assert.doesNotMatch(used.stdout, /\] altitud studio$/mu);
     assert.match(used.stdout, /Search Console queries are sent to the engines as questions\./u);
