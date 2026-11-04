@@ -37,11 +37,11 @@
     "why": "Los analizadores del RFC 9309 omiten las líneas que no pueden analizar. Por tanto, un nombre de campo mal escrito o una regla fuera de cualquier grupo no tiene efecto, aunque el propietario crea que está en vigor.",
     "fix": "Corrige la ortografía de los campos y pon cada regla debajo de una línea user-agent.",
     "messages": {
-      "fail": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}).",
-      "fail:misspelled-field": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}), incluido un nombre de campo mal escrito.",
-      "fail:rule-outside-group": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}), incluidas reglas anteriores a cualquier línea user-agent, que no se aplican a ningún rastreador.",
-      "fail:missing-separator": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}), incluidas líneas sin dos puntos, que se ignoran.",
-      "fail:path-without-slash": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}), incluidas rutas que no empiezan ni por / ni por *."
+      "fail": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}).",
+      "fail:misspelled-field": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}), incluido un nombre de campo mal escrito.",
+      "fail:rule-outside-group": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}), incluidas reglas anteriores a cualquier línea user-agent, que no se aplican a ningún rastreador.",
+      "fail:missing-separator": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}), incluidas líneas sin dos puntos, que se ignoran.",
+      "fail:path-without-slash": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}), incluidas rutas que no empiezan ni por / ni por *."
     }
   },
   "crawl-robots-unsupported-directives": {

@@ -25,11 +25,11 @@
   },
   "crawl-robots-parse-errors": {
     "messages": {
-      "fail": "{count} lines in {url} are not read as intended (lines {lines}).",
-      "fail:misspelled-field": "{count} lines in {url} are not read as intended (lines {lines}), including a misspelled field name.",
-      "fail:rule-outside-group": "{count} lines in {url} are not read as intended (lines {lines}), including rules before any user-agent line, which apply to no crawler.",
-      "fail:missing-separator": "{count} lines in {url} are not read as intended (lines {lines}), including lines without a colon, which are ignored.",
-      "fail:path-without-slash": "{count} lines in {url} are not read as intended (lines {lines}), including paths that start with neither / nor *."
+      "fail": "{count, plural, one {# line in {url} is} other {# lines in {url} are}} not read as intended ({count, plural, one {line} other {lines}} {lines}).",
+      "fail:misspelled-field": "{count, plural, one {# line in {url} is} other {# lines in {url} are}} not read as intended ({count, plural, one {line} other {lines}} {lines}), including a misspelled field name.",
+      "fail:rule-outside-group": "{count, plural, one {# line in {url} is} other {# lines in {url} are}} not read as intended ({count, plural, one {line} other {lines}} {lines}), including rules before any user-agent line, which apply to no crawler.",
+      "fail:missing-separator": "{count, plural, one {# line in {url} is} other {# lines in {url} are}} not read as intended ({count, plural, one {line} other {lines}} {lines}), including lines without a colon, which are ignored.",
+      "fail:path-without-slash": "{count, plural, one {# line in {url} is} other {# lines in {url} are}} not read as intended ({count, plural, one {line} other {lines}} {lines}), including paths that start with neither / nor *."
     }
   },
   "crawl-robots-unsupported-directives": {

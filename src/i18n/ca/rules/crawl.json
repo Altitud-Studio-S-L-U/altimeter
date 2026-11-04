@@ -37,11 +37,11 @@
     "why": "Els analitzadors de l'RFC 9309 se salten les línies que no poden analitzar. Per tant, un nom de camp mal escrit o una regla fora de qualsevol grup no té cap efecte, mentre que el propietari creu que és vigent.",
     "fix": "Corregeix l'ortografia dels camps i posa cada regla sota una línia user-agent.",
     "messages": {
-      "fail": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}).",
-      "fail:misspelled-field": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}); hi ha, per exemple, un nom de camp mal escrit.",
-      "fail:rule-outside-group": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}); hi ha, per exemple, regles anteriors a qualsevol línia user-agent, que no s'apliquen a cap rastrejador.",
-      "fail:missing-separator": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}); hi ha, per exemple, línies sense dos punts, que s'ignoren.",
-      "fail:path-without-slash": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}); hi ha, per exemple, camins que no comencen ni per / ni per *."
+      "fail": "{count, plural, one {# línia de {url} no es llegeix} other {# línies de {url} no es llegeixen}} tal com es pretén ({count, plural, one {línia} other {línies}}: {lines}).",
+      "fail:misspelled-field": "{count, plural, one {# línia de {url} no es llegeix} other {# línies de {url} no es llegeixen}} tal com es pretén ({count, plural, one {línia} other {línies}}: {lines}); hi ha, per exemple, un nom de camp mal escrit.",
+      "fail:rule-outside-group": "{count, plural, one {# línia de {url} no es llegeix} other {# línies de {url} no es llegeixen}} tal com es pretén ({count, plural, one {línia} other {línies}}: {lines}); hi ha, per exemple, regles anteriors a qualsevol línia user-agent, que no s'apliquen a cap rastrejador.",
+      "fail:missing-separator": "{count, plural, one {# línia de {url} no es llegeix} other {# línies de {url} no es llegeixen}} tal com es pretén ({count, plural, one {línia} other {línies}}: {lines}); hi ha, per exemple, línies sense dos punts, que s'ignoren.",
+      "fail:path-without-slash": "{count, plural, one {# línia de {url} no es llegeix} other {# línies de {url} no es llegeixen}} tal com es pretén ({count, plural, one {línia} other {línies}}: {lines}); hi ha, per exemple, camins que no comencen ni per / ni per *."
     }
   },
   "crawl-robots-unsupported-directives": {

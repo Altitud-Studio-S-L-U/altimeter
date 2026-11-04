@@ -161,6 +161,13 @@ describe('crawl-robots-parse-errors', () => {
     assert.deepEqual(excerpts(), ['dissallow: /private/']);
   });
   test('fails low on a rule outside any group', () => {
+  test('counts and lists a line with two problems once', () => {
+    const { finding } = run(id, { pages: [home()], robots: 'User-agent: *\nDissallow: private/' });
+    assertFail(finding, 'medium', 'misspelled-field');
+    assert.equal(finding.evidence.length, 2);
+    assert.deepEqual(finding.params, { url: 'https://example.com/robots.txt', count: 1, lines: '2' });
+    assert.equal(findingMessage('es', id, 'fail', finding.reason, finding.params), '1 línea de https://example.com/robots.txt no se lee como se pretende (línea: 2), incluido un nombre de campo mal escrito.');
+  });
     const { finding, excerpts } = run(id, { pages: [home()], robots: 'Disallow: /old/\nUser-agent: *\nDisallow: /tmp/' });
     assertFail(finding, 'low', 'rule-outside-group');
     assert.deepEqual(excerpts(), ['disallow: /old/']);

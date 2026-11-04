@@ -157,7 +157,8 @@ const robotsParseErrors: RuleImplementation = {
     const top = issues.reduce<Severity>((current, issue) => worst(current, issue.severity), 'info');
     const ids = issues.slice(0, 8).map(issue => evidence.add({ kind: 'robots', url, label: issue.label, excerpt: issue.text, line: issue.line }));
     const reason = issues.find(issue => issue.severity === top)!.reason;
-    return failure({ severity: top, evidence: ids, reason, params: { url, count: issues.length, lines: summarizeList(issues.map(issue => String(issue.line)), 5) } });
+    const lines = [...new Set(issues.map(issue => issue.line))];
+    return failure({ severity: top, evidence: ids, reason, params: { url, count: lines.length, lines: summarizeList(lines.map(String), 5) } });
   },
 };
 
