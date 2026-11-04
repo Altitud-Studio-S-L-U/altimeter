@@ -122,7 +122,7 @@
   },
   "intl-hreflang-no-language-catchall": {
     "messages": {
-      "fail": "Every {language} value carries a region ({values}) and the cluster has no language-only {language} value or x-default, so {language} speakers in other countries have no matching version."
+      "fail": "Every hreflang value for the language {code} carries a region ({values}), and the cluster has no language-only {code} value or x-default, so speakers of that language in other countries have no matching version."
     }
   },
   "intl-hreflang-source-conflict": {
