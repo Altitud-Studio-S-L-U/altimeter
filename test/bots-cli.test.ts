@@ -166,7 +166,7 @@ describe('altimeter bots', () => {
     const { json } = await output(out);
     assert.deepEqual(json.activity.sources.map(source => source.kind === 'access-log' && source.file), ['access.log']);
     await assert.rejects(run(['--logs', folder, '--logs', join(folder, 'error.log')]),
-      (error: unknown) => error instanceof BotsUsageError && /The format of error\.log was not recognised\. Pass --log-format/u.test(error.message), 'a file named itself is still checked');
+      (error: unknown) => error instanceof BotsUsageError && /The format of error\.log was not recognised\. Supported formats are combined/u.test(error.message), 'a file named itself is still checked');
   });
 
   test('rejects wrong options with a message and prints help', async () => {

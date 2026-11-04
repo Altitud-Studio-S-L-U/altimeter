@@ -211,7 +211,7 @@ describe('crawler activity from access logs', () => {
     assert.match(folder.activity.warnings.join('\n'), /access\.log\.1 is empty, so it was skipped\./u);
     const named = await collect({ logs: [logFixture('combined.log'), rotated] }, 'cache-named-empty');
     assert.deepEqual(verdicts(named.activity), expected, 'an empty file holds no request, however it was given');
-    await assert.rejects(collect({ logs: [logFixture('combined.log'), errorLog] }, 'cache-named-error'), /The format of error\.log was not recognised\. Pass --log-format/u);
+    await assert.rejects(collect({ logs: [logFixture('combined.log'), errorLog] }, 'cache-named-error'), /The format of error\.log was not recognised\. Supported formats are combined/u);
   });
 
   test('marks addresses of lists that could not be read as unverified', async () => {

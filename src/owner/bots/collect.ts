@@ -168,7 +168,7 @@ async function scanFile(path: string, inFolder: boolean, options: CollectBotActi
     const detected = await guarded(name, () => detect(path));
     if (detected.empty) return `${name} is empty, so it was skipped.`;
     if (!detected.format && inFolder) return `The format of ${name} was not recognised, so it was skipped.`;
-    if (!detected.format) throw new BotActivityError(`The format of ${name} was not recognised. Pass --log-format with one of: combined, common, nginx-json, iis, cloudfront, alb, cloudflare, vercel, netlify.`);
+    if (!detected.format) throw new BotActivityError(`The format of ${name} was not recognised. Supported formats are combined, common, nginx-json, iis, cloudfront, alb, cloudflare, vercel and netlify; "altimeter bots --log-format" reads a file in one of them that is not detected.`);
     format = detected.format;
   }
   const scan: FileScan = {
