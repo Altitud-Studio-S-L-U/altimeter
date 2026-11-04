@@ -4,14 +4,14 @@ Changes are proposed through pull requests from a fork or a focused branch. Expl
 
 ## Local setup
 
-Use Node.js 24 or newer and npm:
+Use Node.js 26, the active LTS line (`.node-version`), and npm. Node.js 24 remains supported until its end of life on 2028-04-30, so the type definitions follow Node.js 24 and the tests run on both lines:
 
 ```sh
 npm ci
 npm run check
 ```
 
-`npm run check` type-checks the project and runs the tests. Tests run the TypeScript sources directly, so no build step is needed; `npm run build` produces the published `dist/`. Continuous integration runs the same checks on Linux and Windows for every pull request.
+`npm run check` type-checks the project and runs the tests. Tests run the TypeScript sources directly, so no build step is needed; `npm run build` produces the published `dist/`. Continuous integration runs the same checks on Linux and Windows with Node.js 26 and 24 for every pull request.
 
 ## Before opening a pull request
 
