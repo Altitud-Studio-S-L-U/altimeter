@@ -58,7 +58,7 @@ describe('runProcess', () => {
   });
 
   // On Windows the CLI is not detached: it stays in the job that closes with Altimeter.
-  test('Ctrl+C, a termination signal or an exit stops the detached tree of a running call first', { skip: process.platform === 'win32' && 'POSIX process groups only', timeout: 60_000 }, async t => {
+  test('Ctrl+C, a hang-up, a termination signal or an exit stops the detached tree of a running call first', { skip: process.platform === 'win32' && 'POSIX process groups only', timeout: 60_000 }, async t => {
     const home = await sandbox(t);
     const pidFile = join(home, 'cli.pid');
     const cli = `require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));setInterval(()=>{},1000)`;
@@ -71,6 +71,7 @@ ${then}`;
     const cases = [
       { name: 'SIGINT', then: 'setInterval(() => {}, 1000);', signal: 'SIGINT' as const, ends: [null, 'SIGINT'] },
       { name: 'SIGTERM', then: 'setInterval(() => {}, 1000);', signal: 'SIGTERM' as const, ends: [null, 'SIGTERM'] },
+      { name: 'SIGHUP', then: 'setInterval(() => {}, 1000);', signal: 'SIGHUP' as const, ends: [null, 'SIGHUP'] },
       { name: 'exit', then: 'process.exit(3);', ends: [3, null] },
     ];
     for (const entry of cases) {
@@ -86,7 +87,10 @@ ${then}`;
       if (entry.signal) runner.kill(entry.signal);
       assert.deepEqual(await ended, entry.ends, `the ${entry.name} case still ends Altimeter as before`);
       for (let attempt = 0; attempt < 40 && alive(pid); attempt += 1) await delay(100);
-      assert.equal(alive(pid), false, `the CLI outlived ${entry.name}`);
+      const survived = alive(pid);
+      // A tree that was not stopped must not outlive the test either.
+      if (survived) process.kill(pid, 'SIGKILL');
+      assert.equal(survived, false, `the CLI outlived ${entry.name}`);
     }
   });
 

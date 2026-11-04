@@ -95,7 +95,8 @@ async function terminateTree(child: ChildProcess): Promise<void> {
 
 /** Calls running in a POSIX process group of their own, each with the function that stops its tree. */
 const groups = new Set<() => void>();
-const endingSignals = ['SIGINT', 'SIGTERM'] as const;
+// Node resets at startup a SIGHUP that nohup ignores, so a hang-up ends Altimeter whether or not it listens.
+const endingSignals = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const;
 
 function stopGroups(): void {
   for (const stop of [...groups]) stop();
@@ -107,9 +108,9 @@ function unwatchGroups(): void {
 }
 
 /**
- * A detached group receives none of the signals sent to Altimeter, so Ctrl+C would leave the CLI running and
- * spending quota. When no other listener takes the signal, it would end the process: the trees are stopped first
- * and the signal is raised again, so it still ends Altimeter. A caller that listens for it decides by itself.
+ * A detached group receives none of the signals sent to Altimeter, so Ctrl+C or a closed terminal would leave the
+ * CLI running and spending quota. When no other listener takes the signal, it would end the process: the trees are
+ * stopped first and the signal is raised again, so it still ends Altimeter. A caller that listens for it decides by itself.
  */
 function onEndingSignal(signal: NodeJS.Signals): void {
   if (process.listenerCount(signal) > 1) return;
@@ -175,8 +176,8 @@ export async function removeFolder(directory: string): Promise<void> {
 /**
  * Runs an executable with explicit arguments and no shell. Stdin carries the input; stdout is kept, stderr is
  * counted against the same output budget but never kept, because it can echo credentials or raw responses.
- * A deadline, an abort, the output budget, or Ctrl+C, a termination signal or an exit that ends Altimeter, kills
- * the whole process tree that this call started.
+ * A deadline, an abort, the output budget, or Ctrl+C, a hang-up, a termination signal or an exit that ends
+ * Altimeter, kills the whole process tree that this call started.
  */
 export function runProcess(options: RunProcessOptions): Promise<ProcessResult> {
   if (options.signal?.aborted) return Promise.reject(new ProcessError('cancelled', 'The call was cancelled before it started.'));
