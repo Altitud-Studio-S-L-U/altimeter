@@ -1,4 +1,4 @@
-import { detectableLanguages, isDetectable, languageScores, tokenize } from '../analyze/language.ts';
+import { detectableLanguages, isDetectable, languageScores, listingLanguages, tokenize } from '../analyze/language.ts';
 import { rule as catalogRule } from '../catalog/index.ts';
 import { severities, type Myth, type RuleMeta, type Severity } from '../core/types.ts';
 import type { Report, ReportFinding } from '../report/model.ts';
@@ -191,26 +191,30 @@ function checkRecommendations(texts: readonly string[], context: ValidationConte
   return texts.some(recommendsNewMarket) ? reject('new-market') : undefined;
 }
 
-function wordPattern(word: string): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}])${fold(word).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}(?![\\p{L}\\p{N}])`, 'u');
+/**
+ * Whether a word tells a language apart: the language detector lists it as a function word of that language and of
+ * no other. Spelling features describe running text, not one word: Spanish "nació" ends as Catalan words do, and
+ * Catalan "castell" has the ll of Spanish. For a language the detector does not know, no list or feature may count it.
+ */
+function discriminates(token: string, language: string): boolean {
+  if (!isDetectable(language)) {
+    const scores = languageScores([token]);
+    return detectableLanguages.every(other => scores[other] === 0);
+  }
+  const listed = listingLanguages(token);
+  return listed.length === 1 && listed[0] === language;
 }
 
 /**
- * Whether a word tells a language apart: the language detector's word lists and spelling features count it for
- * that language more than for any other. For a language the detector does not know, none of them may count it.
+ * Language claims need a language and at least two distinct words, found in the cited items, that only that language
+ * uses. Words are compared as the detector reads them, with their accents, so Catalan "més" is not Spanish "mes".
  */
-function discriminates(word: string, language: string): boolean {
-  const scores = languageScores(tokenize(word));
-  if (!isDetectable(language)) return detectableLanguages.every(other => scores[other] === 0);
-  return detectableLanguages.every(other => other === language || scores[other] < scores[language]);
-}
-
-/** Language claims need a language and at least two distinct words, found in the cited items, that only that language uses. */
 function checkDiscriminatingWords(language: string | null | undefined, words: readonly string[], cited: readonly string[], context: ValidationContext): Rejection | undefined {
   const claimed = primaryLanguage(language ?? undefined);
   if (claimed === undefined || claimed === 'und') return reject('discriminating-words', 'no language given');
-  const texts = cited.map(id => context.pack.included.get(id)).filter(item => item && !item.section).map(item => fold(item!.text));
-  const found = new Set(words.filter(word => fold(word).length >= 2 && discriminates(word, claimed) && texts.some(text => wordPattern(word).test(text))).map(word => fold(word)));
+  const present = new Set(cited.map(id => context.pack.included.get(id)).flatMap(item => (item && !item.section ? tokenize(item.text) : [])));
+  const tokens = words.map(word => tokenize(word)).filter(entry => entry.length === 1).map(([token]) => token!);
+  const found = new Set(tokens.filter(token => [...token].length >= 2 && present.has(token) && discriminates(token, claimed)));
   return found.size >= 2 ? undefined : reject('discriminating-words', `${found.size} of ${words.length} found and discriminating`);
 }
 

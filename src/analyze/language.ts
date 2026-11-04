@@ -186,6 +186,11 @@ export function languageScores(tokens: readonly string[]): Record<DetectableLang
   return scores;
 }
 
+/** The languages whose list of frequent function words holds the token; spelling features do not count. */
+export function listingLanguages(token: string): DetectableLanguage[] {
+  return [...(wordWeight.get(token)?.keys() ?? [])];
+}
+
 const undetermined = (wordCount: number, best?: DetectableLanguage, runnerUp?: DetectableLanguage): LanguageGuess =>
   ({ language: 'und', confidence: 0, words: wordCount, best, runnerUp });
 

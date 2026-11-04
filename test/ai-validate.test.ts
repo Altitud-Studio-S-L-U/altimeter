@@ -304,14 +304,17 @@ describe('validating proposals', () => {
 });
 
 describe('validating language claims', () => {
-  // A Spanish page with a Catalan paragraph and a Dutch sentence. A mixed-language rule reaches the analyst only as a
+  // A Spanish page with Catalan paragraphs and a Dutch sentence. A mixed-language rule reaches the analyst only as a
   // candidate from code; confirming it is still a language claim.
   const [eAcute, oGrave, oAcute] = [0x00e9, 0x00f2, 0x00f3].map(point => String.fromCodePoint(point));
   const spanishUrl = 'https://hotel.example/es/habitaciones/';
   const spanish = 'Nuestras habitaciones dan al valle y el desayuno se sirve en el patio.';
+  const history = `El hotel naci${oAcute} en 1990 y abri${oAcute} su terraza; las habitaciones son las mismas cada mes y el precio es el mismo.`;
   const catalan = `Les habitacions donen a la vall i tamb${eAcute} tenen balc${oAcute}, per${oGrave} els preus s${oAcute}n els mateixos.`;
+  const castle = 'El castell de la vila vella mira cap a la vall.';
   const dutch = 'Het hotel ligt in de vallei van Andorra.';
-  const html = `<!doctype html><html lang="es"><head><title>Habitaciones | Hotel Example</title></head><body><main><p>${spanish}</p><p>${catalan}</p><p>${dutch}</p></main></body></html>`;
+  const paragraphs = [spanish, history, catalan, castle, dutch].map(text => `<p>${text}</p>`).join('');
+  const html = `<!doctype html><html lang="es"><head><title>Habitaciones | Hotel Example</title></head><body><main>${paragraphs}</main></body></html>`;
   const facts = site({ pages: [page(spanishUrl, { html, pageType: 'other' })] });
   const local = collectSiteStrings(facts, selectPages(facts, 1));
   const plan: PassPlan = { pass: 'intl', page: local.pages[0]!, sitePage: true, rules: [rule('intl-mixed-language-page')!], candidates: [], facts: [], contextPages: [] };
@@ -342,6 +345,14 @@ describe('validating language claims', () => {
     assert.deepEqual(check(claim('und', ['preus', 'mateixos'])), ['discriminating-words']);
     assert.deepEqual(check(claim('nl', ['het', 'ligt'], dutch)), []);
     assert.deepEqual(check(claim('nl', [`tamb${eAcute}`, `per${oGrave}`])), ['discriminating-words'], 'Catalan words do not show Dutch');
+  });
+
+  test('counts only words of the claimed language\'s list, one at a time and with their accents', () => {
+    assert.deepEqual(check(claim('ca', [`naci${oAcute}`, `abri${oAcute}`], history)), ['discriminating-words'], 'Spanish verbs that end like Catalan words show no Catalan');
+    assert.deepEqual(check(claim('es', ['castell', 'vella'], castle)), ['discriminating-words'], 'Catalan words written with ll show no Spanish');
+    assert.deepEqual(check(claim('ca', [`s${oAcute}n`, `m${eAcute}s`], history)), ['discriminating-words'], 'the Spanish son and mes are not the Catalan words');
+    assert.deepEqual(check(claim('ca', ['els preus', 'els mateixos'])), ['discriminating-words'], 'two phrases around one word show one word');
+    assert.deepEqual(check(claim('nl', ['hotel', '1990'], history)), ['discriminating-words'], 'a number is a word of no language');
   });
 
   test('never accepts a recommendation to add languages or markets', () => {
