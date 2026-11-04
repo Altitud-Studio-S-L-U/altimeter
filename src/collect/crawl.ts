@@ -27,6 +27,9 @@ export interface CrawlResult {
 
 const nonHtml = /\.(?:pdf|jpe?g|png|gif|webp|avif|svg|ico|bmp|tiff?|mp4|webm|mov|mp3|wav|ogg|zip|gz|rar|7z|xml|txt|json|csv|xlsx?|docx?|pptx?|css|js|mjs|woff2?|ttf|otf|eot)$/iu;
 
+/** Cloudflare answers this path itself on every site it proxies, for example with its email obfuscation page. */
+const cloudflareReserved = /^\/cdn-cgi\//u;
+
 function normalize(url: string): string {
   const parsed = new URL(url);
   parsed.hash = '';
@@ -57,7 +60,7 @@ export async function crawlSite(client: HttpClient, options: CrawlOptions): Prom
       return;
     }
     const parsed = new URL(url);
-    if (!/^https?:$/u.test(parsed.protocol) || siteKey(url) !== site || nonHtml.test(parsed.pathname) || queued.has(url)) return;
+    if (!/^https?:$/u.test(parsed.protocol) || siteKey(url) !== site || nonHtml.test(parsed.pathname) || cloudflareReserved.test(parsed.pathname) || queued.has(url)) return;
     if (parsed.search !== '') {
       const count = queryVariants.get(parsed.pathname) ?? 0;
       if (count >= maxVariants) return;

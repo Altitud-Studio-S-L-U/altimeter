@@ -16,13 +16,14 @@ before(async () => {
     if (path === '/robots.txt') return void res.writeHead(200, { 'content-type': 'text/plain' }).end(`User-agent: *\nDisallow: /private/\nSitemap: ${origin}/sitemap.xml\n`);
     if (path === '/sitemap.xml') return void res.writeHead(200, { 'content-type': 'application/xml' })
       .end(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/orphan/</loc></url></urlset>`);
-    if (path === '/') return void html(page('Home', ['/a/', '/b/', '/private/secret/', '/shop/?color=red', '/shop/?color=blue', '/shop/?color=green', '/shop/?color=black', '/file.pdf', 'https://external.example/']));
+    if (path === '/') return void html(page('Home', ['/a/', '/b/', '/private/secret/', '/shop/?color=red', '/shop/?color=blue', '/shop/?color=green', '/shop/?color=black', '/file.pdf', 'https://external.example/', '/cdn-cgi/l/email-protection#0a6f676b6366']));
     if (path === '/a/') return void html(page('A', ['/', '/c/']));
     if (path === '/b/') return void html(page('B', ['/']));
     if (path === '/c/') return void html(page('C', ['/d/']));
     if (path === '/d/') return void html(page('D', []));
     if (path === '/orphan/') return void html(page('Orphan', []));
     if (path.startsWith('/shop/')) return void html(page('Shop', []));
+    if (path.startsWith('/cdn-cgi/')) return void html(page('Email Protection | Cloudflare', []).replace('<head>', '<head><meta name="robots" content="noindex, nofollow">'));
     res.writeHead(404, { 'content-type': 'text/html' }).end(page('Missing', []));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -46,6 +47,7 @@ describe('crawl', () => {
     assert.ok(!paths.some(path => path.startsWith('/private/')));
     assert.deepEqual(site.crawlBlocked, [`${origin}/private/secret/`]);
     assert.ok(!paths.includes('/file.pdf'));
+    assert.ok(!paths.some(path => path.startsWith('/cdn-cgi/')), 'pages Cloudflare serves under /cdn-cgi/ are not the site\'s');
   });
 
   test('stops at the page limit and counts what it left out', async () => {
