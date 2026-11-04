@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -130,6 +130,20 @@ describe('altimeter gsc logout', () => {
     });
     assert.equal(requests.length, 0);
     assert.equal((await loginStatus()).stored, false);
+  });
+
+  test('deletes a login file cut short instead of saying that no login is stored', async () => {
+    const file = join(stateDirectory(), 'search-console-login.json');
+    const payload = JSON.stringify({ clientId: 'cid', clientSecret: 'client-secret', refreshToken: 'refresh 1//secret-token', createdAt: '2026-11-04T10:00:00.000Z' });
+    await mkdir(stateDirectory(), { recursive: true });
+    await writeFile(file, JSON.stringify({ mode: 'file', createdAt: '2026-11-04T10:00:00.000Z', clientId: 'cid', payload }).slice(0, -30));
+    const run = context();
+    await assert.rejects(gscCommand(['logout'], run), {
+      message: 'The stored login is damaged. It was deleted without being revoked; revoke it at https://myaccount.google.com/permissions.',
+    });
+    assert.equal(run.output(), '');
+    assert.equal(requests.length, 0);
+    await assert.rejects(stat(file), { code: 'ENOENT' });
   });
 
   test('exits with status 2 and says why when the login was not revoked', async () => {
