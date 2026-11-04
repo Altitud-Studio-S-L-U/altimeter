@@ -1,5 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { CollectResult } from '../collect/index.ts';
+import { servedUrl } from '../collect/page.ts';
 import { HttpClient, type FetchResult } from '../fetch/http.ts';
 import type { NetworkPolicy } from '../fetch/ip-guard.ts';
 import { cleanLine } from '../report/sanitize.ts';
@@ -473,7 +474,7 @@ export interface BingRequest {
 }
 
 export interface BingAuditOptions {
-  /** The audited URL. */
+  /** The audited URL as requested; the site is chosen for the URL its page was served from, after redirects. */
   readonly url: string;
   /** Read the owner's Bing Webmaster Tools data; nothing is read when absent. */
   readonly bing?: BingRequest;
@@ -494,7 +495,7 @@ export async function withBing(collected: CollectResult, options: BingAuditOptio
   try {
     const urlInfoFor = [...collected.site.pages.values()].filter(page => !page.notAuditable && page.fetch.status !== undefined).map(page => page.fetch.finalUrl);
     const bing = await fetchBingData(client, apiKey, {
-      url: options.url,
+      url: servedUrl(collected.site.pages.values().next().value, options.url),
       urlInfoFor,
       ...(request.site === undefined ? {} : { site: request.site }),
       ...(request.endpoint === undefined ? {} : { endpoint: request.endpoint }),

@@ -160,6 +160,62 @@ describe('collect with an extra CA', () => {
   });
 });
 
+describe('collect with Chrome UX Report data', () => {
+  const lookup = ((_host: string, _options: unknown, callback: (error: null, addresses: LookupAddress[]) => void) => {
+    callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  }) as never;
+  const sitePolicy = { allowPrivate: false, privateHosts: new Set(['site.test', 'www.site.test', '127.0.0.1']) };
+  const queried: string[] = [];
+  let pages: Server;
+  let crux: Server;
+  let port: number;
+  let endpoint: string;
+
+  before(async () => {
+    // The bare domain redirects every path to www, where the pages are served.
+    pages = createServer((req, res) => {
+      if (req.headers.host === `site.test:${port}`) return void res.writeHead(301, { location: `http://www.site.test:${port}${req.url}` }).end();
+      if (req.url === '/about/') return void res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(layout('About the studio', '<h1>About</h1>'));
+      res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' }).end(layout('Not found', '<h1>Not found</h1>'));
+    });
+    // CrUX has field data for the www origin only; the bare domain only redirects, so no Chrome user loads a page there.
+    crux = createServer((req, res) => {
+      let body = '';
+      req.on('data', chunk => (body += chunk));
+      req.on('end', () => {
+        const query = JSON.parse(body) as { url?: string; origin?: string };
+        queried.push(query.origin ?? query.url ?? '');
+        if (query.origin !== `http://www.site.test:${port}`) return void res.writeHead(404, { 'content-type': 'application/json' }).end('{"error":{"code":404}}');
+        res.writeHead(200, { 'content-type': 'application/json; charset=UTF-8' }).end(JSON.stringify({ record: {
+          key: { origin: query.origin }, metrics: { largest_contentful_paint: { histogram: [{ start: 0, end: 2500, density: 0.9 }], percentiles: { p75: 1800 } } },
+          collectionPeriod: { firstDate: { year: 2026, month: 10, day: 5 }, lastDate: { year: 2026, month: 11, day: 1 } },
+        } }));
+      });
+    });
+    await new Promise<void>(resolve => pages.listen(0, '127.0.0.1', resolve));
+    await new Promise<void>(resolve => crux.listen(0, '127.0.0.1', resolve));
+    port = (pages.address() as AddressInfo).port;
+    endpoint = `http://127.0.0.1:${(crux.address() as AddressInfo).port}`;
+  });
+
+  after(async () => {
+    for (const server of [pages, crux]) {
+      server.closeAllConnections();
+      await new Promise(resolve => server.close(resolve));
+    }
+  });
+
+  test('queries the URL and the origin the page is served from, after its redirects', async () => {
+    const requested = `http://site.test:${port}/about/`;
+    const { site } = await collect({ url: requested, policy: sitePolicy, lookup, render: false, cruxKey: 'test-key', cruxEndpoint: endpoint });
+    const served = `http://www.site.test:${port}`;
+    assert.deepEqual(queried, [`${served}/about/`, served, `${served}/about/`, served]);
+    const origin = site.pages.get(requested)?.crux?.origin;
+    assert.deepEqual([origin?.PHONE?.status, origin?.DESKTOP?.status], ['ok', 'ok']);
+    assert.equal(origin?.PHONE?.status === 'ok' ? origin.PHONE.record.key : undefined, served);
+  });
+});
+
 /** A site of a few fixed responses on its own server; every other path answers 404. */
 async function serveSite(routes: Readonly<Record<string, { status: number; headers: Record<string, string>; body?: string }>>) {
   const small = createServer((req, res) => {

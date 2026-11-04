@@ -388,4 +388,30 @@ describe('withBing', () => {
     assert.equal(result.site.owner?.bing?.crawlIssues, undefined);
     assert.ok((result.site.owner?.bing?.pageStats?.length ?? 0) > 0);
   });
+
+  describe('when the audited URL redirects to the www host', () => {
+    const served = 'https://www.example.com/en/';
+    const moved = (): CollectResult => ({
+      site: site({ pages: [page(audited, { redirects: [[301, served]], html: '<!doctype html><html lang="en"><head><title>Home</title></head><body><h1>Home</h1></body></html>' })] }),
+      versions: {}, warnings: [], durationMs: 0,
+    });
+    const sites = () => bingJson({ d: [{ IsVerified: true, Url: `${origin}/` }, { IsVerified: true, Url: 'https://www.example.com/' }] });
+
+    test('reads the site that covers the URL the page is served from', async () => {
+      overrides.set('GetUserSites', sites);
+      const result = await withBing(moved(), { url: audited, bing: { ...request(), apiKey: key } });
+      assert.deepEqual(result.warnings, []);
+      assert.equal(result.site.owner?.bing?.site, 'https://www.example.com/');
+      assert.deepEqual(calls.filter(call => call.method === 'GetUrlInfo').map(call => call.params.get('url')), [served]);
+    });
+
+    test('accepts a named site on the host the page is served from, and refuses one on the host it left', async () => {
+      overrides.set('GetUserSites', sites);
+      const named = await withBing(moved(), { url: audited, bing: { ...request(), apiKey: key, site: 'https://www.example.com/' } });
+      assert.deepEqual(named.warnings, []);
+      assert.equal(named.site.owner?.bing?.site, 'https://www.example.com/');
+      const left = await withBing(moved(), { url: audited, bing: { ...request(), apiKey: key, site: `${origin}/` } });
+      assert.deepEqual(left.warnings, ['Bing Webmaster Tools data was not used: The Bing Webmaster Tools site https://example.com/ is not on the audited host www.example.com.']);
+    });
+  });
 });
