@@ -64,6 +64,11 @@ export function decodeSitemapBody(body: Buffer): { readonly xml: Buffer; readonl
   }
 }
 
+/** A copy of `value` that does not keep the whole decoded text alive, as the parser's slices of it would. */
+function detached(value: string): string {
+  return Buffer.from(value, 'utf8').toString('utf8');
+}
+
 export function parseSitemap(input: Buffer | string): SitemapDocument {
   const raw = typeof input === 'string' ? Buffer.from(input, 'utf8') : input;
   const decoded = decodeSitemapBody(raw);
@@ -90,7 +95,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
     depth += 1;
     text = '';
     if (depth === 1) {
-      namespace = tag.uri;
+      namespace = detached(tag.uri);
       kind = tag.local === 'urlset' ? 'urlset' : tag.local === 'sitemapindex' ? 'sitemapindex' : 'unknown';
       return;
     }
@@ -105,7 +110,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
       const attributes = tag.attributes as Record<string, { local: string; value: string }>;
       const value = (name: string) => Object.values(attributes).find(attr => attr.local === name)?.value;
       if (value('rel')?.toLowerCase() === 'alternate' && value('hreflang') && value('href')) {
-        entry.alternates.push({ hreflang: value('hreflang')!, href: value('href')! });
+        entry.alternates.push({ hreflang: detached(value('hreflang')!), href: detached(value('href')!) });
       }
     } else if (tag.uri === ns.image && tag.local === 'image') entry.images += 1;
     else if (tag.uri === ns.video && tag.local === 'video') entry.videos += 1;
@@ -119,7 +124,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
   });
   parser.on('closetag', tag => {
     if (entry && depth === 3 && tag.uri === ns.sitemap) {
-      const value = text.trim();
+      const value = detached(text.trim());
       if (tag.local === 'loc') entry.loc = value;
       else if (tag.local === 'lastmod') entry.lastmod = value;
       else if (tag.local === 'changefreq') entry.changefreq = value;
