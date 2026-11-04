@@ -90,19 +90,33 @@ const genericBusinessWords = new Set([
   'systems', 'sistemas', 'sistemes', 'technologies', 'technology', 'tecnologia', 'tech', 'partners', 'holding', 'limited',
 ]);
 
+// Legal forms written after a company name, which searches for the brand leave out.
+const legalForm = /[\s,]+(?:s\.?\s?l\.?\s?u?\.?|s\.?\s?a\.?\s?u?\.?|s\.?\s?a\.?\s?s\.?|inc\.?|llc|ltd\.?|limited|gmbh|ag|b\.?v\.?|n\.?v\.?|plc|sarl|srl|oy|ab|as|corp\.?|co\.?)$/iu;
+
+/** Lowercase and without accents, as names and queries are compared. */
+const fold = (text: string) => text.toLowerCase().normalize('NFKD').replace(/\p{M}/gu, '');
+
+/** A name as its words in order, with or without separators between them; undefined when no word is distinctive. */
+function namePattern(name: string): string | undefined {
+  const words = fold(name.trim().replace(legalForm, '')).split(/[^a-z0-9]+/u).filter(word => word !== '');
+  if (!words.some(word => word.length >= 4 && !genericBusinessWords.has(word))) return undefined;
+  return words.join('[^a-z0-9]*');
+}
+
 /**
- * A pattern for queries that name the brand, built from the site's names (Organization name, site name, the first
- * label of the host). Generic words such as "studio" are left out, so "software studio" is not a brand query.
+ * A pattern for queries that name the brand: queries that hold one of the given names (the site's names, the first
+ * label of the host) as whole words, with or without the spaces between them, and without a legal form such as
+ * "S.L.". A name made only of generic or short words, such as "Digital Agency", names no brand, and a descriptive
+ * word of a name alone, such as "cooking" in "Barcelona Cooking School", does not make a brand query.
  */
 export function brandPattern(names: readonly string[]): RegExp | undefined {
-  const terms = [...new Set(names.flatMap(name => name.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036F]/gu, '').split(/[^a-z0-9]+/u))
-    .filter(term => term.length >= 4 && !genericBusinessWords.has(term)))];
-  if (terms.length === 0) return undefined;
-  return new RegExp(`\\b(${terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')).join('|')})`, 'iu');
+  const patterns = [...new Set(names.map(namePattern).filter((pattern): pattern is string => pattern !== undefined))];
+  if (patterns.length === 0) return undefined;
+  return new RegExp(`\\b(?:${patterns.join('|')})\\b`, 'iu');
 }
 
 function isBrand(query: string, brand: RegExp | undefined): boolean {
-  return brand !== undefined && brand.test(query.normalize('NFKD').replace(/[\u0300-\u036F]/gu, ''));
+  return brand !== undefined && brand.test(fold(query));
 }
 
 export function cannibalization(data: GscData, brand: RegExp | undefined, minImpressions = 50): Cannibalization[] {

@@ -48,6 +48,18 @@ test('splits brand, non-brand and anonymised traffic', () => {
   assert.deepEqual(split.anonymised, { clicks: 16, impressions: 300 });
 });
 
+test('a brand query names a whole site name, not one of its descriptive words', () => {
+  const brand = brandPattern(['Barcelona Cooking School', 'acme-tools', 'Altitud Studio S.L.U.']);
+  const names = (query: string) => brand?.test(query) ?? false;
+  for (const query of ['barcelona cooking school prices', 'Barcelona-Cooking-School', 'barcelonacookingschool', 'acme tools review', 'acmetools', 'altitud studio andorra']) {
+    assert.equal(names(query), true, query);
+  }
+  for (const query of ['cooking class for kids', 'garden tools', 'barcelona schoolbag', 'altitud de andorra']) assert.equal(names(query), false, query);
+  assert.equal(brandPattern(['Digital Agency', 'Studio', 'AB']), undefined, 'a name made only of generic or short words names no brand');
+  const classes = { ...data, byPageQuery: [row(['/kids/', 'cooking class for kids'], 10, 300, 4), row(['/classes/', 'cooking class for kids'], 9, 250, 5)] };
+  assert.deepEqual(cannibalization(classes, brandPattern(['Barcelona Cooking School'])).map(entry => entry.query), ['cooking class for kids']);
+});
+
 test('lists striking-distance queries and unusual page trends', () => {
   assert.deepEqual(strikingDistance(data).map(entry => entry.query), ['software consultancy']);
   assert.deepEqual(pageTrends(data).map(trend => [trend.page, trend.z]), [['/a', 4.47]]);
