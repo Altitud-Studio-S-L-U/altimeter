@@ -32,6 +32,8 @@ Usage:
 
 Audit options:
   --lang <en|es|ca>          Report language (default en).
+  --crawl                    Crawl the site politely from the page, the home page and the sitemaps.
+  --max-pages <n>            Pages to audit when crawling, 1 to 1000 (default 100).
   --out <dir>                Parent folder for reports (default ./altimeter-report).
   --no-render                Skip Chrome rendering and Lighthouse.
   --no-lighthouse            Skip Lighthouse.
@@ -69,6 +71,7 @@ async function auditCommand(args: string[]): Promise<number> {
     options: {
       lang: { type: 'string' }, out: { type: 'string' }, 'no-render': { type: 'boolean' }, 'no-lighthouse': { type: 'boolean' },
       'lab-runs': { type: 'string' }, 'fail-on': { type: 'string' }, 'allow-private-network': { type: 'boolean' }, quiet: { type: 'boolean' },
+      crawl: { type: 'boolean' }, 'max-pages': { type: 'string' },
     },
   });
   if (positionals.length !== 1) throw new UsageError('audit needs exactly one URL.');
@@ -83,10 +86,12 @@ async function auditCommand(args: string[]): Promise<number> {
   if (!failLevels.includes(failOn)) throw new UsageError('--fail-on must be critical, high, medium, low or none.');
   const labRuns = values['lab-runs'] === undefined ? 3 : Number(values['lab-runs']);
   if (!Number.isInteger(labRuns) || labRuns < 1 || labRuns > 7) throw new UsageError('--lab-runs must be a whole number from 1 to 7.');
+  const maxPages = values['max-pages'] === undefined ? 100 : Number(values['max-pages']);
+  if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 1000) throw new UsageError('--max-pages must be a whole number from 1 to 1000.');
   const lang = language(values.lang);
   const quiet = values.quiet === true;
   const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(message)}\n`);
-  const recordedOptions = { render: values['no-render'] !== true, lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true };
+  const recordedOptions = { crawl: values.crawl === true, maxPages, render: values['no-render'] !== true, lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true };
   const result = await audit({
     url: url.href,
     language: lang,
@@ -94,6 +99,8 @@ async function auditCommand(args: string[]): Promise<number> {
     render: values['no-render'] !== true,
     lighthouse: recordedOptions.lighthouse,
     labRuns,
+    crawl: values.crawl === true,
+    maxPages,
     ...(process.env.ALTIMETER_GOOGLE_API_KEY ? { cruxKey: process.env.ALTIMETER_GOOGLE_API_KEY } : {}),
     ...(log ? { log } : {}),
     recordedOptions,

@@ -10,6 +10,7 @@ import { parseSitemap } from '../fetch/sitemap.ts';
 import { inspectTls } from '../fetch/tls.ts';
 import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser, type RenderMode } from '../render/chrome.ts';
 import { runLighthouse } from '../render/lighthouse.ts';
+import { crawlSite } from './crawl.ts';
 import { documentFacts, fetchPage, isHtmlResponse, decodeHtml } from './page.ts';
 import { notFoundProbeUrl, urlVariants } from './probes.ts';
 
@@ -29,6 +30,12 @@ export interface CollectOptions {
   readonly log?: (message: string) => void;
   readonly lookup?: typeof dnsLookup;
   readonly cruxEndpoint?: string;
+  /** Crawl the site from the audited page, its home page and the sitemaps. */
+  readonly crawl?: boolean;
+  /** Total pages to audit when crawling, including the audited page and the home page (default 100). */
+  readonly maxPages?: number;
+  /** Pause between requests of one crawl worker in milliseconds (default 500, which with two workers keeps about 2 requests per second). */
+  readonly crawlDelayMs?: number;
 }
 
 export interface CollectResult {
@@ -207,6 +214,25 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     const siblingUrls = pickSiblings(page, new Set([page.url, page.fetch.finalUrl, homeUrl, homeFinal]));
     const siblings = await Promise.all(siblingUrls.map(url => fetchPage(client, url)));
 
+    let crawlBlocked: string[] = [];
+    let crawlSkipped = 0;
+    if (options.crawl) {
+      const sitemapUrls = sitemaps.flatMap(entry => entry.document?.urls.map(url => url.loc) ?? []);
+      const allows = async (url: string) => {
+        const parsed = new URL(url);
+        const availability = await robotsFor(parsed.origin);
+        if (availability.kind === 'unrestricted') return true;
+        if (availability.kind === 'unreachable') return false;
+        return isAllowed(availability.file, googlebotTokens, `${parsed.pathname}${parsed.search}`).allowed;
+      };
+      log('Crawling the site');
+      const crawled = await crawlSite(client, { seeds: [page.fetch.finalUrl, homeFinal, ...sitemapUrls], known: pages, maxPages: options.maxPages ?? 100,
+        robotsAllows: allows, concurrency: 2, delayMs: options.crawlDelayMs ?? 500, log });
+      for (const [url, entry] of crawled.pages) pages.set(url, entry);
+      crawlBlocked = [...crawled.blockedByRobots];
+      crawlSkipped = crawled.skipped;
+    }
+
     const versions: { chrome?: string; lighthouse?: string } = {};
     const chromePath = options.chromePath ?? findChrome();
     const wantRender = options.render ?? chromePath !== undefined;
@@ -225,8 +251,9 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
         const result = await renderPage(browser!, url, { mode, userAgent, robotsAllows });
         return { result, ...documentFacts(result.html) };
       };
+      const keyPages = new Set([page.url, homeUrl]);
       for (const [key, entry] of pages) {
-        if (!entry.raw) continue;
+        if (!entry.raw || !keyPages.has(key)) continue;
         log(`Rendering ${entry.fetch.finalUrl}`);
         const rendered = await renderAs(entry.fetch.finalUrl, 'googlebot');
         const userRender = await renderAs(entry.fetch.finalUrl, 'user');
@@ -263,7 +290,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       notFound,
       siblings,
       pages,
-      crawled: false,
+      crawled: options.crawl === true,
+      ...(options.crawl ? { crawlBlocked, crawlSkipped } : {}),
       homeUrl: homeFinal,
       agentProbes,
       resources,

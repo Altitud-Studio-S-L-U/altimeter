@@ -81,6 +81,10 @@ export interface SiteFacts {
   readonly pages: ReadonlyMap<string, PageFacts>;
   /** True when a crawl ran, so site-scope graph rules can be evaluated. */
   readonly crawled: boolean;
+  /** Internal URLs the crawl found but did not fetch because robots.txt disallows them for Googlebot. */
+  readonly crawlBlocked?: readonly string[];
+  /** Internal URLs left out because the page limit was reached. */
+  readonly crawlSkipped?: number;
   readonly homeUrl?: string;
   /** Certificate of the audited host, for https targets. */
   readonly tls?: TlsFacts;
