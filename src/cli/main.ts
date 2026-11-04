@@ -14,6 +14,7 @@ import { compareReports } from '../report/compare.ts';
 import type { Report } from '../report/model.ts';
 import { cleanLine } from '../report/sanitize.ts';
 import { reportDirectory, writeReport } from '../report/write.ts';
+import { verifyExitCode, verifyTasks } from '../verify/index.ts';
 import { version } from '../version.ts';
 
 export const help = `Altimeter ${version}: evidence-based SEO audits.
@@ -22,6 +23,8 @@ Usage:
   altimeter audit <url> [options]                  Audit a page and its site context.
   altimeter render <report.json> --lang <en|es|ca>  Write a report again in another language.
   altimeter compare <before.json> <after.json>     Show fixed, new and remaining problems.
+  altimeter verify <report.json> [--task <id>] [--static <dir> | --origin <url>]
+                                                   Re-check tasks against a local build or another origin.
   altimeter rules [--category <name>] [--stale]    List the rule catalog.
   altimeter explain <rule-id>                      Show a rule and its sources.
   altimeter doctor                                 Check Node.js and Chrome.
@@ -144,6 +147,36 @@ async function compareCommand(args: string[]): Promise<number> {
   return comparison.introduced.length > 0 ? 1 : 0;
 }
 
+async function verifyCommand(args: string[]): Promise<number> {
+  const { values, positionals } = parseArgs({ args, strict: true, allowPositionals: true, options: {
+    task: { type: 'string', multiple: true }, static: { type: 'string' }, origin: { type: 'string' }, render: { type: 'boolean' },
+  } });
+  if (positionals.length !== 1) throw new UsageError('verify needs the path of a report.json.');
+  if (values.static && values.origin) throw new UsageError('Use either --static or --origin, not both.');
+  if (values.origin !== undefined) {
+    const origin = new URL(values.origin);
+    if (origin.protocol !== 'http:' && origin.protocol !== 'https:') throw new UsageError('--origin must be an http or https origin.');
+  }
+  const report = await readReport(resolve(positionals[0]!));
+  const results = await verifyTasks({
+    report,
+    ...(values.task ? { taskIds: values.task } : {}),
+    ...(values.static ? { staticDir: resolve(values.static) } : {}),
+    ...(values.origin ? { origin: new URL(values.origin).origin } : {}),
+    render: values.render === true,
+  });
+  for (const result of results) {
+    const label = result.verdict === 'pass' ? 'PASS' : result.verdict === 'fail' ? 'FAIL' : 'NOT VERIFIABLE';
+    process.stdout.write(`${result.taskId} ${label}${result.reason ? ` (${cleanLine(result.reason)})` : ''}
+`);
+    for (const check of [...result.acceptance.filter(entry => entry.outcome !== 'pass'), ...result.regressions]) {
+      process.stdout.write(`  ${check.check.ruleId} ${check.outcome} · ${cleanLine(check.check.scope.kind === 'page' ? check.check.scope.url : check.check.scope.origin, 160)}
+`);
+    }
+  }
+  return verifyExitCode(results);
+}
+
 function rulesCommand(args: string[]): number {
   const { values } = parseArgs({ args, strict: true, allowPositionals: false, options: { category: { type: 'string' }, stale: { type: 'boolean' }, lang: { type: 'string' } } });
   const lang = language(values.lang);
@@ -195,6 +228,7 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
       case 'audit': return await auditCommand(rest);
       case 'render': return await renderCommand(rest);
       case 'compare': return await compareCommand(rest);
+      case 'verify': return await verifyCommand(rest);
       case 'rules': return rulesCommand(rest);
       case 'explain': return explainCommand(rest);
       case 'doctor': return doctorCommand();
