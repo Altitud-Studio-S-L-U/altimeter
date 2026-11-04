@@ -1,0 +1,19 @@
+#Software: Microsoft Internet Information Services 10.0
+#Version: 1.0
+#Date: 2026-10-20 00:00:00
+#Fields: date time s-ip cs-method cs-uri-stem cs-uri-query s-port cs-username c-ip cs(User-Agent) cs(Referer) sc-status sc-substatus sc-win32-status sc-bytes time-taken
+2026-10-20 08:00:00 10.0.0.2 GET /en/ - 443 - 66.249.64.10 Mozilla/5.0+(Linux;+Android+6.0.1;+Nexus+5X+Build/MMB29P)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/141.0.7390.122+Mobile+Safari/537.36+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html) - 200 0 0 5120 15
+2026-10-20 08:00:05 10.0.0.2 GET /assets/app.js - 443 - 66.249.64.10 Mozilla/5.0+(Linux;+Android+6.0.1;+Nexus+5X+Build/MMB29P)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/141.0.7390.122+Mobile+Safari/537.36+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html) - 200 0 0 20480 15
+2026-10-21 09:30:00 10.0.0.2 GET /en/services/ - 443 - 203.0.113.50 Mozilla/5.0+(Linux;+Android+6.0.1;+Nexus+5X+Build/MMB29P)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/141.0.7390.122+Mobile+Safari/537.36+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html) - 200 0 0 4096 15
+2026-10-22 10:00:00 10.0.0.2 GET /robots.txt - 443 - 157.55.39.10 Mozilla/5.0+AppleWebKit/537.36+(KHTML,+like+Gecko;+compatible;+bingbot/2.0;++http://www.bing.com/bingbot.htm)+Chrome/141.0.0.0+Safari/537.36 - 200 0 0 120 15
+2026-10-23 11:00:00 10.0.0.2 GET /en/about/ - 443 - 132.196.86.20 Mozilla/5.0+AppleWebKit/537.36+(KHTML,+like+Gecko);+compatible;+GPTBot/1.4;++https://openai.com/gptbot - 403 0 0 512 15
+2026-10-23 11:00:10 10.0.0.2 GET /en/about/ - 443 - 203.0.113.60 Mozilla/5.0+AppleWebKit/537.36+(KHTML,+like+Gecko);+compatible;+GPTBot/1.4;++https://openai.com/gptbot - 200 0 0 4096 15
+2026-10-24 12:00:00 10.0.0.2 GET /llms.txt - 443 - 135.234.64.9 Mozilla/5.0+(Macintosh;+Intel+Mac+OS+X+10_15_7)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/131.0.0.0+Safari/537.36;+compatible;+OAI-SearchBot/1.4;++https://openai.com/searchbot - 200 0 0 900 15
+2026-10-25 13:00:00 10.0.0.2 GET /en/contact/ - 443 - 216.73.216.30 Mozilla/5.0+AppleWebKit/537.36+(KHTML,+like+Gecko;+compatible;+ClaudeBot/1.0;++claudebot@anthropic.com) - 200 0 0 3000 15
+2026-10-26 14:00:00 10.0.0.2 GET /en/ - 443 - 203.0.113.70 meta-externalagent/1.1+(+https://developers.facebook.com/docs/sharing/webmasters/crawler) - 200 0 0 5120 15
+2026-10-27 15:00:00 10.0.0.2 GET /en/ - 443 - 192.0.2.10 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/141.0.0.0+Safari/537.36 https://chatgpt.com/ 200 0 0 5120 15
+2026-10-27 15:01:00 10.0.0.2 GET /en/services/ utm_source=chatgpt.com 443 - 192.0.2.11 Mozilla/5.0+(Windows+NT+10.0;+Win64;+x64)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/141.0.0.0+Safari/537.36 - 200 0 0 4096 15
+2026-10-28 16:00:00 10.0.0.2 GET /en/ - 443 - 107.20.236.150 Mozilla/5.0+(compatible;+PerplexityBot/1.0;++https://perplexity.ai/perplexitybot) - 429 0 0 0 15
+2026-11-02 17:00:00 10.0.0.2 GET /private/report - 443 - 104.208.184.200 Mozilla/5.0+AppleWebKit/537.36+(KHTML,+like+Gecko);+compatible;+ChatGPT-User/1.0;++https://openai.com/bot - 200 0 0 1000 15
+2026-09-01 00:00:00 10.0.0.2 GET /old - 443 - 66.249.64.10 Mozilla/5.0+(Linux;+Android+6.0.1;+Nexus+5X+Build/MMB29P)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Chrome/141.0.7390.122+Mobile+Safari/537.36+(compatible;+Googlebot/2.1;++http://www.google.com/bot.html) - 200 0 0 100 15
+2026-10-29 10:00:00 10.0.0.2 GET

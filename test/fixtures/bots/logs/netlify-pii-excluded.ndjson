@@ -1,0 +1,4 @@
+{"log_type":"traffic","method":"GET","request_id":"01FDWR77JMF2DA1CHF5YA6HP0","response_size":5120,"status_code":200,"timestamp":"2026-10-20T08:00:00Z","url":"https://example.com/en/"}
+{"log_type":"traffic","method":"GET","request_id":"01FDWR77JMF2DA1CHF5YA6HP1","response_size":20480,"status_code":200,"timestamp":"2026-10-20T08:00:05Z","url":"https://example.com/assets/app.js"}
+{"log_type":"traffic","method":"GET","request_id":"01FDWR77JMF2DA1CHF5YA6HP2","response_size":4096,"status_code":200,"timestamp":"2026-10-21T09:30:00Z","url":"https://example.com/en/services/"}
+{"log_type":"traffic","method":"GET","request_id":"01FDWR77JMF2DA1CHF5YA6HP3","response_size":120,"status_code":200,"timestamp":"2026-10-22T10:00:00Z","url":"https://example.com/robots.txt"}
