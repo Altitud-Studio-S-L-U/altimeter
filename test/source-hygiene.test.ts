@@ -13,9 +13,10 @@ function files(directory: string): string[] {
   });
 }
 
-/** Characters that render as nothing or reorder text, which can hide what source code really does. */
+/** Characters that render as nothing, look like a plain space or reorder text, which can hide what source code does. */
 function invisible(codePoint: number): boolean {
   return (codePoint < 0x20 && codePoint !== 0x09 && codePoint !== 0x0a && codePoint !== 0x0d)
+    || (codePoint !== 0x20 && /\p{Zs}/u.test(String.fromCodePoint(codePoint)))
     || (codePoint >= 0x7f && codePoint <= 0x9f)
     || (codePoint >= 0x300 && codePoint <= 0x36f)
     || codePoint === 0x61c || codePoint === 0xa0

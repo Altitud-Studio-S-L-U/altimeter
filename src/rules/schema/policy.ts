@@ -44,8 +44,8 @@ function attributeText(root: HtmlNode): string[] {
 /** Every number written in the text, read with a decimal point and with a decimal comma. */
 function numbersIn(haystack: string): number[] {
   const numbers: number[] = [];
-  for (const match of haystack.matchAll(/\d[\d.,   ]*\d|\d/gu)) {
-    const token = match[0].replace(/[   ]/gu, '');
+  for (const match of haystack.matchAll(/\d[\d.,\u00A0\u202F ]*\d|\d/gu)) {
+    const token = match[0].replace(/[\u00A0\u202F ]/gu, '');
     const point = Number(token.replace(/,/gu, ''));
     const comma = Number(token.replace(/\./gu, '').replace(',', '.'));
     for (const value of [point, comma, Number(token.replace(/[.,]/gu, ''))]) if (Number.isFinite(value)) numbers.push(value);
