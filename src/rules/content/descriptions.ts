@@ -30,7 +30,18 @@ export const metaDescriptionMissing: RuleImplementation = {
   },
 };
 
-const paginated = (url: string) => /[?&](page|p|pg|paged)=\d+|\/page\/\d+\/?$/iu.test(url);
+const pageParameters = new Set(['page', 'p', 'pg', 'paged']);
+
+/** A page of a paginated series: a page number in the query, such as ?page=2, or a path ending in /page/2/. */
+function paginated(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return [...parsed.searchParams].some(([name, value]) => pageParameters.has(name.toLowerCase()) && /^\d+$/u.test(value))
+      || /\/page\/\d+\/?$/iu.test(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
 
 export const metaDescriptionDuplicate: RuleImplementation = {
   id: 'content-meta-description-duplicate',

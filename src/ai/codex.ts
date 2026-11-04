@@ -1,6 +1,7 @@
-import { lstat, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { readRegularFile } from '../core/files.ts';
 import { childEnvironment, ProcessError, removeFolder, runProcess } from './process.ts';
 import { assertModel, fromProcessError, resolveProvider, type Capabilities, type ProviderCallInput, type ResolvedProvider } from './providers.ts';
 import { systemPrompt } from './system-prompt.ts';
@@ -112,18 +113,13 @@ export function validateCodexEvents(stdout: string): Usage | undefined {
 }
 
 async function readAnswer(file: string): Promise<unknown> {
-  let size: number;
-  try {
-    const info = await lstat(file);
-    if (!info.isFile() || info.isSymbolicLink()) throw new ProviderError('invalid-response', 'The Codex answer is not a regular file.', 'codex');
-    size = info.size;
-  } catch (error) {
-    if (error instanceof ProviderError) throw error;
-    throw new ProviderError('missing-output', 'Codex did not write a final answer.', 'codex');
+  const read = await readRegularFile(file, maxAnswerBytes);
+  if ('problem' in read) {
+    if (read.problem === 'missing') throw new ProviderError('missing-output', 'Codex did not write a final answer.', 'codex');
+    throw new ProviderError('invalid-response', read.problem === 'too-large' ? 'The Codex answer exceeds its size limit.' : 'The Codex answer is not a regular file.', 'codex');
   }
-  if (size > maxAnswerBytes) throw new ProviderError('invalid-response', 'The Codex answer exceeds its size limit.', 'codex');
   try {
-    return JSON.parse(await readFile(file, 'utf8'));
+    return JSON.parse(read.text);
   } catch {
     throw new ProviderError('invalid-response', 'The Codex answer is not complete JSON.', 'codex');
   }

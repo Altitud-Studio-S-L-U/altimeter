@@ -1,3 +1,5 @@
+import { startsLikeSvg } from '../helpers.ts';
+
 /** Image formats recognised from their leading bytes, independent of the Content-Type the server sends. */
 export type ImageFormat = 'png' | 'gif' | 'jpeg' | 'ico' | 'bmp' | 'webp' | 'svg' | 'avif' | 'tiff' | 'ppm';
 
@@ -65,8 +67,7 @@ function webpSize(bytes: Buffer): { width: number; height: number } | undefined 
 }
 
 function looksLikeSvg(bytes: Buffer): boolean {
-  const head = bytes.subarray(0, 1024).toString('utf8').replace(/^\uFEFF/u, '').trimStart().toLowerCase();
-  return /^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*(<!doctype svg[^>]*>\s*)?<svg[\s>]/u.test(head);
+  return startsLikeSvg(bytes.subarray(0, 1024).toString('utf8'));
 }
 
 /** Reads the format and pixel size of an image from its first bytes. */

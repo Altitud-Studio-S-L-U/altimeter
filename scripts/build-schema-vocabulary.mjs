@@ -54,7 +54,7 @@ function build(current, all, release) {
     }
     const replacement = ids(node['schema:supersededBy'])[0];
     if (replacement) superseded[name] = replacement;
-    if (ids(node['schema:isPartOf']).some(part => /pending\.schema\.org/u.test(part))) pending.push(name);
+    if (ids(node['schema:isPartOf']).some(part => /^https?:\/\/pending\.schema\.org\/?$/u.test(part))) pending.push(name);
   }
   // Data types such as Number and URL inherit from DataType or Text without being marked themselves.
   for (let size = -1; size !== dataTypes.size;) {

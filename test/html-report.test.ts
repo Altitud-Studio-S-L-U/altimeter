@@ -34,7 +34,7 @@ test('the HTML report escapes everything taken from the site', () => {
 test('the HTML report allows only its own script through the CSP and loads nothing external', () => {
   const html = renderHtml(report(), 'es');
   const csp = /http-equiv="Content-Security-Policy" content="([^"]+)"/u.exec(html)?.[1] ?? '';
-  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gu)].map(match => match[1]!);
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/giu)].map(match => match[1]!);
   assert.equal(scripts.length, 1);
   assert.ok(csp.includes(`'sha256-${createHash('sha256').update(scripts[0]!).digest('base64')}'`));
   assert.match(csp, /default-src 'none'/u);

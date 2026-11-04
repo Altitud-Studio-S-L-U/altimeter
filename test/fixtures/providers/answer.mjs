@@ -1,6 +1,6 @@
 // Shared by the synthetic Claude and Codex doubles: reads the request on stdin, records the call next to the
 // scenario file and builds an answer from the scenario, resolving placeholders against the evidence it was sent.
-import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 
 export async function readStdin() {
   const chunks = [];
@@ -22,7 +22,12 @@ export function record(scenarioUrl, entry) {
  */
 export function pick(scenario, stdin, scenarioUrl) {
   const counterUrl = new URL('./counter.json', scenarioUrl);
-  const seen = existsSync(counterUrl) ? JSON.parse(readFileSync(counterUrl, 'utf8')) : {};
+  let seen = {};
+  try {
+    seen = JSON.parse(readFileSync(counterUrl, 'utf8'));
+  } catch {
+    // No call has been counted yet.
+  }
   for (const [index, response] of (scenario.responses ?? []).entries()) {
     if (response.when !== undefined && !stdin.includes(response.when)) continue;
     if (response.times !== undefined && (seen[index] ?? 0) >= response.times) continue;

@@ -1,8 +1,9 @@
-import { lstat, mkdtemp, readdir, readFile } from 'node:fs/promises';
+import { mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { toolFeatureOverrides } from '../ai/codex.ts';
+import { readRegularFile } from '../core/files.ts';
 import { childEnvironment, ProcessError, removeFolder, runProcess } from '../ai/process.ts';
 import type { Capabilities } from '../ai/providers.ts';
 import type { Usage } from '../ai/types.ts';
@@ -117,17 +118,10 @@ export function parseCodexStream(stdout: string): CodexStream {
 }
 
 async function readAnswer(file: string): Promise<string | undefined> {
-  let size: number;
-  try {
-    const info = await lstat(file);
-    if (!info.isFile() || info.isSymbolicLink()) throw new ProbeRunError('invalid-response', 'The Codex answer is not a regular file.');
-    size = info.size;
-  } catch (error) {
-    if (error instanceof ProbeRunError) throw error;
-    return undefined;
-  }
-  if (size > maxAnswerBytes) throw new ProbeRunError('invalid-response', 'The Codex answer exceeds its size limit.');
-  return readFile(file, 'utf8');
+  const read = await readRegularFile(file, maxAnswerBytes);
+  if (!('problem' in read)) return read.text;
+  if (read.problem === 'missing') return undefined;
+  throw new ProbeRunError('invalid-response', read.problem === 'too-large' ? 'The Codex answer exceeds its size limit.' : 'The Codex answer is not a regular file.');
 }
 
 /**

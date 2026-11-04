@@ -53,11 +53,14 @@ export const paidLinksUnqualified: RuleImplementation = {
 
 const ugcTokens = new Set(['comment', 'comments', 'comment-content', 'comment-body', 'comment-text', 'commentlist', 'comment-list', 'comments-area',
   'reply', 'replies', 'forum-post', 'bbp-reply-content', 'bbp-topic-content', 'disqus_thread', 'user-review', 'review-content', 'ugc']);
-const ugcTypes = /schema\.org\/(Comment|DiscussionForumPosting|Answer|UserComments)\b/u;
+const ugcTypes = new Set(['Comment', 'DiscussionForumPosting', 'Answer', 'UserComments']);
+
+/** Whether an itemtype attribute, a list of type URLs, names a schema.org type for user-generated content. */
+const ugcItemtype = (value: string) => value.split(/\s+/u).some(type => ugcTypes.has(/^https?:\/\/schema\.org\/([A-Za-z]+)$/u.exec(type)?.[1] ?? ''));
 
 function ugcRegion(element: Parameters<typeof attribute>[0]): boolean {
   const tokens = `${attribute(element, 'class') ?? ''} ${attribute(element, 'id') ?? ''}`.toLowerCase().split(/\s+/u);
-  return tokens.some(token => ugcTokens.has(token)) || ugcTypes.test(attribute(element, 'itemtype') ?? '');
+  return tokens.some(token => ugcTokens.has(token)) || ugcItemtype(attribute(element, 'itemtype') ?? '');
 }
 
 export const ugcLinkQualifiers: RuleImplementation = {

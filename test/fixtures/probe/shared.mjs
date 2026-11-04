@@ -1,6 +1,6 @@
 // Shared by the synthetic Claude Code and Codex CLIs of the probe tests: reads the question on stdin, records how
 // the double was started next to its scenario file and picks the scenario's response for that question.
-import { appendFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 export async function readStdin() {
   const chunks = [];
@@ -24,7 +24,12 @@ export function record(scenarioUrl, entry) {
  */
 export function pick(scenario, stdin, scenarioUrl) {
   const counterUrl = new URL('./counter.json', scenarioUrl);
-  const seen = existsSync(counterUrl) ? JSON.parse(readFileSync(counterUrl, 'utf8')) : {};
+  let seen = {};
+  try {
+    seen = JSON.parse(readFileSync(counterUrl, 'utf8'));
+  } catch {
+    // No call has been counted yet.
+  }
   for (const [index, response] of (scenario.responses ?? []).entries()) {
     if (response.when !== undefined && !stdin.includes(response.when)) continue;
     if (response.times !== undefined && (seen[index] ?? 0) >= response.times) continue;

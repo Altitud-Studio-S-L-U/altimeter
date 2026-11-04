@@ -58,7 +58,15 @@ interface TagOrder {
   readonly consentDefault: { readonly offset: number; readonly excerpt: string } | undefined;
 }
 
-const googleTagSrc = /googletagmanager\.com\/(gtag\/js|gtm\.js)/iu;
+/** Whether a script URL loads Google's tag, gtag.js or gtm.js, from googletagmanager.com. */
+function googleTagSrc(src: string): boolean {
+  try {
+    const url = new URL(src, 'https://site.invalid/');
+    return /(?:^|\.)googletagmanager\.com$/u.test(url.hostname) && /^\/(?:gtag\/js|gtm\.js)$/u.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
 const inlineGoogleTag = /gtag\(\s*['"]config['"]|googletagmanager\.com\/gtm\.js|['"]gtm\.start['"]/u;
 const consentDefault = /(gtag|dataLayer\.push)\(\s*\[?\s*['"]consent['"]\s*,\s*['"]default['"]/u;
 
@@ -69,7 +77,7 @@ function tagOrder(doc: DocumentFacts): TagOrder {
     const src = script.attrs.src ?? '';
     const excerpt = src !== '' ? `<script src="${src}">` : shorten(script.text.trim(), 240);
     if (!consent && consentDefault.test(script.text)) consent = { offset: script.offset, excerpt };
-    if (!googleTag && (googleTagSrc.test(src) || inlineGoogleTag.test(script.text))) googleTag = { offset: script.offset, excerpt };
+    if (!googleTag && (googleTagSrc(src) || inlineGoogleTag.test(script.text))) googleTag = { offset: script.offset, excerpt };
   }
   return { googleTag, consentDefault: consent };
 }

@@ -213,7 +213,8 @@ export const imgFormat: RuleImplementation = {
   },
 };
 
-const placeholderSource = /^data:|placeholder|blank|spacer|lazy|loading|transparent|1x1|pixel|grey|gray/iu;
+const placeholderWords = /placeholder|blank|spacer|lazy|loading|transparent|1x1|pixel|grey|gray/iu;
+const placeholderSource = (src: string) => /^data:/iu.test(src) || placeholderWords.test(src);
 const deferredAttributes = ['data-src', 'data-lazy-src', 'data-original', 'data-lazy', 'data-srcset'] as const;
 
 function deferredImages(doc: DocumentFacts, base: string) {
@@ -224,7 +225,7 @@ function deferredImages(doc: DocumentFacts, base: string) {
       const src = attribute(visit.element, 'src') ?? '';
       const resolved = absoluteUrl(src || undefined, base);
       const target = absoluteUrl(real || undefined, base);
-      return { visit, real: target, src, waiting: src === '' || placeholderSource.test(src) || (resolved !== undefined && target !== undefined && resolved !== target && !sameAsset(resolved, target) && placeholderSource.test(resolved)) };
+      return { visit, real: target, src, waiting: src === '' || placeholderSource(src) || (resolved !== undefined && target !== undefined && resolved !== target && !sameAsset(resolved, target) && placeholderSource(resolved)) };
     });
 }
 

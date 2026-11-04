@@ -81,7 +81,7 @@ export const clsCulprits: RuleImplementation = {
 };
 
 const embedSource = /youtube(-nocookie)?\.com\/embed|player\.vimeo\.com|google\.com\/maps\/embed|maps\.google\.|twitter\.com|platform\.x\.com|instagram\.com\/p\/|facebook\.com\/plugins|tiktok\.com\/embed|spotify\.com\/embed|soundcloud\.com\/player|doubleclick\.net|googlesyndication\.com|calendly\.com/iu;
-const adContainer = /^div-gpt-ad|adsbygoogle|ad-slot|adslot/iu;
+const adContainer = (marker: string) => /^div-gpt-ad/iu.test(marker) || /adsbygoogle|ad-slot|adslot/iu.test(marker);
 
 function reservesSpace(info: ElementInfo): boolean {
   const style = (info.attrs.style ?? '').toLowerCase();
@@ -95,7 +95,7 @@ export const embedReservedSpace: RuleImplementation = {
     const doc = pageDocument(page!)!;
     const base = page!.fetch.finalUrl;
     const embeds = elements(doc).filter(info => (info.tag === 'iframe' && embedSource.test(absoluteUrl(info.attrs.src, base) ?? info.attrs['data-src'] ?? ''))
-      || (info.tag === 'ins' && /adsbygoogle/u.test(info.attrs.class ?? '')) || (info.tag === 'div' && adContainer.test(markerOf(info).trim())));
+      || (info.tag === 'ins' && /adsbygoogle/u.test(info.attrs.class ?? '')) || (info.tag === 'div' && adContainer(markerOf(info).trim())));
     if (embeds.length === 0) return notApplicable('no-embeds');
     const unsized = embeds.filter(info => !reservesSpace(info));
     if (unsized.length === 0) return { outcome: 'pass' };

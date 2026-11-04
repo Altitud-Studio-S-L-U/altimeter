@@ -1,3 +1,5 @@
+import { startsLikeSvg } from '../helpers.ts';
+
 export type ImageFormat = 'jpeg' | 'png' | 'gif' | 'webp' | 'avif' | 'bmp' | 'svg' | 'heic' | 'jxl' | 'tiff' | 'ico' | 'unknown';
 
 /** Formats Google Images indexes. */
@@ -18,7 +20,7 @@ export function sniffImage(body: Buffer): ImageFormat {
   if (body.subarray(0, 4).equals(Buffer.from([0x49, 0x49, 0x2a, 0x00])) || body.subarray(0, 4).equals(Buffer.from([0x4d, 0x4d, 0x00, 0x2a]))) return 'tiff';
   if (body.subarray(0, 2).toString('latin1') === 'BM') return 'bmp';
   if (body.subarray(0, 4).equals(Buffer.from([0x00, 0x00, 0x01, 0x00]))) return 'ico';
-  if (/^\s*(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*(<!doctype svg[^>]*>\s*)?<svg[\s>]/iu.test(body.subarray(0, 4096).toString('utf8'))) return 'svg';
+  if (startsLikeSvg(body.subarray(0, 4096).toString('utf8'))) return 'svg';
   return 'unknown';
 }
 

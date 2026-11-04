@@ -15,7 +15,7 @@ export function rulesBadge(): string {
 }
 
 function cell(value: string): string {
-  return value.replace(/\|/gu, '\\|').replace(/\s+/gu, ' ').trim();
+  return value.replace(/[\\|]/gu, '\\$&').replace(/\s+/gu, ' ').trim();
 }
 
 /** The catalog as a Markdown reference, generated so it never drifts from the data. */

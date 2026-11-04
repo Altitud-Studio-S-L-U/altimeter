@@ -1,6 +1,7 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 import { basename, extname, join, relative, sep } from 'node:path';
 import type { EvidenceItem } from '../core/evidence.ts';
+import { readRegularFile } from '../core/files.ts';
 import type { Report } from '../report/model.ts';
 import type { FileCandidate, Task } from '../report/tasks.ts';
 
@@ -17,7 +18,9 @@ const platformFiles = new Set([
   'svelte.config.js', 'gatsby-config.js', 'vercel.json', 'netlify.toml', 'wrangler.json', 'wrangler.jsonc', 'wrangler.toml', '_headers', '_redirects', '.htaccess',
 ]);
 /** Tests and project documentation describe the site; the fix is never in them. */
-const testPath = /(?:^|\/)(?:tests?|__tests__|spec|e2e|cypress|playwright|docs|\.github)\/|\.(?:test|spec)\.[a-z]+$/u;
+const testFolder = /(?:^|\/)(?:tests?|__tests__|spec|e2e|cypress|playwright|docs|\.github)\//u;
+const testFile = /\.(?:test|spec)\.[a-z]+$/u;
+const testPath = (path: string) => testFolder.test(path) || testFile.test(path);
 const projectDocument = /^(?:readme|changelog|contributing|license|security|code_of_conduct|claude|agents|gemini)(?:\.[a-z]+)?$/iu;
 const maxFileBytes = 512 * 1024;
 const maxFiles = 20_000;
@@ -49,15 +52,13 @@ async function sourceFiles(root: string): Promise<SourceFile[]> {
         continue;
       }
       if (!entry.isFile() || entry.name.startsWith('.env') || projectDocument.test(entry.name)) continue;
-      if (testPath.test(relative(root, full).split(sep).join('/'))) continue;
+      if (testPath(relative(root, full).split(sep).join('/'))) continue;
       const extension = extname(entry.name).toLowerCase();
       const kind = platformFiles.has(entry.name) ? 'platform' : codeExtensions.has(extension) ? 'code' : dataExtensions.has(extension) ? 'data' : undefined;
       if (!kind) continue;
-      const size = await stat(full).then(info => info.size, () => Infinity);
-      if (size > maxFileBytes) continue;
-      const text = await readFile(full, 'utf8').catch(() => undefined);
-      if (text === undefined || text.includes(nul)) continue;
-      files.push({ path: relative(root, full).split(sep).join('/'), name: entry.name, text, kind });
+      const read = await readRegularFile(full, maxFileBytes);
+      if ('problem' in read || read.text.includes(nul)) continue;
+      files.push({ path: relative(root, full).split(sep).join('/'), name: entry.name, text: read.text, kind });
     }
   };
   await visit(root);

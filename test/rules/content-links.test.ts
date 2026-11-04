@@ -66,6 +66,13 @@ describe('content-ugc-link-qualifiers', () => {
     assert.deepEqual(excerpts(at()), ['<a href="https://loans.example/">loans</a>']);
   });
 
+  test('reads comment regions from schema.org itemtype URLs, not from look-alike URLs', () => {
+    const typed = doc('<div itemscope itemtype="https://schema.org/Comment"><a href="https://loans.example/">loans</a></div>');
+    assert.equal(run(ugcLinkQualifiers, [page(url, { html: typed })]).at()?.severity, 'medium');
+    const lookalike = doc('<div itemscope itemtype="https://types.example/schema.org/Comment"><a href="https://maker.example/">Maker</a></div>');
+    assert.equal(run(ugcLinkQualifiers, [page(url, { html: lookalike })]).at()?.reason, 'no-ugc-region');
+  });
+
   test('does not apply without user-generated content', () => {
     assert.equal(run(ugcLinkQualifiers, [page(url, { html: doc('<main><a href="https://maker.example/">Maker</a></main>') })]).at()?.reason, 'no-ugc-region');
   });

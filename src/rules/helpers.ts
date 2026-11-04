@@ -112,6 +112,33 @@ export function sameSite(a: string, b: string): boolean {
 }
 
 /** Joins a list for a message, e.g. ["a", "b", "c"] -> "a, b and 1 more" when max is 2. */
+/**
+ * Whether text starts like an SVG document: an optional XML declaration, comments and an SVG doctype, then an svg
+ * element. Each part is skipped by searching for its end, so no input can make the check backtrack.
+ */
+export function startsLikeSvg(text: string): boolean {
+  let rest = text.replace(/^\uFEFF/u, '').trimStart().toLowerCase();
+  if (rest.startsWith('<?xml')) {
+    const end = rest.indexOf('>');
+    if (end < 0) return false;
+    rest = rest.slice(end + 1).trimStart();
+  }
+  for (;;) {
+    if (rest.startsWith('<!--')) {
+      const end = rest.indexOf('-->', 4);
+      if (end < 0) return false;
+      rest = rest.slice(end + 3).trimStart();
+    } else if (rest.startsWith('<!doctype svg')) {
+      const end = rest.indexOf('>');
+      if (end < 0) return false;
+      rest = rest.slice(end + 1).trimStart();
+    } else {
+      break;
+    }
+  }
+  return /^<svg[\s>]/u.test(rest);
+}
+
 export function summarizeList(values: readonly string[], max = 3): string {
   if (values.length <= max) return values.join(', ');
   return `${values.slice(0, max).join(', ')} and ${values.length - max} more`;

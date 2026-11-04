@@ -49,7 +49,7 @@ describe('content-meta-description-duplicate', () => {
   const described = (path: string, text: string) => page(`https://example.com${path}`, { html: doc(`<meta name="description" content="${text}">`) });
 
   test('passes with distinct descriptions and ignores paginated pages', () => {
-    const pages = [described('/a', 'Seeds for spring.'), described('/blog', 'All posts.'), described('/blog?page=2', 'All posts.')];
+    const pages = [described('/a', 'Seeds for spring.'), described('/blog', 'All posts.'), described('/blog?page=2', 'All posts.'), described('/blog/page/3/?ref=nav', 'All posts.')];
     assert.equal(run(metaDescriptionDuplicate, pages, crawled).siteFindings[0]?.outcome, 'pass');
   });
 
