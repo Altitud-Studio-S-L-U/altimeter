@@ -22,7 +22,7 @@
     "hreflang link": "enlace hreflang"
   },
   "assistants": {
-    "none by referrer": "ninguna con referente"
+    "none by referrer": "ninguna identificada por la URL de referencia"
   },
   "band": {
     "good": "«buena»",
@@ -339,15 +339,15 @@
     "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} usa el Common Log Format, que no tiene user-agent, así que no se pueden identificar los rastreadores.",
     "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} no registra el user-agent (Netlify elimina client_ip y user_agent cuando se excluyen los datos personales), así que no se pueden identificar los rastreadores.",
     "{name} records no user agent, so crawlers cannot be identified in it.": "{name} no registra el user-agent, así que no se pueden identificar los rastreadores.",
-    "{name} ({format}) records the client address itself; --ip-source applies to server logs only.": "{name} ({format}) registra la dirección del cliente por sí mismo; --ip-source solo se aplica a los registros del servidor.",
+    "{name} ({format}) records the client address itself; --ip-source applies to server logs only.": "{name} ({format}) ya registra la dirección del cliente; --ip-source solo se aplica a los registros del servidor.",
     "Cloudflare analytics and access logs may count the same requests twice.": "Las analíticas de Cloudflare y los registros de acceso pueden contar dos veces las mismas solicitudes.",
-    "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.": "No se ha podido leer la lista de direcciones {id} ({error}); no se puede reconocer un registro que anota las direcciones de Cloudflare.",
+    "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.": "No se ha podido leer la lista de direcciones {id} ({error}); no se puede reconocer un registro que recoge las direcciones de Cloudflare.",
     "The address list {id} could not be read ({error}); requests it would verify stay unverified.": "No se ha podido leer la lista de direcciones {id} ({error}); las solicitudes que verificaría quedan sin verificar.",
     "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.": "No se ha podido actualizar la lista de direcciones {id} ({error}); se ha usado la copia en caché del {date}.",
     "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.": "No se ha podido actualizar la lista de direcciones {id} ({error}); se ha usado la copia en caché de una ejecución anterior.",
     "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.": "El DNS inverso se ha limitado a las {limit} direcciones con más actividad; las solicitudes de las demás quedan sin verificar cuando sus listas no las verifican.",
-    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} solicitudes de rastreadores llevan direcciones privadas o de loopback, así que los registros anotan un proxy o un balanceador de carga; registra la dirección del cliente y usa --ip-source.",
-    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} solicitudes de rastreadores vienen de direcciones de Cloudflare, así que los registros anotan Cloudflare en lugar del cliente; registra CF-Connecting-IP y usa --ip-source.",
+    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} solicitudes de rastreadores llevan direcciones privadas o de loopback, así que los registros recogen la dirección de un proxy o de un balanceador de carga; registra la dirección del cliente y usa --ip-source.",
+    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} solicitudes de rastreadores vienen de direcciones de Cloudflare, así que los registros recogen la dirección de Cloudflare en lugar de la del cliente; registra CF-Connecting-IP y usa --ip-source.",
     "No request falls within the window ({start} to {end}); check the dates of {files}.": "Ninguna solicitud cae dentro de la ventana (del {start} al {end}); comprueba las fechas de {files}.",
     "No request falls within the window ({start} to {end}).": "Ninguna solicitud cae dentro de la ventana (del {start} al {end}).",
     "Cloudflare reported no request from a known crawler in the window.": "Cloudflare no ha indicado ninguna solicitud de un rastreador conocido en la ventana.",
