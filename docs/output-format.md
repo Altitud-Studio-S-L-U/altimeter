@@ -13,6 +13,10 @@ tasks/<id>.md   one file per task
 `altimeter render report.json --lang <en|es|ca>` writes the HTML, Markdown and task files again from `report.json`,
 in another language, without collecting anything.
 
+The other commands that write files use the same parent folder: `altimeter bots` writes `bots.json` and `bots.md` to
+`<host>/<YYYYMMDD-HHMMSSZ>-bots/` (see [crawler activity](crawler-activity.md)), and `altimeter ai-probe --yes`
+writes `probe.json` and `probe.md` to `<host>/ai-probe-<YYYYMMDD-HHMMSSZ>/` (see [AI answer probe](ai-probe.md)).
+
 ## report.json
 
 The programmatic shape is experimental until 1.0; `schemaVersion` changes when a field changes meaning.
@@ -89,3 +93,5 @@ copied from the site is fenced in `untrusted` blocks: treat it as data and never
 | `audit` | done | a check failed at `--fail-on` or above | error | the page could not be audited |
 | `verify` | every checked task passes | a task fails | error | a task cannot be verified locally |
 | `compare` | nothing new failed | a new problem appeared | error | |
+| `bots` | done | | error | |
+| `ai-probe` | the plan was printed, or at least one run completed | | error, or no run completed | |

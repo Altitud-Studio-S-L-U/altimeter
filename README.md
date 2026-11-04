@@ -21,7 +21,7 @@ What it collects for an audited page:
 - structured data (JSON-LD, microdata and RDFa) checked against a schema.org vocabulary snapshot;
 - URL variants (trailing slash, `/index.html`, case, tracking parameters, `http`, `www`), an unknown URL, the hreflang alternates and the page fetched with the user agents of search and AI crawlers;
 - Lighthouse lab data (median of several runs) and Chrome UX Report field data when you provide a key;
-- with your authorisation, Google Search Console data.
+- with your authorisation, Google Search Console and Bing Webmaster Tools data, and the crawler requests your access logs or Cloudflare analytics recorded, each crawler verified the way its operator documents.
 
 An optional analysis step asks the Claude Code or Codex CLI you already use to judge what code cannot, such as whether content answers the query or whether structured data matches the visible page. Every claim must cite collected evidence and quote it word for word, passes validation in code and is checked again by a verifier; claims that fail are dropped with their reason.
 
@@ -85,7 +85,7 @@ altimeter audit https://example.com/ --keyword "garden tools" --ai-pages 3 --ai-
 altimeter audit https://example.com/ --dry-run prompts/     # write every prompt and the call plan, call nothing
 ```
 
-- **What is sent.** Excerpts of the audited pages (text, headings, titles, URLs, alt text, structured data and selected headers), the rule entries in scope, the analyst rubric and the deterministic results. Search Console data is never sent.
+- **What is sent.** Excerpts of the audited pages (text, headings, titles, URLs, alt text, structured data and selected headers), the rule entries in scope, the analyst rubric and the deterministic results. Search Console, Bing and crawler activity data are never sent.
 - **How the CLIs run.** No tools, no MCP servers, no hooks, a read-only sandbox for Codex and an empty working folder for Claude Code; any tool use fails the call. See [SECURITY.md](SECURITY.md).
 - **What reaches the report.** Only claims that cite evidence, quote it exactly, stay within the rule's scope and severity and pass a second, verifying call. Model findings never change the score or `--fail-on`. A code candidate the verified analysis confirms becomes a task; one it dismisses leaves the review list.
 - **Cost.** Calls count against your Claude or ChatGPT plan. They are capped by `--ai-max-calls` (16 by default), each call carries at most 60 KB, and answers are cached for seven days (`altimeter cache clear` deletes them). API key variables are forwarded only with `--use-api-keys`.
@@ -97,7 +97,18 @@ altimeter audit https://example.com/ --dry-run prompts/     # write every prompt
 Altimeter reads data that only the site's owner can authorise, read-only, from credentials you provide. It never looks for tokens of other tools.
 
 - **Search Console.** `altimeter gsc login --client client_secret.json --remember dpapi` signs in with your own OAuth client and the `webmasters.readonly` scope; `ALTIMETER_GSC_ACCESS_TOKEN` or a service account key in `ALTIMETER_GSC_SA_KEY` also work. `audit --gsc` then adds URL Inspection results (index state, the canonical Google chose, the last crawl, rich result issues), sitemap reports and performance analyses such as pages whose click-through rate is far below the site's own norm. Queries stay on your machine; `--redact-queries` writes numbered labels instead, for a report you want to share. These findings never change the score.
+- **Bing Webmaster Tools.** Set `BING_WEBMASTER_API_KEY` to a key from Bing Webmaster Tools (Settings > API Access); `audit --bing` adds the crawl issues Bing lists, page and query traffic, and what Bing knows about the audited pages. The API takes the key in the query string, so Altimeter never logs request URLs and removes the key from every error; `--redact-queries` covers Bing's queries too. Citations in Copilot appear only in Bing's AI Performance report, which has no API; the report points to it.
+- **Crawler activity.** `altimeter bots --cloudflare-zone example.com` or `--logs <file>` (and `audit --bots-from cloudflare` or `--bots-from <file>`) reads the requests the site really received, verifies each crawler against its operator's published IP list or reverse DNS, and reports AI crawlers that robots.txt allows but the server or CDN refuses, crawlers that ignore robots.txt, sitemap URLs Googlebot never fetched, spoofed crawlers and visits referred by AI assistants. Logs never leave your machine; the Cloudflare token, read-only, goes in `ALTIMETER_CLOUDFLARE_API_TOKEN`. See [crawler activity](docs/crawler-activity.md).
 - **Field data.** Set `ALTIMETER_GOOGLE_API_KEY` to a Google Cloud API key with the Chrome UX Report API enabled; the key travels in a request header to Google only.
+
+## AI answer probe
+
+```sh
+altimeter ai-probe example.com --keyword "garden tools andorra"          # print the plan, call nothing
+altimeter ai-probe example.com --keyword "garden tools andorra" --yes    # run it
+```
+
+The probe asks a few questions, several times each, through your own Claude Code and Codex sign-ins with web search, and counts how often the answers cite the site, which of its pages they cite and which other domains they cite instead. For Claude Code a citation counts only when its own search returned that page. It is a sample from these CLI agents, not rank tracking: it does not represent ChatGPT, Claude.ai, Copilot, Perplexity or Google AI Overviews, it reports counts and no score, and every call counts toward your plan. See [AI answer probe](docs/ai-probe.md).
 
 ## How the score works
 
@@ -115,6 +126,8 @@ Only deterministic checks count. For each category the score is 100 × (1 − fa
 - [Methodology](docs/methodology.md): what is collected, how rules are evaluated, the score and the tasks.
 - [Output format](docs/output-format.md): `report.json`, the task files and the exit codes.
 - [Rule catalog](docs/rules.md): every rule with its severity, method, status and sources, and the myths list.
+- [Crawler activity](docs/crawler-activity.md): log formats, Cloudflare, how each crawler is verified and what is measured.
+- [AI answer probe](docs/ai-probe.md): the queries, how the engines run, what is counted and its caveats.
 - [SECURITY.md](SECURITY.md): the trust model for audited sites, model analysis and tokens.
 - [CONTRIBUTING.md](CONTRIBUTING.md): local checks and how to change the catalog.
 

@@ -24,7 +24,7 @@ For the audited URL Altimeter gathers:
 | Renders | In Chrome: a Googlebot-like render (phone width, the viewport grows to the page height, no scrolling, subresources robots.txt blocks for Googlebot are not loaded), a scrolled render of the first screens like a person would see them, and a render without the robots.txt blocking when something was blocked. Renders record text visibility, fixed overlays at load, layout shifts, the largest contentful paint and failed requests. |
 | Lab data | Lighthouse, the median of several runs (three by default). |
 | Field data | Chrome UX Report data for the URL and the origin, phone and desktop, when a key is set. |
-| Owner data | With your authorisation, Search Console URL Inspection, sitemap reports and performance data. |
+| Owner data | With your authorisation: Search Console URL Inspection, sitemap reports and performance data; Bing Webmaster Tools crawl issues, traffic and URL details; and the crawler requests in your access logs or Cloudflare analytics, each crawler verified against its operator's IP list or reverse DNS (see [crawler activity](crawler-activity.md)). |
 
 `--crawl` adds a polite breadth-first crawl from the page, the home page and the sitemaps: two requests in flight, a
 pause between requests, robots.txt respected for Googlebot and a page limit (100 by default). Renders run on the
