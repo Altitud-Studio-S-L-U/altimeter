@@ -183,6 +183,23 @@ describe('schema-review-snippet', () => {
   test('is not applicable without reviews', () => {
     assert.deepEqual(outcome(reviewSnippet, productPage(lamp)), ['not_applicable', 'no-reviews']);
   });
+  test('leaves fact-check markup to schema-retired-feature-markup and still checks the other reviews', () => {
+    const article = { '@context': ctx, '@type': 'NewsArticle', headline: 'Did X say Y? No.', datePublished: '2026-10-01' };
+    const verdict = { '@type': 'Rating', ratingValue: '1', bestRating: '5', worstRating: '1', alternateName: 'False' };
+    const factChecks = [
+      { '@context': ctx, '@type': 'ClaimReview', claimReviewed: 'X said Y', author: { '@type': 'Organization', name: 'Fact Example' },
+        itemReviewed: { '@type': 'Claim', author: { '@type': 'Person', name: 'X' }, datePublished: '2026-09-30' }, reviewRating: verdict },
+      { '@context': ctx, '@type': 'ClaimReview', claimReviewed: 'X said Y', author: { '@type': 'Organization', name: 'Fact Example' },
+        itemReviewed: { '@type': 'CreativeWork', author: { '@type': 'Person', name: 'X' } }, reviewRating: verdict },
+      { '@context': ctx, '@type': 'MediaReview', author: { '@type': 'Organization', name: 'Fact Example' }, mediaAuthenticityCategory: 'https://schema.org/TransformedContent',
+        itemReviewed: { '@type': 'MediaReviewItem', mediaItemAppearance: { '@type': 'ImageObject', contentUrl: 'https://news.example/photo.jpg' } } },
+      { '@context': ctx, '@type': 'Review', author: { '@type': 'Organization', name: 'Fact Example' }, itemReviewed: { '@type': 'Claim', appearance: 'https://news.example/a' }, reviewRating: verdict },
+    ];
+    for (const markup of factChecks) assert.deepEqual(outcome(reviewSnippet, { html: doc(ld(article, markup)), pageType: 'article' }), ['not_applicable', 'no-reviews'], markup['@type']);
+    const unsigned = { ...lamp, review: { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: 4 } } };
+    const { all } = check(reviewSnippet, { html: doc(ld(factChecks[0], unsigned)), pageType: 'product' });
+    assert.deepEqual(all.map(entry => [entry.outcome, entry.reason]), [['fail', 'missing-author']]);
+  });
 });
 
 describe('schema-self-serving-reviews', () => {

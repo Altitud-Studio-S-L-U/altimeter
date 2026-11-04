@@ -242,6 +242,13 @@ describe('schema-entity-consistency-sitewide', () => {
     assert.deepEqual([finding.severity, finding.params?.items], ['medium', 'logo']);
     assert.deepEqual(excerpts, [`${origin}/logo.png`, `${origin}/old-logo.png`]);
   });
+  test('compares telephones by their digits, with 00 read as the international prefix', () => {
+    for (const [first, second] of [['+376 812 345', '+376812345'], ['+376 812 345', '00376 812 345'], ['(376) 812-345', '376 812 345']]) {
+      passes(entityConsistencySitewide, [at(home, ld({ ...org, telephone: first }), 'home'), at(`${origin}/about`, ld({ ...org, telephone: second }), 'about')]);
+    }
+    const { finding } = failure(entityConsistencySitewide, [at(home, ld({ ...org, telephone: '+376 812 345' }), 'home'), at(`${origin}/about`, ld({ ...org, telephone: '+376 812 346' }), 'about')], 'conflicting-organization');
+    assert.equal(finding.params?.items, 'telephone');
+  });
   test('exempts groups with sub-organizations', () => {
     const group = { ...org, subOrganization: { '@type': 'Organization', name: 'Acme Labs' } };
     assert.deepEqual(outcome(entityConsistencySitewide, [at(home, ld(group), 'home'), at(`${origin}/labs`, ld({ ...org, name: 'Acme Labs' }), 'other')]), ['not_applicable', 'multi-brand-group']);

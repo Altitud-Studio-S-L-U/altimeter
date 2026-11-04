@@ -1,7 +1,8 @@
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { attribute, isElement, parseHtml, walk } from '../../parse/html.ts';
+import { contentText } from '../content/common.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, linksWithRel, metaNamed, pageDocument, summarizeList } from '../helpers.ts';
+import { absoluteUrl, linksWithRel, metaNamed, pageDocument, sameSite, summarizeList } from '../helpers.ts';
 import {
   documentBase, effectiveDirectives, failure, internalLinks, missingShare, normalizeUrl, notApplicable, notEvaluated, passed, percent,
   sitemapLocs, words,
@@ -48,12 +49,13 @@ const robotsBlocksRenderResources: RuleImplementation = {
       const ids = changed.map(key => evidence.add({ kind: 'render', url, label: `${key} with and without the blocked requests`, excerpt: `${after[key] || '(none)'} | ${before[key] || '(none)'}` }));
       return failure({ severity: 'high', evidence: [...blockedIds, ...ids], reason: 'metadata-changed', params });
     }
-    const textLoss = missingShare(unblocked.parsed.bodyText, rendered.parsed.bodyText);
+    const fullText = contentText(unblocked);
+    const textLoss = missingShare(fullText, rendered.parsed.bodyText);
     const fullLinks = internalLinks(unblocked, url);
     const kept = new Set(internalLinks(rendered, url));
     const lostLinks = fullLinks.filter(link => !kept.has(link));
-    if (words(unblocked.parsed.bodyText).length >= 30 && textLoss >= 0.2) {
-      const id = evidence.add({ kind: 'render', url, label: 'share of the text that renders only when the blocked requests load', excerpt: percent(textLoss) });
+    if (words(fullText).length >= 30 && textLoss >= 0.2) {
+      const id = evidence.add({ kind: 'render', url, label: 'share of the main text that renders only when the blocked requests load', excerpt: percent(textLoss) });
       return failure({ severity: 'high', evidence: [...blockedIds, id], reason: 'content-missing', params });
     }
     if (lostLinks.length >= 3 && lostLinks.length / fullLinks.length >= 0.2) {
@@ -66,7 +68,7 @@ const robotsBlocksRenderResources: RuleImplementation = {
       return failure({ severity: 'high', evidence: [...blockedIds, id], reason: 'layout-break', params });
     }
     if (textLoss >= 0.05) {
-      const id = evidence.add({ kind: 'render', url, label: 'share of the text that renders only when the blocked requests load', excerpt: percent(textLoss) });
+      const id = evidence.add({ kind: 'render', url, label: 'share of the main text that renders only when the blocked requests load', excerpt: percent(textLoss) });
       return failure({ severity: 'medium', evidence: [...blockedIds, id], reason: 'minor-differences', params, needsJudgment: true });
     }
     return passed(blockedIds);
@@ -114,9 +116,12 @@ const jsFragmentRouting: RuleImplementation = {
     if (documents.length === 0) return notApplicable('no-documents');
     const routes = new Map<string, { url: string; line: number; href: string }>();
     for (const { page, doc } of documents) {
+      const base = documentBase(doc, page.fetch.finalUrl);
       for (const anchor of doc!.parsed.anchors) {
         const href = anchor.attrs.href ?? '';
         if (!hashRoute.test(href)) continue;
+        const target = absoluteUrl(href, base);
+        if (!target || !/^https?:/u.test(target) || !sameSite(target, page.fetch.finalUrl)) continue;
         const fragment = href.slice(href.indexOf('#'));
         if (!routes.has(fragment)) routes.set(fragment, { url: page.fetch.finalUrl, line: anchor.line, href });
       }
@@ -138,10 +143,11 @@ const jsContentDependency: RuleImplementation = {
     const raw = target.raw!;
     const rendered = target.rendered!;
     const url = target.fetch.finalUrl;
-    if (words(rendered.parsed.bodyText).length < 30) return notApplicable('little-rendered-text');
-    const share = missingShare(rendered.parsed.bodyText, raw.parsed.bodyText);
+    const renderedMain = contentText(rendered);
+    if (words(renderedMain).length < 30) return notApplicable('little-rendered-text');
+    const share = missingShare(renderedMain, raw.parsed.bodyText);
     if (share > 0.5) {
-      const id = evidence.add({ kind: 'render', url, label: 'share of the rendered text that the raw HTML lacks', excerpt: percent(share) });
+      const id = evidence.add({ kind: 'render', url, label: 'share of the rendered main text that the raw HTML lacks', excerpt: percent(share) });
       return failure({ severity: 'medium', evidence: [id], reason: 'content-after-js', params: { url, share: percent(share) } });
     }
     const renderedLinks = internalLinks(rendered, url);

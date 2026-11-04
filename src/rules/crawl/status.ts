@@ -46,7 +46,8 @@ const statusFinal: RuleImplementation = {
     const listed = sitemapEntryFor(site, url) ?? sitemapEntryFor(site, target.url);
     const named = namedByOtherPage(site, url);
     const linkedBy = linkedFromOtherPage(site, url);
-    if (!listed && !named && !linkedBy && !isHomePage(site, target)) return notApplicable('removed-unreferenced');
+    // Every URL a crawl reaches is linked, so links alone never make a removed URL critical; crawl-internal-links-broken-redirected grades them.
+    if (!listed && !named && !isHomePage(site, target)) return notApplicable(linkedBy ? 'linked-only' : 'removed-unreferenced');
     const ids = [id];
     if (listed) ids.push(evidence.add({ kind: 'sitemap', url: listed.sitemap, label: 'sitemap entry for the URL', excerpt: listed.loc, line: listed.line }));
     if (named) ids.push(evidence.add({ kind: 'html', url: named.by, label: `page that names the URL as its ${named.as} target`, excerpt: url }));

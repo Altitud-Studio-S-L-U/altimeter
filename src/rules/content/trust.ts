@@ -173,7 +173,14 @@ export const dateManipulation: RuleImplementation = {
 // Authorship and site identity
 
 const bylineMarker = /(^|[\s_-])(author|byline|autor|autora|writer)([\s_-]|$)/iu;
-const bylineText = /(?:^|[\s(|·•-])(?:by|written by|por|escrito por|per|escrit per|autor|autora|author)\s*:?\s+\p{Lu}[\p{L}'’.-]+/u;
+// Keywords match in any case; the capital of the name is tested apart because \p{Lu} matches lower case under the i flag.
+const bylineText = /(?:^|[\s(|·•-])(?:by|written by|por|escrito por|per|escrit per|autor|autora|author)\s*:?\s+(\p{L}[\p{L}'’.-]+)/giu;
+
+/** The first 'By Name' phrase of `text` whose name starts with a capital letter. */
+function textualByline(text: string): string | undefined {
+  for (const match of text.matchAll(bylineText)) if (/^\p{Lu}/u.test(match[1]!)) return match[0].trim();
+  return undefined;
+}
 
 function authorsOf(doc: DocumentFacts): Array<{ readonly type: string; readonly name: string }> {
   // A recipe page is classified as an article, so the Recipe it is about names its author as well.
@@ -215,10 +222,9 @@ export const bylineAuthor: RuleImplementation = {
     const heading = mainHeading(context);
     const at = heading ? text.indexOf(heading.text) : -1;
     const nearHeading = at >= 0 ? text.slice(Math.max(0, at - 200), at + heading!.text.length + 400) : text.slice(0, 600);
-    const textual = bylineText.exec(nearHeading);
     const people = authors.filter(author => author.type !== 'Text' || author.name !== '');
     const visibleName = people.find(author => fold(text).includes(fold(author.name)));
-    const byline = marked ? textContent(marked.element) : textual?.[0].trim() ?? visibleName?.name;
+    const byline = marked ? textContent(marked.element) : textualByline(nearHeading) ?? visibleName?.name;
     if (byline && (people.length === 0 || visibleName)) {
       return { outcome: 'pass', evidence: [cite(context, 'html', 'visible byline', { excerpt: clip(byline, 120), ...(marked ? { line: lineOf(marked.element) } : {}) })] };
     }

@@ -48,11 +48,21 @@ describe('crawl-status-final', () => {
     assertOutcome(finding, 'pass');
     assert.deepEqual(excerpts(), ['HTTP 200']);
   });
-  test('fails critical on a 404 that another page links to', () => {
-    const facts = { pages: [page(`${origin}/`, { html: doc('', '<a href="/gone">Gone</a>') }), page(gone, { status: 404, html: doc('') })] };
-    const { finding, excerpts } = run(id, facts, gone);
-    assertFail(finding, 'critical', 'client-error');
-    assert.deepEqual(excerpts(), ['HTTP 404', gone]);
+  test('fails critical on a 404 that a sitemap lists, that another page names as an hreflang target, or that is the home page', () => {
+    const sitemap = { url: `${origin}/sitemap.xml`, xml: `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${gone}</loc></url></urlset>` };
+    const listed = run(id, { pages: [page(`${origin}/`, { html: doc('', '<p><a href="/gone">Gone</a></p>') }), page(gone, { status: 404, html: doc('') })], sitemaps: [sitemap] }, gone);
+    assertFail(listed.finding, 'critical', 'client-error');
+    assert.deepEqual(listed.excerpts(), ['HTTP 404', gone, gone]);
+    const named = run(id, { pages: [page(`${origin}/`, { html: doc(`<link rel="alternate" hreflang="en" href="${gone}">`) }), page(gone, { status: 404, html: doc('') })] }, gone);
+    assertFail(named.finding, 'critical', 'client-error');
+    assertFail(run(id, { pages: [page(`${origin}/`, { status: 404, html: doc('') })], homeUrl: `${origin}/` }).finding, 'critical', 'client-error');
+  });
+  test('does not raise a 404 that pages only link to, whose links crawl-internal-links-broken-redirected grades', () => {
+    for (const link of ['<p>Read <a href="/gone">the old post</a>.</p>', '<footer><a href="/gone">Gone</a></footer>']) {
+      const facts = { pages: [page(`${origin}/blog/`, { html: doc('', link) }), page(gone, { status: 404, html: doc('') })], crawled: true };
+      assertOutcome(run(id, facts, gone).finding, 'not_applicable', 'linked-only');
+      assertFail(run('crawl-internal-links-broken-redirected', facts).finding, link.startsWith('<footer>') ? 'medium' : 'low', 'broken');
+    }
   });
   test('fails on server errors, rate limiting and empty responses', () => {
     assertFail(run(id, { pages: [page(gone, { status: 503 })] }).finding, 'critical', 'server-error');

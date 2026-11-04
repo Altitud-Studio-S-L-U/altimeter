@@ -53,7 +53,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": ">5 hops = fail high (treated as 404, so no rules). Cross-host redirect = pass, but the rules then apply to the original host (info). A redirect to an HTML page that answers 200 = see crawl-robots-format.",
+    "thresholds": ">5 hops or a redirect loop = fail high (treated as 404, so no rules). Cross-host redirect = pass, but the rules then apply to the original host (info). A redirect to an HTML page that answers 200 = see crawl-robots-format.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
@@ -86,7 +86,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Body >500 KiB (512,000 bytes) = fail high if any rule appears after the cut (it is ignored). An HTML body = fail medium (no rules apply, which equals having no robots.txt, and no Sitemap line is read). Non-UTF-8 bytes inside rule paths = medium. A leading BOM = pass (ignored).",
+    "thresholds": "Body >500 KiB (512,000 bytes) = fail high if any rule appears after the cut (it is ignored). An HTML body, told by its content whatever the Content-Type = fail medium (no rules apply, which equals having no robots.txt, and no Sitemap line is read). Non-UTF-8 bytes inside rule paths = medium. Rules served with a Content-Type other than text/plain = info (Google reads them whatever the type; RFC 9309 asks for text/plain). A leading BOM = pass (ignored).",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
@@ -192,7 +192,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Homepage disallowed for Googlebot = critical. More than 50% of the crawled indexable-intended URLs disallowed for Googlebot = critical (evaluated only when a crawl ran). 'Disallow: /' in the * group with no googlebot group = critical. Homepage disallowed for Bingbot while Googlebot is allowed = high.",
+    "thresholds": "Homepage disallowed for Googlebot = critical. More than 50% of the crawled indexable-intended URLs disallowed for Googlebot = critical (evaluated only when a crawl ran; the crawl does not fetch disallowed URLs, so when the rules for Googlebot disallow the whole site and Allow lines open parts of it, the URLs it found and could not fetch count too, except URLs with a query string and utility or policy paths; under narrower Disallow rules they do not, since sites disallow wishlist, compare, comment or filter links on purpose). 'Disallow: /' in the * group with no googlebot group is judged by those two checks, because Allow lines can open the home page and whole sections on purpose. Homepage disallowed for Bingbot while Googlebot is allowed = high.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
@@ -1410,12 +1410,12 @@
     ],
     "appliesTo": "all",
     "exemptWhen": [
-      "The URL is intentionally removed and is not linked from the site or listed in a sitemap."
+      "The URL is intentionally removed: it is not the home page, no sitemap lists it and no audited page names it as a canonical or hreflang target. Internal links that still point to it belong to crawl-internal-links-broken-redirected."
     ],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Final 4xx (400/401/403/404/410/411) = critical when the URL is the home page, is listed in a sitemap, or is linked or named as a canonical or hreflang target by another audited page (not indexed, and removed if it was). An unreferenced 4xx is treated as intentionally removed. Final 5xx = critical (temporary, but persistent errors cause removal). 429 = high (treated as a server error). 204 = high (no content). 2xx = pass.",
+    "thresholds": "Final 4xx (400/401/403/404/410/411) = critical when the URL is the home page, is listed in a sitemap, or is named as a canonical or hreflang target by another audited page (not indexed, and removed if it was). Links alone never raise it, since every crawled URL is linked: a 4xx that pages only link to is treated as intentionally removed, like an unreferenced one, and crawl-internal-links-broken-redirected grades the links. Final 5xx = critical (temporary, but persistent errors cause removal). 429 = high (treated as a server error). 204 = high (no content). 2xx = pass.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",

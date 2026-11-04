@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import type { SiteFacts } from '../../src/core/facts.ts';
 import type { Severity } from '../../src/core/types.ts';
+import type { FetchResult, Hop } from '../../src/fetch/http.ts';
 import { robotsAvailability } from '../../src/fetch/robots.ts';
 import { findingMessage } from '../../src/i18n/messages.ts';
 import { implementations } from '../../src/rules/crawl/index.ts';
 import type { Finding } from '../../src/rules/engine.ts';
-import { evaluate, page, response, site, type ResponseSpec, type SiteSpec } from '../support/facts.ts';
+import { evaluate, headers, page, response, site, type ResponseSpec, type SiteSpec } from '../support/facts.ts';
 
 function run(id: string, facts: SiteFacts | SiteSpec, url?: string) {
   const implementation = implementations.find(entry => entry.id === id);
@@ -41,6 +42,22 @@ function withRobots(facts: SiteFacts, spec: ResponseSpec & { body: Buffer | stri
   return { ...facts, robots: { url, fetch, availability: robotsAvailability(fetch.status, body, fetch.hops.length > 6) } };
 }
 
+/** robots.txt sent with the type Express gives res.send(string). */
+const servedAsHtml = (body: string) => withRobots(site({ pages: [home()], robots: '' }), { body, headers: { 'content-type': 'text/html; charset=utf-8' } });
+
+/** A robots.txt that redirects back to itself, as the HTTP client reports it, read as unreachable or, as Google and the collector read it, as a missing file. */
+function redirectLoop(availability: 'unreachable' | 'missing-file'): SiteFacts {
+  const url = `${origin}/robots.txt`;
+  const hops: Hop[] = [
+    { url, status: 301, headers: headers({ location: '/robots.txt/' }), location: `${url}/`, ttfbMs: 10 },
+    { url: `${url}/`, status: 301, headers: headers({ location: '/robots.txt' }), location: url, ttfbMs: 10 },
+  ];
+  const fetch: FetchResult = { requestedUrl: url, finalUrl: url, hops, status: 301, headers: hops[1]!.headers, body: Buffer.alloc(0), transferBytes: 0, truncated: false,
+    durationMs: 20, error: { code: 'redirect-loop', message: `Redirect loop at ${url}` } };
+  const robots = robotsAvailability(undefined, fetch.body, availability === 'missing-file');
+  return { ...site({ pages: [home()] }), robots: { url, fetch, availability: robots } };
+}
+
 describe('crawl-robots-fetch-status', () => {
   const id = 'crawl-robots-fetch-status';
   test('passes on 200 and on 404', () => {
@@ -57,6 +74,13 @@ describe('crawl-robots-fetch-status', () => {
   });
   test('reports 403 as info only', () => {
     assertFail(run(id, { pages: [home()], robots: { status: 403 } }).finding, 'info', 'access-denied');
+  });
+  test('passes on a redirect loop, which Google reads as a missing file and crawl-robots-redirects reports', () => {
+    for (const availability of ['unreachable', 'missing-file'] as const) {
+      const { finding, excerpts } = run(id, redirectLoop(availability));
+      assertOutcome(finding, 'pass');
+      assert.deepEqual(excerpts(), ['HTTP 301']);
+    }
   });
   test('is not evaluated without a robots.txt fetch', () => {
     assertOutcome(run(id, { pages: [home()] }).finding, 'not_evaluated', 'missing-input:robots');
@@ -78,6 +102,11 @@ describe('crawl-robots-redirects', () => {
     assert.equal(excerpts().length, 6);
     assert.equal(excerpts()[0], '302 -> https://example.com/r1.txt');
   });
+  test('fails high on a redirect loop', () => {
+    const { finding, excerpts } = run(id, redirectLoop('missing-file'));
+    assertFail(finding, 'high', 'loop');
+    assert.deepEqual(excerpts(), [`301 -> ${origin}/robots.txt/`, `301 -> ${origin}/robots.txt`]);
+  });
   test('does not apply without a redirect', () => {
     assertOutcome(run(id, { pages: [home()], robots: 'User-agent: *' }).finding, 'not_applicable', 'no-redirect');
   });
@@ -92,6 +121,17 @@ describe('crawl-robots-format', () => {
     const { finding, excerpts } = run(id, { pages: [home()], robots: '<!doctype html><html><head><title>App</title></head></html>' });
     assertFail(finding, 'medium', 'html-body');
     assert.match(excerpts()[0]!, /<!doctype html>/u);
+  });
+  test('reads rules served as text/html, and notes the type as info', () => {
+    const { findings, excerpts } = run(id, servedAsHtml('User-agent: *\nDisallow: /admin/\nSitemap: https://example.com/sitemap.xml\n'));
+    assert.equal(findings.length, 1);
+    assertFail(findings[0]!, 'info', 'content-type');
+    assert.deepEqual(excerpts(), ['text/html; charset=utf-8']);
+  });
+  test('recognises an HTML page by its content, after a byte order mark or a comment', () => {
+    assertFail(run(id, { pages: [home()], robots: '\uFEFF\n<!-- app shell -->\n<!DOCTYPE html><html lang="en"><body><div id="app"></div></body></html>' }).finding, 'medium', 'html-body');
+    const { findings } = run(id, servedAsHtml('<html><head><title>App</title></head></html>'));
+    assert.deepEqual(findings.map(finding => finding.reason), ['html-body']);
   });
   test('fails high when rules sit after the 500 KiB limit', () => {
     const body = `User-agent: *\n${'# filler line for the size limit\n'.repeat(17_000)}Disallow: /private/\n`;
@@ -129,6 +169,9 @@ describe('crawl-robots-parse-errors', () => {
     assertOutcome(run(id, { pages: [home()], robots: '<!doctype html><p>app</p>' }).finding, 'not_applicable', 'html-body');
     assertOutcome(run(id, { pages: [home()], robots: { status: 404 } }).finding, 'not_applicable', 'no-robots-file');
   });
+  test('still checks rules served as text/html', () => {
+    assertFail(run(id, servedAsHtml('User-agent: *\nDissallow: /private/\n')).finding, 'medium', 'misspelled-field');
+  });
 });
 
 describe('crawl-robots-unsupported-directives', () => {
@@ -143,6 +186,9 @@ describe('crawl-robots-unsupported-directives', () => {
   });
   test('reports crawl-delay as info', () => {
     assertFail(run(id, { pages: [home()], robots: 'User-agent: *\nCrawl-delay: 5' }).finding, 'info', 'ignored-fields');
+  });
+  test('still reports noindex lines served as text/html', () => {
+    assertFail(run(id, servedAsHtml('User-agent: *\nDisallow: /admin/\nNoindex: /old/\n')).finding, 'high', 'noindex');
   });
   test('does not apply without a parsed file', () => {
     assertOutcome(run(id, { pages: [home()], robots: { status: 410 } }).finding, 'not_applicable', 'no-robots-file');
@@ -165,9 +211,31 @@ describe('crawl-robots-blocks-site', () => {
   test('ignores groups for AI crawlers', () => {
     assertOutcome(run(id, { pages: [home()], robots: 'User-agent: GPTBot\nDisallow: /\n\nUser-agent: CCBot\nDisallow: /\n\nUser-agent: *\nAllow: /' }).finding, 'pass');
   });
+  test('fails critical when robots.txt disallows most URLs the crawl found, which it never fetches', () => {
+    const products = Array.from({ length: 20 }, (_, index) => `${origin}/product/${index}/`);
+    const facts: SiteFacts = { ...site({ pages: [home()], robots: 'User-agent: *\nAllow: /$\nDisallow: /', crawled: true }), crawlBlocked: products };
+    const { finding, excerpts } = run(id, facts);
+    assertFail(finding, 'critical', 'most-pages');
+    assert.deepEqual(finding.params, { blocked: 20, total: 21 });
+    assert.deepEqual(excerpts(), Array.from({ length: 5 }, () => 'disallow: /'));
+  });
+  test('does not count disallowed carts, searches, account pages and filtered URLs the crawl found', () => {
+    const robots = 'User-agent: *\nAllow: /$\nAllow: /lamps/$\nDisallow: /';
+    const pages = [home(), page(`${origin}/lamps/`, { html: '<!doctype html><title>Lamps</title>' })];
+    const found = [`${origin}/cart`, `${origin}/search/lamps`, `${origin}/account/orders`, `${origin}/lamps/?color=red`, `${origin}/lamps/?sort=price`];
+    assertOutcome(run(id, { ...site({ pages, robots, crawled: true }), crawlBlocked: found }).finding, 'pass');
+  });
+  test('does not count the URLs a narrower rule disallows, such as wishlist, compare and filter links', () => {
+    const robots = 'User-agent: *\nDisallow: /wishlist/\nDisallow: /catalog/product_compare/\nDisallow: /collections/*+*';
+    const products = Array.from({ length: 10 }, (_, index) => page(`${origin}/lamp-${index}.html`, { html: `<!doctype html><title>Lamp ${index}</title>` }));
+    const found = products.flatMap((_, index) => [`${origin}/wishlist/index/add/product/${index}/`, `${origin}/catalog/product_compare/add/product/${index}/`, `${origin}/collections/lamps/red+size-${index}`]);
+    assertOutcome(run(id, { ...site({ pages: [home(), ...products], robots, crawled: true }), crawlBlocked: found }).finding, 'pass');
+  });
   test('does not apply to a staging host or without rules', () => {
     const staging = page('https://staging.example.com/', { html: '<title>Staging</title>' });
     assertOutcome(run(id, { pages: [staging], robots: 'User-agent: *\nDisallow: /' }).finding, 'not_applicable', 'private-host');
+    const found = ['a', 'b', 'c'].map(slug => `https://staging.example.com/${slug}/`);
+    assertOutcome(run(id, { ...site({ pages: [staging], robots: 'User-agent: *\nAllow: /$\nDisallow: /', crawled: true }), crawlBlocked: found }).finding, 'not_applicable', 'private-host');
     assertOutcome(run(id, { pages: [home()], robots: { status: 404 } }).finding, 'not_applicable', 'no-robots-rules');
   });
 });

@@ -1,8 +1,9 @@
+import { classifyPage } from '../../analyze/page-type.ts';
 import type { SiteFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
-import { isAllowed, robotsByteLimit, type RobotsFile, type RobotsGroup, type RobotsRule } from '../../fetch/robots.ts';
-import type { RuleImplementation } from '../engine.ts';
+import { isAllowed, robotsByteLimit, selectGroup, type RobotsFile, type RobotsGroup, type RobotsRule } from '../../fetch/robots.ts';
+import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { summarizeList } from '../helpers.ts';
 import {
   effectiveDirectives, failure, isHomePage, isStagingHost, namedByOtherPage, normalizeUrl, notApplicable, notEvaluated, passed,
@@ -13,12 +14,13 @@ function robotsUrl(site: SiteFacts): string {
   return site.robots!.url;
 }
 
-/** A robots.txt body that is really an HTML page, such as an application shell served for every path. */
+/**
+ * A robots.txt body that is really an HTML page, such as an application shell served for every path. Google reads the
+ * bytes whatever the Content-Type, so only the content decides; trimming also drops a byte order mark.
+ */
 export function robotsBodyIsHtml(site: SiteFacts): boolean {
-  const fetch = site.robots?.fetch;
-  if (!fetch) return false;
-  const type = (headerValue(fetch.headers, 'content-type') ?? '').toLowerCase();
-  return type.includes('text/html') || /^\s*(?:<!doctype html|<html|<head)/iu.test(fetch.body.subarray(0, 512).toString('latin1'));
+  const start = site.robots?.fetch.body.subarray(0, 1024).toString('utf8').trimStart() ?? '';
+  return start.startsWith('<') && /<(?:!doctype\s+html|html|head|body)[\s>]/iu.test(start);
 }
 
 function ruleLine(rule: RobotsRule, token: string): string {
@@ -32,7 +34,8 @@ const robotsFetchStatus: RuleImplementation = {
     const status = robots.fetch.status;
     const observed = status === undefined ? `no response (${robots.fetch.error?.code ?? 'network error'})` : `HTTP ${status}`;
     const id = evidence.add({ kind: 'robots', url: robots.url, label: 'robots.txt fetch outcome', excerpt: observed });
-    if (robots.availability.kind === 'unreachable') {
+    // Google gives up on a redirect loop after five hops and reads the file as missing; crawl-robots-redirects reports the loop.
+    if (robots.availability.kind === 'unreachable' && robots.fetch.error?.code !== 'redirect-loop') {
       return failure({ severity: 'critical', evidence: [id], reason: status === undefined ? 'network-error' : 'server-error', params: { url: robots.url, status: observed } });
     }
     if (status === 401 || status === 403) return failure({ severity: 'info', evidence: [id], reason: 'access-denied', params: { url: robots.url, status: observed } });
@@ -45,9 +48,10 @@ const robotsRedirects: RuleImplementation = {
   evaluate({ site, evidence }) {
     const fetch = site.robots!.fetch;
     const redirects = fetch.hops.filter(hop => hop.location !== undefined);
-    if (fetch.error?.code === 'too-many-redirects' || redirects.length > 5) {
+    const loop = fetch.error?.code === 'redirect-loop';
+    if (loop || fetch.error?.code === 'too-many-redirects' || redirects.length > 5) {
       const ids = redirects.map((hop, index) => evidence.add({ kind: 'redirect', url: hop.url, label: `robots.txt redirect hop ${index + 1}`, excerpt: `${hop.status} -> ${hop.location}` }));
-      return failure({ severity: 'high', evidence: ids, reason: 'too-many-hops', params: { url: robotsUrl(site), hops: redirects.length } });
+      return failure({ severity: 'high', evidence: ids, reason: loop ? 'loop' : 'too-many-hops', params: { url: robotsUrl(site), hops: redirects.length } });
     }
     if (fetch.hops.length === 0) return notEvaluated('robots-unreachable');
     if (redirects.length === 0) return notApplicable('no-redirect');
@@ -100,20 +104,26 @@ const robotsFormat: RuleImplementation = {
         excerpt: `${headerValue(headers, 'content-type') ?? '(no content type)'} | ${body.subarray(0, 120).toString('utf8').trim()}` });
       return failure({ severity: 'medium', evidence: [id], reason: 'html-body', params: { url } });
     }
+    const results: RuleResult[] = [];
     const lost = rulesAfterLimit(body);
+    const invalid = lost.length > 0 ? [] : invalidUtf8RuleLines(body);
     if (lost.length > 0) {
       const ids = [
         evidence.add({ kind: 'robots', url, label: 'robots.txt uncompressed size in bytes', excerpt: String(body.length) }),
         ...lost.slice(0, 5).map(entry => evidence.add({ kind: 'robots', url, label: 'rule after the 500 KiB limit', excerpt: entry.text, line: entry.line })),
       ];
-      return failure({ severity: 'high', evidence: ids, reason: 'over-size-limit', params: { url, bytes: body.length, lost: lost.length } });
-    }
-    const invalid = invalidUtf8RuleLines(body);
-    if (invalid.length > 0) {
+      results.push(failure({ severity: 'high', evidence: ids, reason: 'over-size-limit', params: { url, bytes: body.length, lost: lost.length } }));
+    } else if (invalid.length > 0) {
       const ids = invalid.slice(0, 5).map(entry => evidence.add({ kind: 'robots', url, label: 'rule path with bytes that are not UTF-8', excerpt: entry.text, line: entry.line }));
-      return failure({ severity: 'medium', evidence: ids, reason: 'invalid-utf8', params: { url, count: invalid.length } });
+      results.push(failure({ severity: 'medium', evidence: ids, reason: 'invalid-utf8', params: { url, count: invalid.length } }));
     }
-    return passed([evidence.add({ kind: 'robots', url, label: 'robots.txt uncompressed size in bytes', excerpt: String(body.length) })]);
+    // RFC 9309 asks for text/plain, but Google reads the rules whatever the type.
+    const type = headerValue(headers, 'content-type');
+    if (type !== undefined && !/^\s*text\/plain\s*(?:;|$)/iu.test(type)) {
+      const id = evidence.add({ kind: 'robots', url, label: 'robots.txt Content-Type header', excerpt: type });
+      results.push(failure({ severity: 'info', evidence: [id], reason: 'content-type', params: { url, type } }));
+    }
+    return results.length > 0 ? results : passed([evidence.add({ kind: 'robots', url, label: 'robots.txt uncompressed size in bytes', excerpt: String(body.length) })]);
   },
 };
 
@@ -174,10 +184,39 @@ function privateHost(site: SiteFacts): string | undefined {
   return undefined;
 }
 
+/** Whether a URL the crawl found but did not fetch looks meant for the index: no query string, and not a utility or policy path. */
+function meantForIndex(url: string): boolean {
+  const { type } = classifyPage({ url, status: undefined, title: undefined, h1: undefined, ogType: undefined, data: undefined });
+  return new URL(url).search === '' && type !== 'utility' && type !== 'legal';
+}
+
+/** Whether the rules robots.txt has for Googlebot disallow the whole site, so that only what Allow lines open can be crawled. */
+function disallowsWholeSite(file: RobotsFile): boolean {
+  return selectGroup(file, ['googlebot']).rules.some(rule => rule.type === 'disallow' && rule.pattern !== '' && /^\/?\**$/u.test(rule.pattern));
+}
+
+/**
+ * The crawled pages meant for the index, and those of them robots.txt disallows for Googlebot. The crawl never fetches
+ * a disallowed URL, so when the rules disallow the whole site the URLs it found and left for that reason count too.
+ * Under narrower rules they are left out: sites disallow wishlist, compare, comment or filter links on purpose, and
+ * every crawled page can link to several of them.
+ */
+function crawlSample(site: SiteFacts, file: RobotsFile): { readonly total: number; readonly blocked: ReadonlyArray<{ readonly url: string; readonly fetched: boolean }> } {
+  const sampled = [...site.pages.values()].filter(page => page.fetch.status === 200 && page.pageType !== 'utility' && page.pageType !== 'legal');
+  const found = disallowsWholeSite(file) ? site.crawlBlocked ?? [] : [];
+  const unfetched = found.filter(url => meantForIndex(url) && robotsDecision(site, url)?.allowed === false);
+  const blocked = [
+    ...sampled.filter(page => robotsDecision(site, page.fetch.finalUrl)?.allowed === false).map(page => ({ url: page.fetch.finalUrl, fetched: true })),
+    ...unfetched.map(url => ({ url, fetched: false })),
+  ];
+  return { total: sampled.length + unfetched.length, blocked };
+}
+
 const robotsBlocksSite: RuleImplementation = {
   id: 'crawl-robots-blocks-site',
   evaluate({ site, evidence }) {
-    if (!robotsFile(site)) return notApplicable('no-robots-rules');
+    const file = robotsFile(site);
+    if (!file) return notApplicable('no-robots-rules');
     const url = robotsUrl(site);
     const homePaths = [...new Set([`${site.origin}/`, ...(site.homeUrl ? [site.homeUrl] : [])])];
     const blockedHome = (tokens: string[]) => homePaths.map(path => ({ path, decision: robotsDecision(site, path, tokens) }))
@@ -194,14 +233,15 @@ const robotsBlocksSite: RuleImplementation = {
     }
     if (google) return failure({ severity: 'critical', evidence: [cite(google, 'Googlebot')], reason: 'home-googlebot', params: { url: google.path, crawler: 'Googlebot' } });
     if (site.crawled) {
-      const sampled = [...site.pages.values()].filter(page => page.fetch.status === 200 && page.pageType !== 'utility' && page.pageType !== 'legal');
-      const blocked = sampled.filter(page => robotsDecision(site, page.fetch.finalUrl)?.allowed === false);
-      if (sampled.length > 0 && blocked.length / sampled.length > 0.5) {
-        const ids = blocked.slice(0, 5).map(page => {
-          const decision = robotsDecision(site, page.fetch.finalUrl)!;
-          return evidence.add({ kind: 'robots', url: page.fetch.finalUrl, label: 'crawled URL disallowed for Googlebot', excerpt: `${decision.rule!.type}: ${decision.rule!.pattern}`, line: decision.rule!.line });
+      const { total, blocked } = crawlSample(site, file);
+      if (total > 0 && blocked.length / total > 0.5) {
+        if (privateHost(site)) return notApplicable('private-host');
+        const ids = blocked.slice(0, 5).map(entry => {
+          const decision = robotsDecision(site, entry.url)!;
+          return evidence.add({ kind: 'robots', url: entry.url, label: entry.fetched ? 'crawled URL disallowed for Googlebot' : 'URL the crawl found and did not fetch because robots.txt disallows it for Googlebot',
+            excerpt: `${decision.rule!.type}: ${decision.rule!.pattern}`, line: decision.rule!.line });
         });
-        return failure({ severity: 'critical', evidence: ids, reason: 'most-pages', params: { blocked: blocked.length, total: sampled.length } });
+        return failure({ severity: 'critical', evidence: ids, reason: 'most-pages', params: { blocked: blocked.length, total } });
       }
     }
     if (bing) return failure({ severity: 'high', evidence: [cite(bing, 'Bingbot')], reason: 'home-bingbot', params: { url: bing.path, crawler: 'Bingbot' } });

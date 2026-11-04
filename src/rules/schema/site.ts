@@ -385,7 +385,7 @@ const consistencyKeys = ['name', 'legalName', 'logo', 'telephone', 'url'] as con
 function comparable(graph: PageGraph, node: GraphNode, key: (typeof consistencyKeys)[number]): string[] {
   if (key === 'logo') return imageUrls(graph, node, 'logo');
   if (key === 'url') return texts(graph, node, 'url').map(url => absoluteUrl(url, graph.base)).filter((url): url is string => url !== undefined).map(url => new URL(url).origin);
-  if (key === 'telephone') return texts(graph, node, 'telephone').map(value => value.replace(/D/gu, '').replace(/^00/u, ''));
+  if (key === 'telephone') return texts(graph, node, 'telephone').map(value => value.replace(/\D/gu, '').replace(/^00/u, ''));
   return texts(graph, node, key).map(brandOf);
 }
 

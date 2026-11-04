@@ -10,7 +10,8 @@
   "crawl-robots-redirects": {
     "messages": {
       "fail": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply.",
-      "fail:too-many-hops": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply."
+      "fail:too-many-hops": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply.",
+      "fail:loop": "{url} redirects in a loop, back to a URL it already visited after {hops} hops. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply."
     }
   },
   "crawl-robots-format": {
@@ -18,7 +19,8 @@
       "fail": "{url} cannot be read as intended.",
       "fail:html-body": "{url} returns an HTML page instead of plain-text rules, so no rules and no Sitemap lines are read from it.",
       "fail:over-size-limit": "{url} is {bytes} bytes. Google reads only the first 500 KiB, so {lost} rule lines after that point are ignored.",
-      "fail:invalid-utf8": "{count} allow or disallow lines in {url} contain bytes that are not valid UTF-8."
+      "fail:invalid-utf8": "{count} allow or disallow lines in {url} contain bytes that are not valid UTF-8.",
+      "fail:content-type": "{url} is served as {type}. Google reads its rules whatever the type, but the robots.txt standard asks for text/plain."
     }
   },
   "crawl-robots-parse-errors": {
@@ -42,7 +44,7 @@
       "fail": "robots.txt disallows the home page {url} for {crawler}.",
       "fail:home-googlebot": "robots.txt disallows the home page {url} for {crawler}, so Google cannot crawl the site from its entry point.",
       "fail:home-bingbot": "robots.txt disallows the home page {url} for {crawler} while Googlebot is allowed.",
-      "fail:most-pages": "robots.txt disallows {blocked} of {total} crawled indexable-looking pages for Googlebot."
+      "fail:most-pages": "robots.txt disallows {blocked} of the {total} indexable-looking URLs the crawl found for Googlebot."
     }
   },
   "crawl-robots-blocks-page": {
