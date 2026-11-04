@@ -81,6 +81,11 @@ export interface BotChecks {
    * that access logs do not record: an address outside the lists then leaves the request unverified, not spoofed.
    */
   readonly listsInconclusive?: boolean;
+  /**
+   * The operator also documents host names in space other customers share (Google App Engine), which Altimeter does
+   * not accept: reverse DNS can then verify a request but never refute it, and a request no check verifies stays unverified.
+   */
+  readonly dnsInconclusive?: boolean;
 }
 
 export interface BotDefinition {
@@ -119,7 +124,7 @@ const googleFetchers = 'https://developers.google.com/search/docs/crawling-index
 const googlebotChecks: BotChecks = { lists: ['google-common'], dnsSuffixes: ['googlebot.com'], listsInconclusive: true };
 // Google's fetchers also run from Google App Engine space (gae.googleusercontent.com), which any App Engine customer
 // shares, so only the Google-controlled list and host names verify them and other addresses stay unverified.
-const googleFetcherChecks: BotChecks = { lists: ['google-user-triggered-fetchers-google'], dnsSuffixes: ['google.com'], listsInconclusive: true };
+const googleFetcherChecks: BotChecks = { lists: ['google-user-triggered-fetchers-google'], dnsSuffixes: ['google.com'], listsInconclusive: true, dnsInconclusive: true };
 const openai = 'https://developers.openai.com/api/docs/bots';
 const anthropic = ipListDefinitions.anthropic.documentation;
 const perplexity = 'https://docs.perplexity.ai/guides/bots';

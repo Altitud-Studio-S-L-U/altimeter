@@ -1,4 +1,5 @@
 import type { HttpClient } from '../fetch/http.ts';
+import { cleanLine } from '../report/sanitize.ts';
 import { GoogleAuthError, type AccessToken } from './google-auth.ts';
 
 export const searchConsoleApi = { webmasters: 'https://www.googleapis.com/webmasters/v3', inspection: 'https://searchconsole.googleapis.com/v1' };
@@ -182,6 +183,8 @@ export interface FetchGscOptions {
   readonly url: string;
   /** A property such as `sc-domain:example.com`; chosen automatically when omitted. */
   readonly siteUrl?: string;
+  /** The caller's option that names a property, such as --gsc-property, suggested when no property covers the URL. */
+  readonly propertyOption?: string;
   /** URLs to inspect; the API allows 2,000 per property per day. */
   readonly inspectUrls?: readonly string[];
   readonly now?: Date;
@@ -195,7 +198,9 @@ export async function fetchGscData(client: HttpClient, token: AccessToken, optio
   const properties = listed.filter(entry => entry.siteUrl).map(entry => ({ siteUrl: entry.siteUrl!, permissionLevel: entry.permissionLevel ?? 'unknown' }));
   const property = options.siteUrl ? properties.find(entry => entry.siteUrl === options.siteUrl) : chooseProperty(properties, options.url);
   if (!property || property.permissionLevel === 'siteUnverifiedUser') {
-    throw new SearchConsoleError(`No verified Search Console property covers ${new URL(options.url).origin}. Add the site in Search Console or pass --gsc with the property.`);
+    if (options.siteUrl) throw new SearchConsoleError(`${cleanLine(options.siteUrl, 300)} is not a verified Search Console property this credential can read.`);
+    const named = options.propertyOption ? `, or pass the property that holds its data with ${options.propertyOption}, for example sc-domain:example.com` : '';
+    throw new SearchConsoleError(`No verified Search Console property covers ${new URL(options.url).origin}. Add and verify the site in Search Console${named}.`);
   }
   const fetchedAt = options.now ?? new Date();
   const periods = reportingPeriods(fetchedAt);

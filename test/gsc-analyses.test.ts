@@ -41,6 +41,18 @@ test('detects cannibalization on non-brand queries only', () => {
   assert.deepEqual(results[0]?.pages.map(page => page.page), ['/a', '/b']);
 });
 
+test('never takes the language or region versions of a page for pages that compete', () => {
+  const site = 'https://example.com';
+  const multilingual = { ...data, byPageQuery: [
+    row([`${site}/en/seo/`, 'seo audit'], 6, 60, 5), row([`${site}/es/seo/`, 'seo audit'], 4, 40, 7), row([`${site}/ca/auditoria/`, 'seo audit'], 2, 30, 8),
+    row([`${site}/pt-br/seo/`, 'seo audit'], 1, 30, 9), row([`${site}/seo/?lang=fr`, 'seo audit'], 1, 30, 9), row([`${site}/seo/`, 'seo audit'], 1, 25, 9),
+    row([`${site}/en/blog/seo-audit/`, 'seo audit'], 5, 55, 6),
+    row(['https://en.example.com/design/', 'web design'], 5, 50, 4), row(['https://es.example.com/disseny/', 'web design'], 5, 50, 4),
+  ] };
+  assert.deepEqual(cannibalization(multilingual, undefined).map(entry => [entry.query, entry.pages.map(page => page.page)]),
+    [['seo audit', [`${site}/en/seo/`, `${site}/en/blog/seo-audit/`]]], 'only the two English pages compete');
+});
+
 test('splits brand, non-brand and anonymised traffic', () => {
   const split = brandSplit(data, brandPattern(['Example Studio SLU']));
   assert.deepEqual(split.brand, { clicks: 30, impressions: 300 });
@@ -48,9 +60,26 @@ test('splits brand, non-brand and anonymised traffic', () => {
   assert.deepEqual(split.anonymised, { clicks: 16, impressions: 300 });
 });
 
+test('a brand query names a whole site name, not one of its descriptive words', () => {
+  const brand = brandPattern(['Barcelona Cooking School', 'acme-tools', 'Altitud Studio S.L.U.']);
+  const names = (query: string) => brand?.test(query) ?? false;
+  for (const query of ['barcelona cooking school prices', 'Barcelona-Cooking-School', 'barcelonacookingschool', 'acme tools review', 'acmetools', 'altitud studio andorra']) {
+    assert.equal(names(query), true, query);
+  }
+  for (const query of ['cooking class for kids', 'garden tools', 'barcelona schoolbag', 'altitud de andorra']) assert.equal(names(query), false, query);
+  assert.equal(brandPattern(['Digital Agency', 'Studio', 'AB']), undefined, 'a name made only of generic or short words names no brand');
+  const classes = { ...data, byPageQuery: [row(['/kids/', 'cooking class for kids'], 10, 300, 4), row(['/classes/', 'cooking class for kids'], 9, 250, 5)] };
+  assert.deepEqual(cannibalization(classes, brandPattern(['Barcelona Cooking School'])).map(entry => entry.query), ['cooking class for kids']);
+});
+
 test('lists striking-distance queries and unusual page trends', () => {
   assert.deepEqual(strikingDistance(data).map(entry => entry.query), ['software consultancy']);
   assert.deepEqual(pageTrends(data).map(trend => [trend.page, trend.z]), [['/a', 4.47]]);
+});
+
+test('orders page trends by the change in clicks, largest first', () => {
+  const trends = pageTrends({ ...data, previousByPage: [row(['/a'], 30, 900, 5), row(['/b'], 5000, 90_000, 3)], byPage: [row(['/a'], 5, 900, 6), row(['/b'], 4700, 90_000, 3)] });
+  assert.deepEqual(trends.map(trend => [trend.page, trend.z]), [['/b', -3.05], ['/a', -4.23]]);
 });
 
 test('turns URL Inspection results into insights', () => {

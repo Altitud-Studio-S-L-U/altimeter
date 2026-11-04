@@ -4,6 +4,9 @@ import type { GscData, GscProperty, UrlInspection } from '../../owner/gsc.ts';
 import { indexability, siteNames } from '../content/common.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
 import { summarizeList } from '../helpers.ts';
+import { isSiteOwner } from '../schema/commerce.ts';
+import { graphOf, texts } from '../schema/graph.ts';
+import { nodesOfType } from '../schema/support.ts';
 
 /**
  * Evidence `path` of excerpts that list the owner's search queries. Queries can hold personal data: with
@@ -200,10 +203,20 @@ const lowCtr: RuleImplementation = {
   },
 };
 
-/** Names a brand query may contain: the declared site names and the first label of the host. */
+/** The name and alternate names of the Organization the audited pages declare as the site's own. */
+function organizationNames(context: RuleContext): string[] {
+  return [...context.site.pages.values()].flatMap(page => {
+    const graph = graphOf(page);
+    if (!graph) return [];
+    return nodesOfType(graph, 'Organization').filter(node => isSiteOwner(graph, node))
+      .flatMap(node => [...texts(graph, node, 'name'), ...texts(graph, node, 'alternateName')]);
+  });
+}
+
+/** Names a brand query may contain: the declared site and organization names and the first label of the host. */
 function brandOf(context: RuleContext): RegExp | undefined {
   const host = new URL(context.site.origin).hostname.replace(/^www\./u, '').split('.')[0] ?? '';
-  return brandPattern([...siteNames(context.site), host]);
+  return brandPattern([...siteNames(context.site), ...organizationNames(context), host]);
 }
 
 const competingPages: RuleImplementation = {

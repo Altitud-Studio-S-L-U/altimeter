@@ -5,7 +5,7 @@ import type { SiteFacts } from '../core/facts.ts';
 import { HttpClient } from '../fetch/http.ts';
 import { languages, type Language } from '../i18n/messages.ts';
 import type { BotActivity, IpSource, LogFormat } from '../owner/bots/activity.ts';
-import { BotActivityError, collectBotActivity, type CollectBotActivityOptions } from '../owner/bots/collect.ts';
+import { BotActivityError, collectBotActivity, type CollectBotActivityOptions, type FolderLogFile } from '../owner/bots/collect.ts';
 import { jsonFieldRoles, logFormats, type JsonFields } from '../owner/bots/formats.ts';
 import type { IpListOptions } from '../owner/bots/ip-ranges.ts';
 import { buildBotsReport, renderBotsMarkdown } from '../owner/bots/report.ts';
@@ -67,9 +67,12 @@ function parseJsonFields(value: string): JsonFields {
   return fields as JsonFields;
 }
 
-/** The files named by --logs: a folder means the files in it; a missing path is a usage error. */
-export async function logFiles(paths: readonly string[]): Promise<string[]> {
-  const files: string[] = [];
+/**
+ * The files named by --logs: a folder means the files in it, which are skipped when they are not access logs; a
+ * missing path is a usage error. A file named itself is checked strictly, even when a folder given too holds it.
+ */
+export async function logFiles(paths: readonly string[]): Promise<Array<string | FolderLogFile>> {
+  const files = new Map<string, string | FolderLogFile>();
   for (const path of paths) {
     const absolute = resolve(path);
     let info;
@@ -81,12 +84,12 @@ export async function logFiles(paths: readonly string[]): Promise<string[]> {
     if (info.isDirectory()) {
       const entries = (await readdir(absolute, { withFileTypes: true })).filter(entry => entry.isFile() && !entry.name.startsWith('.')).map(entry => entry.name).sort();
       if (entries.length === 0) throw new BotsUsageError(`${cleanLine(path, 200)} holds no file.`);
-      files.push(...entries.map(name => join(absolute, name)));
+      for (const file of entries.map(name => join(absolute, name))) if (!files.has(file)) files.set(file, { path: file, inFolder: true });
     } else {
-      files.push(absolute);
+      files.set(absolute, absolute);
     }
   }
-  return [...new Set(files)];
+  return [...files.values()];
 }
 
 function siteOrigin(site: string | undefined, zone: string | undefined): string | undefined {

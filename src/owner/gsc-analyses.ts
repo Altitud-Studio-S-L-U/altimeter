@@ -1,3 +1,4 @@
+import { iso639_1 } from '../rules/intl/codes.ts';
 import type { GscData, SearchRow, UrlInspection } from './gsc.ts';
 
 export interface LowCtrPage {
@@ -90,26 +91,75 @@ const genericBusinessWords = new Set([
   'systems', 'sistemas', 'sistemes', 'technologies', 'technology', 'tecnologia', 'tech', 'partners', 'holding', 'limited',
 ]);
 
+// Legal forms written after a company name, which searches for the brand leave out.
+const legalForm = /[\s,]+(?:s\.?\s?l\.?\s?u?\.?|s\.?\s?a\.?\s?u?\.?|s\.?\s?a\.?\s?s\.?|inc\.?|llc|ltd\.?|limited|gmbh|ag|b\.?v\.?|n\.?v\.?|plc|sarl|srl|oy|ab|as|corp\.?|co\.?)$/iu;
+
+/** Lowercase and without accents, as names and queries are compared. */
+const fold = (text: string) => text.toLowerCase().normalize('NFKD').replace(/\p{M}/gu, '');
+
+/** A name as its words in order, with or without separators between them; undefined when no word is distinctive. */
+function namePattern(name: string): string | undefined {
+  const words = fold(name.trim().replace(legalForm, '')).split(/[^a-z0-9]+/u).filter(word => word !== '');
+  if (!words.some(word => word.length >= 4 && !genericBusinessWords.has(word))) return undefined;
+  return words.join('[^a-z0-9]*');
+}
+
 /**
- * A pattern for queries that name the brand, built from the site's names (Organization name, site name, the first
- * label of the host). Generic words such as "studio" are left out, so "software studio" is not a brand query.
+ * A pattern for queries that name the brand: queries that hold one of the given names (the site's names, the first
+ * label of the host) as whole words, with or without the spaces between them, and without a legal form such as
+ * "S.L.". A name made only of generic or short words, such as "Digital Agency", names no brand, and a descriptive
+ * word of a name alone, such as "cooking" in "Barcelona Cooking School", does not make a brand query.
  */
 export function brandPattern(names: readonly string[]): RegExp | undefined {
-  const terms = [...new Set(names.flatMap(name => name.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036F]/gu, '').split(/[^a-z0-9]+/u))
-    .filter(term => term.length >= 4 && !genericBusinessWords.has(term)))];
-  if (terms.length === 0) return undefined;
-  return new RegExp(`\\b(${terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')).join('|')})`, 'iu');
+  const patterns = [...new Set(names.map(namePattern).filter((pattern): pattern is string => pattern !== undefined))];
+  if (patterns.length === 0) return undefined;
+  return new RegExp(`\\b(?:${patterns.join('|')})\\b`, 'iu');
 }
 
 function isBrand(query: string, brand: RegExp | undefined): boolean {
-  return brand !== undefined && brand.test(query.normalize('NFKD').replace(/[\u0300-\u036F]/gu, ''));
+  return brand !== undefined && brand.test(fold(query));
 }
 
+// A language with an optional script and region, as URLs write a locale: en, pt-br, zh_Hant, es-419.
+const urlLocale = /^([a-z]{2})(?:[-_][a-z]{4})?(?:[-_](?:[a-z]{2}|\d{3}))?$/iu;
+const localeParameter = /^(?:lang|language|hl|locale|lng|lc)$/iu;
+
+function localeTag(value: string | undefined): string | undefined {
+  const match = value === undefined ? null : urlLocale.exec(value);
+  return match && iso639_1.has(match[1]!.toLowerCase()) ? match[0].toLowerCase().replace(/_/gu, '-') : undefined;
+}
+
+/**
+ * The locale a page URL is written for: its first path segment, its subdomain or a language parameter, when that is
+ * a language code such as en or pt-br; empty when the URL names none, as is often the case for the default language.
+ */
+function localeOf(page: string): string {
+  let url: URL;
+  try {
+    url = new URL(page, 'https://unknown.invalid/');
+  } catch {
+    return '';
+  }
+  const labels = url.hostname.split('.');
+  return localeTag(url.pathname.split('/').find(part => part !== '')) ?? (labels.length > 2 ? localeTag(labels[0]) : undefined)
+    ?? localeTag([...url.searchParams].find(([name]) => localeParameter.test(name))?.[1]) ?? '';
+}
+
+/**
+ * Non-brand queries whose impressions several pages split without one taking most clicks. Pages written for different
+ * languages or regions are not compared: they are versions of one page for different searchers, not competitors.
+ */
 export function cannibalization(data: GscData, brand: RegExp | undefined, minImpressions = 50): Cannibalization[] {
   const byQuery = new Map<string, SearchRow[]>();
-  for (const row of data.byPageQuery) byQuery.set(row.keys[1]!, [...(byQuery.get(row.keys[1]!) ?? []), row]);
+  for (const row of data.byPageQuery) {
+    const key = JSON.stringify([row.keys[1]!, localeOf(row.keys[0]!)]);
+    const rows = byQuery.get(key);
+    if (rows) rows.push(row);
+    else byQuery.set(key, [row]);
+  }
   const results: Cannibalization[] = [];
-  for (const [query, rows] of byQuery) {
+  for (const rows of byQuery.values()) {
+    const query = rows[0]!.keys[1]!;
     if (isBrand(query, brand)) continue;
     const impressions = rows.reduce((sum, row) => sum + row.impressions, 0);
     const clicks = rows.reduce((sum, row) => sum + row.clicks, 0);
@@ -143,6 +193,7 @@ export function strikingDistance(data: GscData, minImpressions = 50): StrikingDi
     .sort((a, b) => b.impressions - a.impressions);
 }
 
+/** Pages whose clicks changed by at least `minChange` with a Poisson z-score of at least `minZ`, largest change in clicks first. */
 export function pageTrends(data: GscData, minChange = 20, minZ = 2.5): PageTrend[] {
   const before = new Map(data.previousByPage.map(row => [row.keys[0]!, row.clicks]));
   const pages = new Set([...before.keys(), ...data.byPage.map(row => row.keys[0]!)]);
@@ -155,7 +206,8 @@ export function pageTrends(data: GscData, minChange = 20, minZ = 2.5): PageTrend
     const z = (b - a) / Math.sqrt(a + b);
     if (Math.abs(z) >= minZ) trends.push({ page, clicksBefore: a, clicksNow: b, z: Math.round(z * 100) / 100 });
   }
-  return trends.sort((x, y) => Math.abs(y.z) - Math.abs(x.z));
+  const change = (trend: PageTrend) => Math.abs(trend.clicksNow - trend.clicksBefore);
+  return trends.sort((x, y) => change(y) - change(x) || Math.abs(y.z) - Math.abs(x.z) || x.page.localeCompare(y.page));
 }
 
 function normalizeUrl(url: string): string {

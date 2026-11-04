@@ -99,6 +99,24 @@ describe('claim verification', () => {
     assert.deepEqual(check('gptbot', '132.196.86.20', undefined, { lists: stale }), { verdict: 'verified', method: 'ip-list' });
   });
 
+  test('Google\'s user-triggered fetchers outside the Google-controlled list and google.com names stay unverified', () => {
+    const fetchers: LoadedIpList = {
+      id: 'google-user-triggered-fetchers-google', url: ipListDefinitions['google-user-triggered-fetchers-google'].url, from: 'cache', prefixes: 1, blocks: blockListOf(['192.0.2.0/25']),
+    };
+    const lists = new Map<IpListId, LoadedIpList>([...listIds.map(id => [id, snapshot(id)] as const), [fetchers.id, fetchers]]);
+    const dns = new Map<string, ReverseDnsResult>([
+      ['198.51.100.20', { kind: 'names', names: ['198-51-100-20.gae.googleusercontent.com'], confirmed: [] }],
+      ['198.51.100.21', { kind: 'none' }],
+      ['198.51.100.22', { kind: 'names', names: ['google-proxy-198-51-100-22.google.com'], confirmed: ['google-proxy-198-51-100-22.google.com'] }],
+    ]);
+    const notebook = (address: string) => check('google-gemininotebook', address, undefined, { lists, dns });
+    assert.deepEqual(notebook('192.0.2.10'), { verdict: 'verified', method: 'operator-ip-list' });
+    assert.deepEqual(notebook('198.51.100.22'), { verdict: 'verified', method: 'reverse-dns' });
+    assert.deepEqual(notebook('198.51.100.20'), { verdict: 'unverified', reason: 'not-in-list' }, 'App Engine space is shared, so it neither verifies nor refutes');
+    assert.deepEqual(notebook('198.51.100.21'), { verdict: 'unverified', reason: 'not-in-list' });
+    assert.deepEqual(check('googlebot', '203.0.113.50', undefined, { lists, dns: context().dns }), { verdict: 'spoofed' }, 'Googlebot\'s documented host names still refute a claim');
+  });
+
   test('operators without a published check stay claims unless the edge verified them', () => {
     assert.deepEqual(check('meta-externalagent', '203.0.113.70'), { verdict: 'unverified', reason: 'no-published-check' });
     assert.deepEqual(check('meta-externalagent', undefined, 'AI Crawler'), { verdict: 'verified', method: 'edge' });

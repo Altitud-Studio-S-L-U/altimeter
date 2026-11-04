@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
-import { isAllowed } from '../src/fetch/robots.ts';
+import type { SiteFacts } from '../src/core/facts.ts';
+import { isAllowed, robotsAvailability } from '../src/fetch/robots.ts';
 import { botSiteInput, fetchSiteFacts } from '../src/owner/bots/site.ts';
 import { loopbackClient } from './support/bots.ts';
+import { page, response, site } from './support/facts.ts';
 
 let primary: Server;
 let moved: Server;
@@ -84,5 +86,36 @@ describe('site facts for the bots command', () => {
     assert.equal(isAllowed(botSiteInput(missing).robots!.file, ['gptbot'], '/anything').allowed, true);
     const unreachable = { ...fetched, robots: { ...fetched.robots, availability: { kind: 'unreachable' as const, status: 503 } } };
     assert.equal(botSiteInput(unreachable).robots, undefined);
+  });
+});
+
+describe('site input for an audit', () => {
+  const rules = 'User-agent: *\nDisallow: /private/\n';
+  /** An audit of https://example.com/, with the redirects robots.txt and the home page followed. */
+  function audited(robotsTo?: string, homeTo?: string): SiteFacts {
+    const url = 'https://example.com/robots.txt';
+    const fetch = response(url, { body: rules, headers: { 'content-type': 'text/plain' }, ...(robotsTo ? { redirects: [[301, robotsTo]] as const } : {}) });
+    const home = page('https://example.com/', homeTo ? { redirects: [[301, homeTo]] } : {});
+    const facts = site({ origin: 'https://example.com', pages: [home], homeUrl: home.fetch.finalUrl, sitemaps: [{ url: 'https://www.example.com/sitemap.xml', xml: urlset('https://www.example.com', ['/en/']) }] });
+    return { ...facts, robots: { url, fetch, availability: robotsAvailability(200, Buffer.from(rules)) } };
+  }
+
+  test('takes the www or apex host that robots.txt or the home page redirects to, as the bots command does', () => {
+    const input = botSiteInput(audited('https://www.example.com/robots.txt', 'https://www.example.com/'));
+    assert.equal(input.origin, 'https://www.example.com', 'the logs record the host that serves the site');
+    assert.deepEqual([input.robots?.url, input.sitemapUrls], ['https://example.com/robots.txt', ['https://www.example.com/en/']]);
+    assert.equal(botSiteInput(audited(undefined, 'https://www.example.com/')).origin, 'https://www.example.com', 'robots.txt answered on both hosts');
+    assert.equal(botSiteInput(audited('https://cdn.example.net/robots.txt')).origin, 'https://example.com', 'another site is never taken');
+    assert.equal(botSiteInput(audited()).origin, 'https://example.com');
+  });
+
+  test('takes the host the home page moves to when robots.txt only moves to https on the audited host', () => {
+    const url = 'http://example.com/robots.txt';
+    const fetch = response(url, { body: rules, headers: { 'content-type': 'text/plain' }, redirects: [[301, 'https://example.com/robots.txt']] });
+    const home = page('http://example.com/', { redirects: [[301, 'https://example.com/'], [301, 'https://www.example.com/']] });
+    const facts = { ...site({ origin: 'http://example.com', pages: [home], homeUrl: home.fetch.finalUrl }), robots: { url, fetch, availability: robotsAvailability(200, Buffer.from(rules)) } };
+    assert.equal(botSiteInput(facts).origin, 'https://www.example.com', 'the logs name the host, whatever the scheme');
+    const apex = page('http://example.com/', { redirects: [[301, 'https://example.com/']] });
+    assert.equal(botSiteInput({ ...facts, pages: new Map([[apex.url, apex]]), homeUrl: apex.fetch.finalUrl }).origin, 'https://example.com');
   });
 });

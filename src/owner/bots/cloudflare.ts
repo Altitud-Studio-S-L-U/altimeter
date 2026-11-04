@@ -38,6 +38,7 @@ export interface CloudflareOptions {
 export interface CloudflareData {
   readonly zone: { readonly id: string; readonly name: string };
   readonly settings: DatasetSettings;
+  /** Where the data read starts: later than requested when the zone keeps less or the query limit was reached. */
   readonly start: Date;
   readonly end: Date;
   readonly observations: readonly Observation[];
@@ -236,10 +237,12 @@ function baseFilter(from: number, to: number, plan: Plan): Record<string, unknow
  * Reads crawler requests from Cloudflare's GraphQL Analytics API, read-only: the zone's dataset limits first, then
  * requests grouped by user agent, path, status, day and, where the plan allows, client address and Cloudflare's
  * verified-bot category. Counts are adaptive-sampling estimates. When a query returns its maximum rows, the crawlers
- * are split into smaller groups and queried again.
+ * are split into smaller groups and queried again. Time slices are read newest first; when the query limit is
+ * reached, the data starts with the oldest slice read in full.
  */
 export async function fetchCloudflareActivity(options: CloudflareOptions): Promise<CloudflareData> {
-  const api = new Api(options.client, options.token, options.endpoint ?? cloudflareApi, options.maxQueries ?? 120);
+  const maxQueries = options.maxQueries ?? 120;
+  const api = new Api(options.client, options.token, options.endpoint ?? cloudflareApi, maxQueries);
   const warnings: string[] = [];
   const zone = await resolveZone(api, options.zone);
   const settings = await readSettings(api, zone.id);
@@ -253,17 +256,11 @@ export async function fetchCloudflareActivity(options: CloudflareOptions): Promi
     warnings.push(`Cloudflare keeps ${Math.floor(settings.notOlderThan / 86_400)} days of this data for the zone, so the window starts on ${time(start).slice(0, 10)}.`);
   }
   const sliceMs = Math.max(hourMs, Math.min(settings.maxDuration * 1000, end - start));
-  let slices: Array<readonly [number, number]> = [];
+  const slices: Array<readonly [number, number]> = [];
   for (let from = start; from < end; from += sliceMs) slices.push([from, Math.min(from + sliceMs, end)]);
   const referralFields = fieldAvailable(settings, 'clientRefererHost');
   const taggedField = fieldAvailable(settings, 'clientRequestQuery');
-  const perSlice = 1 + (referralFields ? 1 : 0) + (taggedField ? 1 : 0);
-  const budget = Math.max(1, Math.floor(api.budgetLeft / perSlice));
-  if (slices.length > budget) {
-    slices = slices.slice(-budget);
-    start = slices[0]![0];
-    warnings.push(`Cloudflare allows ${Math.round(sliceMs / hourMs)} hours per query, so only the data from ${time(start).slice(0, 10)} was read.`);
-  }
+  const referralQueries = (referralFields ? 1 : 0) + (taggedField ? 1 : 0);
   const bots = options.bots ?? botDefinitions;
   const selection = [
     'count', ...(queryPlan.bytes ? ['sum { edgeResponseBytes }'] : []), ...(queryPlan.sampleInterval ? ['avg { sampleInterval }'] : []),
@@ -276,14 +273,20 @@ export async function fetchCloudflareActivity(options: CloudflareOptions): Promi
   let intervalSum = 0;
   const spanOf = (from: number, to: number) => (queryPlan.time === 'date' ? dayMs : queryPlan.time === 'datetimeHour' ? hourMs : to - from);
 
-  for (const [from, to] of slices) {
+  // A slice whose crawlers could not all be queried is left out, so the data from the start on is complete; only the
+  // newest slice is kept in part, when no other could be read.
+  const read: Array<readonly [number, number]> = [];
+  for (const [from, to] of slices.toReversed()) {
+    // Each slice read keeps the queries its referral counts need.
+    const reserve = (read.length + 1) * referralQueries;
     const rows = new Map<string, Row>();
+    const filled = new Set<string>();
+    const unread: BotDefinition[] = [];
     const queue: BotDefinition[][] = [[...bots]];
     while (queue.length > 0) {
       const group = queue.shift()!;
-      if (api.budgetLeft <= 0) {
-        truncated = true;
-        for (const definition of group) truncatedBots.add(definition.id);
+      if (api.budgetLeft <= reserve) {
+        unread.push(...group);
         continue;
       }
       const filter = { ...baseFilter(from, to, queryPlan), OR: group.flatMap(definition => definition.userAgentTokens.map(token => ({ userAgent_like: `%${token}%` }))) };
@@ -294,11 +297,14 @@ export async function fetchCloudflareActivity(options: CloudflareOptions): Promi
           queue.push(group.slice(0, half), group.slice(half));
           continue;
         }
-        truncated = true;
-        truncatedBots.add(group[0]!.id);
+        filled.add(group[0]!.id);
       }
       for (const row of result) rows.set(JSON.stringify(queryPlan.dimensions.map(field => row.dimensions[field] ?? null)), row);
     }
+    if (unread.length > 0 && read.length > 0) break;
+    for (const id of [...filled, ...unread.map(definition => definition.id)]) truncatedBots.add(id);
+    if (filled.size > 0 || unread.length > 0) truncated = true;
+    read.unshift([from, to]);
     for (const row of rows.values()) {
       const dimensions = row.dimensions;
       const timeValue = queryPlan.time === 'date' ? Date.parse(`${String(dimensions.date)}T00:00:00Z`) : queryPlan.time === 'datetimeHour' ? Date.parse(String(dimensions.datetimeHour)) : from;
@@ -318,6 +324,11 @@ export async function fetchCloudflareActivity(options: CloudflareOptions): Promi
         ...(queryPlan.dimensions.includes('verifiedBotCategory') ? { edgeCategory: typeof dimensions.verifiedBotCategory === 'string' ? dimensions.verifiedBotCategory.trim() : '' } : {}),
       });
     }
+    if (unread.length > 0) break;
+  }
+  if (read.length < slices.length) {
+    start = read[0]![0];
+    warnings.push(`Cloudflare allows ${Math.round(sliceMs / hourMs)} hours per query and Altimeter makes at most ${maxQueries} queries per run, so only the data from ${time(start).slice(0, 10)} was read.`);
   }
 
   let referrals: CloudflareData['referrals'];
@@ -325,7 +336,7 @@ export async function fetchCloudflareActivity(options: CloudflareOptions): Promi
     const byHost = new Map<string, number>();
     let tagged: number | undefined;
     const hosts = assistantReferrers.flatMap(entry => [entry.host, `www.${entry.host}`]);
-    for (const [from, to] of slices) {
+    for (const [from, to] of read) {
       if (referralFields && api.budgetLeft > 0) {
         const rows = rowsOf(await api.graphql(groupsQuery(zone.id, 100, { ...baseFilter(from, to, queryPlan), clientRefererHost_in: hosts }, 'count dimensions { clientRefererHost }')));
         for (const row of rows) {
