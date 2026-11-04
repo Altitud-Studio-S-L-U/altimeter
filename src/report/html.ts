@@ -212,7 +212,7 @@ ${notEvaluated.size > 0 ? `<h2>${escapeHtml(t.notEvaluated)}</h2><ul>${[...notEv
 <h2>${escapeHtml(t.method)}</h2>
 <p>${escapeHtml(t.methodIntro)}</p><p class="where">${escapeHtml(formulaText(report, language))}</p>
 <p class="where">${escapeHtml(format(t.mythsLine, { count: myths.length }))} ${safeHttpsLink(mythsListUrl, mythsListUrl)}</p>
-<p class="where">${escapeHtml(format(t.catalogLine, { implemented: report.catalog.implemented, rules: report.catalog.rules })).replace('{hash}', `<code>${escapeHtml(report.catalog.hash.slice(0, 12))}</code>`)} · Node ${escapeHtml(report.run.versions.node)}${report.run.versions.chrome ? ` · ${escapeHtml(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${escapeHtml(report.run.versions.lighthouse)}` : ''}</p>
+<p class="where">${escapeHtml(format(t.catalogLine, { implemented: report.catalog.implemented, rules: report.catalog.rules })).replace('{hash}', () => `<code>${escapeHtml(report.catalog.hash.slice(0, 12))}</code>`)} · Node ${escapeHtml(report.run.versions.node)}${report.run.versions.chrome ? ` · ${escapeHtml(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${escapeHtml(report.run.versions.lighthouse)}` : ''}</p>
 </main>
 <script>${script}</script>
 </body>
