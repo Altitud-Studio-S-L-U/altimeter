@@ -1,4 +1,5 @@
 import type { DefaultTreeAdapterTypes } from 'parse5';
+import { tagText } from '../../analyze/tag-text.ts';
 import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts } from '../../core/facts.ts';
 import { attribute, isElement, textOf, type HtmlElement, type HtmlNode } from '../../parse/html.ts';
@@ -32,7 +33,7 @@ const checkedAttributes = /^(?:alt|title|aria-label|aria-description|placeholder
 const visibleMetadata = /^(?:description|og:|twitter:)/iu;
 
 export interface Candidate {
-  readonly where: 'hidden-element' | 'comment' | 'attribute' | 'meta' | 'rendered-hidden';
+  readonly where: 'hidden-element' | 'comment' | 'attribute' | 'meta' | 'rendered-hidden' | 'invisible-text';
   readonly text: string;
   readonly line?: number;
   readonly path: string;
@@ -58,13 +59,22 @@ function childNodes(node: HtmlNode): readonly HtmlNode[] {
   return 'childNodes' in node ? (node as DefaultTreeAdapterTypes.ParentNode).childNodes : [];
 }
 
-/** Instruction-like text in hidden elements, comments and attributes of the served HTML. */
+/**
+ * Instruction-like text in hidden elements, comments and attributes of the served HTML, and words written in
+ * Unicode tag characters anywhere in its text, comments, checked attributes and meta elements: no reader sees
+ * those, whatever they say.
+ */
 export function rawCandidates(doc: DocumentFacts): Candidate[] {
   const found: Candidate[] = [];
+  const invisible = (value: string, line: number, path: string) => {
+    for (const text of tagText(value)) found.push({ where: 'invisible-text', text, line, path });
+  };
   const visit = (node: HtmlNode, hidden: boolean) => {
     if (node.nodeName === '#comment') {
       const text = (node as DefaultTreeAdapterTypes.CommentNode).data.trim();
-      if (isInstructionLike(text)) found.push({ where: 'comment', text, line: node.sourceCodeLocation?.startLine ?? 0, path: '<!-- -->' });
+      const line = node.sourceCodeLocation?.startLine ?? 0;
+      if (isInstructionLike(text)) found.push({ where: 'comment', text, line, path: '<!-- -->' });
+      invisible(text, line, '<!-- -->');
       return;
     }
     if (!isElement(node)) return;
@@ -74,17 +84,23 @@ export function rawCandidates(doc: DocumentFacts): Candidate[] {
       const name = attribute(node, 'name') ?? attribute(node, 'property') ?? '';
       const content = attribute(node, 'content') ?? '';
       if (!visibleMetadata.test(name) && isInstructionLike(content)) found.push({ where: 'meta', text: content, line, path: `meta[name="${name}"]` });
+      invisible(content, line, `meta[name="${name}"]`);
       return;
     }
     for (const attr of node.attrs) {
-      if (checkedAttributes.test(attr.name) && isInstructionLike(attr.value)) found.push({ where: 'attribute', text: attr.value, line, path: `${selector(node)}[${attr.name}]` });
+      if (!checkedAttributes.test(attr.name)) continue;
+      if (isInstructionLike(attr.value)) found.push({ where: 'attribute', text: attr.value, line, path: `${selector(node)}[${attr.name}]` });
+      invisible(attr.value, line, `${selector(node)}[${attr.name}]`);
     }
     const becomesHidden = !hidden && hiddenReason(node) !== undefined;
     if (becomesHidden) {
       const text = textOf(node);
       if (isInstructionLike(text)) found.push({ where: 'hidden-element', text, line, path: `${selector(node)} (${hiddenReason(node)})` });
     }
-    for (const child of childNodes(node)) visit(child, hidden || becomesHidden);
+    for (const child of childNodes(node)) {
+      if (child.nodeName === '#text') invisible((child as DefaultTreeAdapterTypes.TextNode).value, child.sourceCodeLocation?.startLine ?? line, selector(node));
+      visit(child, hidden || becomesHidden);
+    }
   };
   for (const child of childNodes(doc.parsed.document)) visit(child, false);
   return found;
@@ -119,11 +135,14 @@ const hiddenInstructions: RuleImplementation = {
     if (candidates.length === 0) return { outcome: 'pass' };
     const ids = candidates.slice(0, 10).map(candidate => evidence.add({
       kind: candidate.where === 'rendered-hidden' ? 'render' : 'html', url,
-      label: evidenceLabel('instruction-like text aimed at AI systems in {location}', { location: candidate.where.replace('-', ' ') }),
+      label: candidate.where === 'invisible-text'
+        ? evidenceLabel('text written in invisible Unicode tag characters')
+        : evidenceLabel('instruction-like text aimed at AI systems in {location}', { location: candidate.where.replace('-', ' ') }),
       excerpt: clip(candidate.text, 500), path: candidate.path, ...(candidate.line ? { line: candidate.line } : {}),
     }));
+    const invisibleText = candidates.some(candidate => candidate.where === 'invisible-text');
     // Intent decides whether this is manipulation or a quoted example, so the analyst confirms it.
-    return { outcome: 'fail', severity: 'medium', reason: 'hidden-instructions', needsJudgment: true, evidence: ids, params: { count: candidates.length } };
+    return { outcome: 'fail', severity: 'medium', reason: invisibleText ? 'invisible-text' : 'hidden-instructions', needsJudgment: true, evidence: ids, params: { count: candidates.length } };
   },
 };
 

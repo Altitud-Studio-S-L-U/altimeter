@@ -721,6 +721,7 @@
   "text served to a browser user agent": "texto servido a un user-agent de navegador",
   "text served to the {agent} user agent (word overlap with the browser response {similarity}%)": "texto servido al user-agent {agent} (coincidencia de palabras con la respuesta al navegador: {similarity} %)",
   "text sitemap line that is not an absolute URL": "línea del sitemap de texto que no es una URL absoluta",
+  "text written in invisible Unicode tag characters": "texto escrito con los caracteres invisibles del bloque Tags de Unicode",
   "third-party entity cost in the lab load": "coste de una entidad de terceros en la carga de laboratorio",
   "three-letter region subtag": "subetiqueta de región de tres letras",
   "time that is not hh:mm[:ss]": "hora que no tiene el formato hh:mm[:ss]",

@@ -282,7 +282,8 @@
     "fix": "Elimina el text d'indicacions ocult; fes les afirmacions de manera visible i veraç.",
     "messages": {
       "fail": "S'han trobat fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA ({count}); l'analista en confirma la intenció.",
-      "fail:hidden-instructions": "S'han trobat fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA en elements ocults, comentaris o atributs ({count}); l'analista confirma si l'objectiu és dirigir les respostes d'IA."
+      "fail:hidden-instructions": "S'han trobat fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA en elements ocults, comentaris o atributs ({count}); l'analista confirma si l'objectiu és dirigir les respostes d'IA.",
+      "fail:invisible-text": "S'han trobat fragments de text ocult als lectors ({count}), entre els quals text escrit amb els caràcters invisibles del bloc Tags d'Unicode, que els models sí que poden llegir; l'analista confirma si l'objectiu és dirigir les respostes d'IA."
     }
   },
   "ai-answer-readiness": {

@@ -190,7 +190,8 @@
   "ai-hidden-llm-instructions": {
     "messages": {
       "fail": "{count} pieces of hidden, instruction-like text aimed at AI systems were found; the analyst confirms intent.",
-      "fail:hidden-instructions": "{count} pieces of hidden, instruction-like text aimed at AI systems were found in hidden elements, comments or attributes; the analyst confirms whether they try to steer AI answers."
+      "fail:hidden-instructions": "{count} pieces of hidden, instruction-like text aimed at AI systems were found in hidden elements, comments or attributes; the analyst confirms whether they try to steer AI answers.",
+      "fail:invisible-text": "{count} pieces of text hidden from readers were found, including text written in invisible Unicode tag characters, which models can still read; the analyst confirms whether they try to steer AI answers."
     }
   },
   "ai-agent-readiness": {

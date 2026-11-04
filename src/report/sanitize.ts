@@ -1,11 +1,13 @@
 /**
  * Text copied from an audited site is untrusted: it can carry control characters, bidirectional overrides that
- * disguise what a reader sees, terminal escape sequences, or instructions aimed at whoever reads the report,
- * including coding agents. These helpers neutralise it before it reaches a report, a task file or a terminal.
+ * disguise what a reader sees, invisible characters that hide words from readers but not from models, terminal
+ * escape sequences, or instructions aimed at whoever reads the report, including coding agents. These helpers
+ * neutralise it before it reaches a report, a task file, a model or a terminal.
  */
 
-// C0 and C1 controls except tab and line feed, bidirectional overrides and isolates, and zero-width characters.
-const unsafeCharacters = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u061C\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/gu;
+// C0 and C1 controls except tab and line feed, and every invisible format character: bidirectional controls,
+// zero-width characters, Unicode tags, variation selectors and the other default-ignorable code points.
+const unsafeCharacters = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\p{Cf}\p{Default_Ignorable_Code_Point}]/gu;
 const terminalEscapes = /\u001B(?:\[[0-?]*[ -/]*[@-~]|\][^\u0007\u001B]*(?:\u0007|\u001B\\)|[@-_])/gu;
 
 export function cleanText(value: string, maxLength = 2000): string {

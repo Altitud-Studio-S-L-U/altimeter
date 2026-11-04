@@ -1,5 +1,6 @@
 import type { DefaultTreeAdapterTypes } from 'parse5';
 import { linkGraph } from '../analyze/graph.ts';
+import { tagText } from '../analyze/tag-text.ts';
 import { maxExcerptLength, type EvidenceItem, type EvidenceKind } from '../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../core/facts.ts';
 import type { PageType } from '../core/types.ts';
@@ -24,7 +25,7 @@ export interface SiteItem {
   readonly label: string;
   /** Exactly what the site returned, for the injection rules and the report. */
   readonly original: string;
-  /** What the model sees: control, zero-width and bidirectional characters removed, bounded. */
+  /** What the model sees: control characters and invisible format characters removed, bounded. */
   readonly text: string;
   readonly url: string;
   readonly href?: string;
@@ -510,10 +511,17 @@ const injectionPatterns: ReadonlyArray<{ readonly id: string; readonly test: (te
 /**
  * Site text that addresses AI systems. It is reported for the ai-hidden-llm-instructions rule to judge and
  * never changes how answers are validated, because validation only compares quotes and facts with the evidence.
+ * Words written in Unicode tag characters are a candidate whatever they say: no reader sees them, and models
+ * never receive them either, because site text is cleaned of them.
  */
 export function injectionCandidates(strings: SiteStrings): InjectionCandidate[] {
   const candidates: InjectionCandidate[] = [];
   for (const item of strings.items.values()) {
+    const hidden = tagText(item.original);
+    if (hidden.length > 0) {
+      candidates.push({ ruleId: 'ai-hidden-llm-instructions', page: item.page, evidenceId: item.id, where: item.label, pattern: 'invisible-text', excerpt: cleanDisplay(hidden.join(' '), 200), visible: false });
+      continue;
+    }
     const text = fold(item.original);
     for (const { id, test } of injectionPatterns) {
       if (!test(text)) continue;
