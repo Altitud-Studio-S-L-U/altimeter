@@ -30,8 +30,12 @@ export function botSiteInput(site: SiteFacts): BotSiteInput {
   }
   const sitemapUrls = [...new Set(site.sitemaps.flatMap(entry => entry.document?.kind === 'urlset' ? entry.document.urls.map(url => url.loc) : []))];
   // Logs record the host that serves the site: the variant robots.txt or the home page redirects to, as for the bots command.
-  const origin = (robots && !robots.fetch.error ? movedWithinSite(robots.fetch.finalUrl, site.origin) : undefined)
-    ?? (site.homeUrl ? movedWithinSite(site.homeUrl, site.origin) : undefined) ?? site.origin;
+  // Logs name hosts, not schemes, so a move to https alone gives way to the other redirect's change of host.
+  const moves = [robots && !robots.fetch.error ? robots.fetch.finalUrl : undefined, site.homeUrl]
+    .map(url => (url === undefined ? undefined : movedWithinSite(url, site.origin)))
+    .filter((moved): moved is string => moved !== undefined);
+  const host = new URL(site.origin).hostname;
+  const origin = moves.find(moved => new URL(moved).hostname !== host) ?? moves[0] ?? site.origin;
   return { origin, ...(robotsInput ? { robots: robotsInput } : {}), sitemapUrls };
 }
 

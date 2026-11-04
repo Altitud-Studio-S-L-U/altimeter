@@ -108,4 +108,14 @@ describe('site input for an audit', () => {
     assert.equal(botSiteInput(audited('https://cdn.example.net/robots.txt')).origin, 'https://example.com', 'another site is never taken');
     assert.equal(botSiteInput(audited()).origin, 'https://example.com');
   });
+
+  test('takes the host the home page moves to when robots.txt only moves to https on the audited host', () => {
+    const url = 'http://example.com/robots.txt';
+    const fetch = response(url, { body: rules, headers: { 'content-type': 'text/plain' }, redirects: [[301, 'https://example.com/robots.txt']] });
+    const home = page('http://example.com/', { redirects: [[301, 'https://example.com/'], [301, 'https://www.example.com/']] });
+    const facts = { ...site({ origin: 'http://example.com', pages: [home], homeUrl: home.fetch.finalUrl }), robots: { url, fetch, availability: robotsAvailability(200, Buffer.from(rules)) } };
+    assert.equal(botSiteInput(facts).origin, 'https://www.example.com', 'the logs name the host, whatever the scheme');
+    const apex = page('http://example.com/', { redirects: [[301, 'https://example.com/']] });
+    assert.equal(botSiteInput({ ...facts, pages: new Map([[apex.url, apex]]), homeUrl: apex.fetch.finalUrl }).origin, 'https://example.com');
+  });
 });
