@@ -1,5 +1,5 @@
 import type { PageType } from '../core/types.ts';
-import type { StructuredData } from '../parse/structured-data.ts';
+import type { StructuredData, StructuredNode } from '../parse/structured-data.ts';
 
 export interface PageTypeInput {
   readonly url: string;
@@ -25,6 +25,9 @@ const utility = /\b(search|buscar|cercar|cart|carrito|cistella|checkout|login|si
 const services = /^(services?|servicios?|serveis?|servei)$/iu;
 const listing = /^(blog|news|noticias|noticies|category|categoria|tag|etiqueta|archive|archivo|arxiu)$/iu;
 const localeRoot = /^\/(?:[a-z]{2}(?:[-_][a-z]{2,4})?\/?)?$/iu;
+
+/** Nodes that say what the page is: top-level ones and the main entity of another node, such as an ItemPage's Product. */
+const describesPage = (node: StructuredNode) => !node.nested || /\.mainEntity(?:\[\d+\])?$/u.test(node.path);
 
 function segments(url: string): string[] {
   try {
@@ -54,10 +57,10 @@ export function classifyPage(input: PageTypeInput): PageTypeDecision {
   if (legal.test(parts.join(' ')) || legal.test(input.h1 ?? '')) return { type: 'legal', reason: 'legal or policy page' };
   if (contact.test(last) || contact.test(input.h1 ?? '')) return { type: 'contact', reason: 'contact page' };
   if (about.test(last)) return { type: 'about', reason: 'about page' };
-  const types = new Set(input.data?.nodes.filter(node => !node.nested).flatMap(node => node.types) ?? []);
+  const types = new Set(input.data?.nodes.filter(describesPage).flatMap(node => node.types) ?? []);
   if (['Product', 'ProductGroup'].some(type => types.has(type)) || input.ogType === 'product') return { type: 'product', reason: 'Product markup or og:type product' };
-  if (['Article', 'NewsArticle', 'BlogPosting', 'TechArticle', 'Report'].some(type => types.has(type)) || input.ogType === 'article') {
-    return { type: 'article', reason: 'Article markup or og:type article' };
+  if (['Article', 'NewsArticle', 'BlogPosting', 'TechArticle', 'Report', 'Recipe'].some(type => types.has(type)) || input.ogType === 'article') {
+    return { type: 'article', reason: 'Article or Recipe markup or og:type article' };
   }
   if (['CollectionPage', 'ItemList', 'SearchResultsPage'].some(type => types.has(type)) || (parts.length === 1 && listing.test(last))) {
     return { type: 'listing', reason: 'collection markup or listing path' };

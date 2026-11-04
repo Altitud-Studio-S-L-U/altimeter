@@ -38,3 +38,15 @@ test('uses structured data and Open Graph types for content pages', () => {
   assert.equal(type({ url: 'https://example.com/en/services/custom-software/' }), 'service');
   assert.equal(type({ url: 'https://example.com/en/open-source/' }), 'other');
 });
+
+test('reads the main entity of a page node and treats recipes as articles', () => {
+  const data = (html: string) => extractStructuredData(parseHtml(html));
+  const jsonLd = (value: unknown) => data(`<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', ...value as object })}</script>`);
+  const lamp = { '@type': 'Product', name: 'Lamp', offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' } };
+  assert.equal(type({ url: 'https://example.com/receptes/pa-amb-tomaquet', data: jsonLd({ '@type': 'Recipe', name: 'Pa amb tomaquet' }) }), 'article');
+  assert.equal(type({ url: 'https://example.com/item/lamp', data: jsonLd({ '@type': 'ItemPage', mainEntity: lamp }) }), 'product');
+  assert.equal(type({ url: 'https://example.com/item/lamp', data: jsonLd({ '@graph': [{ '@type': 'ItemPage', mainEntity: [lamp] }] }) }), 'product');
+  const microdata = '<div itemscope itemtype="https://schema.org/ItemPage"><div itemprop="mainEntity" itemscope itemtype="https://schema.org/Product"><span itemprop="name">Lamp</span></div></div>';
+  assert.equal(type({ url: 'https://example.com/item/lamp', data: data(microdata) }), 'product');
+  assert.equal(type({ url: 'https://example.com/posts/lamp-review', data: jsonLd({ '@type': 'BlogPosting', headline: 'H', review: { '@type': 'Review', itemReviewed: lamp } }) }), 'article');
+});
