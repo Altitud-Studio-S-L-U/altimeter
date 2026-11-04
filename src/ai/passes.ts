@@ -186,6 +186,7 @@ function entryOf(item: SiteItem): PackEntry {
     ...(item.href === undefined ? {} : { href: item.href }),
     ...(item.path === undefined ? {} : { path: item.path }),
     ...(item.hidden === undefined ? {} : { hidden: item.hidden }),
+    ...(item.kind === 'header' ? { header: true } : {}),
     complete: item.complete,
   };
 }
@@ -201,6 +202,7 @@ export function packSections(plan: PassPlan, strings: SiteStrings, report: Repor
     text: cleanText(item.excerpt ?? '', 2000),
     ...(item.url ? { href: cleanText(item.url, 2000) } : {}),
     ...(item.path ? { path: cleanText(item.path, 300) } : {}),
+    ...(item.kind === 'header' ? { header: true } : {}),
     complete: item.complete,
   }));
   if (entries.length > 0) sections.push({ name: 'deterministic-evidence', complete: true, entries });

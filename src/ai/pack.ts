@@ -14,6 +14,8 @@ export interface PackEntry {
   readonly href?: string;
   readonly path?: string;
   readonly hidden?: string;
+  /** True for an HTTP response header, whose request-specific values are left out of cache keys. */
+  readonly header?: boolean;
   readonly complete: boolean;
 }
 
@@ -64,7 +66,11 @@ function jsonLine(value: unknown): string {
   return text;
 }
 
-const volatileHeaders = /^(?:response header )?(?:date|age|expires|set-cookie|cookie|cf-ray|cf-cache-status|x-request-id|x-amz-cf-id|x-cache|x-served-by|x-timer|server-timing|report-to|nel)\b/iu;
+const volatileNames = 'date|age|expires|set-cookie|cookie|cf-ray|cf-cache-status|x-request-id|x-amz-cf-id|x-cache|x-served-by|x-timer|server-timing|report-to|nel';
+/** A header item whose label names a volatile header, such as "response header date" or "Date response header". */
+const volatileLabel = new RegExp(`^(?:response header )?(?:${volatileNames})\\b`, 'iu');
+/** A "name: value" line of a volatile header inside a header item. */
+const volatileLine = new RegExp(`^(\\s*(?:${volatileNames})\\s*:).*$`, 'gimu');
 const tokenNames = '(?:nonce|csrf[\\w-]*|xsrf[\\w-]*|_token|authenticity_token|__requestverificationtoken)';
 const volatilePatterns: ReadonlyArray<readonly [RegExp, string]> = [
   // nonce="...", csrf_token: "...", "_token":"..."
@@ -82,9 +88,14 @@ export function scrubVolatile(text: string): string {
 /** Room kept for the line that lists omitted sections. */
 const omittedReserve = 600;
 
+/** A header item's text without the values that change on every request; the text of any other item is site content and stays. */
+function headerText(entry: PackEntry): string {
+  if (entry.header !== true) return entry.text;
+  return volatileLabel.test(entry.label) ? '[volatile]' : entry.text.replace(volatileLine, '$1 [volatile]');
+}
+
 function entryJson(entry: PackEntry, canonical: boolean): string {
-  const volatile = canonical && (volatileHeaders.test(entry.label) || volatileHeaders.test(entry.text));
-  const text = canonical ? (volatile ? '[volatile]' : scrubVolatile(entry.text)) : entry.text;
+  const text = canonical ? scrubVolatile(headerText(entry)) : entry.text;
   return jsonLine({
     id: entry.id,
     label: entry.label,
