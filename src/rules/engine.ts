@@ -53,20 +53,24 @@ export interface Finding {
   readonly needsJudgment?: boolean;
 }
 
-/** Whether a collected input exists for this page or site. */
+/**
+ * Whether a collected input exists for this page or site. At site scope a per-page input counts as available when
+ * at least one auditable page has it, so a site rule can require, say, one rendered page.
+ */
 export function inputAvailable(input: InputId, site: SiteFacts, page: PageFacts | undefined): boolean {
+  const onPage = (has: (entry: PageFacts) => boolean) => page ? has(page) : [...site.pages.values()].some(entry => !entry.notAuditable && has(entry));
   switch (input) {
     case 'http':
     case 'redirects':
-      return page ? page.fetch.status !== undefined : site.pages.size > 0;
+      return onPage(entry => entry.fetch.status !== undefined);
     case 'raw-html':
-      return page?.raw !== undefined;
+      return onPage(entry => entry.raw !== undefined);
     case 'rendered-dom':
-      return page?.rendered !== undefined && page.rendered.result.error === undefined;
+      return onPage(entry => entry.rendered !== undefined && entry.rendered.result.error === undefined);
     case 'user-render':
-      return page?.userRender !== undefined && page.userRender.result.error === undefined;
+      return onPage(entry => entry.userRender !== undefined && entry.userRender.result.error === undefined);
     case 'unblocked-render':
-      return page?.unblockedRender !== undefined && page.unblockedRender.result.error === undefined;
+      return onPage(entry => entry.unblockedRender !== undefined && entry.unblockedRender.result.error === undefined);
     case 'resources':
       return site.resources.length > 0;
     case 'robots':
@@ -82,9 +86,9 @@ export function inputAvailable(input: InputId, site: SiteFacts, page: PageFacts 
     case 'crawl':
       return site.crawled;
     case 'lighthouse':
-      return page?.lighthouse?.ok === true;
+      return onPage(entry => entry.lighthouse?.ok === true);
     case 'crux':
-      return page?.crux !== undefined && Object.values(page.crux).some(byForm => Object.values(byForm).some(result => result?.status !== 'no-key'));
+      return onPage(entry => entry.crux !== undefined && Object.values(entry.crux).some(byForm => Object.values(byForm).some(result => result?.status !== 'no-key')));
     case 'tls':
       return site.tls !== undefined;
     case 'ua-probe':

@@ -71,6 +71,17 @@ describe('runRules', () => {
     assert.ok(findings.filter(f => f.ruleId === needsRender.id).every(f => f.outcome === 'not_evaluated' && f.reason === 'missing-input:rendered-dom'));
   });
 
+  test('counts a page input as available to a site rule when an auditable page has it', () => {
+    const siteRule = meta({ id: 'content-test-site', scope: 'site', inputs: ['raw-html'] });
+    const counter: RuleImplementation = { id: siteRule.id, evaluate: () => ({ outcome: 'pass' }) };
+    const outcome = (facts: SiteFacts) => runRules({ rules: [siteRule], implementations: new Map([[counter.id, counter]]), site: facts, evidence: new EvidenceStore() })[0];
+    assert.equal(outcome(site(pages))?.outcome, 'pass');
+    const withoutHtml = pages.map(({ raw: _raw, ...rest }) => rest);
+    assert.deepEqual([outcome(site(withoutHtml))?.outcome, outcome(site(withoutHtml))?.reason], ['not_evaluated', 'missing-input:raw-html']);
+    const blocked = pages.map(entry => ({ ...entry, notAuditable: 'challenge' }));
+    assert.equal(outcome(site(blocked))?.outcome, 'not_evaluated');
+  });
+
   test('skips planned rules and rules without an implementation', () => {
     const findings = runRules({ rules: [meta({ status: 'planned' }), meta({ id: 'content-unimplemented' })], implementations: new Map([[titleRule.id, titleRule]]),
       site: site(pages), evidence: new EvidenceStore() });
