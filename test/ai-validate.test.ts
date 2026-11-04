@@ -244,11 +244,13 @@ describe('validating proposals', () => {
       proposal('title', 'Valley rooms | Hotel Example | HTTPS://EVIL.EXAMPLE'),
       proposal('meta-description', 'Our 45 rooms look over the valley of Andorra la Vella. Book at www.evil.example today.'),
       proposal('meta-description', `Our ${fullWidth('46')} rooms look over the valley of Andorra la Vella, with breakfast in the garden room.`),
+      proposal('title', 'Valley rooms, book:www.evil.example | Hotel Example'),
     ]);
     assert.deepEqual(reasons(result), ['new-fact']);
     assert.deepEqual(result.proposals.map(entry => (entry.kind === 'json-ld' ? undefined : [entry.text, entry.placeholders])), [
       [`Valley rooms | Hotel Example | ${ownerPlaceholder}`, 1],
       [`Our 45 rooms look over the valley of Andorra la Vella. Book at ${ownerPlaceholder} today.`, 1],
+      [`Valley rooms, book:${ownerPlaceholder} | Hotel Example`, 1],
     ]);
   });
 

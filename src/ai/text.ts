@@ -104,8 +104,11 @@ export function checkQuote(quote: string, source: string): QuoteCheck {
 const phonePattern = /(?:\+|00)?\d[\d ()./-]{6,}\d/gu;
 const numberPattern = /\d+(?:[.,]\d+)*/gu;
 const emailPattern = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.\p{L}{2,}/gu;
-/** Web addresses in text: with an http or https scheme in any case, or without one when they start with www. */
-export const urlPattern = /(?:https?:\/\/|(?<![\p{L}\p{N}@./:-])www\.)[^\s"'<>()]+/giu;
+/**
+ * Web addresses in text: with an http or https scheme in any case, or without one when they start with www. and are
+ * not part of a longer host name, path or email address.
+ */
+export const urlPattern = /(?:https?:\/\/|(?<![\p{L}\p{N}@./-])www\.)[^\s"'<>()]+/giu;
 
 /** Superlatives and comparative claims in English, Spanish and Catalan, folded (no accents, lower case). */
 const superlatives = [
