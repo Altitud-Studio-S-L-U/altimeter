@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
 import { EvidenceStore } from '../src/core/evidence.ts';
@@ -16,6 +18,8 @@ import type { TaskCheck } from '../src/report/tasks.ts';
 import { serveStatic } from '../src/verify/static-server.ts';
 import { rebaseSite, verifyExitCode, verifyTasks } from '../src/verify/index.ts';
 import { page, site } from './support/facts.ts';
+
+const cli = fileURLToPath(new URL('../src/cli/main.ts', import.meta.url));
 
 const titleRule: RuleImplementation = {
   id: 'content-title-missing',
@@ -181,5 +185,30 @@ describe('static server and rebasing', () => {
     assert.equal(entry?.url, 'https://example.com/en/');
     assert.equal(entry?.fetch.hops[0]?.location, 'https://example.com/en/');
     assert.equal(rebased.homeUrl, 'https://example.com/');
+  });
+});
+
+describe('altimeter verify', () => {
+  test('passes a fixed task and names the checks that must keep passing but need --render', async () => {
+    const work = await mkdtemp(join(tmpdir(), 'altimeter-verify-cli-'));
+    try {
+      const html = '<!doctype html><html lang="en"><head><title>Home</title></head><body><h1>Home</h1></body></html>';
+      const facts = site({ pages: [page('https://example.com/', { html, rendered: html })], homeUrl: 'https://example.com/' });
+      const evidence = new EvidenceStore();
+      const used = catalogRules.filter(rule => rule.id === 'content-meta-description-missing' || rule.id === 'content-title-raw-rendered-mismatch');
+      const findings = runRules({ rules: used, implementations: registered, site: facts, evidence });
+      const collected: CollectResult = { site: facts, versions: {}, warnings: [], durationMs: 1 };
+      const audited = buildReport({ collected, findings, evidence, implemented: used.length, language: 'en', startedAt: new Date('2026-11-04T10:00:00Z'), targetUrl: 'https://example.com/', options: {} });
+      const [task] = audited.tasks;
+      assert.deepEqual([audited.tasks.length, task?.ruleId, task?.mustRemainPassing.map(check => check.ruleId)], [1, 'content-meta-description-missing', ['content-title-raw-rendered-mismatch']]);
+      await writeFile(join(work, 'report.json'), JSON.stringify(audited));
+      await mkdir(join(work, 'dist'));
+      await writeFile(join(work, 'dist', 'index.html'), html.replace('</title>', '</title><meta name="description" content="What the home page offers, in one sentence.">'));
+      const result = spawnSync(process.execPath, [cli, 'verify', join(work, 'report.json'), '--static', join(work, 'dist')], { encoding: 'utf8', windowsHide: true });
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stdout, `${task!.id} PASS\n  content-title-raw-rendered-mismatch not re-checked (missing-input:rendered-dom) · https://example.com/\n`);
+    } finally {
+      await rm(work, { recursive: true, force: true });
+    }
   });
 });
