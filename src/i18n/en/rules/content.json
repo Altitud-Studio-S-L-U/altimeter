@@ -234,9 +234,9 @@
   },
   "content-img-alt-missing": {
     "messages": {
-      "fail": "{count} of {total} images have no alt attribute ({emptyAlt} others have alt=\"\", which is correct for decorative images).",
-      "fail:content-image": "{count} of {total} images have no alt attribute, including content images in the main content ({emptyAlt} others have alt=\"\", which is correct for decorative images).",
-      "fail:other-image": "{count} of {total} images have no alt attribute ({emptyAlt} others have alt=\"\", which is correct for decorative images)."
+      "fail": "{count, plural, one {# of {total} images has} other {# of {total} images have}} no alt attribute (images with alt=\"\", which is correct for decorative images: {emptyAlt}).",
+      "fail:content-image": "{count, plural, one {# of {total} images has no alt attribute, a content image in the main content} other {# of {total} images have no alt attribute, including content images in the main content}} (images with alt=\"\", which is correct for decorative images: {emptyAlt}).",
+      "fail:other-image": "{count, plural, one {# of {total} images has} other {# of {total} images have}} no alt attribute (images with alt=\"\", which is correct for decorative images: {emptyAlt})."
     }
   },
   "content-img-alt-quality": {
