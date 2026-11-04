@@ -148,6 +148,7 @@ The Spanish (Spain) terms used to translate the rule catalog and report messages
 | owner, owner data | propietario, datos del propietario | |
 | candidate, analyst | candidato, analista | to be confirmed by the analyst: `Pendiente de que lo confirme el analista` |
 | finding, check, evidence | hallazgo, comprobación, evidencia | |
+| severity: critical, high, medium, low, info | severidad: crítica, alta, media, baja, informativa | feminine, agreeing with `severidad` |
 | sampled | muestreado | sampled paths: `rutas muestreadas` |
 | report (verb) | informar de, indicar | |
 | referrer, referring hosts | URL de referencia, sitios de referencia | |

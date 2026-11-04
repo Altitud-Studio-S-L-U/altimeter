@@ -137,6 +137,7 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 | English | Català | Notes |
 | --- | --- | --- |
 | check, finding | comprovació, troballa | as in the report |
+| severity: critical, high, medium, low, info | severitat: crítica, alta, mitjana, baixa, informativa | feminine, agreeing with «severitat» |
 | evidence | evidència | |
 | owner, owner data | propietari, dades del propietari | |
 | candidate, analyst | candidat, analista | «l'analista ho hauria de confirmar» |
