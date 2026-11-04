@@ -210,6 +210,16 @@ describe('myth patterns', () => {
     }
   });
 
+  test('no pattern matches a report message', () => {
+    const messages = new URL('../src/i18n/en/rules/', import.meta.url);
+    for (const file of readdirSync(messages).filter(name => name.endsWith('.json'))) {
+      const entries = JSON.parse(readFileSync(new URL(file, messages), 'utf8')) as Record<string, { readonly messages: Record<string, string> }>;
+      for (const [id, entry] of Object.entries(entries)) {
+        for (const text of Object.values(entry.messages)) assert.deepEqual(matchedIds(text), [], `${id}: ${describeMatches(text)}`);
+      }
+    }
+  });
+
   test('a recommendation that repeats a myth is matched by that myth and no other', () => {
     assert.deepEqual(Object.keys(repeats).sort(), myths.map(myth => myth.id).sort(), 'every myth needs exactly one sample');
     for (const [id, text] of Object.entries(repeats)) {
