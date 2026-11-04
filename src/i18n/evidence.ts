@@ -24,7 +24,7 @@ export function evidenceLabelText(language: Language, item: Pick<EvidenceItem, '
   return item.labelParts.map(part => {
     const template = catalog[part.template];
     if (template === undefined) return format(part.template, part.params);
-    return format(template, part.params === undefined ? undefined : localizeParams(language, part.params));
+    return format(template, part.params === undefined ? undefined : localizeParams(language, part.params), language);
   }).join(' ');
 }
 
@@ -43,6 +43,6 @@ export function quotedEvidenceLabel(language: Language, item: Pick<EvidenceItem,
       const shown = translation === undefined ? value : localizeValue(language, name, value);
       return [name, isCatalogWord(name, value) ? shown : quote(shown)];
     }));
-    return format(translation ?? part.template, values);
+    return format(translation ?? part.template, values, translation === undefined ? 'en' : language);
   }).join(' ');
 }

@@ -241,7 +241,7 @@ function statuses(values: Readonly<Record<string, number>>): string {
 }
 
 function evidenceLine(item: EvidenceItem, language: Language): string {
-  const where = [item.url, item.line ? format(ui(language).lineNumber, { line: item.line }) : undefined].filter(Boolean).join(', ');
+  const where = [item.url, item.line ? format(ui(language).lineNumber, { line: item.line }, language) : undefined].filter(Boolean).join(', ');
   const head = `${cleanLine(evidenceLabelText(language, item))}${where ? ` (${untrustedInline(where, 160)})` : ''}`;
   if (item.excerpt === undefined) return head;
   return item.excerpt.includes('\n') ? `${head}:\n\n${untrustedBlock(item.excerpt, 3000).split('\n').map(line => `    ${line}`).join('\n')}\n` : `${head}: ${untrustedInline(item.excerpt, 300)}`;
@@ -259,15 +259,15 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
   const evidence = new Map(report.evidence.map(item => [item.id, item]));
   const lines: string[] = [];
   const site = report.origin ? new URL(report.origin).host : undefined;
-  lines.push(`# ${site ? format(l.title, { site: cleanLine(site, 120) }) : l.titleNoSite}`, '');
-  lines.push(format(l.window, { start: day(activity.window.start), end: day(activity.window.end), days: activity.window.days }), '');
-  lines.push(format(l.generated, { version: report.tool.version, date: day(report.generatedAt) }), '');
+  lines.push(`# ${site ? format(l.title, { site: cleanLine(site, 120) }, language) : l.titleNoSite}`, '');
+  lines.push(format(l.window, { start: day(activity.window.start), end: day(activity.window.end), days: activity.window.days }, language), '');
+  lines.push(format(l.generated, { version: report.tool.version, date: day(report.generatedAt) }, language), '');
   lines.push(`## ${l.sources}`, '');
   for (const source of activity.sources) {
     if (source.kind === 'access-log') {
-      lines.push(`- ${format(l.logSource, { file: untrustedInline(source.file, 120), format: source.format, lines: source.lines, records: source.records, malformed: source.malformed })}`);
+      lines.push(`- ${format(l.logSource, { file: untrustedInline(source.file, 120), format: source.format, lines: source.lines, records: source.records, malformed: source.malformed }, language)}`);
     } else {
-      lines.push(`- ${format(l.cloudflareSource, { zone: untrustedInline(source.zone, 120), queries: source.queries, dimensions: source.dimensions.map(name => `\`${cleanLine(name, 40)}\``).join(', ') })}`);
+      lines.push(`- ${format(l.cloudflareSource, { zone: untrustedInline(source.zone, 120), queries: source.queries, dimensions: source.dimensions.map(name => `\`${cleanLine(name, 40)}\``).join(', ') }, language)}`);
     }
   }
   if (activity.sampled) lines.push('', l.sampled);
@@ -317,7 +317,7 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
   }
 
   lines.push(`## ${l.notObservable}`, '');
-  for (const token of activity.notObservable) lines.push(`- ${format(l.notObservableLine, { name: token.name, operator: token.operator })}`);
+  for (const token of activity.notObservable) lines.push(`- ${format(l.notObservableLine, { name: token.name, operator: token.operator }, language)}`);
   lines.push('');
 
   lines.push(`## ${l.referrals}`, '');
@@ -325,21 +325,21 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
   if (!referrals) lines.push(l.referralsMissing);
   else if (referrals.total === 0 && referrals.tagged === 0 && referrals.byHost.length === 0) lines.push(l.referralsNone);
   else {
-    for (const entry of referrals.byHost) lines.push(`- ${format(l.referralLine, { host: entry.host, assistant: entry.assistant, visits: amount(activity, language, entry.visits) })}`);
-    lines.push(`- ${format(l.tagged, { count: amount(activity, language, referrals.tagged) })}`);
+    for (const entry of referrals.byHost) lines.push(`- ${format(l.referralLine, { host: entry.host, assistant: entry.assistant, visits: amount(activity, language, entry.visits) }, language)}`);
+    lines.push(`- ${format(l.tagged, { count: amount(activity, language, referrals.tagged) }, language)}`);
   }
   lines.push('', l.referralsCaveat, '');
 
   lines.push(`## ${t.method}`, '', ...l.definitions.map(line => `- ${line}`), '');
-  lines.push(format(l.clientIp, { source: `\`${activity.clientIp.source}\``, checkable: amount(activity, language, activity.clientIp.checkable), claims: amount(activity, language, activity.clientIp.claims) }));
+  lines.push(format(l.clientIp, { source: `\`${activity.clientIp.source}\``, checkable: amount(activity, language, activity.clientIp.checkable), claims: amount(activity, language, activity.clientIp.claims) }, language));
   const discarded = Object.entries(activity.clientIp.discarded);
-  if (discarded.length > 0) lines.push('', format(l.discarded, { list: discarded.map(([reason, hits]) => `\`${cleanLine(reason, 40)}\` ${amount(activity, language, hits)}`).join(', ') }));
-  lines.push('', activity.dns.enabled ? format(activity.dns.capped ? l.dnsOnCapped : l.dnsOn, { lookups: activity.dns.lookups, errors: activity.dns.errors }) : l.dnsOff);
-  if (activity.site?.robots) lines.push('', format(l.robots, { date: day(activity.site.robots.effectiveFrom), source: l.robotsSources[activity.site.robots.effectiveFromSource] }));
+  if (discarded.length > 0) lines.push('', format(l.discarded, { list: discarded.map(([reason, hits]) => `\`${cleanLine(reason, 40)}\` ${amount(activity, language, hits)}`).join(', ') }, language));
+  lines.push('', activity.dns.enabled ? format(activity.dns.capped ? l.dnsOnCapped : l.dnsOn, { lookups: activity.dns.lookups, errors: activity.dns.errors }, language) : l.dnsOff);
+  if (activity.site?.robots) lines.push('', format(l.robots, { date: day(activity.site.robots.effectiveFrom), source: l.robotsSources[activity.site.robots.effectiveFromSource] }, language));
   if (activity.ipLists.length > 0) {
     lines.push('', `### ${l.lists}`, '');
     for (const list of activity.ipLists) {
-      lines.push(`- ${format(l.listLine, { id: `\`${list.id}\``, prefixes: list.prefixes, created: untrustedInline(list.creationTime ?? '-', 40), from: l.listSources[list.from] })} <${list.url}>`);
+      lines.push(`- ${format(l.listLine, { id: `\`${list.id}\``, prefixes: list.prefixes, created: untrustedInline(list.creationTime ?? '-', 40), from: l.listSources[list.from] }, language)} <${list.url}>`);
     }
   }
   if (activity.warnings.length > 0) lines.push('', `### ${t.warnings}`, '', ...activity.warnings.map(warning => `- ${cleanLine(localizeValue(language, 'warning', warning), 400)}`));

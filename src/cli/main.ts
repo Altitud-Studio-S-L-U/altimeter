@@ -264,7 +264,7 @@ async function auditCommand(args: string[]): Promise<number> {
     const { score, coverage, tasks } = report;
     process.stdout.write(`\nAltimeter ${version} · ${cleanLine(report.target.url)}\n`);
     process.stdout.write(`${t.score} ${score.overall ?? t.notScored} · ${t.indexability}: ${t.indexabilityStates[score.indexability]}\n`);
-    process.stdout.write(`${cleanLine(format(t.coverageLine, { evaluated: coverage.evaluated, notEvaluated: coverage.notEvaluated, notApplicable: coverage.notApplicable }))}\n`);
+    process.stdout.write(`${cleanLine(format(t.coverageLine, { evaluated: coverage.evaluated, notEvaluated: coverage.notEvaluated, notApplicable: coverage.notApplicable }, lang))}\n`);
     if (report.ai) process.stdout.write(`${cleanLine(analysisSummary(report.ai, lang))}\n`);
     if (tasks.length > 0) process.stdout.write(`\n${t.topActions}:\n`);
     for (const task of tasks.slice(0, 5)) {

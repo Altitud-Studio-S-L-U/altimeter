@@ -34,7 +34,7 @@ describe('translating the values of messages and labels', () => {
 
   test('fills patterns whose parts are translated by their own names, without matching across list items', () => {
     assert.equal(localizeValue('es', 'conditions', 'lab, Lighthouse 13.6.0, mobile, simulate throttling'), 'laboratorio, Lighthouse 13.6.0, móvil, limitación simulada');
-    assert.equal(localizeValue('ca', 'metrics', 'LCP 3200 ms (needs improvement), CLS 0.31 (poor)'), 'LCP 3200 ms (cal millorar), CLS 0.31 (deficient)');
+    assert.equal(localizeValue('ca', 'metrics', 'LCP 3200 ms (needs improvement), CLS 0.31 (poor)'), 'LCP 3200 ms (cal millorar), CLS 0,31 (deficient)');
     assert.equal(localizeValue('es', 'entities', 'Tag Manager: main thread 120 ms, transfer 45 KiB; Widget: main thread 80 ms, transfer 30 KiB'),
       'Tag Manager: hilo principal 120 ms, transferencia 45 KiB; Widget: hilo principal 80 ms, transferencia 30 KiB');
     assert.equal(localizeValue('ca', 'operators', 'OpenAI (OAI-SearchBot blocked, GPTBot allowed) and 1 more'), 'OpenAI (OAI-SearchBot bloquejat, GPTBot permès) i 1 més');

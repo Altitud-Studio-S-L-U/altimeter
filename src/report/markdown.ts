@@ -18,12 +18,12 @@ export function scopeLabel(scope: FindingScope): string {
 
 /** Where an evidence item was observed: its URL, line and path. */
 export function evidenceWhere(item: Pick<EvidenceItem, 'url' | 'line' | 'path'>, language: Language): string {
-  return [item.url, item.line ? format(ui(language).lineNumber, { line: item.line }) : undefined, item.path].filter(Boolean).join(', ');
+  return [item.url, item.line ? format(ui(language).lineNumber, { line: item.line }, language) : undefined, item.path].filter(Boolean).join(', ');
 }
 
 /** Where an evidence item was observed, for Markdown: the URL and the path come from the site, so both are quoted. */
 function evidenceWhereMarkdown(item: Pick<EvidenceItem, 'url' | 'line' | 'path'>, language: Language): string {
-  return [item.url ? untrustedInline(item.url, 300) : undefined, item.line ? format(ui(language).lineNumber, { line: item.line }) : undefined, item.path ? untrustedInline(item.path, 200) : undefined]
+  return [item.url ? untrustedInline(item.url, 300) : undefined, item.line ? format(ui(language).lineNumber, { line: item.line }, language) : undefined, item.path ? untrustedInline(item.path, 200) : undefined]
     .filter(Boolean).join(', ');
 }
 
@@ -71,7 +71,7 @@ export function providerLabel(summary: ProviderSummary | undefined, nobody: stri
 export function analysisSummary(analysis: ReportAnalysis, language: Language): string {
   const strings = ui(language).analysis;
   const planned = analysis.calls.filter(call => call.status === 'planned').length;
-  if (planned > 0 && planned === analysis.calls.length) return format(strings.dryRunLine, { calls: planned });
+  if (planned > 0 && planned === analysis.calls.length) return format(strings.dryRunLine, { calls: planned }, language);
   const calls = analysis.calls.filter(call => call.status !== 'skipped' && call.status !== 'planned');
   // Codex reports no cost, so a total of zero there means unknown rather than free.
   const priced = calls.some(call => call.costUsd !== undefined);
@@ -80,8 +80,8 @@ export function analysisSummary(analysis: ReportAnalysis, language: Language): s
     findings: analysis.findings.filter(finding => finding.outcome === 'fail').length, proposals: analysis.proposals.length,
     judgments: analysis.findings.length + analysis.confirmations.length, calls: calls.length,
     cached: calls.filter(call => call.status === 'cached').length,
-    costPart: priced ? format(strings.costPart, { cost }) : '',
-  });
+    costPart: priced ? format(strings.costPart, { cost }, language) : '',
+  }, language);
 }
 
 /**
@@ -116,7 +116,7 @@ function analysisLines(analysis: ReportAnalysis, language: Language, findings: r
   lines.push(format(a.by, {
     analyst: markdownText(providerLabel(analysis.provider.analyst, a.nobody)), verifier: markdownText(providerLabel(analysis.provider.verifier, a.nobody)),
     pages: analysis.pages.map(page => untrustedInline(page, 120)).join(', ') || '-',
-  }), '', cleanLine(analysisSummary(analysis, language)), '');
+  }, language), '', cleanLine(analysisSummary(analysis, language)), '');
   lines.push(`### ${a.verified}`, '');
   const failures = analysis.findings.filter(finding => finding.outcome === 'fail');
   if (failures.length === 0) lines.push(a.none);
@@ -179,14 +179,14 @@ export function renderMarkdown(report: Report, language: Language): string {
   const evidence = new Map(report.evidence.map(item => [item.id, item]));
   const lines: string[] = [];
   const date = report.run.startedAt.slice(0, 10);
-  lines.push(`# ${format(t.reportTitle, { site: cleanLine(new URL(report.target.origin).host) })}`, '');
-  lines.push(`${t.audited}: ${untrustedInline(report.target.url)} · ${format(t.generated, { version: report.tool.version, date })}`, '');
+  lines.push(`# ${format(t.reportTitle, { site: cleanLine(new URL(report.target.origin).host) }, language)}`, '');
+  lines.push(`${t.audited}: ${untrustedInline(report.target.url)} · ${format(t.generated, { version: report.tool.version, date }, language)}`, '');
 
   lines.push(`## ${t.summary}`, '', `| | ${t.score} |`, '| --- | --- |');
   lines.push(`| **${t.overall}** | ${report.score.overall ?? t.notScored} |`);
   for (const entry of report.score.categories) lines.push(`| ${t.categories[entry.category]} | ${entry.score ?? t.notScored} |`);
   lines.push('', `**${t.indexability}:** ${t.indexabilityStates[report.score.indexability]}`, '');
-  lines.push(`**${t.coverage}:** ${format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable })}`);
+  lines.push(`**${t.coverage}:** ${format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable }, language)}`);
   const missing = Object.entries(report.coverage.missingInputs);
   if (missing.length > 0) lines.push('', `${t.missingInputs}: ${missing.map(([input, count]) => `\`${input}\` (${count})`).join(', ')}`);
   if (report.run.warnings.length > 0) lines.push('', `**${t.warnings}:**`, ...report.run.warnings.map(warning => `- ${markdownText(localizeValue(language, 'warning', warning))}`));
@@ -218,7 +218,7 @@ export function renderMarkdown(report: Report, language: Language): string {
         if (item) lines.push(`  - ${t.evidence}: ${evidenceLine(item, language)}`);
       }
       if (texts.fix) lines.push(`  - ${t.fix}: ${markdownText(texts.fix, 700)}`);
-      for (const source of rule?.sources.slice(0, 2) ?? []) lines.push(`  - ${t.source}: <${source.url}> (${format(t.verified, { date: source.verified })})`);
+      for (const source of rule?.sources.slice(0, 2) ?? []) lines.push(`  - ${t.source}: <${source.url}> (${format(t.verified, { date: source.verified }, language)})`);
     }
     if (inCategory.length > 0) lines.push('');
   }
@@ -243,8 +243,8 @@ export function renderMarkdown(report: Report, language: Language): string {
   lines.push(`## ${t.pages}`, '', `| ${t.page} | ${t.status} | ${t.type} | ${t.rendered} |`, '| --- | --- | --- | --- |');
   for (const page of report.pages) lines.push(`| ${untrustedInline(page.finalUrl, 160)} | ${page.status ?? '-'} | ${cleanLine(pageTypeText(page.pageType, language))} | ${page.rendered ? t.yes : t.no} |`);
   lines.push('', `## ${t.method}`, '', t.methodIntro, '', markdownText(formulaText(report, language), 1200), '');
-  lines.push(`${format(t.mythsLine, { count: myths.length })} <${mythsListUrl}>`, '');
-  const catalog = format(t.catalogLine, { hash: `\`${cleanLine(report.catalog.hash.slice(0, 12))}\``, implemented: report.catalog.implemented, rules: report.catalog.rules });
+  lines.push(`${format(t.mythsLine, { count: myths.length }, language)} <${mythsListUrl}>`, '');
+  const catalog = format(t.catalogLine, { hash: `\`${cleanLine(report.catalog.hash.slice(0, 12))}\``, implemented: report.catalog.implemented, rules: report.catalog.rules }, language);
   lines.push(`${catalog} · Node ${report.run.versions.node}${report.run.versions.chrome ? ` · ${markdownText(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${markdownText(report.run.versions.lighthouse)}` : ''}`, '');
   return lines.join('\n');
 }
@@ -279,7 +279,7 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
     const label = quotedEvidenceLabel(language, item, value => untrustedInline(value, 200));
     const entry = `- \`${item.id}\` ${label}${where ? ` (${where})` : ''}${block}`;
     if (used + entry.length > evidenceBudget) {
-      lines.push(`- ${format(t.moreEvidence, { count: task.evidence.length })}`);
+      lines.push(`- ${format(t.moreEvidence, { count: task.evidence.length }, language)}`);
       break;
     }
     used += entry.length;
@@ -293,21 +293,21 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
     lines.push('');
   }
   lines.push(`### ${t.acceptance}`, '');
-  for (const check of task.acceptance) lines.push(`- ${format(t.acceptanceLine, { rule: check.ruleId, scope: untrustedInline(scopeLabel(check.scope), 160) })}`);
+  for (const check of task.acceptance) lines.push(`- ${format(t.acceptanceLine, { rule: check.ruleId, scope: untrustedInline(scopeLabel(check.scope), 160) }, language)}`);
   if (task.mustRemainPassing.length > 0) {
     lines.push('', `### ${t.keepPassing}`, '');
     for (const check of task.mustRemainPassing) lines.push(`- \`${check.ruleId}\` · ${untrustedInline(scopeLabel(check.scope), 160)}`);
   }
   lines.push('', `### ${t.source}`, '');
-  for (const source of task.sources) lines.push(`- <${source.url}> (${format(t.verified, { date: source.verified })})`);
+  for (const source of task.sources) lines.push(`- <${source.url}> (${format(t.verified, { date: source.verified }, language)})`);
   return lines.join('\n');
 }
 
 /** FIXES.md: every task in priority order, with the handling rules for untrusted text first. */
 export function renderFixPlan(report: Report, language: Language): string {
   const t = ui(language);
-  const header = [`# ${format(t.fixPlanTitle, { site: cleanLine(new URL(report.target.origin).host) })}`, '',
-    format(t.generated, { version: report.tool.version, date: report.run.startedAt.slice(0, 10) }), '', ...t.fixPlanIntro.map(line => `- ${line}`), ''];
+  const header = [`# ${format(t.fixPlanTitle, { site: cleanLine(new URL(report.target.origin).host) }, language)}`, '',
+    format(t.generated, { version: report.tool.version, date: report.run.startedAt.slice(0, 10) }, language), '', ...t.fixPlanIntro.map(line => `- ${line}`), ''];
   if (report.tasks.length === 0) return [...header, t.noActions, ''].join('\n');
   return [...header, ...report.tasks.map(task => taskBody(report, task, language, 6000)), ''].join('\n\n');
 }

@@ -2,20 +2,29 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { rules } from '../src/catalog/index.ts';
 import { labelCatalogs } from '../src/i18n/evidence.ts';
-import { catalogsByCategory, placeholders, type Language } from '../src/i18n/messages.ts';
+import { argumentSignature, templateProblems as syntaxProblems } from '../src/i18n/format.ts';
+import { catalogsByCategory, type Language } from '../src/i18n/messages.ts';
 import { ui } from '../src/i18n/ui.ts';
 import { valueCatalogs } from '../src/i18n/values.ts';
 
 const codeSpans = (text: string) => (text.match(/`[^`]+`/gu) ?? []).sort();
 
-/** Differences between an English template catalog and a translation: missing or extra keys and changed placeholders. */
-function templateProblems(where: string, english: Readonly<Record<string, string>>, translated: Readonly<Record<string, string>>): string[] {
+/** Whether a translation fills in the same values as the English template, each written the same way. */
+const sameArguments = (translation: string, english: string) => JSON.stringify(argumentSignature(translation)) === JSON.stringify(argumentSignature(english));
+
+/** Syntax problems of a template in `language`, such as a plural without its other branch. */
+const malformed = (where: string, template: string, language: Language) => syntaxProblems(template, language).map(problem => `${where}: ${problem}`);
+
+/** Differences between an English template catalog and a translation: missing or extra keys, changed values and malformed templates. */
+function templateProblems(where: string, english: Readonly<Record<string, string>>, translated: Readonly<Record<string, string>>, language: Language): string[] {
   const problems: string[] = [];
   for (const [key, template] of Object.entries(english)) {
     const translation = translated[key];
+    problems.push(...malformed(`${where}: English "${key}"`, template, 'en'));
     if (translation === undefined || translation.trim() === '') problems.push(`${where}: "${key}" is not translated`);
-    else if (JSON.stringify(placeholders(translation)) !== JSON.stringify(placeholders(template))) problems.push(`${where}: "${key}" has other placeholders`);
+    else if (!sameArguments(translation, template)) problems.push(`${where}: "${key}" has other placeholders`);
     else if (translation.trim() !== translation) problems.push(`${where}: "${key}" has surrounding whitespace`);
+    else problems.push(...malformed(`${where}: "${key}"`, translation, language));
   }
   for (const key of Object.keys(translated)) if (!(key in english)) problems.push(`${where}: "${key}" is not an English template`);
   return problems;
@@ -30,11 +39,13 @@ function uiTexts(value: unknown, path = ''): Array<[string, string]> {
 
 for (const language of ['es', 'ca'] as const satisfies readonly Language[]) {
   describe(`${language} report interface`, () => {
-    test('has every string of the English one, with the same placeholders', () => {
+    test('has every string of the English one, with the same placeholders and well-formed plurals', () => {
       const english = new Map(uiTexts(ui('en')));
       const translated = new Map(uiTexts(ui(language)));
-      const problems = [...english].filter(([path, text]) => translated.get(path) === undefined || JSON.stringify(placeholders(translated.get(path)!)) !== JSON.stringify(placeholders(text)))
+      const problems = [...english].filter(([path, text]) => translated.get(path) === undefined || !sameArguments(translated.get(path)!, text))
         .map(([path]) => path);
+      for (const [path, text] of english) problems.push(...malformed(`English ${path}`, text, 'en'));
+      for (const [path, text] of translated) problems.push(...malformed(path, text, language));
       assert.deepEqual(problems, []);
     });
   });
@@ -42,7 +53,7 @@ for (const language of ['es', 'ca'] as const satisfies readonly Language[]) {
   const values = valueCatalogs[language];
   describe(`${language} values that code writes into messages and labels`, { skip: Object.keys(values).length === 0 ? `no ${language} values yet` : false }, () => {
     test('translate every English value of src/i18n/en/values.json with the same placeholders', () => {
-      const problems = Object.entries(valueCatalogs.en).flatMap(([section, english]) => templateProblems(`values.${section}`, english, values[section] ?? {}));
+      const problems = Object.entries(valueCatalogs.en).flatMap(([section, english]) => templateProblems(`values.${section}`, english, values[section] ?? {}, language));
       for (const section of Object.keys(values)) if (!(section in valueCatalogs.en)) problems.push(`values.${section} is not an English section`);
       assert.deepEqual(problems, []);
     });
@@ -51,7 +62,7 @@ for (const language of ['es', 'ca'] as const satisfies readonly Language[]) {
   const labels = labelCatalogs[language];
   describe(`${language} evidence labels`, { skip: Object.keys(labels).length === 0 ? `no ${language} evidence labels yet` : false }, () => {
     test('translate every template of src/i18n/en/evidence.json with the same placeholders', () => {
-      assert.deepEqual(templateProblems('evidence', labelCatalogs.en, labels), []);
+      assert.deepEqual(templateProblems('evidence', labelCatalogs.en, labels, language), []);
     });
   });
 }
@@ -80,7 +91,7 @@ for (const language of ['es', 'ca'] as const satisfies readonly Language[]) {
       assert.deepEqual(problems, []);
     });
 
-    test('keep the placeholders and code spans of the English text', () => {
+    test('keep the placeholders and code spans of the English text, with well-formed plurals', () => {
       const problems: string[] = [];
       for (const rule of rules.filter(entry => entry.status !== 'planned')) {
         const entry = catalogsByCategory[language][rule.category][rule.id];
@@ -91,7 +102,8 @@ for (const language of ['es', 'ca'] as const satisfies readonly Language[]) {
         }
         for (const [key, template] of Object.entries(english?.messages ?? {})) {
           const translation = entry.messages[key] ?? '';
-          if (JSON.stringify(placeholders(translation)) !== JSON.stringify(placeholders(template))) problems.push(`${rule.id}.${key}: placeholders differ`);
+          if (!sameArguments(translation, template)) problems.push(`${rule.id}.${key}: placeholders differ`);
+          problems.push(...malformed(`${rule.id}.${key}`, translation, language));
           if (JSON.stringify(codeSpans(translation)) !== JSON.stringify(codeSpans(template))) problems.push(`${rule.id}.${key}: code spans differ`);
           if (translation.trim() !== translation) problems.push(`${rule.id}.${key}: surrounding whitespace`);
         }

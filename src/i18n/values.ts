@@ -129,7 +129,15 @@ function translateExact(language: Language, name: string, value: string, ruleId:
   return undefined;
 }
 
-/** The first pattern of the catalog that matches the whole value, with each part translated by its own name. */
+/** A number as code wrote it into English text, which a translation writes again in its own language. */
+const englishNumber = /^(?:0|[1-9]\d*)(?:\.\d+)?$/u;
+/** Parts that hold codes or names made of digits, which keep the digits as they are. */
+const digitParts: ReadonlySet<string> = new Set(['file', 'id', 'line', 'name', 'status', 'version']);
+
+/**
+ * The first pattern of the catalog that matches the whole value, with each part translated by its own name, and
+ * each part that is a number passed as a number, so the translation writes it its own way and can pick a plural.
+ */
 function translatePattern(language: Language, name: string, value: string, ruleId: string | undefined, depth: number): string | undefined {
   if (depth >= 4 || value.length > 2000) return undefined;
   for (const section of sections(language, name, ruleId)) {
@@ -137,11 +145,12 @@ function translatePattern(language: Language, name: string, value: string, ruleI
       if (!pattern.literals.every(literal => value.includes(literal))) continue;
       const match = pattern.regex.exec(value);
       if (!match) continue;
-      const parts: Record<string, string> = {};
+      const parts: Record<string, string | number> = {};
       pattern.names.forEach((part, index) => {
-        parts[part] = translate(language, part, match[index + 1]!, ruleId, depth + 1);
+        const text = match[index + 1]!;
+        parts[part] = englishNumber.test(text) && !digitParts.has(part) ? Number(text) : translate(language, part, text, ruleId, depth + 1);
       });
-      return format(section[pattern.key]!, parts);
+      return format(section[pattern.key]!, parts, language);
     }
   }
   return undefined;
@@ -176,7 +185,7 @@ function translate(language: Language, name: string, value: string, ruleId: stri
   if (!more && !known) return value;
   const head = more ? more[1]! : value;
   const items = known ? translateKnown(language, name, head, ruleId, depth) ?? head : head;
-  return more ? format(ui(language).moreItems, { items, count: more[2]! }) : items;
+  return more ? format(ui(language).moreItems, { items, count: Number(more[2]!) }, language) : items;
 }
 
 /** One value of parameter `name` with the English words code wrote into it translated to `language`. */
