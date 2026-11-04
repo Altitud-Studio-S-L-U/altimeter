@@ -89,6 +89,20 @@ describe('altimeter bots', () => {
     }
   });
 
+  test('prints its progress, summary and warnings in the language of --lang', async () => {
+    const spanish = await run(['--logs', logFixture('nginx.ndjson'), '--out', join(work, 'out-es-terminal'), '--lang', 'es']);
+    assert.equal(spanish.code, 0);
+    assert.match(spanish.stderr, /^· Sin --site: no se comparan el robots\.txt ni los sitemaps\.$/mu);
+    assert.match(spanish.stderr, /^· Leyendo nginx\.ndjson$/mu);
+    assert.match(spanish.stdout, /^Actividad de rastreadores del 20\d\d-\d\d-\d\d al 20\d\d-\d\d-\d\d$/mu);
+    assert.match(spanish.stdout, /^ {2}GPTBot \(OpenAI, entrenamiento\): 1 verificada, 0 sin verificar, 1 suplantada$/mu);
+    assert.match(spanish.stdout, /^ {2}meta-externalagent \(Meta, entrenamiento\): 1 declarada, sin comprobación publicada$/mu);
+    assert.match(spanish.stdout, /^\d+ hallazgos? · /mu);
+    const catalan = await run(['--logs', logFixture('nginx.ndjson'), '--out', join(work, 'out-ca-terminal'), '--lang', 'ca']);
+    assert.match(catalan.stdout, /^Troballes: \d+ · /mu);
+    for (const text of [spanish.stdout, spanish.stderr, catalan.stdout]) assert.doesNotMatch(text, /Crawler activity|Reading |finding\(s\)|verified,/u);
+  });
+
   test('keeps hostile log text out of the terminal and quotes it as untrusted data', async () => {
     const escape = String.fromCharCode(27);
     const override = String.fromCodePoint(0x202e);

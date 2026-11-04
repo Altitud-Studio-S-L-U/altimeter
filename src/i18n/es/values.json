@@ -222,6 +222,28 @@
     "invalid key \"{key}\"": "clave «{key}» no válida",
     "{key} needs y or n": "{key} necesita «y» o «n»"
   },
+  "progress": {
+    "Fetching {url}": "Obteniendo {url}",
+    "Reading sitemaps": "Leyendo los sitemaps",
+    "Probing URL variants and an unknown path": "Probando variantes de la URL y una ruta desconocida",
+    "Probing crawler user agents": "Probando los user-agents de rastreadores",
+    "Fetching referenced resources and language probes": "Obteniendo los recursos referenciados y las pruebas de idioma",
+    "Fetching the hreflang alternates of the page": "Obteniendo las alternativas hreflang de la página",
+    "Crawling the site": "Rastreando el sitio",
+    "Crawled {done}/{max}": "Páginas rastreadas: {done}/{max}",
+    "Rendering {url}": "Renderizando {url}",
+    "Running Lighthouse": "Ejecutando Lighthouse",
+    "Querying Chrome UX Report field data": "Consultando los datos de campo de Chrome UX Report",
+    "Reading Cloudflare analytics for {zone}": "Leyendo las analíticas de Cloudflare de la zona {zone}",
+    "Reading {file}": "Leyendo {file}",
+    "Checking {count} crawler address in reverse DNS": "Comprobando {count} dirección de rastreador en el DNS inverso",
+    "Checking {count} crawler addresses in reverse DNS": "Comprobando {count} direcciones de rastreadores en el DNS inverso",
+    "Reading robots.txt and the sitemaps of {origin}": "Leyendo el robots.txt y los sitemaps de {origin}",
+    "No --site given: robots.txt and sitemaps are not compared.": "Sin --site: no se comparan el robots.txt ni los sitemaps.",
+    "Asking {engine} ({caller}, {pass})": "Consultando a {engine} ({caller}, {pass})",
+    "Asking {engine}: {queryId}, run {run} of {runs}": "Consultando a {engine}: {queryId}, ejecución {run} de {runs}",
+    "Checking {target}": "Comprobando {target}"
+  },
   "purpose": {
     "search": "búsqueda",
     "training": "entrenamiento",

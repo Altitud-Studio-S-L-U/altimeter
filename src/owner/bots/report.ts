@@ -58,6 +58,13 @@ interface Labels {
   readonly noFindings: string;
   readonly crawlers: string;
   readonly noCrawlers: string;
+  readonly summaryHeading: string;
+  readonly summaryHeadingSampled: string;
+  readonly summaryTally: string;
+  readonly summaryClaimed: string;
+  readonly summaryEstimates: string;
+  readonly summaryNone: string;
+  readonly summaryFindings: string;
   readonly columns: readonly string[];
   readonly purposes: Readonly<Record<BotPurpose, string>>;
   readonly unverifiable: string;
@@ -101,6 +108,13 @@ const labels: Readonly<Record<Language, Labels>> = {
     noFindings: 'No crawler rule failed.',
     crawlers: 'Crawlers',
     noCrawlers: 'No request from a known crawler in the window.',
+    summaryHeading: 'Crawler activity from {start} to {end}',
+    summaryHeadingSampled: 'Crawler activity from {start} to {end} (Cloudflare counts are estimates)',
+    summaryTally: '{verified} verified, {unverified} unverified, {spoofed} spoofed',
+    summaryClaimed: '{claimed} claimed, no published check',
+    summaryEstimates: '(estimates)',
+    summaryNone: 'No request from a known crawler.',
+    summaryFindings: '{count, plural, one {# finding} other {# findings}} · {path}',
     columns: ['Crawler', 'Operator', 'Purpose', 'Verified', 'Unverified', 'Spoofed', 'Last verified', 'robots.txt', 'llms.txt'],
     purposes: { search: 'search', training: 'training', 'user-triggered': 'on user request' },
     unverifiable: 'no published check',
@@ -147,6 +161,13 @@ const labels: Readonly<Record<Language, Labels>> = {
     noFindings: 'Ninguna regla de rastreadores ha fallado.',
     crawlers: 'Rastreadores',
     noCrawlers: 'No hay ninguna solicitud de un rastreador conocido en la ventana.',
+    summaryHeading: 'Actividad de rastreadores del {start} al {end}',
+    summaryHeadingSampled: 'Actividad de rastreadores del {start} al {end} (las cifras de Cloudflare son estimaciones)',
+    summaryTally: '{verified, plural, one {# verificada} other {# verificadas}}, {unverified} sin verificar, {spoofed, plural, one {# suplantada} other {# suplantadas}}',
+    summaryClaimed: '{claimed, plural, one {# declarada} other {# declaradas}}, sin comprobación publicada',
+    summaryEstimates: '(estimaciones)',
+    summaryNone: 'Ninguna solicitud de un rastreador conocido.',
+    summaryFindings: '{count, plural, one {# hallazgo} other {# hallazgos}} · {path}',
     columns: ['Rastreador', 'Operador', 'Finalidad', 'Verificadas', 'Sin verificar', 'Suplantadas', 'Última verificada', 'robots.txt', 'llms.txt'],
     purposes: { search: 'búsqueda', training: 'entrenamiento', 'user-triggered': 'a petición del usuario' },
     unverifiable: 'sin comprobación publicada',
@@ -193,6 +214,13 @@ const labels: Readonly<Record<Language, Labels>> = {
     noFindings: 'Cap regla de rastrejadors no ha fallat.',
     crawlers: 'Rastrejadors',
     noCrawlers: 'Cap sol·licitud de cap rastrejador conegut durant el període.',
+    summaryHeading: 'Activitat de rastrejadors del {start} al {end}',
+    summaryHeadingSampled: 'Activitat de rastrejadors del {start} al {end} (les xifres de Cloudflare són estimacions)',
+    summaryTally: '{verified, plural, one {# verificada} other {# verificades}}, {unverified} sense verificar, {spoofed, plural, one {# suplantada} other {# suplantades}}',
+    summaryClaimed: '{claimed, plural, one {# declarada} other {# declarades}}, sense comprovació publicada',
+    summaryEstimates: '(estimacions)',
+    summaryNone: 'Cap sol·licitud de cap rastrejador conegut.',
+    summaryFindings: 'Troballes: {count} · {path}',
     columns: ['Rastrejador', 'Operador', 'Finalitat', 'Verificades', 'Sense verificar', 'Suplantades', 'Darrera verificació', 'robots.txt', 'llms.txt'],
     purposes: { search: 'cerca', training: 'entrenament', 'user-triggered': 'a petició de l\'usuari' },
     unverifiable: 'sense comprovació publicada',
@@ -253,6 +281,26 @@ function tallyCell(activity: BotActivity, language: Language, bot: BotSummary, v
 }
 
 /** bots.md: what crawlers did, the rule findings and how the data was read. Untrusted text is quoted as data. */
+/** What `altimeter bots` prints when it is done: the window, the busiest crawlers and the failed checks, in `language`. */
+export function botsSummary(report: BotsReport, path: string, language: Language): string[] {
+  const l = labels[language];
+  const activity = report.activity;
+  const window = { start: activity.window.start.slice(0, 10), end: activity.window.end.slice(0, 10) };
+  const bots = activity.bots.slice(0, 12).map(bot => {
+    const counts = !bot.verifiable && bot.verified.hits === 0
+      ? format(l.summaryClaimed, { claimed: Math.round(bot.unverified.hits) }, language)
+      : format(l.summaryTally, { verified: Math.round(bot.verified.hits), unverified: Math.round(bot.unverified.hits), spoofed: Math.round(bot.spoofed.hits) }, language);
+    return `  ${bot.name} (${bot.operator}, ${l.purposes[bot.purpose]}): ${counts}${activity.sampled ? ` ${l.summaryEstimates}` : ''}`;
+  });
+  const failures = report.findings.filter(finding => finding.outcome === 'fail').length;
+  return [
+    `
+${format(activity.sampled ? l.summaryHeadingSampled : l.summaryHeading, window, language)}`,
+    ...(bots.length > 0 ? bots : [`  ${l.summaryNone}`]),
+    format(l.summaryFindings, { count: failures, path }, language), '',
+  ];
+}
+
 export function renderBotsMarkdown(report: BotsReport, language: Language): string {
   const t = ui(language);
   const l = labels[language];

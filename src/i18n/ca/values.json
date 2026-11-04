@@ -222,6 +222,28 @@
     "invalid key \"{key}\"": "clau «{key}» no vàlida",
     "{key} needs y or n": "{key} necessita y o n"
   },
+  "progress": {
+    "Fetching {url}": "Obtenint {url}",
+    "Reading sitemaps": "Llegint els mapes del lloc",
+    "Probing URL variants and an unknown path": "Provant variants de la URL i un camí desconegut",
+    "Probing crawler user agents": "Provant els agents d'usuari dels rastrejadors",
+    "Fetching referenced resources and language probes": "Obtenint els recursos referenciats i les proves de llengua",
+    "Fetching the hreflang alternates of the page": "Obtenint les alternatives hreflang de la pàgina",
+    "Crawling the site": "Rastrejant el lloc",
+    "Crawled {done}/{max}": "Pàgines rastrejades: {done}/{max}",
+    "Rendering {url}": "Renderitzant {url}",
+    "Running Lighthouse": "Executant Lighthouse",
+    "Querying Chrome UX Report field data": "Consultant les dades de camp de Chrome UX Report",
+    "Reading Cloudflare analytics for {zone}": "Llegint les analítiques de Cloudflare de la zona {zone}",
+    "Reading {file}": "Llegint {file}",
+    "Checking {count} crawler address in reverse DNS": "Comprovant {count} adreça de rastrejador al DNS invers",
+    "Checking {count} crawler addresses in reverse DNS": "Comprovant {count} adreces de rastrejadors al DNS invers",
+    "Reading robots.txt and the sitemaps of {origin}": "Llegint el robots.txt i els mapes del lloc ({origin})",
+    "No --site given: robots.txt and sitemaps are not compared.": "Sense --site: no es comparen el robots.txt ni els mapes del lloc.",
+    "Asking {engine} ({caller}, {pass})": "Consultant {engine} ({caller}, {pass})",
+    "Asking {engine}: {queryId}, run {run} of {runs}": "Consultant {engine}: {queryId}, execució {run} de {runs}",
+    "Checking {target}": "Comprovant {target}"
+  },
   "purpose": {
     "search": "cerca",
     "training": "entrenament",

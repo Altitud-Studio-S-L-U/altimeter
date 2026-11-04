@@ -131,6 +131,26 @@ describe('the value catalogs', () => {
     assert.deepEqual(missing, []);
   });
 
+  test('know every progress line that code logs, so the terminal speaks the language of --lang', () => {
+    const normalize = (template: string) => template.replace(/\{[a-zA-Z][a-zA-Z0-9]*\}/gu, '{}');
+    const known = new Set(Object.keys(valueCatalogs.en.progress ?? {}).map(normalize));
+    known.add('Checking {} crawler address{} in reverse DNS');
+    const logged = /(?<!console\.)\blog(?:\?\.)?\(\s*(?:'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`)\s*\)/gu;
+    const missing: string[] = [];
+    let checked = 0;
+    for (const text of sources(sourceDirectory)) {
+      for (const match of text.matchAll(logged)) {
+        const template = (match[1] ?? match[2] ?? '').replace(/\\'/gu, '\'').replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/gu, '{}');
+        checked += 1;
+        if (!known.has(template)) missing.push(template);
+      }
+    }
+    assert.ok(checked >= 15, `only ${checked} progress lines found`);
+    assert.deepEqual(missing, []);
+    assert.equal(localizeValue('es', 'progress', 'Crawled 4/10'), 'Páginas rastreadas: 4/10');
+    assert.equal(localizeValue('ca', 'progress', 'Checking 1 crawler address in reverse DNS'), 'Comprovant 1 adreça de rastrejador al DNS invers');
+  });
+
   test('know every parameter that holds a language name', () => {
     const names = new Set<string>();
     for (const text of sources(rulesDirectory)) for (const match of text.matchAll(/\b([A-Za-z]+): (?:list\()?(?:[a-z.]+\.map\()?languageLabel\b/gu)) names.add(match[1]!);

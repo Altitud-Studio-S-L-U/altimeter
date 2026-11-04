@@ -222,6 +222,28 @@
     "invalid key \"{key}\"": "invalid key \"{key}\"",
     "{key} needs y or n": "{key} needs y or n"
   },
+  "progress": {
+    "Fetching {url}": "Fetching {url}",
+    "Reading sitemaps": "Reading sitemaps",
+    "Probing URL variants and an unknown path": "Probing URL variants and an unknown path",
+    "Probing crawler user agents": "Probing crawler user agents",
+    "Fetching referenced resources and language probes": "Fetching referenced resources and language probes",
+    "Fetching the hreflang alternates of the page": "Fetching the hreflang alternates of the page",
+    "Crawling the site": "Crawling the site",
+    "Crawled {done}/{max}": "Crawled {done}/{max}",
+    "Rendering {url}": "Rendering {url}",
+    "Running Lighthouse": "Running Lighthouse",
+    "Querying Chrome UX Report field data": "Querying Chrome UX Report field data",
+    "Reading Cloudflare analytics for {zone}": "Reading Cloudflare analytics for {zone}",
+    "Reading {file}": "Reading {file}",
+    "Checking {count} crawler address in reverse DNS": "Checking {count} crawler address in reverse DNS",
+    "Checking {count} crawler addresses in reverse DNS": "Checking {count} crawler addresses in reverse DNS",
+    "Reading robots.txt and the sitemaps of {origin}": "Reading robots.txt and the sitemaps of {origin}",
+    "No --site given: robots.txt and sitemaps are not compared.": "No --site given: robots.txt and sitemaps are not compared.",
+    "Asking {engine} ({caller}, {pass})": "Asking {engine} ({caller}, {pass})",
+    "Asking {engine}: {queryId}, run {run} of {runs}": "Asking {engine}: {queryId}, run {run} of {runs}",
+    "Checking {target}": "Checking {target}"
+  },
   "purpose": {
     "search": "search",
     "training": "training",

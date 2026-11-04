@@ -323,7 +323,8 @@ export async function collectBotActivity(options: CollectBotActivityOptions): Pr
       const limit = options.maxDnsLookups ?? 400;
       const queue = [...candidates].sort((a, b) => b[1].hits - a[1].hits);
       capped = queue.length > limit;
-      if (queue.length > 0) log(`Checking ${Math.min(queue.length, limit)} crawler addresses in reverse DNS`);
+      const checking = Math.min(queue.length, limit);
+      if (checking > 0) log(`Checking ${checking} crawler address${checking === 1 ? '' : 'es'} in reverse DNS`);
       const results = await mapLimit(queue.slice(0, limit), 10, async ([address, entry]) => [address, await reverseDns(resolver, address, [...entry.suffixes])] as const);
       for (const [address, result] of results) {
         lookups += 1;

@@ -14,6 +14,7 @@ import { rule as catalogRule, rules as catalogRules } from '../catalog/index.ts'
 import { categories, type Category } from '../core/types.ts';
 import { format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
+import { localizeValue } from '../i18n/values.ts';
 import { findChrome } from '../render/chrome.ts';
 import { compareReports } from '../report/compare.ts';
 import { analysisSummary } from '../report/markdown.ts';
@@ -195,7 +196,7 @@ async function auditCommand(args: string[]): Promise<number> {
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 1000) throw new UsageError('--max-pages must be a whole number from 1 to 1000.');
   const lang = language(values.lang);
   const quiet = values.quiet === true;
-  const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(message)}\n`);
+  const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(localizeValue(lang, 'progress', message))}\n`);
   const useGsc = values.gsc === true || values['gsc-property'] !== undefined;
   const useBing = values.bing === true || values['bing-site'] !== undefined;
   if (values['bing-site'] !== undefined && !/^https?:\/\/[^/]/iu.test(values['bing-site'])) throw new UsageError('--bing-site must be the URL of a Bing Webmaster Tools site, for example https://example.com/.');
@@ -271,7 +272,7 @@ async function auditCommand(args: string[]): Promise<number> {
       const rule = catalogRule(task.ruleId);
       process.stdout.write(`  ${task.priority}. [${t.severities[task.severity]}] ${cleanLine(rule ? ruleTexts(lang, rule).title : task.title, 120)} (${task.id})\n`);
     }
-    for (const warning of [...report.run.warnings, ...(report.ai?.warnings ?? [])]) process.stderr.write(`! ${cleanLine(warning)}\n`);
+    for (const warning of [...report.run.warnings, ...(report.ai?.warnings ?? [])]) process.stderr.write(`! ${cleanLine(localizeValue(lang, 'warning', warning))}\n`);
     process.stdout.write(`\n${shown}${process.platform === 'win32' ? '\\' : '/'}report.md\n`);
   }
   return auditExitCode(result, failOn);
