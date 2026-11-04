@@ -1,1 +1,321 @@
-{}
+{
+  "perf-crux-lcp-p75": {
+    "messages": {
+      "fail": "Field LCP at p75 is {value} on {formFactor} ({scope} CrUX data), in the {band} range; good is 2500 ms or less.",
+      "fail:origin-level": "Field LCP at p75 is {value} on {formFactor}, in the {band} range; good is 2500 ms or less. This is {scope} CrUX data, which covers every page of the origin, not only this URL."
+    }
+  },
+  "perf-crux-inp-p75": {
+    "messages": {
+      "fail": "Field INP at p75 is {value} on {formFactor} ({scope} CrUX data), in the {band} range; good is 200 ms or less.",
+      "fail:origin-level": "Field INP at p75 is {value} on {formFactor}, in the {band} range; good is 200 ms or less. This is {scope} CrUX data, which covers every page of the origin, not only this URL."
+    }
+  },
+  "perf-crux-cls-p75": {
+    "messages": {
+      "fail": "Field CLS at p75 is {value} on {formFactor} ({scope} CrUX data), in the {band} range; good is 0.1 or less.",
+      "fail:origin-level": "Field CLS at p75 is {value} on {formFactor}, in the {band} range; good is 0.1 or less. This is {scope} CrUX data, which covers every page of the origin, not only this URL."
+    }
+  },
+  "perf-crux-cwv-assessment": {
+    "messages": {
+      "fail": "The field Core Web Vitals assessment on {formFactor} ({scope} CrUX data) is not good: {metrics}.",
+      "fail:origin-level": "The field Core Web Vitals assessment on {formFactor} is not good: {metrics}. This is {scope} CrUX data, which covers every page of the origin, not only this URL."
+    }
+  },
+  "perf-crux-data-availability": {
+    "messages": {
+      "fail": "CrUX has no field data for this URL or its origin. CrUX covers only public pages with enough opted-in Chrome traffic, so this is not a defect.",
+      "fail:origin-only": "CrUX has no URL-level field data for this page; only origin-level data exists ({formFactors}), and it covers every page of the origin.",
+      "fail:not-eligible-status": "CrUX has no field data for this URL or its origin. The URL answers HTTP {status}, and CrUX includes only public pages that answer 200.",
+      "fail:not-eligible-noindex": "CrUX has no field data for this URL or its origin. The page is noindex, which keeps it out of CrUX.",
+      "fail:no-field-data": "CrUX has no field data for this URL or its origin. CrUX covers only public pages with enough opted-in Chrome traffic, so this is not a defect."
+    }
+  },
+  "perf-crux-fcp-p75": {
+    "messages": {
+      "fail": "Field FCP at p75 is {value} on {formFactor} ({scope} CrUX data), in the {band} range; good is 1800 ms or less. FCP is a diagnostic, not a Core Web Vital.",
+      "fail:origin-level": "Field FCP at p75 is {value} on {formFactor}, in the {band} range; good is 1800 ms or less. This is {scope} CrUX data, covering every page of the origin. FCP is a diagnostic, not a Core Web Vital."
+    }
+  },
+  "perf-crux-ttfb-p75": {
+    "messages": {
+      "fail": "Field TTFB at p75 is {value} on {formFactor} ({scope} CrUX data), in the {band} range; good is 800 ms or less. TTFB is a diagnostic, not a Core Web Vital, and includes redirects and connection setup.",
+      "fail:origin-level": "Field TTFB at p75 is {value} on {formFactor}, in the {band} range; good is 800 ms or less. This is {scope} CrUX data, covering every page of the origin. TTFB is a diagnostic, not a Core Web Vital."
+    }
+  },
+  "perf-crux-lcp-subparts": {
+    "messages": {
+      "fail": "Field LCP p75 is {lcp} on {formFactor} ({scope} CrUX data). LCP image subparts above their guideline share: {subparts}. The subparts are independent percentiles, so the shares are approximate."
+    }
+  },
+  "perf-crux-navigation-types": {
+    "messages": {
+      "fail": "On {formFactor} ({scope} CrUX data), {backForward} of navigations are back/forward navigations that were not restored from the back/forward cache, against {restored} that were. The 5% gate is a tool heuristic."
+    }
+  },
+  "perf-crux-rtt-context": {
+    "messages": {
+      "fail": "CrUX round-trip time describes the users' connections, not the server."
+    }
+  },
+  "perf-crux-softnav-experimental": {
+    "messages": {
+      "fail": "On {formFactor} ({scope} CrUX data), the experimental metrics that include soft navigations fall in a different band: {metrics}. They are experimental and not part of the Core Web Vitals assessment."
+    }
+  },
+  "perf-lab-run-protocol": {
+    "messages": {
+      "fail": "The Lighthouse run protocol limits how stable the lab values are.",
+      "fail:few-runs": "Lab values come from the median of {validRuns} valid Lighthouse runs out of {runs}; {recommended} runs give a more stable median.",
+      "fail:run-warnings": "Lighthouse reported {count} run warnings, so the lab values may be unreliable."
+    }
+  },
+  "perf-lab-performance-score": {
+    "messages": {
+      "fail": "The Lighthouse performance score is {score} ({conditions}). It is a lab summary, not a Google ranking input.",
+      "fail:poor": "The Lighthouse performance score is {score} ({conditions}), in the 0-49 band. It is a lab summary, not a Google ranking input.",
+      "fail:needs-improvement": "The Lighthouse performance score is {score} ({conditions}), in the 50-89 band. It is a lab summary, not a Google ranking input."
+    }
+  },
+  "perf-lab-lcp": {
+    "messages": {
+      "fail": "Lab LCP is {value} ({conditions}), above the 2500 ms good threshold.",
+      "fail:field-precedence": "Lab LCP is {value} ({conditions}), above 2500 ms. Field data exists, so the field result decides the status and this lab value is a diagnostic."
+    }
+  },
+  "perf-lab-tbt-inp-proxy": {
+    "messages": {
+      "fail": "Lab Total Blocking Time is {value} ({conditions}). TBT measures main-thread blocking during load; it is lab evidence of INP risk, not field INP.",
+      "fail:field-precedence": "Lab Total Blocking Time is {value} ({conditions}). Field INP exists, so the field result decides the status and this lab value is a diagnostic."
+    }
+  },
+  "perf-lab-cls": {
+    "messages": {
+      "fail": "Lab CLS is {value} ({conditions}), above 0.1. Lab CLS covers the page load only.",
+      "fail:field-precedence": "Lab CLS is {value} ({conditions}), above 0.1. Field CLS exists, so the field result decides the status and this lab value is a diagnostic."
+    }
+  },
+  "perf-lcp-lazy-loaded": {
+    "messages": {
+      "fail": "The lab LCP image is lazy-loaded (loading=lazy) without a preload, so its request waits for layout.",
+      "fail:loading-lazy": "The lab LCP image is lazy-loaded (loading=lazy) without a preload, so its request waits for layout.",
+      "fail:script-lazy-load": "The LCP image URL appears only in a lazy-loading data attribute of its <img>, so it loads only after a script swaps it in."
+    }
+  },
+  "perf-lcp-not-discoverable": {
+    "messages": {
+      "fail": "The lab LCP image ({url}) is not requested by the parser from the server HTML or by a preload, so the browser discovers it late.",
+      "fail:conflicting-signals": "Lighthouse reports that the LCP image ({url}) was not requested by the parser from the server HTML, although the server HTML references it; check how the image is inserted."
+    }
+  },
+  "perf-lcp-fetchpriority": {
+    "messages": {
+      "fail": "The lab LCP image is discoverable but has no fetchpriority=high on its <img> or its preload.",
+      "fail:overuse": "{count} images in the HTML have fetchpriority=high; more than two compete with the LCP image for bandwidth."
+    }
+  },
+  "perf-lcp-breakdown-lab": {
+    "messages": {
+      "fail": "Lab LCP is {lcp}. LCP subparts above their guideline share of the lab breakdown: {subparts}."
+    }
+  },
+  "perf-lcp-client-side-rendered": {
+    "messages": {
+      "fail": "The LCP content was not found in the server HTML and lab LCP comes {gap} after FCP; it may be rendered by scripts.",
+      "fail:app-shell": "The server HTML has an empty body and the LCP content appears only after scripts run; lab LCP comes {gap} after FCP.",
+      "fail:content-differs": "The LCP content was not found in the server HTML and lab LCP comes {gap} after FCP. It may be rendered by scripts, or differ for personalisation or location."
+    }
+  },
+  "perf-lcp-antiflicker-hiding": {
+    "messages": {
+      "fail": "A page-hiding snippet ({snippet}) keeps the page invisible while scripts load, and the lab LCP element render delay is {delay}."
+    }
+  },
+  "perf-render-blocking": {
+    "messages": {
+      "fail": "{count} external scripts in the head block the parser: {scripts}.",
+      "fail:parser-blocking-script": "{count} external scripts in the head block the parser (no async, defer or type=module): {scripts}.",
+      "fail:consent-script": "{count} consent scripts in the head load synchronously: {scripts}. Some consent tools must run first; check whether the vendor offers an asynchronous loader that still blocks tags until consent.",
+      "fail:render-blocking-requests": "Lighthouse estimates that removing render-blocking requests from the critical path saves {savings} of lab FCP: {requests}."
+    }
+  },
+  "perf-document-redirects": {
+    "messages": {
+      "fail": "{from} redirects {hops} time(s) before {to} answers; each hop adds to TTFB and LCP."
+    }
+  },
+  "perf-server-response-time": {
+    "messages": {
+      "fail": "The document response took {lab} in the lab, over Lighthouse's 600 ms threshold (collector sample: {collector}). These are measurements from one location, not user TTFB."
+    }
+  },
+  "perf-text-compression": {
+    "messages": {
+      "fail": "Text responses are sent without gzip, Brotli or zstd compression.",
+      "fail:document": "The HTML response ({size} decoded) is sent without gzip, Brotli or zstd compression.",
+      "fail:assets": "{count} first-party text resources are sent without compression: {urls}."
+    }
+  },
+  "perf-http-protocol": {
+    "messages": {
+      "fail": "Static resources from {origins} load over HTTP/1.x, with six or more requests per origin queuing on a few connections.",
+      "fail:third-party": "Third-party origins {origins} serve six or more static requests over HTTP/1.x; this is outside the site's control."
+    }
+  },
+  "perf-static-cache-ttl": {
+    "messages": {
+      "fail": "{count} first-party static resources have a cache lifetime under 30 days or none: {urls}.",
+      "fail:fingerprinted": "{count} first-party static resources have a cache lifetime under 30 days or none: {urls}. {hashed} of them have fingerprinted file names, which can be cached for a year."
+    }
+  },
+  "perf-html-no-store": {
+    "messages": {
+      "fail": "The HTML is served with Cache-Control: {value} although nothing marks it as personalised; no-store prevents browser and shared caching of the page.",
+      "fail:sets-cookie": "The HTML is served with no-store and sets cookies. If the page is not personalised, a cacheable policy would allow browser and shared caching."
+    }
+  },
+  "perf-bfcache-eligibility": {
+    "messages": {
+      "fail": "Lighthouse found {count} actionable reasons that keep the page out of the back/forward cache: {reasons}."
+    }
+  },
+  "perf-unload-handlers": {
+    "messages": {
+      "fail": "The page registers {count} unload listener(s). Chrome no longer fires unload by default, but these listeners can still keep the page out of other browsers' back/forward cache."
+    }
+  },
+  "perf-unsized-images": {
+    "messages": {
+      "fail": "{count} images have no explicit dimensions; {aboveFold} of them are in the first viewport of the lab run.",
+      "fail:below-fold": "{count} images have no explicit dimensions, all below the first viewport of the lab run."
+    }
+  },
+  "perf-cls-culprits": {
+    "messages": {
+      "fail": "The worst lab layout shift cluster scores {score} ({clusters} clusters above 0.05). Root causes attributed by Lighthouse: {causes}.",
+      "fail:no-root-cause": "The worst lab layout shift cluster scores {score} ({clusters} clusters above 0.05) and Lighthouse attributed no root cause; the moved element is not necessarily the cause."
+    }
+  },
+  "perf-embed-reserved-space": {
+    "messages": {
+      "fail": "{count} embeds have no reserved space.",
+      "fail:attributed-shift": "{count} embeds have no width and height or reserved height, and Lighthouse attributes a lab layout shift to an injected iframe.",
+      "fail:unsized-embed": "{count} embeds have no width and height or inline reserved height; a stylesheet or container may still reserve the space."
+    }
+  },
+  "perf-non-composited-animations": {
+    "messages": {
+      "fail": "{count} elements run animations the browser cannot composite: {reasons}."
+    }
+  },
+  "perf-font-display": {
+    "messages": {
+      "fail": "{count} web fonts keep text invisible while they load: {fonts}."
+    }
+  },
+  "perf-font-preload-crossorigin": {
+    "messages": {
+      "fail": "{count} font preload or preconnect hints lack the crossorigin attribute, so the font request cannot reuse them."
+    }
+  },
+  "perf-font-format": {
+    "messages": {
+      "fail": "{count} font files are not WOFF2: {fonts}.",
+      "fail:not-woff2": "{count} font files are not WOFF2: {fonts}.",
+      "fail:many-files": "The page loads {count} font files ({size}) in the lab; more than six is a tool heuristic, not a limit."
+    }
+  },
+  "perf-preconnect-hints": {
+    "messages": {
+      "fail": "The page's preconnect hints do not match the requests it makes.",
+      "fail:too-many": "The page declares {count} preconnect hints. More than four is a heuristic: each opens a connection that competes with critical requests.",
+      "fail:combined-rel": "{count} link elements combine preconnect and dns-prefetch in one rel attribute; separate link elements are recommended.",
+      "fail:unused": "Preconnected origins received no lab request in the first 10 seconds: {origins}.",
+      "fail:missing": "Lighthouse estimates that a preconnect would speed up the requests to {origins}."
+    }
+  },
+  "perf-critical-request-chains": {
+    "messages": {
+      "fail": "The deepest critical request chain is {depth} requests after the document (longest chain {duration}, lab)."
+    }
+  },
+  "perf-image-delivery": {
+    "messages": {
+      "fail": "Images could be delivered with fewer bytes (lab estimate).",
+      "fail:lcp-image": "The LCP image {url} could be about {savings} smaller through size, format or compression (lab estimate).",
+      "fail:images": "{count} images could save about {savings} in total through size, format or compression (lab estimate)."
+    }
+  },
+  "perf-long-tasks": {
+    "messages": {
+      "fail": "{count} long tasks block the main thread for {blocking} beyond 50 ms each in the lab load. Scripts with the most execution time: {scripts}."
+    }
+  },
+  "perf-forced-reflow": {
+    "messages": {
+      "fail": "Scripts force synchronous layout during the lab load: {sources}."
+    }
+  },
+  "perf-dom-size": {
+    "messages": {
+      "fail": "The rendered DOM has {count} elements, above 1400.",
+      "fail:costly-rendering": "Lighthouse found costly layout or style recalculation on a large DOM; the rendered DOM has {count} elements.",
+      "fail:warn": "The rendered DOM has {count} elements, above the legacy warning level of 800."
+    }
+  },
+  "perf-third-party-cost": {
+    "messages": {
+      "fail": "Third-party code takes main-thread time in the lab load: {entities}.",
+      "fail:bytes": "Third-party code adds transfer size in the lab load: {entities}.",
+      "fail:consent-manager": "The consent manager costs {entities} in the lab load. It may be legally required, so look for a lighter loading option rather than removing it."
+    }
+  },
+  "perf-third-party-facades": {
+    "messages": {
+      "fail": "Embeds load their full code before any interaction: {embeds}. A facade loads it when the visitor asks for it."
+    }
+  },
+  "perf-unused-code": {
+    "messages": {
+      "fail": "Code loaded by the page is not used during the lab load.",
+      "fail:javascript": "About {size} of JavaScript is not used during the lab load, which has no interactions: {files}.",
+      "fail:css": "About {size} of CSS is not used during the lab load, which has no interactions: {files}."
+    }
+  },
+  "perf-legacy-duplicated-js": {
+    "messages": {
+      "fail": "Scripts ship code that modern browsers do not need.",
+      "fail:legacy": "Scripts ship about {size} of polyfills and transforms for features that the target browsers support: {files}.",
+      "fail:duplicated": "Scripts bundle the same modules more than once, about {size}: {files}."
+    }
+  },
+  "perf-minification": {
+    "messages": {
+      "fail": "Minifying CSS and JavaScript would save about {size} (lab estimate)."
+    }
+  },
+  "perf-total-byte-weight": {
+    "messages": {
+      "fail": "The lab load transfers {size} in at least {requests} requests, above 4000 KiB.",
+      "fail:note": "The lab load transfers {size} in at least {requests} requests, above 2667 KiB."
+    }
+  },
+  "perf-speculation-rules": {
+    "messages": {
+      "fail": "Speculation rules may prefetch or prerender state-changing links: {urls}.",
+      "fail:state-changing-urls": "Speculation rules may prefetch or prerender state-changing links: {urls}. Exclude them so speculation cannot log visitors out or change a cart.",
+      "fail:invalid-json": "A speculation rules script is not valid JSON, so browsers ignore it."
+    }
+  },
+  "perf-html-cdn": {
+    "messages": {
+      "fail": "No CDN markers were detected in the response headers of {count} audited HTML pages. Some CDNs strip their markers, so this does not show that no CDN is used."
+    }
+  },
+  "perf-consent-lab-bias": {
+    "messages": {
+      "fail": "The lab LCP element ({element}) is inside a consent dialog. The lab measures a first-time visitor, while field data mixes visitors who already answered it."
+    }
+  }
+}
