@@ -53,7 +53,7 @@ export const fontFormat: RuleImplementation = {
     if (fonts.length === 0) return notApplicable('no-web-fonts');
     const results: RuleResult[] = [];
     const legacy = fonts.filter(font => !/woff2/iu.test(font.mimeType ?? '') && !/\.woff2(?:$|[?#])/iu.test(font.url));
-    const describe = (font: (typeof fonts)[number]) => labEvidence(evidence, page!, summary, 'network-requests', evidenceLabel('web font request'), `${font.url} (${font.mimeType ?? 'no type'}, ${font.transferSize ?? 0} bytes)`);
+    const describe = (font: (typeof fonts)[number]) => labEvidence(evidence, page!, summary, 'network-requests', font.mimeType ? evidenceLabel('web font request ({type}, {bytes} bytes)', { type: font.mimeType, bytes: font.transferSize ?? 0 }) : evidenceLabel('web font request with no type ({bytes} bytes)', { bytes: font.transferSize ?? 0 }), font.url);
     if (legacy.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'not-woff2', evidence: legacy.slice(0, 5).map(describe), params: { count: legacy.length, fonts: summarizeList(legacy.map(font => font.url)) } });
     if (fonts.length > fontFileLimit) {
       const bytes = fonts.reduce((sum, font) => sum + (font.transferSize ?? 0), 0);
@@ -138,10 +138,10 @@ export const criticalRequestChains: RuleImplementation = {
     const path = deepest(chainNodes(tree.chains));
     const depth = Math.max(0, path.length - 1);
     const longest = isRecord(tree.longestChain) ? num(tree.longestChain.duration) : undefined;
-    const cited = labEvidence(evidence, page!, summary, 'network-dependency-tree-insight', evidenceLabel('deepest critical request chain'),
-      `${path.map(node => node.url).join(' -> ')}${longest === undefined ? '' : `; longest chain ${longest} ms`}`);
+    const cited = labEvidence(evidence, page!, summary, 'network-dependency-tree-insight', longest === undefined ? evidenceLabel('deepest critical request chain') : evidenceLabel('deepest critical request chain (longest chain {duration} ms)', { duration: Math.round(longest) }),
+      path.map(node => node.url).join(' -> '));
     if (depth <= chainDepthLimit) return { outcome: 'pass', evidence: [cited] };
-    return { outcome: 'fail', severity: 'low', evidence: [cited], params: { depth, duration: longest === undefined ? 'unknown' : `${longest} ms` } };
+    return { outcome: 'fail', severity: 'low', evidence: [cited], params: { depth, duration: longest === undefined ? 'unknown' : `${Math.round(longest)} ms` } };
   },
 };
 
