@@ -30,8 +30,9 @@ function entryExcerpt(entry: SitemapUrl): string {
 }
 
 /**
- * True when every sitemap robots.txt or a page declares was fetched (the collector reads only the first few) and every
- * child sitemap an index lists was fetched and parsed, so a missing entry is really missing.
+ * True when every sitemap robots.txt or a page declares was fetched (the collector reads only the first few), every
+ * child sitemap an index lists was fetched and parsed, and none was cut at the 50,000-entry limit, so a missing entry
+ * is really missing.
  */
 function complete(site: SiteFacts): boolean {
   const sitemaps = site.sitemaps;
@@ -44,7 +45,7 @@ function complete(site: SiteFacts): boolean {
   const listed = new Set(sitemaps.flatMap(sitemap => sitemap.document?.sitemaps.map(reference => reference.loc) ?? []));
   const parsed = new Set(sitemaps.filter(sitemap => sitemap.document).map(sitemap => sitemap.url));
   return declared.every(url => fetched.has(key(url))) && [...listed].every(url => parsed.has(url))
-    && sitemaps.every(sitemap => sitemap.document || sitemap.fetch.status === 404 || sitemap.source === 'default');
+    && sitemaps.every(sitemap => (sitemap.document ? !sitemap.document.overEntryLimit : sitemap.fetch.status === 404 || sitemap.source === 'default'));
 }
 
 export const sitemapFormat: RuleImplementation = {

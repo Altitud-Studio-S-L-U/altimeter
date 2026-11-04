@@ -278,6 +278,12 @@ describe('intl-hreflang-sitemap-format', () => {
     assertFail(only(evaluate(sitemapFormat, site({ pages: [], origin, robots: robots(5), sitemaps: fetched })).findings), 'medium', 'alternate-not-listed');
   });
 
+  test('does not look for missing entries in a sitemap cut at the 50,000-entry limit', () => {
+    const filler = Array.from({ length: 49_999 }, (_, index) => ({ loc: url(`/p/${index}`) }));
+    const xml = sitemap([{ loc: en, alternates: [['en', en], ['ca', ca]] }, ...filler, { loc: ca, alternates: [['en', en], ['ca', ca]] }]);
+    assertOutcome(only(evaluate(sitemapFormat, site({ pages: [], origin, sitemaps: [{ url: map, xml }] })).findings), 'pass');
+  });
+
   test('accepts alternates on other domains', () => {
     const xml = sitemap([{ loc: en, alternates: [['en', en], ['de', 'https://example.de/']] }]);
     assertOutcome(only(evaluate(sitemapFormat, site({ pages: [], origin, sitemaps: [{ url: map, xml }] })).findings), 'pass');
