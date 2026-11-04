@@ -119,7 +119,7 @@ There are no known gaps: every expectation must hold.
 
 ## The hold-out set
 
-The `holdout-*` scenarios measure whether rules do what their catalog entries promise, rather than whether they fit fixtures written next to them. They check 128 rules that no other scenario checks, with 192 expectations: 132 failures to find and 60 correct forms, most of them the exemptions and edge cases that the entries name. Each expectation was derived from the rule's catalog entry alone (its thresholds, exemptions and notes), without reading the rule implementations or their tests, and the scenarios were committed before they were first run. `bench/support/holdout.ts` holds the few helpers they share.
+The `holdout-*` scenarios measure whether rules do what their catalog entries promise, rather than whether they fit fixtures written next to them. They check 128 rules that no other scenario checks, with 192 expectations: 132 failures to find and 60 correct forms, most of them the exemptions and edge cases that the entries name. Each expectation was derived from the rule's catalog entry alone (its thresholds, exemptions and notes), without reading the rule implementations or their tests, and the scenarios were committed before they were first run. On that first run 189 of the 192 expectations held, with no false positive; the three misses were bugs in the rules, which were then fixed (two compared a phone page's width with a measure Chrome widens to fit the content, one passed a `<base href>` without checking where it sends links). `bench/support/holdout.ts` holds the few helpers they share.
 
 `npm run bench` runs them after the other scenarios, in about four minutes. To run only some of them, name each one:
 
