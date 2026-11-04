@@ -162,7 +162,7 @@ export function renderHtml(report: Report, language: Language): string {
   const tasks = report.tasks.slice(0, 10).map(task => {
     const rule = catalogRule(task.ruleId);
     const title = rule ? ruleTexts(language, rule).title : task.title;
-    return `<li><b class="sev-${escapeHtml(task.severity)}">${escapeHtml(t.severities[task.severity])}</b> ${escapeHtml(title)} <span class="where">· ${escapeHtml(String(task.scopes.length))} ·${escapeHtml(t.fixLocations[task.fixLocation])} · <code>${escapeHtml(task.id)}</code></span></li>`;
+    return `<li><b class="sev-${escapeHtml(task.severity)}">${escapeHtml(t.severities[task.severity])}</b> ${escapeHtml(title)} <span class="where">· ${escapeHtml(String(task.scopes.length))} · ${escapeHtml(t.fixLocations[task.fixLocation])} · <code>${escapeHtml(task.id)}</code></span></li>`;
   }).join('');
   const filterButtons = [
     `<button type="button" data-filter="category" data-value="all" aria-pressed="true">${escapeHtml(t.all)}</button>`,
