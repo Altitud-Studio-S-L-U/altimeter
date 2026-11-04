@@ -192,7 +192,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Homepage disallowed for Googlebot = critical. More than 50% of the crawled indexable-intended URLs disallowed for Googlebot = critical (evaluated only when a crawl ran; the crawl does not fetch disallowed URLs, so when the rules for Googlebot disallow the whole site and Allow lines open parts of it, the URLs it found and could not fetch count too, except URLs with a query string and utility or policy paths; under narrower Disallow rules they do not, since sites disallow wishlist, compare, comment or filter links on purpose). 'Disallow: /' in the * group with no googlebot group = critical. Homepage disallowed for Bingbot while Googlebot is allowed = high.",
+    "thresholds": "Homepage disallowed for Googlebot = critical. More than 50% of the crawled indexable-intended URLs disallowed for Googlebot = critical (evaluated only when a crawl ran; the crawl does not fetch disallowed URLs, so when the rules for Googlebot disallow the whole site and Allow lines open parts of it, the URLs it found and could not fetch count too, except URLs with a query string and utility or policy paths; under narrower Disallow rules they do not, since sites disallow wishlist, compare, comment or filter links on purpose). 'Disallow: /' in the * group with no googlebot group is judged by those two checks, because Allow lines can open the home page and whole sections on purpose. Homepage disallowed for Bingbot while Googlebot is allowed = high.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
