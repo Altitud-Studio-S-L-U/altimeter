@@ -375,4 +375,23 @@ describe('schema-blocked-or-nonindexable-carrier', () => {
     assert.deepEqual(outcome(blockedOrNonindexableCarrier, { html, pageType: 'legal', at: 'https://shop.example/privacy' }), ['not_applicable', 'legal-page']);
     assert.deepEqual(outcome(blockedOrNonindexableCarrier, { html, pageType: 'other' }), ['not_applicable', 'no-feature-markup']);
   });
+  const store = { '@type': 'Store', '@id': 'https://shop.example/#store', name: 'Shop Example', url: 'https://shop.example/', telephone: '+376 800 800',
+    address: { '@type': 'PostalAddress', streetAddress: 'Av. Meritxell 1', addressLocality: 'Andorra la Vella', addressCountry: 'AD' } };
+  const noindex = '<meta name="robots" content="noindex, follow">';
+  test('does not apply to utility and error pages, which are kept out of the index on purpose', () => {
+    const template = (path: string) => ld({ '@graph': [store, { '@type': 'WebPage', '@id': `https://shop.example${path}#webpage`, url: `https://shop.example${path}`, publisher: { '@id': 'https://shop.example/#store' } }] });
+    assert.deepEqual(outcome(blockedOrNonindexableCarrier, { html: doc(`${noindex}${template('/cart/')}${ld(lamp)}`), at: 'https://shop.example/cart/' }), ['not_applicable', 'utility-page']);
+    assert.deepEqual(outcome(blockedOrNonindexableCarrier, { html: doc(`${template('/old-lamp/')}${ld(lamp)}`), status: 404, at: 'https://shop.example/old-lamp/' }), ['not_applicable', 'error-page']);
+  });
+  test('reads a business anchored at the home page as site identity on the other pages', () => {
+    const listing = { html: doc(`${noindex}${ld(store)}`), pageType: 'listing' as const, at: 'https://shop.example/tag/lamps/' };
+    assert.deepEqual(outcome(blockedOrNonindexableCarrier, listing), ['not_applicable', 'no-feature-markup']);
+    assert.deepEqual(outcome(blockedOrNonindexableCarrier, { ...listing, html: doc(`${noindex}${ld({ ...store, url: undefined })}`) }), ['not_applicable', 'no-feature-markup']);
+    failure(blockedOrNonindexableCarrier, { ...listing, pageType: 'home', at: 'https://shop.example/' }, 'noindex');
+    failure(blockedOrNonindexableCarrier, { ...listing, pageType: 'home', at: 'https://shop.example/en/' }, 'noindex');
+    const location = { ...store, '@id': 'https://shop.example/stores/andorra/#store', url: 'https://shop.example/stores/andorra/' };
+    failure(blockedOrNonindexableCarrier, { html: doc(`${noindex}${ld(location)}`), pageType: 'contact', at: 'https://shop.example/stores/andorra/' }, 'noindex');
+    const { finding } = failure(blockedOrNonindexableCarrier, { html: doc(`${noindex}${ld(store, lamp)}`), pageType: 'product', at: 'https://shop.example/lamp' }, 'noindex');
+    assert.equal(finding.params?.items, 'Product');
+  });
 });

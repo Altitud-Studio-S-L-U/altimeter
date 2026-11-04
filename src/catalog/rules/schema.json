@@ -835,12 +835,13 @@
     ],
     "appliesTo": "all",
     "exemptWhen": [
-      "The page is a legal, privacy, cookie or similar policy page that carries noindex,follow, is linked from the footer and is absent from every sitemap."
+      "The page is a legal, privacy, cookie or similar policy page that carries noindex,follow, is linked from the footer and is absent from every sitemap.",
+      "The page is a utility page such as internal search results, a cart, a thank-you page or an account page, or an error page."
     ],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "page feature markup on a page that is not 200, carries noindex or is disallowed for Googlebot = medium; a feature image or video thumbnail disallowed for Googlebot-Image, or fetched with an error or a non-image type = high. Organization logos belong to schema-organization-logo.",
+    "thresholds": "page feature markup on a page that is not 200, carries noindex or is disallowed for Googlebot = medium; a feature image or video thumbnail disallowed for Googlebot-Image, or fetched with an error or a non-image type = high. A top-level LocalBusiness whose @id or url points to the home page is site identity that the template repeats, so it counts as feature markup only on the home page. Organization logos belong to schema-organization-logo.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",

@@ -1,10 +1,10 @@
 import { isAllowed } from '../../fetch/robots.ts';
 import { attribute, isElement, type HtmlNode } from '../../parse/html.ts';
-import type { RuleImplementation } from '../engine.ts';
-import { directivesFor, robotsDirectives } from '../helpers.ts';
-import { texts, topLevel, type GraphNode, type PageGraph } from './graph.ts';
+import type { RuleContext, RuleImplementation } from '../engine.ts';
+import { absoluteUrl, directivesFor, robotsDirectives } from '../helpers.ts';
+import { text, texts, topLevel, type GraphNode, type PageGraph } from './graph.ts';
 import { pageFeatureTypes } from './features.ts';
-import { blockedForImages, cite, imageUrls, isResult, nodesOfType, pageGraph, plainNumber, report, type Problem } from './support.ts';
+import { blockedForImages, cite, homePage, imageUrls, isResult, nodesOfType, pageGraph, plainNumber, report, type Problem } from './support.ts';
 import { isA } from './vocabulary.ts';
 
 export const mainEntityPageFit: RuleImplementation = {
@@ -83,14 +83,29 @@ export const visibleContentParity: RuleImplementation = {
 const isFeatureNode = (node: GraphNode) => pageFeatureTypes.some(type => isA(node.types, type))
   && (node.parent === undefined || node.parent.property === 'mainEntity');
 
+function withoutFragment(value: string | undefined, base: string): string | undefined {
+  return absoluteUrl(value, base)?.replace(/#.*$/u, '');
+}
+
+/** A top-level LocalBusiness whose @id or url points to the home page, seen on another page: site identity the template repeats. */
+function siteIdentity(context: RuleContext, graph: PageGraph, node: GraphNode): boolean {
+  if (node.parent !== undefined || !isA(node.types, 'LocalBusiness') || context.page!.pageType === 'home') return false;
+  const page = withoutFragment(context.page!.fetch.finalUrl, graph.base);
+  const homes = new Set([`${context.site.origin}/`, context.site.homeUrl, homePage(context.site)?.fetch.finalUrl].map(value => withoutFragment(value, graph.base)));
+  if (homes.has(page)) return false;
+  const anchors = [node.id, text(graph, node, 'url')].map(value => withoutFragment(value, graph.base));
+  return !anchors.includes(page) && anchors.some(anchor => anchor !== undefined && homes.has(anchor));
+}
+
 export const blockedOrNonindexableCarrier: RuleImplementation = {
   id: 'schema-blocked-or-nonindexable-carrier',
   evaluate(context) {
     const page = context.page!;
-    if (page.pageType === 'legal') return { outcome: 'not_applicable', reason: 'legal-page' };
+    // Policy, utility and error pages stay out of the index on purpose, and their markup comes from the site template.
+    if (page.pageType === 'legal' || page.pageType === 'utility' || page.pageType === 'error') return { outcome: 'not_applicable', reason: `${page.pageType}-page` };
     const graph = pageGraph(context);
     if (isResult(graph)) return graph;
-    const features = graph.nodes.filter(node => node.schemaOrg && isFeatureNode(node));
+    const features = graph.nodes.filter(node => node.schemaOrg && isFeatureNode(node) && !siteIdentity(context, graph, node));
     if (features.length === 0) return { outcome: 'not_applicable', reason: 'no-feature-markup' };
     const first = features[0]!;
     const problems: Problem[] = [];
