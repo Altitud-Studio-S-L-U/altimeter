@@ -11,7 +11,7 @@ export interface TaskCheck {
 }
 
 export interface Task {
-  /** Stable across runs while the same rule fails for the same reason with the same evidence: `T-<hash>`. */
+  /** Stable across runs while the same rule fails for the same reason with evidence of the same shape: `T-<hash>`. */
   readonly id: string;
   readonly ruleId: string;
   readonly category: Category;
@@ -79,15 +79,28 @@ export interface EvidenceLookup {
   get(id: string): EvidenceItem | undefined;
 }
 
+/** The random segment of the not-found probe's path, which is new on every run. */
+const probeSegment = /altimeter-probe-[0-9a-f]+/gu;
+/** An HTTP date such as a Date header, whose day and month names change too. */
+const httpDate = /\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT\b/gu;
+const withoutProbe = (value: string) => value.replace(probeSegment, 'altimeter-probe');
+/** Numbers and dates change from run to run while the problem stays the same. */
+const shape = (value: string) => withoutProbe(value).replace(httpDate, '#').replace(/\d+/gu, '#');
+
 /**
  * A defect repeated on several pages is usually one template fix, so page findings group by the shape of their
- * evidence while the observed values differ from page to page. Site findings keep the values, which tell them apart.
+ * evidence while the observed values differ from page to page. Site findings keep what tells them apart: where each
+ * item was observed and what was seen there, except the figures and lists of owner data, which move with the
+ * reporting window. Numbers, dates and the not-found probe's random path never count, so an unchanged problem keeps
+ * its id from run to run.
  */
 function groupKey(finding: Finding, evidence: EvidenceLookup): string {
   const page = finding.scope.kind === 'page';
-  const shape = (value: string) => value.replace(/\d+/gu, '#');
   const items = finding.evidence.map(id => evidence.get(id)).filter((item): item is EvidenceItem => item !== undefined);
-  const facts = [...new Set(items.map(item => JSON.stringify(page ? [item.kind, shape(item.label), shape(item.path ?? '')] : [item.kind, item.label, item.excerpt ?? '', item.path ?? ''])))].sort();
+  const fact = (item: EvidenceItem) => page
+    ? [item.kind, shape(item.label), shape(item.path ?? '')]
+    : [item.kind, withoutProbe(item.url ?? ''), shape(item.label), shape(item.path ?? ''), item.kind === 'owner-data' ? '' : shape(item.excerpt ?? '')];
+  const facts = [...new Set(items.map(item => JSON.stringify(fact(item))))].sort();
   return JSON.stringify([finding.ruleId, finding.reason ?? '', page ? '' : (finding.scope as { readonly origin: string }).origin, facts]);
 }
 

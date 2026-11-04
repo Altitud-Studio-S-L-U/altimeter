@@ -6,7 +6,7 @@ import { describe, test } from 'node:test';
 import type { ReportAnalysis } from '../src/ai/types.ts';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
-import { EvidenceStore } from '../src/core/evidence.ts';
+import { EvidenceStore, type NewEvidence } from '../src/core/evidence.ts';
 import { runRules, type Finding, type RuleImplementation } from '../src/rules/engine.ts';
 import { implementations as registered } from '../src/rules/registry.ts';
 import { compareReports } from '../src/report/compare.ts';
@@ -104,6 +104,48 @@ describe('tasks', () => {
     assert.deepEqual(kept('crawl-meta-robots-noindex'), ['crawl-status-final']);
     assert.deepEqual(kept('perf-render-blocking'), ['perf-text-compression']);
     assert.deepEqual(kept('intl-hreflang-relative-url'), ['intl-hreflang-outside-head']);
+  });
+
+  /** Task ids of site findings, one run each: every finding records its evidence in that run's store. */
+  const siteTaskIds = (...findings: ReadonlyArray<readonly [ruleId: string, reason: string | undefined, evidence: readonly NewEvidence[]]>) => {
+    const store = new EvidenceStore();
+    const built = findings.map(([ruleId, reason, items]): Finding => ({
+      ruleId, scope: { kind: 'site', origin: 'https://example.com' }, outcome: 'fail', severity: 'low', ...(reason ? { reason } : {}),
+      evidence: items.map(item => store.add(item)), evidenceSignature: ruleId, confidence: 'high', origin: 'deterministic',
+    }));
+    return buildTasks(built, rulesById, store).map(task => task.id);
+  };
+
+  test('keeps the task id of a site finding when only the reporting window, the figures or the probe path change', () => {
+    const blocked = (window: string, requests: number, paths: string) => siteTaskIds(['crawl-bots-blocked-at-edge', 'refused', [
+      { kind: 'owner-data', label: `verified Googlebot requests for paths robots.txt allows, from ${window}`, excerpt: `Googlebot: ${requests} requests; answers 403 x${requests - 2}, 200 x2` },
+      { kind: 'owner-data', label: 'paths where Googlebot got errors or refusals', excerpt: paths },
+    ]]);
+    assert.deepEqual(blocked('2026-10-05 to 2026-11-04', 40, '/a 403 x20\n/b 403 x18'), blocked('2026-10-06 to 2026-11-05', 52, '/a 403 x30\n/c 403 x20'));
+    const dropped = (period: string, clicks: number) => siteTaskIds(['content-gsc-traffic-drop', undefined, [
+      { kind: 'owner-data', url: 'https://example.com/a', label: `clicks from ${period}`, excerpt: `clicks ${clicks} -> 4; z=-2.9` },
+    ]]);
+    assert.deepEqual(dropped('2026-08-08 to 2026-09-04 and from 2026-09-05 to 2026-10-02', 40), dropped('2026-08-09 to 2026-09-05 and from 2026-09-06 to 2026-10-03', 38));
+    const soft = (token: string) => siteTaskIds(['crawl-soft-404', 'probe-200', [
+      { kind: 'probe', url: `https://example.com/altimeter-probe-${token}/`, label: 'response to a random unknown path', excerpt: 'HTTP 200' },
+    ]]);
+    assert.deepEqual(soft('0a1b2c3d4e5f'), soft('f00dbabe1234'));
+    const generated = (lastmod: string, date: string) => siteTaskIds(['crawl-sitemap-lastmod', 'generation-time', [
+      { kind: 'sitemap', url: 'https://example.com/sitemap.xml', label: 'lastmod value shared by most URLs, with its count', excerpt: `${lastmod} (40 of 41)` },
+      { kind: 'header', url: 'https://example.com/sitemap.xml', label: 'Date header of the sitemap response', excerpt: date },
+    ]]);
+    assert.deepEqual(generated('2026-11-04T10:00:00Z', 'Wed, 04 Nov 2026 10:00:00 GMT'), generated('2026-11-05T09:30:12Z', 'Thu, 05 Nov 2026 09:30:12 GMT'));
+  });
+
+  test('keeps site findings about different crawlers, pages, lines or variants apart', () => {
+    const blockedBot = (bot: string) => ['crawl-bots-blocked-at-edge', 'refused', [{ kind: 'owner-data', label: `verified ${bot} requests for paths robots.txt allows, from 2026-10-05 to 2026-11-04`, excerpt: `${bot}: 40 requests` }]] as const;
+    assert.equal(new Set(siteTaskIds(blockedBot('Googlebot'), blockedBot('Bingbot'))).size, 2);
+    const lowCtr = (url: string) => ['content-gsc-low-ctr', undefined, [{ kind: 'owner-data', url, label: 'Search Console performance of the page from 2026-10-05 to 2026-11-04', excerpt: 'impressions=900; clicks=3' }]] as const;
+    assert.equal(new Set(siteTaskIds(lowCtr('https://example.com/a'), lowCtr('https://example.com/b'))).size, 2);
+    const token = (line: string) => ['ai-robots-legacy-tokens', 'legacy-token', [{ kind: 'robots', url: 'https://example.com/robots.txt', label: 'user-agent line naming a token that no current crawler documentation lists', excerpt: line }]] as const;
+    assert.equal(new Set(siteTaskIds(token('User-agent: anthropic-ai'), token('User-agent: Claude-Web'))).size, 2);
+    const variant = (url: string) => ['crawl-host-variant-consolidation', 'temporary-redirect', [{ kind: 'redirect', url, label: 'redirect hop 1', excerpt: '302 -> https://example.com/a' }]] as const;
+    assert.equal(new Set(siteTaskIds(variant('https://example.com/a/'), variant('https://example.com/a/index.html'))).size, 2);
   });
 });
 
