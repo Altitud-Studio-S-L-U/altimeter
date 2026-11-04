@@ -691,7 +691,7 @@
   },
   "crawl-bots-robots-compliance": {
     "title": "Rastreadores verificados que han obtenido rutas que robots.txt bloquea",
-    "why": "La RFC 9309 exige que los rastreadores sigan las reglas de robots.txt que leen y que no usen una copia en caché durante más de 24 horas; algunos operadores documentan plazos más largos (Amazon, hasta 30 días; DuckAssistBot, 72 horas). Las solicitudes verificadas de rutas bloqueadas después de ese plazo significan que el rastreador ha visto un robots.txt distinto del que se sirve ahora, o que lo ignora.",
+    "why": "El RFC 9309 exige que los rastreadores sigan las reglas de robots.txt que leen y que no usen una copia en caché durante más de 24 horas; algunos operadores documentan plazos más largos (Amazon, hasta 30 días; DuckAssistBot, 72 horas). Las solicitudes verificadas de rutas bloqueadas después de ese plazo significan que el rastreador ha visto un robots.txt distinto del que se sirve ahora, o que lo ignora.",
     "fix": "Comprueba que todos los hosts y protocolos sirven el mismo robots.txt y que los patrones disallow coinciden con las rutas tal como aparecen en los registros (mayúsculas y codificación). Si un rastreador verificado lo sigue ignorando, bloquéalo en el perímetro por los rangos de IP que publica. Las solicitudes que inicia un usuario (ChatGPT-User, Claude-User, Perplexity-User) no siguen robots.txt y no se cuentan.",
     "messages": {
       "fail": "{agent} verificado ha obtenido {count} veces rutas que robots.txt bloquea.",
@@ -712,7 +712,7 @@
   },
   "crawl-bots-spoofed-crawlers": {
     "title": "Solicitudes que usan el user-agent de un rastreador pero no superan las comprobaciones de su operador",
-    "why": "Cualquiera puede enviar el user-agent de Googlebot o de GPTBot, y Google y Common Crawl advierten de que los suyos se suplantan. Las solicitudes que dicen ser de un rastreador pero no superan la comprobación de la lista de IP o del DNS inverso que publica su operador son suplantaciones, a menudo de bots que extraen contenido, y un cortafuegos que confía en los user-agents las sirve mientras puede rechazar al rastreador real.",
+    "why": "Cualquiera puede enviar el user-agent de Googlebot o de GPTBot, y Google y Common Crawl advierten de que los suyos se suplantan. Las solicitudes que dicen ser de un rastreador pero no superan la comprobación de la lista de IP o del DNS inverso que publica su operador son impostores, a menudo bots que extraen contenido, y un cortafuegos que confía en los user-agents las sirve mientras puede rechazar al rastreador real.",
     "fix": "Verifica los rastreadores en el perímetro por su DNS inverso o por las listas de IP que publican los operadores (los CDN ofrecen reglas de bots verificados) en lugar de permitir o bloquear user-agents, y rechaza las solicitudes que no superen la verificación.",
     "messages": {
       "fail": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share}; {agents}).",
@@ -724,10 +724,10 @@
   "crawl-bing-crawl-issues": {
     "title": "Problemas de rastreo que Bing indica para el sitio",
     "why": "Bing Webmaster Tools enumera las URLs con las que Bingbot ha tenido problemas: errores del servidor y del cliente, fallos de DNS, tiempos de espera agotados, bloqueos de robots.txt, redirecciones y malware. Bing no puede indexar el contenido actual de una URL que no puede obtener, y avisa a quienes buscan antes de que visiten una página que marca como malware.",
-    "fix": "Empieza por el tipo más grave: elimina el malware y cierra la vía por la que entró, y después solicita una nueva evaluación de malware en Bing Webmaster Tools; corrige los errores del servidor, los fallos de DNS y los tiempos de espera para Bingbot; restaura o redirige las URLs 4xx que enlazan otras páginas; apunta los enlaces a la URL final en lugar de a una redirección. Bing indica que un problema corregido puede tardar unos días en salir de su lista.",
+    "fix": "Empieza por el tipo más grave: elimina el malware y cierra la vía por la que entró, y después solicita una nueva evaluación de malware en Bing Webmaster Tools; corrige los errores del servidor, los fallos de DNS y los tiempos de espera para Bingbot; restaura o redirige las URLs 4xx a las que enlazan otras páginas; apunta los enlaces a la URL final en lugar de a una redirección. Bing indica que un problema corregido puede tardar unos días en salir de su lista.",
     "messages": {
       "fail": "Bing indica {count} URL(s) con el problema de rastreo {issue}, por ejemplo, {examples}.",
-      "fail:malware": "Bing marca {count} URL(s) como que contienen malware, por ejemplo, {examples}.",
+      "fail:malware": "Bing indica que {count} URL(s) contienen malware, por ejemplo, {examples}.",
       "fail:server-error": "Bing ha recibido errores del servidor (5xx) para {count} URL(s), por ejemplo, {examples}.",
       "fail:dns-error": "Bing no ha podido resolver el nombre de host de {count} URL(s), por ejemplo, {examples}.",
       "fail:timeout": "Bing ha agotado el tiempo de espera al obtener {count} URL(s), por ejemplo, {examples}.",
@@ -744,7 +744,7 @@
     "fix": "Corrige lo que ha encontrado Bingbot: busca sus solicitudes a la página en los registros del servidor y del CDN (errores, tiempos de espera, bloqueos del cortafuegos) y revisa las reglas de robots.txt que se aplican a Bingbot. Después, envía la URL en Bing Webmaster Tools para que Bing la vuelva a rastrear.",
     "messages": {
       "fail": "Bing indica {issues} para {url}.",
-      "fail:malware": "Bing marca {url} como que contiene malware ({issues}).",
+      "fail:malware": "Bing indica que {url} contiene malware ({issues}).",
       "fail:server-error": "Bing ha recibido un error del servidor para {url} (estado HTTP {status}; {issues}); en esta auditoría: {live}.",
       "fail:dns-error": "Bing no ha podido resolver el nombre de host de {url} ({issues}); en esta auditoría: {live}.",
       "fail:timeout": "Bing ha agotado el tiempo de espera al obtener {url} ({issues}); en esta auditoría: {live}.",

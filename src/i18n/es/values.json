@@ -187,8 +187,8 @@
     "the first line is not an H1 heading": "la primera línea no es un encabezado H1",
     "it has {count} H1 headings": "tiene {count} encabezados H1",
     "empty member": "miembro vacío",
-    "invalid key \"{key}\"": "clave \"{key}\" no válida",
-    "{key} needs y or n": "{key} necesita y o n"
+    "invalid key \"{key}\"": "clave «{key}» no válida",
+    "{key} needs y or n": "{key} necesita «y» o «n»"
   },
   "query": {
     "query {number}": "consulta {number}"
@@ -276,7 +276,7 @@
     "Excluded by ‘noindex’ tag": "Excluida por una etiqueta «noindex»",
     "Excluded by 'noindex' tag": "Excluida por una etiqueta «noindex»",
     "Blocked by robots.txt": "Bloqueada por robots.txt",
-    "Indexed, though blocked by robots.txt": "Indexada aunque un archivo robots.txt la haya bloqueado",
+    "Indexed, though blocked by robots.txt": "Indexada, aunque un archivo robots.txt la haya bloqueado",
     "Not found (404)": "No se ha encontrado (404)",
     "Soft 404": "Soft 404",
     "Server error (5xx)": "Error de servidor (5xx)",
@@ -285,7 +285,7 @@
     "URL is unknown to Google": "URL desconocida para Google",
     "Blocked due to unauthorized request (401)": "Bloqueada debido a una solicitud no autorizada (401)",
     "Blocked due to access forbidden (403)": "Bloqueada debido a un acceso prohibido (403)",
-    "Blocked due to other 4xx issue": "Bloqueada por otro problema de tipo 4xx",
+    "Blocked due to other 4xx issue": "Bloqueada debido a otro problema 4xx",
     "Page indexed without content": "Página indexada sin contenido"
   },
   "status": {
