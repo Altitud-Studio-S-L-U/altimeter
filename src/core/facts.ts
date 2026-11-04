@@ -4,6 +4,8 @@ import type { FetchResult } from '../fetch/http.ts';
 import type { RobotsAvailability } from '../fetch/robots.ts';
 import type { SitemapDocument } from '../fetch/sitemap.ts';
 import type { TlsFacts } from '../fetch/tls.ts';
+import type { BingData } from '../owner/bing.ts';
+import type { BotActivity } from '../owner/bots/activity.ts';
 import type { GscData } from '../owner/gsc.ts';
 import type { ParsedHtml } from '../parse/html.ts';
 import type { StructuredData } from '../parse/structured-data.ts';
@@ -44,6 +46,8 @@ export interface PageFacts {
 
 export interface OwnerData {
   readonly gsc?: GscData;
+  readonly bing?: BingData;
+  readonly bots?: BotActivity;
   /** Write "query 1", "query 2" instead of the owner's search queries, for a report meant to be shared. */
   readonly redactQueries?: boolean;
 }
