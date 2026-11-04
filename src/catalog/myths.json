@@ -10,9 +10,16 @@
       }
     ],
     "patterns": [
-      "crawl-delay to slow googlebot",
-      "crawl-delay for googlebot",
-      "crawl-delay for google"
+      "add a crawl-delay for googlebot",
+      "add crawl-delay for googlebot",
+      "set crawl-delay for googlebot",
+      "set a crawl-delay for googlebot",
+      "use crawl-delay to slow googlebot",
+      "set crawl-delay to slow googlebot",
+      "add crawl-delay to slow googlebot",
+      "use crawl-delay to reduce googlebot",
+      "crawl-delay slows googlebot",
+      "crawl-delay will slow googlebot"
     ]
   },
   {
@@ -26,10 +33,15 @@
       }
     ],
     "patterns": [
-      "noindex in robots.txt",
-      "noindex: line",
-      "noindex directive to robots.txt",
-      "robots.txt noindex"
+      "add noindex to robots.txt",
+      "add a noindex line to robots.txt",
+      "add a noindex: line",
+      "add a noindex directive to robots.txt",
+      "use noindex in robots.txt",
+      "put noindex in robots.txt",
+      "noindex in robots.txt removes",
+      "noindex in robots.txt to remove",
+      "noindex in robots.txt to deindex"
     ]
   },
   {
@@ -48,9 +60,16 @@
     ],
     "patterns": [
       "disallow it in robots.txt to remove",
-      "block in robots.txt to deindex",
-      "robots.txt to remove it from google",
-      "robots.txt to keep it out of the index"
+      "disallow it in robots.txt to deindex",
+      "block it in robots.txt to deindex",
+      "block it in robots.txt to remove it from google",
+      "block the url in robots.txt to deindex",
+      "disallow the url to deindex",
+      "use robots.txt to keep it out of the index",
+      "use robots.txt to remove it from google",
+      "use robots.txt to deindex",
+      "robots.txt keeps it out of the index",
+      "disallow removes it from the index"
     ]
   },
   {
@@ -64,9 +83,14 @@
       }
     ],
     "patterns": [
-      "noindex to save crawl budget",
+      "add noindex to save crawl budget",
+      "use noindex to save crawl budget",
+      "noindex them to save crawl budget",
+      "noindex these pages to save crawl budget",
+      "add noindex to preserve crawl budget",
+      "use noindex to preserve crawl budget",
       "noindex saves crawl budget",
-      "noindex to preserve crawl budget"
+      "noindex will save crawl budget"
     ]
   },
   {
@@ -90,9 +114,16 @@
     "patterns": [
       "set changefreq",
       "add changefreq",
+      "set the changefreq",
+      "add a changefreq",
       "set priority in the sitemap",
-      "sitemap priority values",
-      "adjust sitemap priority"
+      "set sitemap priority",
+      "adjust sitemap priority",
+      "raise the sitemap priority",
+      "increase the sitemap priority",
+      "set a higher priority in the sitemap",
+      "changefreq helps crawling",
+      "sitemap priority helps ranking"
     ]
   },
   {
@@ -106,10 +137,16 @@
       }
     ],
     "patterns": [
-      "ping google",
-      "google.com/ping",
-      "ping?sitemap=",
-      "sitemap ping"
+      "ping google after",
+      "ping google with",
+      "ping google to",
+      "ping google when",
+      "ping the sitemap to google",
+      "use the sitemap ping",
+      "use google.com/ping",
+      "call google.com/ping",
+      "submit the sitemap through google.com/ping",
+      "request google.com/ping?sitemap="
     ]
   },
   {
@@ -123,11 +160,16 @@
       }
     ],
     "patterns": [
-      "rel=prev",
-      "rel=next",
-      "rel=\"next\"",
-      "rel=\"prev\"",
-      "add rel next"
+      "add rel=next",
+      "add rel=prev",
+      "implement rel=next",
+      "implement rel=prev",
+      "use rel=next",
+      "use rel=prev",
+      "rel=next/prev is required",
+      "rel=next and rel=prev are required",
+      "needs rel=next",
+      "needs rel=prev"
     ]
   },
   {
@@ -142,8 +184,13 @@
     ],
     "patterns": [
       "canonicalize paginated pages to page 1",
-      "canonical to the first page",
-      "point pagination canonicals to page 1"
+      "canonicalise paginated pages to page 1",
+      "canonicalize page 2 to page 1",
+      "set the canonical to the first page",
+      "point the canonical to the first page",
+      "point pagination canonicals to page 1",
+      "point paginated canonicals to the first page",
+      "paginated pages should canonicalize to page 1"
     ]
   },
   {
@@ -163,7 +210,10 @@
     "patterns": [
       "canonical is a directive",
       "google must obey the canonical",
-      "canonical forces google"
+      "canonical forces google",
+      "google always honors the canonical",
+      "google will always respect the canonical",
+      "canonical tag guarantees"
     ]
   },
   {
@@ -179,8 +229,11 @@
     "patterns": [
       "google cannot index javascript",
       "google can't index javascript",
+      "google cannot render javascript",
+      "google can't render javascript",
       "invisible to google because it is rendered with javascript",
-      "googlebot does not run javascript"
+      "googlebot does not run javascript",
+      "googlebot doesn't run javascript"
     ]
   },
   {
@@ -195,8 +248,11 @@
     ],
     "patterns": [
       "implement dynamic rendering",
-      "use dynamic rendering",
-      "dynamic rendering is recommended"
+      "switch to dynamic rendering",
+      "set up dynamic rendering",
+      "dynamic rendering is recommended",
+      "dynamic rendering is the recommended",
+      "google recommends dynamic rendering"
     ]
   },
   {
@@ -218,9 +274,15 @@
       }
     ],
     "patterns": [
-      "first 15 mb",
-      "15 mb limit for googlebot",
-      "googlebot reads 15 mb"
+      "googlebot indexes the first 15 mb",
+      "googlebot reads the first 15 mb",
+      "googlebot crawls the first 15 mb",
+      "googlebot fetches the first 15 mb",
+      "googlebot indexes up to 15 mb",
+      "googlebot reads up to 15 mb",
+      "googlebot reads 15 mb",
+      "googlebot has a 15 mb limit",
+      "googlebot's 15 mb limit"
     ]
   },
   {
@@ -236,8 +298,13 @@
     "patterns": [
       "404 errors hurt rankings",
       "404s hurt your rankings",
+      "404s hurt rankings",
+      "404 errors hurt seo",
+      "404s hurt seo",
       "404 errors damage seo",
-      "404s are penalized"
+      "404s are penalized",
+      "404 errors are penalized",
+      "fix 404s to protect rankings"
     ]
   },
   {
@@ -257,7 +324,8 @@
     "patterns": [
       "410 removes urls faster",
       "use 410 instead of 404 to deindex faster",
-      "410 is much faster"
+      "410 is much faster",
+      "410 deindexes faster"
     ]
   },
   {
@@ -272,8 +340,11 @@
     ],
     "patterns": [
       "redirect deleted pages to the homepage",
+      "redirect all deleted pages to the homepage",
       "redirect all 404s to the homepage",
-      "redirect removed pages to the home page"
+      "redirect removed pages to the home page",
+      "redirect removed pages to the homepage",
+      "redirect deleted pages to the home page"
     ]
   },
   {
@@ -293,7 +364,10 @@
     "patterns": [
       "return 403 to slow googlebot",
       "return 401 to slow googlebot",
-      "403 to reduce crawl rate"
+      "return 403 to reduce crawl rate",
+      "return 401 to reduce crawl rate",
+      "use 403 to slow googlebot",
+      "use 403 to reduce crawl rate"
     ]
   },
   {
@@ -311,11 +385,15 @@
       }
     ],
     "patterns": [
-      "noarchive to stop google",
-      "noarchive to remove the cached",
-      "google cached copy",
-      "noarchive for google",
-      "nocache for google"
+      "add noarchive to stop google",
+      "use noarchive to stop google",
+      "set noarchive to stop google",
+      "add noarchive to remove the cached",
+      "add noarchive for google",
+      "add nocache for google",
+      "prevent google from showing a cached copy",
+      "stop google from showing a cached copy",
+      "remove the google cached copy"
     ]
   },
   {
@@ -333,10 +411,15 @@
       }
     ],
     "patterns": [
-      "indexnow to get indexed by google",
-      "indexnow for google",
-      "indexing api for any page",
-      "submit to the indexing api"
+      "use indexnow for google",
+      "use indexnow to get indexed by google",
+      "submit to indexnow to get indexed by google",
+      "indexnow notifies google",
+      "indexnow gets pages into google",
+      "use the indexing api for any page",
+      "submit any page to the indexing api",
+      "submit every page to the indexing api",
+      "use the indexing api for regular pages"
     ]
   },
   {
@@ -350,9 +433,14 @@
       }
     ],
     "patterns": [
-      "http/2 ranking boost",
+      "http/2 gives a ranking boost",
       "http/2 improves rankings",
-      "http/3 ranking"
+      "http/3 improves rankings",
+      "http/2 is a ranking factor",
+      "http/3 is a ranking factor",
+      "enable http/2 to rank",
+      "enable http/2 for a ranking boost",
+      "enable http/3 to rank"
     ]
   },
   {
@@ -375,7 +463,10 @@
     ],
     "patterns": [
       "robots meta only works in the head",
-      "noindex outside head is ignored"
+      "robots meta tags only work in the head",
+      "noindex outside head is ignored",
+      "noindex outside the head is ignored",
+      "noindex in the body is ignored"
     ]
   },
   {
@@ -394,9 +485,14 @@
     ],
     "patterns": [
       "hashbang urls are crawled",
+      "use hashbang urls",
+      "use #! urls for",
       "fragment urls are indexed separately",
-      "use #! urls",
-      "escaped_fragment"
+      "google indexes fragment urls separately",
+      "fragments are crawled as separate pages",
+      "use the escaped_fragment scheme",
+      "implement escaped_fragment",
+      "support escaped_fragment"
     ]
   },
   {
@@ -414,13 +510,32 @@
       }
     ],
     "patterns": [
-      "60 characters",
-      "60-character",
-      "155 characters",
-      "160 characters",
-      "155-160 characters",
-      "title length limit",
-      "meta description length limit"
+      "limit of 60 characters",
+      "limit of 155 characters",
+      "limit of 160 characters",
+      "exceeds the 60-character limit",
+      "exceeds the 155-character limit",
+      "exceeds the 160-character limit",
+      "over the 60-character limit",
+      "within the 60-character limit",
+      "within the 155-160 character limit",
+      "exceeds the 155-160 character limit",
+      "must be under 60 characters",
+      "must be under 155 characters",
+      "must be under 160 characters",
+      "must not exceed 60 characters",
+      "must not exceed 160 characters",
+      "google limits titles to 60 characters",
+      "google limits meta descriptions to",
+      "titles over 60 characters are penalized",
+      "titles longer than 60 characters hurt",
+      "meta descriptions over 160 characters are penalized",
+      "exceeds the title length limit",
+      "exceeds the meta description length limit",
+      "the title length limit is",
+      "the meta description length limit is",
+      "official title length limit",
+      "official meta description length limit"
     ]
   },
   {
@@ -439,7 +554,9 @@
     ],
     "patterns": [
       "google always shows your title",
+      "google will always show your title",
       "google will always use your meta description",
+      "google always uses your meta description",
       "guarantees your snippet"
     ]
   },
@@ -455,10 +572,15 @@
     ],
     "patterns": [
       "only one h1 for seo",
+      "use only one h1 to rank",
+      "use exactly one h1 for seo",
+      "must have exactly one h1",
       "multiple h1 tags hurt",
       "multiple h1s hurt",
+      "never skip heading levels for seo",
       "skipping heading levels hurts rankings",
-      "heading order affects rankings"
+      "heading order affects rankings",
+      "fix the heading order to rank"
     ]
   },
   {
@@ -476,12 +598,28 @@
       }
     ],
     "patterns": [
-      "minimum word count",
-      "at least 300 words",
-      "at least 1000 words",
-      "at least 1,000 words",
-      "at least 2000 words",
-      "word count to rank",
+      "needs a minimum word count",
+      "needs at least 300 words",
+      "needs at least 500 words",
+      "needs at least 1000 words",
+      "needs at least 1,000 words",
+      "needs at least 2000 words",
+      "needs at least 2,000 words",
+      "write at least 300 words",
+      "write at least 1000 words",
+      "write at least 1,000 words",
+      "write at least 2000 words",
+      "write at least 2,000 words",
+      "minimum of 300 words",
+      "minimum of 1000 words",
+      "minimum of 1,000 words",
+      "reach the minimum word count",
+      "meet the minimum word count",
+      "below the minimum word count",
+      "under the minimum word count",
+      "increase the word count to rank",
+      "needs more words to rank",
+      "pad the word count",
       "thin content because it has fewer than"
     ]
   },
@@ -500,7 +638,21 @@
       }
     ],
     "patterns": [
-      "keyword density",
+      "target keyword density",
+      "target a keyword density",
+      "target density of",
+      "aim for a keyword density",
+      "aim for keyword density",
+      "keyword density of 1",
+      "keyword density of 2",
+      "keyword density of 3",
+      "the ideal keyword density is",
+      "the optimal keyword density is",
+      "increase keyword density",
+      "increase the keyword density",
+      "raise the keyword density",
+      "improve keyword density",
+      "improve the keyword density",
       "keyword frequency target",
       "use the keyword 3%"
     ]
@@ -516,9 +668,18 @@
       }
     ],
     "patterns": [
-      "meta keywords",
-      "keywords meta tag",
-      "meta name=\"keywords\""
+      "add a meta keywords tag",
+      "add meta keywords",
+      "add the meta keywords",
+      "fill in the meta keywords",
+      "populate the meta keywords",
+      "meta keywords tag to rank",
+      "meta keywords help",
+      "meta keywords improve",
+      "add a keywords meta tag",
+      "add the keywords meta tag",
+      "the keywords meta tag helps",
+      "add meta name=\"keywords\""
     ]
   },
   {
@@ -536,10 +697,15 @@
       }
     ],
     "patterns": [
-      "e-e-a-t score",
-      "eeat score",
+      "improve your e-e-a-t score",
+      "improve the e-e-a-t score",
+      "raise your e-e-a-t score",
+      "your e-e-a-t score is",
+      "improve your eeat score",
       "e-e-a-t is a ranking factor",
-      "improve your e-e-a-t score"
+      "eeat is a ranking factor",
+      "e-a-t is a ranking factor",
+      "boost e-e-a-t to rank"
     ]
   },
   {
@@ -558,8 +724,12 @@
     ],
     "patterns": [
       "quality raters demote",
+      "quality raters can demote",
+      "quality raters will demote",
+      "quality raters penalize",
       "raters can penalize",
-      "rater penalty"
+      "raters can penalise",
+      "raters can demote"
     ]
   },
   {
@@ -584,7 +754,11 @@
       "google penalizes ai content",
       "google penalises ai content",
       "ai-generated content is penalized",
-      "ai content penalty"
+      "ai-generated content is penalised",
+      "ai content is penalized",
+      "ai content is penalised",
+      "avoid an ai content penalty",
+      "trigger an ai content penalty"
     ]
   },
   {
@@ -602,9 +776,17 @@
       }
     ],
     "patterns": [
-      "duplicate content penalty",
+      "avoid a duplicate content penalty",
+      "avoid the duplicate content penalty",
+      "avoid duplicate content penalties",
+      "risk a duplicate content penalty",
+      "risks a duplicate content penalty",
+      "trigger a duplicate content penalty",
+      "triggers a duplicate content penalty",
+      "get a duplicate content penalty",
       "penalized for duplicate content",
-      "penalised for duplicate content"
+      "penalised for duplicate content",
+      "duplicate content will be penalized"
     ]
   },
   {
@@ -618,10 +800,17 @@
       }
     ],
     "patterns": [
-      "exact-match domain",
-      "keywords in the domain",
+      "use an exact-match domain",
+      "buy an exact-match domain",
+      "register an exact-match domain",
+      "exact-match domain to rank",
+      "keywords in the domain boost",
+      "keywords in the domain help",
+      "add keywords to the domain",
+      "add keywords to the url to rank",
       "keyword in the url boosts",
-      "keyword-rich url to rank"
+      "keyword-rich url to rank",
+      "keyword-rich urls rank"
     ]
   },
   {
@@ -639,10 +828,16 @@
       }
     ],
     "patterns": [
-      "update the publish date",
-      "refresh the date to",
+      "update the publish date regularly",
+      "update the publish date to rank",
+      "update the publish date to look fresh",
+      "refresh the date to look fresh",
+      "refresh the date to rank",
+      "refresh the publish date",
+      "bump the dates",
+      "bump the publish date",
       "change the date to look fresh",
-      "bump the dates"
+      "update the dates to boost freshness"
     ]
   },
   {
@@ -658,8 +853,14 @@
     "patterns": [
       "flesch score for seo",
       "readability score affects ranking",
-      "yoast readability",
-      "improve readability score to rank"
+      "readability score affects rankings",
+      "improve readability score to rank",
+      "improve the readability score to rank",
+      "improve the flesch score to rank",
+      "raise the flesch score",
+      "flesch reading ease is a ranking factor",
+      "readability is a ranking factor",
+      "get a yoast readability green light"
     ]
   },
   {
@@ -674,9 +875,18 @@
     ],
     "patterns": [
       "nofollow all external links",
-      "pagerank leak",
-      "leaking pagerank",
-      "leak link juice"
+      "nofollow every external link",
+      "add nofollow to all external links",
+      "add rel=nofollow to every external link",
+      "add rel=nofollow to all external links",
+      "to avoid leaking pagerank",
+      "to prevent leaking pagerank",
+      "to stop leaking pagerank",
+      "to avoid pagerank leakage",
+      "to avoid leaking link juice",
+      "to stop leaking link juice",
+      "prevent pagerank leak",
+      "stop the pagerank leak"
     ]
   },
   {
@@ -693,7 +903,9 @@
       "content in tabs is hidden text",
       "accordions are hidden text",
       "tabbed content is ignored",
-      "accordion content is not indexed"
+      "accordion content is not indexed",
+      "content in accordions is hidden text",
+      "tabs are treated as hidden text"
     ]
   },
   {
@@ -716,12 +928,17 @@
     ],
     "patterns": [
       "llms.txt to rank",
-      "add llms.txt",
-      "create an llms.txt",
-      "llms.txt for ai overviews",
+      "add llms.txt to rank",
+      "add llms.txt for ai overviews",
+      "create an llms.txt to appear in ai",
+      "add an llms.txt to appear in ai",
+      "add llms.txt to get cited",
       "llms.txt is required",
-      "llms-full.txt",
-      "markdown copies for ai"
+      "llms.txt helps ai overviews",
+      "llms.txt improves ai visibility",
+      "llms.txt helps rankings",
+      "create markdown copies for ai search",
+      "serve markdown copies for ai search"
     ]
   },
   {
@@ -739,10 +956,15 @@
       }
     ],
     "patterns": [
-      "helpful content update",
-      "hcu recovery",
-      "hit by the helpful content",
-      "helpful content classifier"
+      "recover from the helpful content update",
+      "recovery from the helpful content update",
+      "wait for the next helpful content update",
+      "wait for the next hcu",
+      "the next hcu refresh",
+      "next helpful content update refresh",
+      "lift the helpful content classifier",
+      "escape the helpful content classifier",
+      "hcu recovery plan"
     ]
   },
   {
@@ -756,9 +978,13 @@
       }
     ],
     "patterns": [
-      "125 characters for alt",
-      "125-character alt",
-      "alt text limit of 125"
+      "keep alt text under 125 characters",
+      "alt text must be under 125 characters",
+      "alt text limit of 125",
+      "limit alt text to 125",
+      "shorten alt text to 125",
+      "the 125-character alt text limit",
+      "alt text over 125 characters is"
     ]
   },
   {
@@ -773,7 +999,9 @@
     ],
     "patterns": [
       "css background images are indexed",
-      "background-image is indexed by google"
+      "background-image is indexed by google",
+      "google indexes css background images",
+      "google indexes background images"
     ]
   },
   {
@@ -787,9 +1015,14 @@
       }
     ],
     "patterns": [
-      "pipes instead of dashes",
-      "dashes instead of pipes",
-      "separator affects ranking"
+      "separator affects ranking",
+      "separators affect rankings",
+      "pipes rank better",
+      "dashes rank better",
+      "use pipes instead of dashes to rank",
+      "use dashes instead of pipes to rank",
+      "use pipes instead of dashes for rankings",
+      "use dashes instead of pipes for rankings"
     ]
   },
   {
@@ -811,10 +1044,14 @@
       }
     ],
     "patterns": [
-      "pagespeed score ranking factor",
       "lighthouse score affects ranking",
+      "lighthouse score affects rankings",
+      "the lighthouse score is a ranking factor",
+      "lighthouse performance score is a ranking factor",
+      "pagespeed score is a ranking factor",
       "pagespeed insights score of 100 to rank",
-      "improve your pagespeed score to rank"
+      "improve your pagespeed score to rank",
+      "improve the lighthouse score to rank"
     ]
   },
   {
@@ -832,10 +1069,13 @@
       }
     ],
     "patterns": [
-      "page experience ranking signal",
-      "page experience score",
-      "page experience update",
-      "page experience boost"
+      "page experience is a ranking signal",
+      "page experience is a single ranking signal",
+      "page experience is a separate ranking system",
+      "improve your page experience score",
+      "get a page experience boost",
+      "for a page experience boost",
+      "page experience ranking boost"
     ]
   },
   {
@@ -853,10 +1093,15 @@
       }
     ],
     "patterns": [
-      "core web vitals penalty",
+      "avoid a core web vitals penalty",
+      "avoid a cwv penalty",
+      "penalized for failing core web vitals",
+      "penalised for failing core web vitals",
       "failing core web vitals penalizes",
+      "failing core web vitals is penalized",
       "core web vitals will outrank",
-      "cwv penalty"
+      "passing core web vitals will outrank",
+      "good core web vitals guarantee"
     ]
   },
   {
@@ -875,9 +1120,12 @@
     ],
     "patterns": [
       "improve fid",
+      "reduce fid",
       "reduce first input delay",
-      "first input delay score",
-      "fid is a core web vital"
+      "improve first input delay",
+      "improve the first input delay score",
+      "fid is a core web vital",
+      "first input delay is a core web vital"
     ]
   },
   {
@@ -897,7 +1145,9 @@
     "patterns": [
       "ttfb is a core web vital",
       "fcp is a core web vital",
-      "first contentful paint core web vital"
+      "first contentful paint is a core web vital",
+      "time to first byte is a core web vital",
+      "ttfb must be good to pass core web vitals"
     ]
   },
   {
@@ -916,8 +1166,11 @@
     ],
     "patterns": [
       "lighthouse measures inp",
+      "lighthouse shows good inp",
+      "lighthouse run shows good inp",
+      "inp is good in lighthouse",
       "lab inp shows",
-      "inp from lighthouse"
+      "good lab inp means"
     ]
   },
   {
@@ -936,6 +1189,8 @@
     ],
     "patterns": [
       "lab cls proves",
+      "low lab cls means",
+      "lighthouse cls proves",
       "cls is fine because lighthouse"
     ]
   },
@@ -955,10 +1210,15 @@
     ],
     "patterns": [
       "lazy-load all images",
-      "lazy load every image",
+      "lazy-load every image",
       "lazy-load the hero",
-      "lazy load the hero",
-      "loading=\"lazy\" on the lcp"
+      "lazy-load the lcp image",
+      "add loading=lazy to all images",
+      "add loading=\"lazy\" to every image",
+      "add loading=lazy to the hero",
+      "add loading=lazy to the lcp",
+      "set loading=lazy on the hero",
+      "set loading=lazy on the lcp"
     ]
   },
   {
@@ -977,7 +1237,9 @@
     ],
     "patterns": [
       "no-store always prevents the bfcache",
-      "no-store blocks bfcache"
+      "no-store always blocks bfcache",
+      "no-store always blocks the bfcache",
+      "chrome never restores no-store pages"
     ]
   },
   {
@@ -996,7 +1258,13 @@
     ],
     "patterns": [
       "use the unload event",
-      "unload handler to send analytics"
+      "use an unload handler to send",
+      "add an unload handler",
+      "use unload to send analytics",
+      "send analytics in the unload",
+      "unload handlers reliably run",
+      "unload handlers are harmless",
+      "unload always fires"
     ]
   },
   {
@@ -1010,7 +1278,13 @@
       }
     ],
     "patterns": [
-      "isinputpending"
+      "use isinputpending",
+      "use navigator.isinputpending",
+      "call isinputpending",
+      "call navigator.isinputpending",
+      "check isinputpending",
+      "check navigator.isinputpending",
+      "yield when isinputpending"
     ]
   },
   {
@@ -1033,9 +1307,14 @@
     ],
     "patterns": [
       "preload all fonts",
-      "preconnect to every",
+      "preload all images",
+      "preload all resources",
       "preload every",
-      "add preconnect for all"
+      "preconnect to every",
+      "preconnect to all third",
+      "add preconnect for all",
+      "add fetchpriority=high to all images",
+      "add fetchpriority=high to every image"
     ]
   },
   {
@@ -1057,12 +1336,22 @@
       }
     ],
     "patterns": [
-      "render-blocking-resources audit",
-      "uses-long-cache-ttl",
-      "offscreen-images audit",
-      "third-party-facades audit",
-      "uses-rel-preload",
-      "first-meaningful-paint"
+      "fix the render-blocking-resources audit",
+      "pass the render-blocking-resources audit",
+      "fails the render-blocking-resources audit",
+      "the render-blocking-resources audit shows",
+      "fix the uses-long-cache-ttl audit",
+      "pass the uses-long-cache-ttl audit",
+      "fails the uses-long-cache-ttl audit",
+      "the uses-long-cache-ttl audit shows",
+      "fix the offscreen-images audit",
+      "the offscreen-images audit flags",
+      "fix the third-party-facades audit",
+      "the third-party-facades audit flags",
+      "fix the uses-rel-preload audit",
+      "pass the uses-rel-preload audit",
+      "improve first meaningful paint",
+      "reduce first meaningful paint"
     ]
   },
   {
@@ -1077,7 +1366,11 @@
     ],
     "patterns": [
       "a single lighthouse run shows",
-      "one pagespeed run"
+      "one lighthouse run shows",
+      "one pagespeed run shows",
+      "a single pagespeed insights run shows",
+      "a single lighthouse run is enough",
+      "a single run proves"
     ]
   },
   {
@@ -1095,9 +1388,14 @@
       }
     ],
     "patterns": [
-      "no crux data means",
+      "no crux data means a performance problem",
+      "no crux data means the site is penalized",
+      "no crux data means a penalty",
       "missing crux data is a problem",
-      "not enough field data is a penalty"
+      "missing crux data means a performance",
+      "not enough field data is a penalty",
+      "lack of crux data indicates a performance",
+      "missing field data means the site is slow"
     ]
   },
   {
@@ -1115,8 +1413,12 @@
       }
     ],
     "patterns": [
-      "average of mobile and desktop",
-      "averaged across devices"
+      "core web vitals are averaged across",
+      "cwv are averaged across",
+      "averaged across all devices",
+      "core web vitals are an average",
+      "measured as an average across devices",
+      "average the mobile and desktop"
     ]
   },
   {
@@ -1135,9 +1437,15 @@
     ],
     "patterns": [
       "schema boosts rankings",
-      "structured data is a ranking factor",
+      "schema helps rankings",
       "schema markup improves rankings",
-      "add schema to rank higher"
+      "structured data improves rankings",
+      "structured data boosts rankings",
+      "structured data is a ranking factor",
+      "schema is a ranking factor",
+      "add schema to rank higher",
+      "add structured data to rank",
+      "add schema markup to rank"
     ]
   },
   {
@@ -1157,10 +1465,15 @@
     "patterns": [
       "add faq schema",
       "add faqpage",
-      "faq rich results",
-      "faq rich snippet",
-      "faq dropdowns",
-      "faqpage markup to get"
+      "add faq markup",
+      "add faq structured data",
+      "to get faq rich results",
+      "to get faq rich snippets",
+      "to get faq dropdowns",
+      "to qualify for faq rich results",
+      "faqpage markup to get",
+      "faq schema to get",
+      "faq rich results will"
     ]
   },
   {
@@ -1179,9 +1492,13 @@
     ],
     "patterns": [
       "add howto schema",
-      "howto rich results",
-      "howto markup to get",
-      "how-to rich result"
+      "add howto markup",
+      "add howto structured data",
+      "add how-to schema",
+      "to get howto rich results",
+      "to get how-to rich results",
+      "to get a how-to rich result",
+      "howto markup to get"
     ]
   },
   {
@@ -1195,11 +1512,17 @@
       }
     ],
     "patterns": [
-      "sitelinks search box",
-      "add searchaction",
       "add a searchaction",
-      "missing searchaction",
-      "potentialaction searchaction"
+      "add searchaction",
+      "add the searchaction",
+      "add a potentialaction searchaction",
+      "add potentialaction searchaction",
+      "add website searchaction",
+      "to get a sitelinks search box",
+      "to get the sitelinks search box",
+      "to show a sitelinks search box",
+      "enable the sitelinks search box",
+      "searchaction to get"
     ]
   },
   {
@@ -1215,7 +1538,8 @@
     "patterns": [
       "json-ld must be in the head",
       "move json-ld to the head",
-      "structured data must be in the head"
+      "structured data must be in the head",
+      "json-ld only works in the head"
     ]
   },
   {
@@ -1230,8 +1554,11 @@
     ],
     "patterns": [
       "google cannot see structured data injected",
+      "google can't see structured data injected",
       "gtm structured data is not seen",
-      "javascript-injected schema is ignored"
+      "javascript-injected schema is ignored",
+      "google ignores javascript-injected structured data",
+      "structured data injected by gtm is ignored"
     ]
   },
   {
@@ -1254,8 +1581,12 @@
     ],
     "patterns": [
       "microdata is worse",
+      "rdfa is worse",
       "convert microdata to json-ld for rankings",
-      "rdfa is not supported by google"
+      "convert microdata to json-ld to rank",
+      "switch from microdata to json-ld for rankings",
+      "rdfa is not supported by google",
+      "microdata is not supported by google"
     ]
   },
   {
@@ -1271,7 +1602,10 @@
     "patterns": [
       "guarantees a rich result",
       "guaranteed rich results",
-      "will show rich results once valid"
+      "will show rich results once valid",
+      "will get rich results once valid",
+      "passing the rich results test guarantees",
+      "valid markup guarantees"
     ]
   },
   {
@@ -1289,11 +1623,17 @@
       }
     ],
     "patterns": [
-      "schema for ai overviews",
-      "special schema for ai",
-      "structured data for ai mode",
-      "ai overview schema",
-      "schema to appear in ai"
+      "add schema for ai overviews",
+      "add structured data for ai overviews",
+      "add schema for ai mode",
+      "add structured data for ai mode",
+      "add special schema for ai",
+      "need special schema for ai",
+      "needs special schema for ai",
+      "requires special schema for ai",
+      "schema to appear in ai",
+      "structured data to appear in ai",
+      "schema to get cited in ai"
     ]
   },
   {
@@ -1312,10 +1652,14 @@
     ],
     "patterns": [
       "add your google reviews to schema",
-      "trustpilot rating in organization markup",
-      "aggregaterating to your organization",
-      "review stars from your testimonials",
-      "aggregaterating on localbusiness"
+      "add the trustpilot rating to organization",
+      "add your trustpilot rating to the organization markup",
+      "add aggregaterating to your organization",
+      "add aggregaterating to the organization",
+      "add aggregaterating to localbusiness",
+      "add aggregaterating on localbusiness",
+      "add aggregaterating to your localbusiness",
+      "get review stars from your testimonials"
     ]
   },
   {
@@ -1330,8 +1674,11 @@
     ],
     "patterns": [
       "headline must be 110 characters",
-      "110-character headline",
-      "headline under 110 characters"
+      "headline must be under 110 characters",
+      "keep the headline under 110 characters",
+      "shorten the headline to 110 characters",
+      "the 110-character headline limit",
+      "headline exceeds 110 characters"
     ]
   },
   {
@@ -1345,8 +1692,12 @@
       }
     ],
     "patterns": [
-      "organization markup on every page",
-      "organization schema on all pages"
+      "add organization markup to every page",
+      "add organization markup on every page",
+      "add organization schema to all pages",
+      "add organization schema on all pages",
+      "organization markup must be on every page",
+      "organization markup is required on every page"
     ]
   },
   {
@@ -1365,7 +1716,10 @@
     ],
     "patterns": [
       "rich results test validates all schema",
-      "test site names in the rich results test"
+      "use the rich results test to validate all",
+      "test site names in the rich results test",
+      "validate site names with the rich results test",
+      "check the site name in the rich results test"
     ]
   },
   {
@@ -1384,9 +1738,17 @@
     ],
     "patterns": [
       "remove faqpage because it harms",
+      "remove faqpage because it hurts",
+      "remove searchaction because it harms",
+      "remove searchaction because it hurts",
       "unsupported markup harms",
+      "unsupported markup hurts",
       "retired schema hurts",
-      "remove searchaction because"
+      "retired schema harms",
+      "retired markup hurts",
+      "leftover faqpage markup harms",
+      "remove retired markup to avoid a penalty",
+      "remove retired schema to avoid errors"
     ]
   },
   {
@@ -1408,9 +1770,11 @@
       }
     ],
     "patterns": [
-      "breadcrumbs in mobile results",
       "breadcrumb markup changes mobile urls",
-      "breadcrumbs on mobile serps"
+      "breadcrumbs appear in mobile results",
+      "breadcrumbs show in mobile results",
+      "to show breadcrumbs on mobile",
+      "to get breadcrumbs in mobile results"
     ]
   },
   {
@@ -1429,7 +1793,10 @@
     ],
     "patterns": [
       "author must be a person object",
-      "text values are schema errors"
+      "text values are schema errors",
+      "a text author is an error",
+      "plain-text author is invalid",
+      "text value is a schema error"
     ]
   },
   {
@@ -1448,7 +1815,8 @@
     ],
     "patterns": [
       "videoobject description is required",
-      "video description is required for rich results"
+      "video description is required for rich results",
+      "add a description because it is required for videoobject"
     ]
   },
   {
@@ -1466,8 +1834,11 @@
       }
     ],
     "patterns": [
-      "virtuallocation for event rich results",
-      "online event rich results"
+      "use virtuallocation for event rich results",
+      "add virtuallocation to get event rich results",
+      "online events get event rich results",
+      "online events are eligible for event rich results",
+      "to get event rich results for an online event"
     ]
   },
   {
@@ -1486,6 +1857,8 @@
     ],
     "patterns": [
       "use professionalservice",
+      "use the professionalservice type",
+      "use professionalservice to rank",
       "professionalservice type to rank"
     ]
   },
@@ -1502,7 +1875,8 @@
     "patterns": [
       "use qapage instead of faqpage",
       "switch faqpage to qapage",
-      "qapage for your faq"
+      "qapage for your faq",
+      "replace faqpage with qapage"
     ]
   },
   {
@@ -1521,8 +1895,11 @@
     ],
     "patterns": [
       "google uses html lang",
+      "google uses the html lang",
+      "google uses the lang attribute to",
       "lang attribute tells google the language",
-      "content-language header tells google"
+      "content-language header tells google",
+      "google reads html lang to detect"
     ]
   },
   {
@@ -1536,9 +1913,15 @@
       }
     ],
     "patterns": [
-      "hreflang penalty",
+      "avoid a hreflang penalty",
+      "avoid an hreflang penalty",
+      "risk an hreflang penalty",
       "hreflang errors cause a penalty",
-      "penalized for hreflang"
+      "hreflang errors cause penalties",
+      "hreflang errors hurt rankings",
+      "hreflang errors demote",
+      "penalized for hreflang",
+      "penalised for hreflang"
     ]
   },
   {
@@ -1553,7 +1936,8 @@
     ],
     "patterns": [
       "hreflang guarantees indexing",
-      "hreflang ensures every version is indexed"
+      "hreflang ensures every version is indexed",
+      "hreflang guarantees that every"
     ]
   },
   {
@@ -1572,8 +1956,11 @@
     ],
     "patterns": [
       "canonicalize translations to the main language",
-      "canonical to the english version",
-      "canonicalize all language versions"
+      "canonicalize translations to the",
+      "canonicalise translations to the",
+      "canonicalize all language versions to",
+      "set the canonical to the english version",
+      "point the canonical to the english version"
     ]
   },
   {
@@ -1590,7 +1977,8 @@
       "x-default is required",
       "x-default is mandatory",
       "missing x-default is an error",
-      "the root must be the x-default"
+      "the root must be the x-default",
+      "x-default must be set"
     ]
   },
   {
@@ -1604,9 +1992,13 @@
       }
     ],
     "patterns": [
-      "hreflang=\"en-uk\"",
-      "hreflang=en-uk",
-      "es-419 in hreflang"
+      "use hreflang=en-uk",
+      "use en-uk in hreflang",
+      "use es-419 in hreflang",
+      "use hreflang=es-419",
+      "en-uk is a valid hreflang",
+      "es-419 is a valid hreflang",
+      "use hreflang=us"
     ]
   },
   {
@@ -1621,8 +2013,10 @@
     ],
     "patterns": [
       "the cctld tells google the target country",
-      ".io domain targets",
-      ".co domain targets colombia"
+      ".io domain targets the",
+      ".co domain targets colombia",
+      ".tv domain targets tuvalu",
+      ".me domain targets montenegro"
     ]
   },
   {
@@ -1637,8 +2031,11 @@
     ],
     "patterns": [
       "set a target country in search console",
-      "international targeting report",
-      "geotargeting setting in search console"
+      "set the target country in search console",
+      "use the international targeting report",
+      "check the international targeting report",
+      "set geotargeting in search console",
+      "use the geotargeting setting in search console"
     ]
   },
   {
@@ -1653,8 +2050,11 @@
     ],
     "patterns": [
       "host the server in the target country",
-      "server location for local rankings",
-      "local hosting for seo"
+      "host in the target country to rank",
+      "move hosting to the target country",
+      "server location is required for local rankings",
+      "use local hosting for seo",
+      "local hosting is required"
     ]
   },
   {
@@ -1668,10 +2068,20 @@
       }
     ],
     "patterns": [
-      "geo.position",
-      "geo.region",
-      "geo meta tags",
-      "icbm meta"
+      "add geo.position",
+      "add a geo.position",
+      "add the geo.position",
+      "add geo.region",
+      "add a geo.region",
+      "add the geo.region",
+      "add geo.placename",
+      "add geo meta tags",
+      "add icbm",
+      "use geo meta tags",
+      "geo meta tags help",
+      "geo meta tags improve",
+      "geo.position helps",
+      "geo.region helps"
     ]
   },
   {
@@ -1706,6 +2116,7 @@
     "patterns": [
       "machine translation is spam",
       "machine-translated content is penalized",
+      "machine-translated content is spam",
       "auto-translation is always spam"
     ]
   },
@@ -1721,8 +2132,10 @@
     ],
     "patterns": [
       "block auto-translated pages",
+      "block machine-translated pages in robots.txt",
       "disallow machine-translated pages",
-      "robots.txt for translated pages"
+      "disallow auto-translated pages",
+      "use robots.txt to block translated pages"
     ]
   },
   {
@@ -1739,7 +2152,9 @@
       "subdirectories rank better",
       "subfolders rank better",
       "cctlds rank better",
-      "subdomains rank worse"
+      "subdomains rank worse",
+      "switch to subdirectories to rank",
+      "move to subfolders to rank"
     ]
   },
   {
@@ -1772,9 +2187,11 @@
       }
     ],
     "patterns": [
-      "keywords in the business profile name",
+      "add keywords to the business profile name",
       "add keywords to your business name",
-      "pay for business profile rankings"
+      "add keywords to the business name",
+      "pay for business profile rankings",
+      "pay for better local rankings"
     ]
   },
   {
@@ -1788,10 +2205,13 @@
       }
     ],
     "patterns": [
-      "one page per town",
-      "a page for every nearby city",
-      "location pages for each city",
-      "city landing pages for every"
+      "create one page per town",
+      "create a page for every nearby city",
+      "create a page for each nearby city",
+      "create a page for every nearby town",
+      "create pages for every nearby town",
+      "create pages for nearby towns to rank",
+      "one page per town boosts"
     ]
   },
   {
@@ -1809,9 +2229,11 @@
       }
     ],
     "patterns": [
-      "multiple of 48",
-      "48px multiple",
-      "favicon must be 48"
+      "must be a multiple of 48",
+      "favicon must be 48",
+      "use a multiple of 48",
+      "make the favicon a multiple of 48",
+      "resize the favicon to a multiple of 48"
     ]
   },
   {
@@ -1826,9 +2248,14 @@
     ],
     "patterns": [
       "hsts is a ranking factor",
+      "security headers are a ranking factor",
       "security headers improve rankings",
+      "security headers boost rankings",
       "csp improves seo",
-      "security headers for seo"
+      "add security headers for seo",
+      "add hsts for seo",
+      "add hsts to rank",
+      "add csp for seo"
     ]
   },
   {
@@ -1846,9 +2273,17 @@
       }
     ],
     "patterns": [
-      "mobile-friendly test",
-      "mobile usability report",
-      "mobile friendly test"
+      "run the mobile-friendly test",
+      "use the mobile-friendly test",
+      "run google's mobile-friendly test",
+      "use google's mobile-friendly test",
+      "check it with the mobile-friendly test",
+      "pass the mobile-friendly test",
+      "passes the mobile-friendly test",
+      "fails the mobile-friendly test",
+      "check the mobile usability report",
+      "use the mobile usability report",
+      "fix the errors in the mobile usability report"
     ]
   },
   {
@@ -1870,10 +2305,14 @@
       }
     ],
     "patterns": [
-      "lighthouse seo tap targets",
-      "lighthouse seo font size",
-      "tap-targets audit",
-      "plugins audit"
+      "lighthouse seo checks tap targets",
+      "lighthouse seo checks font size",
+      "lighthouse seo checks the viewport",
+      "lighthouse seo flags tap targets",
+      "fix the tap-targets audit",
+      "fails the tap-targets audit",
+      "fix the plugins audit",
+      "fails the plugins audit"
     ]
   },
   {
@@ -1892,8 +2331,9 @@
     ],
     "patterns": [
       "seo score of 100 means",
-      "perfect lighthouse seo score",
-      "lighthouse seo 100"
+      "a perfect lighthouse seo score means",
+      "lighthouse seo score of 100 proves",
+      "seo score of 100 shows"
     ]
   },
   {
@@ -1912,8 +2352,10 @@
     ],
     "patterns": [
       "cookie banner hurts rankings",
+      "cookie banners hurt rankings",
       "cookie banners are intrusive interstitials",
-      "consent banner penalty"
+      "consent banners are penalized",
+      "consent banners hurt rankings"
     ]
   },
   {
@@ -1928,7 +2370,8 @@
     ],
     "patterns": [
       "meta refresh is spam",
-      "google ignores meta refresh"
+      "google ignores meta refresh",
+      "meta refresh redirects are ignored"
     ]
   },
   {
@@ -1944,7 +2387,8 @@
     "patterns": [
       "w3c validation errors hurt seo",
       "html validation affects rankings",
-      "fix all w3c errors for seo"
+      "fix all w3c errors for seo",
+      "html validation errors hurt rankings"
     ]
   },
   {
@@ -1964,7 +2408,10 @@
     "patterns": [
       "open graph is a ranking factor",
       "og tags improve rankings",
-      "open graph for rankings"
+      "open graph tags improve rankings",
+      "add open graph for rankings",
+      "add open graph tags to rank",
+      "add og tags to rank"
     ]
   },
   {
@@ -1979,7 +2426,8 @@
     ],
     "patterns": [
       "block slackbot in robots.txt",
-      "robots.txt prevents slack previews"
+      "robots.txt prevents slack previews",
+      "robots.txt blocks slack previews"
     ]
   },
   {
@@ -1998,7 +2446,8 @@
     ],
     "patterns": [
       "mixed images make google prefer http",
-      "http images cause http canonical"
+      "http images cause http canonical",
+      "mixed images cause an http canonical"
     ]
   },
   {
@@ -2018,7 +2467,9 @@
     "patterns": [
       "small fonts hurt rankings",
       "tap targets are a ranking factor",
-      "font size ranking factor"
+      "small tap targets hurt rankings",
+      "font size is a ranking factor",
+      "small fonts are a ranking factor"
     ]
   },
   {
@@ -2041,9 +2492,14 @@
     ],
     "patterns": [
       "block google-extended to remove",
+      "block google-extended to opt out of ai overviews",
+      "block google-extended to stay out of ai",
+      "block google-extended for ai mode",
+      "use google-extended to opt out of ai overviews",
+      "blocking google-extended removes",
       "google-extended removes ai overviews",
-      "google-extended to opt out of ai overviews",
-      "google-extended for ai mode"
+      "google-extended controls ai overviews",
+      "google-extended controls ai mode"
     ]
   },
   {
@@ -2059,7 +2515,9 @@
     "patterns": [
       "blocking gptbot removes",
       "allow gptbot to appear in chatgpt search",
-      "gptbot for chatgpt search"
+      "allow gptbot for chatgpt search",
+      "block gptbot to opt out of chatgpt search",
+      "gptbot controls chatgpt search"
     ]
   },
   {
@@ -2074,10 +2532,11 @@
     ],
     "patterns": [
       "chunk your content",
-      "content chunking",
       "rewrite content for llms",
       "split content into chunks",
-      "passage chunking for ai"
+      "use passage chunking for ai",
+      "break content into small chunks for ai",
+      "chunk content for ai"
     ]
   },
   {
@@ -2100,7 +2559,8 @@
     ],
     "patterns": [
       "seed brand mentions",
-      "brand mentions for ai visibility",
+      "plant brand mentions",
+      "post brand mentions on reddit for ai",
       "get mentioned on reddit for ai"
     ]
   },
@@ -2121,7 +2581,8 @@
     "patterns": [
       "boost ai citations by 40%",
       "40% more ai visibility",
-      "geo tactics guarantee"
+      "geo tactics guarantee",
+      "add statistics to boost ai citations by"
     ]
   },
   {
@@ -2137,7 +2598,8 @@
     "patterns": [
       "keyword stuffing for llms",
       "repeat keywords so ai",
-      "keyword-stuff for ai answers"
+      "keyword-stuff for ai answers",
+      "keyword stuffing helps llm"
     ]
   },
   {
@@ -2157,7 +2619,9 @@
     "patterns": [
       "ai crawlers render javascript",
       "gptbot renders javascript",
-      "all ai crawlers execute javascript"
+      "all ai crawlers execute javascript",
+      "claudebot renders javascript",
+      "perplexitybot renders javascript"
     ]
   },
   {
@@ -2189,7 +2653,8 @@
     "patterns": [
       "robots.txt blocks all ai fetches",
       "robots.txt stops chatgpt-user",
-      "robots.txt blocks perplexity-user"
+      "robots.txt blocks perplexity-user",
+      "robots.txt blocks chatgpt-user"
     ]
   },
   {
@@ -2208,6 +2673,7 @@
     ],
     "patterns": [
       "content-signal blocks",
+      "content-signal lines block ai",
       "ai-train=no legally",
       "content signals are enforced"
     ]
@@ -2227,10 +2693,12 @@
       }
     ],
     "patterns": [
-      "ai overview rankings",
-      "ai visibility score",
-      "share of voice in ai overviews",
-      "ai rank tracking"
+      "track your ai overview rankings",
+      "check your ai overview rankings",
+      "monitor your ai overview rankings",
+      "real ai overview rankings",
+      "actual ai overview rankings",
+      "ai visibility tools show your real"
     ]
   },
   {
@@ -2245,7 +2713,8 @@
     ],
     "patterns": [
       "opting out of ai features hurts rankings",
-      "ai opt-out lowers rankings"
+      "ai opt-out lowers rankings",
+      "opting out of ai overviews hurts rankings"
     ]
   },
   {
@@ -2276,7 +2745,8 @@
     ],
     "patterns": [
       "allow applebot-extended for siri",
-      "applebot-extended for spotlight"
+      "allow applebot-extended for spotlight",
+      "allow applebot-extended to appear in siri"
     ]
   },
   {
@@ -2294,9 +2764,12 @@
       }
     ],
     "patterns": [
-      "block ai crawler ip",
-      "ip blocking to opt out of ai",
-      "block ai bots by ip"
+      "block ai crawler ip addresses",
+      "block ai crawler ips",
+      "block ai crawler ip ranges",
+      "use ip blocking to opt out of ai",
+      "block ai bots by ip",
+      "ip blocking is a reliable"
     ]
   },
   {
@@ -2315,8 +2788,11 @@
     ],
     "patterns": [
       "set lastmod to today",
-      "lastmod to the current date",
-      "update every lastmod"
+      "set every lastmod to today",
+      "set all lastmod values to today",
+      "set lastmod to the current date",
+      "update every lastmod to today",
+      "lastmod to today signals freshness"
     ]
   }
 ]
