@@ -70,6 +70,14 @@ describe('intl-localized-urls-unreachable', () => {
     assert.ok(excerpts(finding, evidence).some(excerpt => excerpt.includes(`302 ${es} -> ${en}`)));
   });
 
+  test('treats a redirect to the root that hosts the same language as an ordinary redirect', () => {
+    const head = links([['en', root], ['ca', ca]]);
+    const pages = [member(ca, 'ca', links([['en', url('/en/')], ['ca', ca]])), member(root, 'en', head), page(url('/en/'), { redirects: [[301, '/']], html: html({ lang: 'en', head, body: prose('en') }) })];
+    const facts = site({ pages });
+    assertOutcome(only(evaluate(localizedUrlsUnreachable, facts).findings), 'pass');
+    assertFail(only(evaluate(targetNot200, facts).findings), 'medium', 'redirect');
+  });
+
   test('is not evaluated when no locale URL was fetched', () => {
     assertOutcome(only(evaluate(localizedUrlsUnreachable, site({ pages: [member(ca, 'ca', links([['ca', url('/ca/x')], ['en', url('/en/x')]]))] })).findings), 'not_evaluated', 'targets-not-fetched');
   });

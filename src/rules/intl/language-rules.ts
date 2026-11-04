@@ -4,7 +4,7 @@ import { headerValue } from '../../fetch/http.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { metaProperty, pageDocument } from '../helpers.ts';
 import { annotationEvidence, elementSource, normalizeUrl } from './annotations.ts';
-import { declaredSets, documentAt, isXDefault, valuesFor } from './cluster.ts';
+import { clusters, declaredSets, documentAt, isXDefault, valuesFor } from './cluster.ts';
 import { bcp47Problem, primaryLanguage, sameLanguage } from './codes.ts';
 import { fail, list, maxEvidence, notApplicable, notEvaluated, pass } from './shared.ts';
 import { decisive, isDecisive, jaccard, languageEvidence, languageLabel, mainBlocks, needsConfirmation, pageLanguage, shingles, type DocumentLanguage } from './text.ts';
@@ -165,6 +165,7 @@ interface Variant {
   readonly page: PageFacts;
   readonly languages: readonly string[];
   readonly language: DocumentLanguage;
+  readonly shingles: ReadonlySet<string>;
 }
 
 export const untranslatedVariant: RuleImplementation = {
@@ -172,34 +173,34 @@ export const untranslatedVariant: RuleImplementation = {
   evaluate({ site, evidence }) {
     const sets = declaredSets(site);
     if (sets.size === 0) return notApplicable('no-hreflang');
-    const urls = new Set([...sets.values()].flatMap(set => [set.url, ...set.annotations.map(annotation => annotation.href).filter((href): href is string => href !== undefined)]));
-    const variants: Variant[] = [];
-    for (const url of urls) {
+    const variantOf = (url: string): Variant | undefined => {
       const page = documentAt(site, url);
       const language = page ? pageLanguage(page) : undefined;
-      if (!page || !language) continue;
+      if (!page || !language) return undefined;
       const languages = [...new Set(valuesFor(sets, url).filter(annotation => !isXDefault(annotation)).map(annotation => primaryLanguage(annotation.value)).filter((code): code is string => code !== undefined))];
-      if (languages.length > 0) variants.push({ url, page, languages, language });
-    }
+      return languages.length > 0 ? { url, page, languages, language, shingles: shingles(language.text) } : undefined;
+    };
     const results: RuleResult[] = [];
     let compared = 0;
-    for (const [index, a] of variants.entries()) {
-      for (const b of variants.slice(index + 1)) {
+    // Versions are compared within their own cluster only: those are the pages that claim to be translations.
+    for (const members of clusters(sets)) {
+      const variants = members.map(variantOf).filter((variant): variant is Variant => variant !== undefined);
+      for (const [index, a] of variants.entries()) for (const b of variants.slice(index + 1)) {
         // Same-language regional variants may share their text; only versions in different languages are compared.
         if (a.languages.some(x => b.languages.some(y => sameLanguage(x, y)))) continue;
         compared += 1;
-        const similarity = a.language.guess.words >= 50 && b.language.guess.words >= 50 ? jaccard(shingles(a.language.text), shingles(b.language.text)) : 0;
+        const similarity = a.language.guess.words >= 50 && b.language.guess.words >= 50 ? jaccard(a.shingles, b.shingles) : 0;
         const params = { url: a.url, other: b.url, languages: `${list(a.languages)} / ${list(b.languages)}`, similarity: Math.round(similarity * 100) };
-        const ids = [languageEvidence(evidence, a.url, a.language), languageEvidence(evidence, b.url, b.language)];
+        const ids = () => [languageEvidence(evidence, a.url, a.language), languageEvidence(evidence, b.url, b.language)];
         if (similarity >= 0.9) {
-          results.push(fail('medium', ids, params, 'near-identical'));
+          results.push(fail('medium', ids(), params, 'near-identical'));
           continue;
         }
         const same = isDecisive(a.language.guess) && isDecisive(b.language.guess) && a.language.guess.language === b.language.guess.language;
         if (!same) continue;
         const detected = a.language.guess.language;
         const confirm = [...a.languages, ...b.languages].some(code => needsConfirmation(detected, code));
-        results.push(fail('medium', ids, { ...params, detected: languageLabel(detected) }, 'same-language', confirm));
+        results.push(fail('medium', ids(), { ...params, detected: languageLabel(detected) }, 'same-language', confirm));
       }
     }
     if (results.length > 0) return results;

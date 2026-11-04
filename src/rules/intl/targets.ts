@@ -49,8 +49,10 @@ const disjoint = (a: readonly string[], b: readonly string[]) => a.length > 0 &&
 /** True when a redirect from `href` lands on the site root or on a URL the cluster assigns to another language. */
 function redirectsToOtherLocale(sets: ReadonlyMap<string, DeclaredSet>, href: string, final: string): boolean {
   if (final === href) return false;
-  if (new URL(final).pathname === '/' && new URL(href).pathname !== '/') return true;
-  return disjoint(languagesOf(sets, href), languagesOf(sets, final));
+  const theirs = languagesOf(sets, final);
+  // A root that the cluster assigns to the same language (the default locale at /) is not another locale.
+  if (theirs.length > 0) return disjoint(languagesOf(sets, href), theirs);
+  return new URL(final).pathname === '/' && new URL(href).pathname !== '/';
 }
 
 const onlyXDefault = (target: Target) => target.annotations.every(isXDefault);

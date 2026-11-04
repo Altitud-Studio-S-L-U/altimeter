@@ -180,12 +180,19 @@ export function headerAnnotations(page: PageFacts): Annotation[] {
     }));
 }
 
-/** xhtml:link alternates of every sitemap entry whose loc is `url`. */
-export function sitemapAnnotations(site: SiteFacts, url: string): Annotation[] {
-  const results: Annotation[] = [];
+const sitemapIndexes = new WeakMap<SiteFacts, Map<string, Annotation[]>>();
+
+/** xhtml:link alternates of every sitemap entry, keyed by the entry's loc; built once per site. */
+function sitemapIndex(site: SiteFacts): Map<string, Annotation[]> {
+  const cached = sitemapIndexes.get(site);
+  if (cached) return cached;
+  const index = new Map<string, Annotation[]>();
   for (const sitemap of site.sitemaps) {
     for (const entry of sitemap.document?.urls ?? []) {
-      if (normalizeUrl(entry.loc) !== url) continue;
+      const url = normalizeUrl(entry.loc);
+      if (!url || entry.alternates.length === 0) continue;
+      const results = index.get(url) ?? [];
+      index.set(url, results);
       for (const alternate of entry.alternates) {
         results.push({
           source: 'sitemap',
@@ -200,7 +207,13 @@ export function sitemapAnnotations(site: SiteFacts, url: string): Annotation[] {
       }
     }
   }
-  return results;
+  sitemapIndexes.set(site, index);
+  return index;
+}
+
+/** xhtml:link alternates of every sitemap entry whose loc is `url`. */
+export function sitemapAnnotations(site: SiteFacts, url: string): Annotation[] {
+  return sitemapIndex(site).get(url) ?? [];
 }
 
 export interface AnnotationOptions {

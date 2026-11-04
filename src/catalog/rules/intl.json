@@ -386,7 +386,7 @@
     "status": "v1",
     "fixLocation": "repo",
     "verifiableBy": "deployed",
-    "notes": "Fetch every hreflang target (without following redirects first, then following them). Fail on 3xx (report the final URL), 4xx, 5xx, timeouts and DNS errors. Google's hreflang page doesn't spell out a status-code rule. It follows from the bidirectional requirement (a redirecting or erroring URL can't return the link at the listed address). Keep the evidence label at industry-consensus. Retry 5xx and 429 once before reporting."
+    "notes": "Fetch every hreflang target (without following redirects first, then following them). Fail on 3xx (report the final URL), 4xx, 5xx, timeouts and DNS errors. Google's hreflang page doesn't spell out a status-code rule. It follows from the bidirectional requirement (a redirecting or erroring URL can't return the link at the listed address). Keep the evidence label at industry-consensus. Retry 5xx and 429 once before reporting. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported."
   },
   {
     "id": "intl-hreflang-target-noindex",
@@ -423,7 +423,7 @@
     "status": "v1",
     "fixLocation": "repo",
     "verifiableBy": "local",
-    "notes": "For each hreflang target that returns 200, check the robots meta (name=robots/googlebot) in raw and rendered HTML and the X-Robots-Tag header for noindex/none. A noindexed page can't appear for its locale, so the alternate is useless. Google applies robots rules per URL. No Google page explicitly states 'hreflang to noindex is ignored'. Keep wording factual: 'this version cannot be shown in Search'.",
+    "notes": "For each hreflang target that returns 200, check the robots meta (name=robots/googlebot) in raw and rendered HTML and the X-Robots-Tag header for noindex/none. A noindexed page can't appear for its locale, so the alternate is useless. Google applies robots rules per URL. No Google page explicitly states 'hreflang to noindex is ignored'. Keep wording factual: 'this version cannot be shown in Search'. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported.",
     "related": [
       "crawl-meta-robots-noindex"
     ]
@@ -465,7 +465,7 @@
     "status": "v1",
     "fixLocation": "repo",
     "verifiableBy": "local",
-    "notes": "Evaluate each hreflang target against its host's robots.txt for user-agent Googlebot (RFC 9309 matching, longest match, Allow beats Disallow on tie). Google can't read a blocked page's return links, so reciprocity can't be confirmed. Since 2025-06-11, Google's docs no longer suggest blocking auto-translated pages with robots.txt. Don't recommend that pattern.",
+    "notes": "Evaluate each hreflang target against its host's robots.txt for user-agent Googlebot (RFC 9309 matching, longest match, Allow beats Disallow on tie). Google can't read a blocked page's return links, so reciprocity can't be confirmed. Since 2025-06-11, Google's docs no longer suggest blocking auto-translated pages with robots.txt. Don't recommend that pattern. v1 reads the robots.txt of the audited origin; targets on other hosts are not evaluated.",
     "related": [
       "crawl-robots-blocks-page"
     ]
@@ -503,7 +503,7 @@
     "status": "v1",
     "fixLocation": "repo",
     "verifiableBy": "local",
-    "notes": "For each hreflang target that returns 200, read its rel=canonical (HTML and Link header). Fail if the canonical differs from the target URL after normalization. Also fail when the declaring page's own canonical isn't one of the URLs in its hreflang set. Mueller (2015): if the canonical URL is not part of the hreflang pairs, the hreflang markup will be ignored. Google's canonicalization docs say Google prefers URLs that are part of hreflang clusters and recommend a self-referential canonical. Parameterized tracking URLs in hreflang are a common cause."
+    "notes": "For each hreflang target that returns 200, read its rel=canonical (HTML and Link header). Fail if the canonical differs from the target URL after normalization. Also fail when the declaring page's own canonical isn't one of the URLs in its hreflang set. Mueller (2015): if the canonical URL is not part of the hreflang pairs, the hreflang markup will be ignored. Google's canonicalization docs say Google prefers URLs that are part of hreflang clusters and recommend a self-referential canonical. Parameterized tracking URLs in hreflang are a common cause. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported."
   },
   {
     "id": "intl-canonical-cross-language",
@@ -541,7 +541,7 @@
     "status": "v1",
     "fixLocation": "repo",
     "verifiableBy": "local",
-    "notes": "For pages in an hreflang cluster (or with a locale path, subdomain or ccTLD), compare the declared canonical with the page URL. When it differs, compare the detected content language of the page and of the canonical target, or the hreflang values both URLs hold in the cluster. Fail when the languages differ. This asks Google to drop the localized version from the index. Exception: if a variant's main content is untranslated (same language), canonicalizing to the original is legitimate. Then it should not appear in hreflang. Same-language regional duplicates (fr-FR/fr-BE) may legitimately be folded by Google. That is not this rule."
+    "notes": "For pages in an hreflang cluster (or with a locale path, subdomain or ccTLD), compare the declared canonical with the page URL. When it differs, compare the detected content language of the page and of the canonical target, or the hreflang values both URLs hold in the cluster. Fail when the languages differ. This asks Google to drop the localized version from the index. Exception: if a variant's main content is untranslated (same language), canonicalizing to the original is legitimate. Then it should not appear in hreflang. Same-language regional duplicates (fr-FR/fr-BE) may legitimately be folded by Google. That is not this rule. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported."
   },
   {
     "id": "intl-hreflang-on-non-canonical-page",
@@ -1156,7 +1156,7 @@
     "status": "v1",
     "fixLocation": "content",
     "verifiableBy": "manual",
-    "notes": "For each pair in a cluster with different language subtags, compute main-content similarity (shingled MinHash or cosine on normalized text) and the language detected on each. Flag when the variant's main content language equals the other's, or similarity >= 0.9. Compare main content only, and do not apply the similarity threshold to same-language regional variants."
+    "notes": "For each pair in a cluster with different language subtags, compute main-content similarity (shingled MinHash or cosine on normalized text) and the language detected on each. Flag when the variant's main content language equals the other's, or similarity >= 0.9. Compare main content only, and do not apply the similarity threshold to same-language regional variants. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported."
   },
   {
     "id": "intl-machine-translation-quality",

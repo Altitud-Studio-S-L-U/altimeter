@@ -104,12 +104,16 @@ export interface DocumentLanguage {
   readonly doc: DocumentFacts;
 }
 
+const languages = new WeakMap<PageFacts, DocumentLanguage | undefined>();
+
 /** Language of a page's main content, from the rendered DOM when present, else the raw HTML. */
 export function pageLanguage(page: PageFacts): DocumentLanguage | undefined {
+  if (languages.has(page)) return languages.get(page);
   const doc = pageDocument(page);
-  if (!doc) return undefined;
-  const text = mainText(doc);
-  return { guess: detectLanguage(text), text, doc };
+  const text = doc ? mainText(doc) : '';
+  const result = doc ? { guess: detectLanguage(text), text, doc } : undefined;
+  languages.set(page, result);
+  return result;
 }
 
 /** Minimum evidence before a detected language may contradict a declared one. */
