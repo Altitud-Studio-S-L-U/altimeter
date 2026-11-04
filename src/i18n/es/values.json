@@ -29,6 +29,10 @@
     "needs improvement": "«necesita mejorar»",
     "poor": "«deficiente»"
   },
+  "caller": {
+    "analyst": "analista",
+    "verifier": "verificador"
+  },
   "causes": {
     "none attributed": "ninguna"
   },
@@ -71,6 +75,10 @@
   },
   "entities": {
     "{entity}: main thread {time}, transfer {size}": "{entity}: hilo principal {time}, transferencia {size}"
+  },
+  "error": {
+    "no answer": "sin respuesta",
+    "unknown error": "error desconocido"
   },
   "field": {
     "title": "título",
@@ -156,6 +164,10 @@
   },
   "operators": {
     "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloqueado, {training} permitido)"
+  },
+  "outcome": {
+    "failed": "fallida",
+    "skipped": "omitida"
   },
   "preload": {
     "yes": "sí",
@@ -302,6 +314,49 @@
   },
   "url": {
     "unknown": "URL desconocida"
+  },
+  "warning": {
+    "Search Console was requested but no credential was found. Run \"altimeter gsc login\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "Se han pedido datos de Search Console, pero no se ha encontrado ninguna credencial. Ejecuta \"altimeter gsc login\" o define ALTIMETER_GSC_ACCESS_TOKEN.",
+    "Search Console data was not used: {error}": "No se han usado los datos de Search Console: {error}",
+    "Crawler activity: {warning}": "Actividad de rastreadores: {warning}",
+    "Crawler activity was not read: {error}": "No se ha leído la actividad de rastreadores: {error}",
+    "Chrome was not found, so rendered checks were not evaluated.": "No se ha encontrado Chrome, así que no se han evaluado las comprobaciones que necesitan el renderizado.",
+    "Lighthouse did not complete: {error}": "Lighthouse no ha terminado: {error}",
+    "Bing Webmaster Tools data was requested but BING_WEBMASTER_API_KEY is not set. Generate a key in Bing Webmaster Tools under Settings > API Access.": "Se han pedido datos de Bing Webmaster Tools, pero BING_WEBMASTER_API_KEY no está definida. Genera una clave en Bing Webmaster Tools, en Settings > API Access.",
+    "Bing Webmaster Tools data is incomplete. {warning}": "Los datos de Bing Webmaster Tools están incompletos. {warning}",
+    "Bing Webmaster Tools data was not used: {error}": "No se han usado los datos de Bing Webmaster Tools: {error}",
+    "The crawl issues could not be read: {error}": "No se han podido leer los problemas de rastreo: {error}",
+    "The page traffic could not be read: {error}": "No se ha podido leer el tráfico de las páginas: {error}",
+    "The queries of {page} could not be read: {error}": "No se han podido leer las consultas de {page}: {error}",
+    "The index details of {url} could not be read: {error}": "No se han podido leer los detalles del índice de {url}: {error}",
+    "{count} later request was not sent after Bing Webmaster Tools throttled the requests.": "{count} solicitud posterior no se ha enviado porque Bing Webmaster Tools ha limitado las solicitudes.",
+    "{count} later requests were not sent after Bing Webmaster Tools throttled the requests.": "{count} solicitudes posteriores no se han enviado porque Bing Webmaster Tools ha limitado las solicitudes.",
+    "Cloudflare keeps {days} days of this data for the zone, so the window starts on {date}.": "Cloudflare conserva {days} días de estos datos para la zona, así que la ventana empieza el {date}.",
+    "Cloudflare allows {hours} hours per query, so only the data from {date} was read.": "Cloudflare permite {hours} horas por consulta, así que solo se han leído los datos desde el {date}.",
+    "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.": "Algunas consultas a Cloudflare han devuelto el máximo de filas, así que pueden faltar rastreadores o rutas poco frecuentes y las cifras son mínimos.",
+    "{name}: reading stopped early ({error}).": "{name}: la lectura se ha detenido antes de tiempo ({error}).",
+    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: el {share} % de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy o un balanceador de carga, así que sus direcciones no se han usado para verificar rastreadores. Registra la dirección del cliente y usa --ip-source.",
+    "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} usa el Common Log Format, que no tiene user-agent, así que no se pueden identificar los rastreadores.",
+    "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} no registra el user-agent (Netlify elimina client_ip y user_agent cuando se excluyen los datos personales), así que no se pueden identificar los rastreadores.",
+    "{name} records no user agent, so crawlers cannot be identified in it.": "{name} no registra el user-agent, así que no se pueden identificar los rastreadores.",
+    "{name} ({format}) records the client address itself; --ip-source applies to server logs only.": "{name} ({format}) registra la dirección del cliente por sí mismo; --ip-source solo se aplica a los registros del servidor.",
+    "Cloudflare analytics and access logs may count the same requests twice.": "Las analíticas de Cloudflare y los registros de acceso pueden contar dos veces las mismas solicitudes.",
+    "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.": "No se ha podido leer la lista de direcciones {id} ({error}); no se puede reconocer un registro que anota las direcciones de Cloudflare.",
+    "The address list {id} could not be read ({error}); requests it would verify stay unverified.": "No se ha podido leer la lista de direcciones {id} ({error}); las solicitudes que verificaría quedan sin verificar.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.": "No se ha podido actualizar la lista de direcciones {id} ({error}); se ha usado la copia en caché del {date}.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.": "No se ha podido actualizar la lista de direcciones {id} ({error}); se ha usado la copia en caché de una ejecución anterior.",
+    "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.": "El DNS inverso se ha limitado a las {limit} direcciones con más actividad; las solicitudes de las demás quedan sin verificar cuando sus listas no las verifican.",
+    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} solicitudes de rastreadores llevan direcciones privadas o de loopback, así que los registros anotan un proxy o un balanceador de carga; registra la dirección del cliente y usa --ip-source.",
+    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} solicitudes de rastreadores vienen de direcciones de Cloudflare, así que los registros anotan Cloudflare en lugar del cliente; registra CF-Connecting-IP y usa --ip-source.",
+    "No request falls within the window ({start} to {end}); check the dates of {files}.": "Ninguna solicitud cae dentro de la ventana (del {start} al {end}); comprueba las fechas de {files}.",
+    "No request falls within the window ({start} to {end}).": "Ninguna solicitud cae dentro de la ventana (del {start} al {end}).",
+    "Cloudflare reported no request from a known crawler in the window.": "Cloudflare no ha indicado ninguna solicitud de un rastreador conocido en la ventana.",
+    "The analysis did not run because no provider CLI is available.": "El análisis no se ha ejecutado porque no hay ninguna CLI de proveedor disponible.",
+    "Verification was turned off, so every analysis finding stays unverified.": "La verificación estaba desactivada, así que todos los hallazgos del análisis quedan sin verificar.",
+    "{error} Findings stay unverified.": "{error} Los hallazgos quedan sin verificar.",
+    "{count} analysis calls were left out to stay within the call limit.": "Se han omitido {count} llamadas del análisis para no superar el límite de llamadas.",
+    "{caller} call {id} ({pass}) {outcome}: {error}": "Llamada {id} ({caller}, {pass}) {outcome}: {error}",
+    "{name} {version} is not a verified version; it runs with {flags}.": "{name} {version} no es una versión verificada; se ejecuta con {flags}."
   },
   "where": {
     "title": "el título",

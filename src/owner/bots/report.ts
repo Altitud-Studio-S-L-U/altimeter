@@ -4,6 +4,7 @@ import type { SiteFacts } from '../../core/facts.ts';
 import { evidenceLabelText } from '../../i18n/evidence.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../../i18n/messages.ts';
 import { ui } from '../../i18n/ui.ts';
+import { localizeValue } from '../../i18n/values.ts';
 import { runRules, type Finding } from '../../rules/engine.ts';
 import { implementations } from '../../rules/owner/bots.ts';
 import { cleanLine, untrustedBlock, untrustedInline } from '../../report/sanitize.ts';
@@ -341,7 +342,7 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
       lines.push(`- ${format(l.listLine, { id: `\`${list.id}\``, prefixes: list.prefixes, created: untrustedInline(list.creationTime ?? '-', 40), from: l.listSources[list.from] })} <${list.url}>`);
     }
   }
-  if (activity.warnings.length > 0) lines.push('', `### ${t.warnings}`, '', ...activity.warnings.map(warning => `- ${cleanLine(warning, 400)}`));
+  if (activity.warnings.length > 0) lines.push('', `### ${t.warnings}`, '', ...activity.warnings.map(warning => `- ${cleanLine(localizeValue(language, 'warning', warning), 400)}`));
   lines.push('');
   return lines.join('\n');
 }

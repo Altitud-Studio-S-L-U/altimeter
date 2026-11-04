@@ -28,6 +28,9 @@ export const listParams: ReadonlySet<string> = new Set([
   'crawl-canonical-chains/path', 'intl-hreflang-target-not-200/status', 'intl-og-locale/value',
 ]);
 
+/** Values that are sentences, such as run warnings: each is translated as a whole, never as a list of items. */
+export const proseParams: ReadonlySet<string> = new Set(['warning']);
+
 /** Parameters that hold English language names from src/analyze/language.ts, translated with Intl.DisplayNames. */
 export const languageParams: ReadonlySet<string> = new Set([
   'canonicalLanguage', 'declared', 'detected', 'expected', 'language', 'languages', 'other', 'primary', 'secondary',
@@ -55,9 +58,12 @@ function compile(key: string): Pattern {
 function patternsOf(section: Readonly<Record<string, string>>): readonly Pattern[] {
   let patterns = patternCache.get(section);
   if (!patterns) {
-    // The pattern with the most fixed text is tried first, so "text hidden by {method} inside main" wins over "text hidden by {method}".
+    // Patterns that start with fixed text come first, so a prefix such as "Crawler activity: {warning}" is read before
+    // a pattern that starts with a value; then the one with the most fixed text, so "text hidden by {method} inside
+    // main" wins over "text hidden by {method}".
+    const leading = (pattern: Pattern) => (pattern.literals[0] === '' ? 0 : 1);
     const fixed = (pattern: Pattern) => pattern.literals.join('').length;
-    patterns = Object.keys(section).filter(key => key.includes('{')).map(compile).sort((a, b) => fixed(b) - fixed(a));
+    patterns = Object.keys(section).filter(key => key.includes('{')).map(compile).sort((a, b) => leading(b) - leading(a) || fixed(b) - fixed(a));
     patternCache.set(section, patterns);
   }
   return patterns;
@@ -110,7 +116,8 @@ function sections(language: Language, name: string, ruleId: string | undefined):
   return [ruleId === undefined ? undefined : catalog[`${ruleId}/${name}`], catalog[name]].filter((section): section is Readonly<Record<string, string>> => section !== undefined);
 }
 
-function translateWhole(language: Language, name: string, value: string, ruleId: string | undefined, depth: number): string | undefined {
+/** A language name or an entry of the catalog for the whole value. */
+function translateExact(language: Language, name: string, value: string, ruleId: string | undefined): string | undefined {
   if (languageParams.has(name)) {
     const named = languageName(language, value);
     if (named !== undefined) return named;
@@ -118,12 +125,18 @@ function translateWhole(language: Language, name: string, value: string, ruleId:
   for (const section of sections(language, name, ruleId)) {
     const exact = section[value];
     if (exact !== undefined) return exact;
-    if (depth >= 4 || value.length > 2000) continue;
+  }
+  return undefined;
+}
+
+/** The first pattern of the catalog that matches the whole value, with each part translated by its own name. */
+function translatePattern(language: Language, name: string, value: string, ruleId: string | undefined, depth: number): string | undefined {
+  if (depth >= 4 || value.length > 2000) return undefined;
+  for (const section of sections(language, name, ruleId)) {
     for (const pattern of patternsOf(section)) {
       if (!pattern.literals.every(literal => value.includes(literal))) continue;
       const match = pattern.regex.exec(value);
-      // A part that spans list items means the pattern matched across a list, which is translated item by item.
-      if (!match || match.slice(1).some(part => splitList(part).length > 1 || splitList(part, '; ').length > 1)) continue;
+      if (!match) continue;
       const parts: Record<string, string> = {};
       pattern.names.forEach((part, index) => {
         parts[part] = translate(language, part, match[index + 1]!, ruleId, depth + 1);
@@ -134,22 +147,35 @@ function translateWhole(language: Language, name: string, value: string, ruleId:
   return undefined;
 }
 
-/** A list joined with "; " or ", ", each item translated where the catalog knows it as a whole. */
-function translateItems(language: Language, name: string, value: string, ruleId: string | undefined, depth: number): string {
-  const groups = splitList(value, '; ');
-  if (groups.length > 1) return groups.map(group => translateWhole(language, name, group, ruleId, depth) ?? translateItems(language, name, group, ruleId, depth)).join('; ');
-  return splitList(value).map(item => translateWhole(language, name, item, ruleId, depth) ?? item).join(', ');
+/**
+ * A list joined with "; " or ", ", item by item, or undefined when the value is one item or no item is known.
+ * Items come before patterns, so a pattern cannot match across the items of a list.
+ */
+function translateItems(language: Language, name: string, value: string, ruleId: string | undefined, depth: number): string | undefined {
+  for (const separator of ['; ', ', '] as const) {
+    const items = splitList(value, separator);
+    if (items.length < 2) continue;
+    const translated = items.map(item => translateKnown(language, name, item, ruleId, depth) ?? item);
+    return translated.some((item, index) => item !== items[index]) ? translated.join(separator) : undefined;
+  }
+  return undefined;
+}
+
+function translateKnown(language: Language, name: string, value: string, ruleId: string | undefined, depth: number): string | undefined {
+  return translateExact(language, name, value, ruleId)
+    ?? (proseParams.has(name) ? undefined : translateItems(language, name, value, ruleId, depth))
+    ?? translatePattern(language, name, value, ruleId, depth);
 }
 
 function translate(language: Language, name: string, value: string, ruleId: string | undefined, depth: number): string {
-  const whole = translateWhole(language, name, value, ruleId, depth);
-  if (whole !== undefined) return whole;
+  const exact = translateExact(language, name, value, ruleId);
+  if (exact !== undefined) return exact;
   const list = listParams.has(name) || (ruleId !== undefined && listParams.has(`${ruleId}/${name}`));
   const more = list ? englishMore.exec(value) : null;
   const known = languageParams.has(name) || sections(language, name, ruleId).length > 0;
   if (!more && !known) return value;
   const head = more ? more[1]! : value;
-  const items = known ? translateItems(language, name, head, ruleId, depth) : head;
+  const items = known ? translateKnown(language, name, head, ruleId, depth) ?? head : head;
   return more ? format(ui(language).moreItems, { items, count: more[2]! }) : items;
 }
 

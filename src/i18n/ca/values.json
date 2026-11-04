@@ -29,6 +29,10 @@
     "needs improvement": "cal millorar",
     "poor": "deficient"
   },
+  "caller": {
+    "analyst": "analista",
+    "verifier": "verificador"
+  },
   "causes": {
     "none attributed": "cap"
   },
@@ -71,6 +75,10 @@
   },
   "entities": {
     "{entity}: main thread {time}, transfer {size}": "{entity}: fil principal {time}, transferència {size}"
+  },
+  "error": {
+    "no answer": "sense resposta",
+    "unknown error": "error desconegut"
   },
   "field": {
     "title": "títol",
@@ -156,6 +164,10 @@
   },
   "operators": {
     "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloquejat, {training} permès)"
+  },
+  "outcome": {
+    "failed": "fallida",
+    "skipped": "omesa"
   },
   "preload": {
     "yes": "sí",
@@ -302,6 +314,49 @@
   },
   "url": {
     "unknown": "URL desconeguda"
+  },
+  "warning": {
+    "Search Console was requested but no credential was found. Run \"altimeter gsc login\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "S'han demanat dades de Search Console, però no s'ha trobat cap credencial. Executa \"altimeter gsc login\" o defineix ALTIMETER_GSC_ACCESS_TOKEN.",
+    "Search Console data was not used: {error}": "No s'han fet servir les dades de Search Console: {error}",
+    "Crawler activity: {warning}": "Activitat de rastrejadors: {warning}",
+    "Crawler activity was not read: {error}": "No s'ha llegit l'activitat de rastrejadors: {error}",
+    "Chrome was not found, so rendered checks were not evaluated.": "No s'ha trobat Chrome, de manera que no s'han avaluat les comprovacions que necessiten la renderització.",
+    "Lighthouse did not complete: {error}": "Lighthouse no ha acabat: {error}",
+    "Bing Webmaster Tools data was requested but BING_WEBMASTER_API_KEY is not set. Generate a key in Bing Webmaster Tools under Settings > API Access.": "S'han demanat dades de Bing Webmaster Tools, però BING_WEBMASTER_API_KEY no està definida. Genera una clau a Bing Webmaster Tools, a Settings > API Access.",
+    "Bing Webmaster Tools data is incomplete. {warning}": "Les dades de Bing Webmaster Tools estan incompletes. {warning}",
+    "Bing Webmaster Tools data was not used: {error}": "No s'han fet servir les dades de Bing Webmaster Tools: {error}",
+    "The crawl issues could not be read: {error}": "No s'han pogut llegir els problemes de rastreig: {error}",
+    "The page traffic could not be read: {error}": "No s'ha pogut llegir el trànsit de les pàgines: {error}",
+    "The queries of {page} could not be read: {error}": "No s'han pogut llegir les consultes de {page}: {error}",
+    "The index details of {url} could not be read: {error}": "No s'han pogut llegir els detalls de l'índex de {url}: {error}",
+    "{count} later request was not sent after Bing Webmaster Tools throttled the requests.": "{count} sol·licitud posterior no s'ha enviat perquè Bing Webmaster Tools ha limitat les sol·licituds.",
+    "{count} later requests were not sent after Bing Webmaster Tools throttled the requests.": "{count} sol·licituds posteriors no s'han enviat perquè Bing Webmaster Tools ha limitat les sol·licituds.",
+    "Cloudflare keeps {days} days of this data for the zone, so the window starts on {date}.": "Cloudflare conserva {days} dies d'aquestes dades per a la zona, de manera que la finestra comença el {date}.",
+    "Cloudflare allows {hours} hours per query, so only the data from {date} was read.": "Cloudflare permet {hours} hores per consulta, de manera que només s'han llegit les dades des del {date}.",
+    "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.": "Algunes consultes a Cloudflare han retornat el màxim de files, de manera que poden faltar rastrejadors o camins poc freqüents i les xifres són mínims.",
+    "{name}: reading stopped early ({error}).": "{name}: la lectura s'ha aturat abans d'hora ({error}).",
+    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: un {share} % de les seves sol·licituds vénen d'una o dues adreces, cosa que sembla un proxy o un balancejador de càrrega, de manera que les seves adreces no s'han fet servir per verificar rastrejadors. Registra l'adreça del client i fes servir --ip-source.",
+    "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} fa servir el Common Log Format, que no té agent d'usuari, de manera que no s'hi poden identificar els rastrejadors.",
+    "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} no registra l'agent d'usuari (Netlify elimina client_ip i user_agent quan s'exclouen les dades personals), de manera que no s'hi poden identificar els rastrejadors.",
+    "{name} records no user agent, so crawlers cannot be identified in it.": "{name} no registra l'agent d'usuari, de manera que no s'hi poden identificar els rastrejadors.",
+    "{name} ({format}) records the client address itself; --ip-source applies to server logs only.": "{name} ({format}) registra l'adreça del client per si mateix; --ip-source només s'aplica als registres del servidor.",
+    "Cloudflare analytics and access logs may count the same requests twice.": "Les analítiques de Cloudflare i els registres d'accés poden comptar dues vegades les mateixes sol·licituds.",
+    "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.": "No s'ha pogut llegir la llista d'adreces {id} ({error}); no es pot reconèixer un registre que anota les adreces de Cloudflare.",
+    "The address list {id} could not be read ({error}); requests it would verify stay unverified.": "No s'ha pogut llegir la llista d'adreces {id} ({error}); les sol·licituds que verificaria queden sense verificar.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.": "No s'ha pogut actualitzar la llista d'adreces {id} ({error}); s'ha fet servir la còpia de la memòria cau del {date}.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.": "No s'ha pogut actualitzar la llista d'adreces {id} ({error}); s'ha fet servir la còpia de la memòria cau d'una execució anterior.",
+    "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.": "El DNS invers s'ha limitat a les {limit} adreces amb més activitat; les sol·licituds de les altres queden sense verificar quan les seves llistes no les verifiquen.",
+    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} sol·licituds de rastrejadors porten adreces privades o de loopback, de manera que els registres anoten un proxy o un balancejador de càrrega; registra l'adreça del client i fes servir --ip-source.",
+    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} sol·licituds de rastrejadors vénen d'adreces de Cloudflare, de manera que els registres anoten Cloudflare en lloc del client; registra CF-Connecting-IP i fes servir --ip-source.",
+    "No request falls within the window ({start} to {end}); check the dates of {files}.": "Cap sol·licitud no cau dins de la finestra (del {start} al {end}); comprova les dates de {files}.",
+    "No request falls within the window ({start} to {end}).": "Cap sol·licitud no cau dins de la finestra (del {start} al {end}).",
+    "Cloudflare reported no request from a known crawler in the window.": "Cloudflare no ha indicat cap sol·licitud d'un rastrejador conegut a la finestra.",
+    "The analysis did not run because no provider CLI is available.": "L'anàlisi no s'ha executat perquè no hi ha cap CLI de proveïdor disponible.",
+    "Verification was turned off, so every analysis finding stays unverified.": "La verificació estava desactivada, de manera que totes les troballes de l'anàlisi queden sense verificar.",
+    "{error} Findings stay unverified.": "{error} Les troballes queden sense verificar.",
+    "{count} analysis calls were left out to stay within the call limit.": "S'han omès {count} crides de l'anàlisi per no superar el límit de crides.",
+    "{caller} call {id} ({pass}) {outcome}: {error}": "Crida {id} ({caller}, {pass}) {outcome}: {error}",
+    "{name} {version} is not a verified version; it runs with {flags}.": "{name} {version} no és una versió verificada; s'executa amb {flags}."
   },
   "where": {
     "title": "títol",

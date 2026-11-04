@@ -144,7 +144,7 @@ function analysisLines(analysis: ReportAnalysis, language: Language): string[] {
   if (analysis.skipped.length > 0) {
     lines.push(`### ${a.skipped}`, '', ...analysis.skipped.map(entry => `- ${cleanLine(entry.pass)} · ${untrustedInline(entry.page, 160)}: \`${cleanLine(entry.reason)}\``), '');
   }
-  if (analysis.warnings.length > 0) lines.push(`**${t.warnings}:**`, ...analysis.warnings.map(warning => `- ${cleanLine(warning)}`), '');
+  if (analysis.warnings.length > 0) lines.push(`**${t.warnings}:**`, ...analysis.warnings.map(warning => `- ${cleanLine(localizeValue(language, 'warning', warning))}`), '');
   return lines;
 }
 
@@ -169,7 +169,7 @@ export function renderMarkdown(report: Report, language: Language): string {
   lines.push(`**${t.coverage}:** ${format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable })}`);
   const missing = Object.entries(report.coverage.missingInputs);
   if (missing.length > 0) lines.push('', `${t.missingInputs}: ${missing.map(([input, count]) => `\`${input}\` (${count})`).join(', ')}`);
-  if (report.run.warnings.length > 0) lines.push('', `**${t.warnings}:**`, ...report.run.warnings.map(warning => `- ${cleanLine(warning)}`));
+  if (report.run.warnings.length > 0) lines.push('', `**${t.warnings}:**`, ...report.run.warnings.map(warning => `- ${cleanLine(localizeValue(language, 'warning', warning))}`));
   lines.push('');
 
   lines.push(`## ${t.topActions}`, '');

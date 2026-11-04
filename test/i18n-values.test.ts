@@ -9,6 +9,7 @@ import { languageParams, listParams, localizeParams, localizeValue, splitList, v
 import { summarizeList } from '../src/rules/helpers.ts';
 
 const rulesDirectory = fileURLToPath(new URL('../src/rules', import.meta.url));
+const sourceDirectory = fileURLToPath(new URL('../src', import.meta.url));
 
 function sources(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -62,6 +63,14 @@ describe('translating the values of messages and labels', () => {
     assert.deepEqual(splitList('a; b, c', '; '), ['a', 'b, c']);
   });
 
+  test('translates warnings as whole sentences, with a prefix before them', () => {
+    const proxy = 'access.log: 85% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.';
+    assert.match(localizeValue('es', 'warning', `Crawler activity: ${proxy}`), /^Actividad de rastreadores: access\.log: el 85 % de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy/u);
+    assert.equal(localizeValue('ca', 'warning', 'analyst call C3 (content) failed: no answer'), 'Crida C3 (analista, content) fallida: sense resposta');
+    assert.equal(localizeValue('es', 'warning', 'Lighthouse did not complete: Target closed, retry'), 'Lighthouse no ha terminado: Target closed, retry');
+    assert.equal(localizeValue('es', 'warning', 'A warning nobody translated yet.'), 'A warning nobody translated yet.');
+  });
+
   test('reads the list ending that summarizeList writes', () => {
     const list = summarizeList(['a', 'b', 'c', 'd'], 2);
     assert.equal(list, format(ui('en').moreItems, { items: 'a, b', count: 2 }));
@@ -91,6 +100,26 @@ describe('the value catalogs', () => {
     }
     names.delete('excerpt');
     const missing = [...names].filter(name => !listParams.has(name) && ![...listParams].some(entry => entry.endsWith(`/${name}`)));
+    assert.deepEqual(missing, []);
+  });
+
+  test('know every warning that code writes with a fixed sentence', () => {
+    const normalize = (template: string) => template.replace(/\{[a-zA-Z][a-zA-Z0-9]*\}/gu, '{}');
+    const known = new Set(Object.keys(valueCatalogs.en.warning ?? {}).map(normalize));
+    // Warnings whose wording code picks from a few fixed variants; the catalog lists each variant.
+    for (const variants of ['{} could not be read: {}', '{} later request{} not sent after Bing Webmaster Tools throttled the requests.', '{} records no user agent{}, so crawlers cannot be identified in it.']) known.add(variants);
+    const pushed = /(?:warnings\.push|unavailable\.push)\(\s*(?:'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`)\s*\)|\.\.\.collected\.warnings, (?:'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`)\]/gu;
+    const missing: string[] = [];
+    let checked = 0;
+    for (const text of sources(sourceDirectory)) {
+      for (const match of text.matchAll(pushed)) {
+        const literal = match[1] ?? match[2] ?? match[3] ?? match[4] ?? '';
+        const template = literal.replace(/\\'/gu, '\'').replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/gu, '{}');
+        checked += 1;
+        if (!known.has(template)) missing.push(template);
+      }
+    }
+    assert.ok(checked >= 20, `only ${checked} warnings found`);
     assert.deepEqual(missing, []);
   });
 

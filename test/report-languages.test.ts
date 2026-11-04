@@ -38,7 +38,7 @@ function report(): Report {
     finding('content-hidden-text', { words: 40, blocks: 2, reasons: 'display-none, offscreen' }, [cite(evidenceLabel('text hidden by {method}', { method: 'display-none' }), { excerpt: 'cheap rooms' })], { needsJudgment: true, confidence: 'low' }),
     { ruleId: 'perf-lab-cls', scope: { kind: 'page', url }, outcome: 'not_evaluated', reason: 'missing-input:lighthouse', evidence: [], evidenceSignature: 'n', confidence: 'high', origin: 'deterministic' },
   ];
-  const collected: CollectResult = { site: site({ pages: [page(url, { html: '<!doctype html><title>Hotel</title>', pageType: 'product' })] }), versions: { chrome: 'HeadlessChrome/156.0.0.0', lighthouse: '13.6.0' }, warnings: [], durationMs: 10 };
+  const collected: CollectResult = { site: site({ pages: [page(url, { html: '<!doctype html><title>Hotel</title>', pageType: 'product' })] }), versions: { chrome: 'HeadlessChrome/156.0.0.0', lighthouse: '13.6.0' }, warnings: ['Chrome was not found, so rendered checks were not evaluated.'], durationMs: 10 };
   const built = buildReport({ collected, findings, evidence, implemented: 300, language: 'en', startedAt: new Date('2026-11-04T10:00:00Z'), targetUrl: url, options: {} });
   const tasks = built.tasks.map(task => (task.ruleId === 'crawl-canonical-ignored-attributes-placement'
     ? { ...task, files: [{ path: 'src/Head.astro', confidence: 'high' as const, reason: 'contains rel="canonical"; contains the observed text; named after .Head' }] }
@@ -56,7 +56,7 @@ const english = [
   'Catalog ', 'rules implemented', 'evidence items in report.json', 'See report.json', '<build directory>', 'For each category, score', 'Pending review',
   'needs improvement', 'origin-level', 'URL-level', 'PHONE', 'carries hreflang', 'in the body', ' and 2 more', 'simulate throttling', 'Catalan', 'Spanish',
   'display-none', 'offscreen', 'contains the observed text', 'named after', 'text hidden by', '>product<', '| product |',
-  'Hidden text (colour, size',
+  'Hidden text (colour, size', 'Chrome was not found',
 ];
 
 /** Translations a translator would add for the labels this report cites, so labels are checked with their values. */
@@ -141,11 +141,12 @@ describe('Spanish and Catalan reports', () => {
   test('bots.md carries no English data sources or limits in Spanish and Catalan', () => {
     const bots = buildBotsReport(activity({
       dns: { enabled: true, lookups: 120, errors: 2, capped: true },
+      warnings: ['Cloudflare analytics and access logs may count the same requests twice.'],
       ipLists: [{ id: 'googlebot', url: 'https://developers.google.com/static/search/apis/ipranges/googlebot.json', from: 'stale-cache', prefixes: 120, creationTime: '2026-11-01T00:00:00Z' }],
     }), undefined);
     for (const language of ['es', 'ca'] as const) {
       const text = renderBotsMarkdown(bots, language);
-      assert.deepEqual(['(limit reached)', 'stale-cache', '(last-modified)'].filter(phrase => text.includes(phrase)), []);
+      assert.deepEqual(['(limit reached)', 'stale-cache', '(last-modified)', 'may count the same requests twice'].filter(phrase => text.includes(phrase)), []);
     }
     assert.match(renderBotsMarkdown(bots, 'es'), /copia caducada de la caché[\s\S]*se ha alcanzado el límite[\s\S]*cabecera Last-Modified|se ha alcanzado el límite[\s\S]*cabecera Last-Modified[\s\S]*copia caducada de la caché/u);
   });

@@ -146,7 +146,7 @@ function analysisHtml(analysis: ReportAnalysis, language: Language): string {
     parts.push(`<h3>${escapeHtml(a.dropped)}</h3><ul>${[...byReason].sort((x, y) => y[1] - x[1]).map(([reason, count]) => `<li><code>${escapeHtml(reason)}</code>: ${count}</li>`).join('')}</ul>`);
   }
   if (analysis.skipped.length > 0) parts.push(`<h3>${escapeHtml(a.skipped)}</h3><ul>${analysis.skipped.map(entry => `<li>${escapeHtml(entry.pass)} <span class="where">${escapeHtml(entry.page)}</span>: <code>${escapeHtml(entry.reason)}</code></li>`).join('')}</ul>`);
-  if (analysis.warnings.length > 0) parts.push(`<p class="where">${analysis.warnings.map(warning => escapeHtml(warning)).join('<br>')}</p>`);
+  if (analysis.warnings.length > 0) parts.push(`<p class="where">${analysis.warnings.map(warning => escapeHtml(localizeValue(language, 'warning', warning))).join('<br>')}</p>`);
   return parts.join('\n');
 }
 
@@ -197,7 +197,7 @@ export function renderHtml(report: Report, language: Language): string {
 <div class="panel"><div class="summary"><div class="overall"><b>${report.score.overall ?? '–'}</b><span>${escapeHtml(t.overall)}</span></div><div class="bars">${bars}</div></div>
 <p class="gate"><span class="pill">${escapeHtml(t.indexability)}</span> ${escapeHtml(t.indexabilityStates[report.score.indexability])}</p>
 <p class="where">${escapeHtml(format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable }))}</p>
-${report.run.warnings.length > 0 ? `<p class="where">${report.run.warnings.map(warning => escapeHtml(warning)).join('<br>')}</p>` : ''}</div>
+${report.run.warnings.length > 0 ? `<p class="where">${report.run.warnings.map(warning => escapeHtml(localizeValue(language, 'warning', warning))).join('<br>')}</p>` : ''}</div>
 <h2>${escapeHtml(t.topActions)}</h2>
 ${tasks ? `<ol class="tasks">${tasks}</ol>` : `<p>${escapeHtml(t.noActions)}</p>`}
 <h2>${escapeHtml(t.findings)}</h2>

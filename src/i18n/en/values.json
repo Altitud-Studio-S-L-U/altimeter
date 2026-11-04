@@ -29,6 +29,10 @@
     "needs improvement": "needs improvement",
     "poor": "poor"
   },
+  "caller": {
+    "analyst": "analyst",
+    "verifier": "verifier"
+  },
   "causes": {
     "none attributed": "none attributed"
   },
@@ -71,6 +75,10 @@
   },
   "entities": {
     "{entity}: main thread {time}, transfer {size}": "{entity}: main thread {time}, transfer {size}"
+  },
+  "error": {
+    "no answer": "no answer",
+    "unknown error": "unknown error"
   },
   "field": {
     "title": "title",
@@ -156,6 +164,10 @@
   },
   "operators": {
     "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} blocked, {training} allowed)"
+  },
+  "outcome": {
+    "failed": "failed",
+    "skipped": "skipped"
   },
   "preload": {
     "yes": "yes",
@@ -302,6 +314,49 @@
   },
   "url": {
     "unknown": "unknown"
+  },
+  "warning": {
+    "Search Console was requested but no credential was found. Run \"altimeter gsc login\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "Search Console was requested but no credential was found. Run \"altimeter gsc login\" or set ALTIMETER_GSC_ACCESS_TOKEN.",
+    "Search Console data was not used: {error}": "Search Console data was not used: {error}",
+    "Crawler activity: {warning}": "Crawler activity: {warning}",
+    "Crawler activity was not read: {error}": "Crawler activity was not read: {error}",
+    "Chrome was not found, so rendered checks were not evaluated.": "Chrome was not found, so rendered checks were not evaluated.",
+    "Lighthouse did not complete: {error}": "Lighthouse did not complete: {error}",
+    "Bing Webmaster Tools data was requested but BING_WEBMASTER_API_KEY is not set. Generate a key in Bing Webmaster Tools under Settings > API Access.": "Bing Webmaster Tools data was requested but BING_WEBMASTER_API_KEY is not set. Generate a key in Bing Webmaster Tools under Settings > API Access.",
+    "Bing Webmaster Tools data is incomplete. {warning}": "Bing Webmaster Tools data is incomplete. {warning}",
+    "Bing Webmaster Tools data was not used: {error}": "Bing Webmaster Tools data was not used: {error}",
+    "The crawl issues could not be read: {error}": "The crawl issues could not be read: {error}",
+    "The page traffic could not be read: {error}": "The page traffic could not be read: {error}",
+    "The queries of {page} could not be read: {error}": "The queries of {page} could not be read: {error}",
+    "The index details of {url} could not be read: {error}": "The index details of {url} could not be read: {error}",
+    "{count} later request was not sent after Bing Webmaster Tools throttled the requests.": "{count} later request was not sent after Bing Webmaster Tools throttled the requests.",
+    "{count} later requests were not sent after Bing Webmaster Tools throttled the requests.": "{count} later requests were not sent after Bing Webmaster Tools throttled the requests.",
+    "Cloudflare keeps {days} days of this data for the zone, so the window starts on {date}.": "Cloudflare keeps {days} days of this data for the zone, so the window starts on {date}.",
+    "Cloudflare allows {hours} hours per query, so only the data from {date} was read.": "Cloudflare allows {hours} hours per query, so only the data from {date} was read.",
+    "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.": "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.",
+    "{name}: reading stopped early ({error}).": "{name}: reading stopped early ({error}).",
+    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.",
+    "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.",
+    "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.",
+    "{name} records no user agent, so crawlers cannot be identified in it.": "{name} records no user agent, so crawlers cannot be identified in it.",
+    "{name} ({format}) records the client address itself; --ip-source applies to server logs only.": "{name} ({format}) records the client address itself; --ip-source applies to server logs only.",
+    "Cloudflare analytics and access logs may count the same requests twice.": "Cloudflare analytics and access logs may count the same requests twice.",
+    "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.": "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.",
+    "The address list {id} could not be read ({error}); requests it would verify stay unverified.": "The address list {id} could not be read ({error}); requests it would verify stay unverified.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.": "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.": "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.",
+    "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.": "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.",
+    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.",
+    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.",
+    "No request falls within the window ({start} to {end}); check the dates of {files}.": "No request falls within the window ({start} to {end}); check the dates of {files}.",
+    "No request falls within the window ({start} to {end}).": "No request falls within the window ({start} to {end}).",
+    "Cloudflare reported no request from a known crawler in the window.": "Cloudflare reported no request from a known crawler in the window.",
+    "The analysis did not run because no provider CLI is available.": "The analysis did not run because no provider CLI is available.",
+    "Verification was turned off, so every analysis finding stays unverified.": "Verification was turned off, so every analysis finding stays unverified.",
+    "{error} Findings stay unverified.": "{error} Findings stay unverified.",
+    "{count} analysis calls were left out to stay within the call limit.": "{count} analysis calls were left out to stay within the call limit.",
+    "{caller} call {id} ({pass}) {outcome}: {error}": "{caller} call {id} ({pass}) {outcome}: {error}",
+    "{name} {version} is not a verified version; it runs with {flags}.": "{name} {version} is not a verified version; it runs with {flags}."
   },
   "where": {
     "title": "title",
