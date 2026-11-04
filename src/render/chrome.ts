@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { Launcher } from 'chrome-launcher';
-import puppeteer, { type Browser, type HTTPRequest, type Page } from 'puppeteer-core';
+import puppeteer, { type Browser, type BrowserContext, type HTTPRequest, type Page } from 'puppeteer-core';
 import type { NetworkPolicy } from '../fetch/ip-guard.ts';
 import { spkiHashes } from '../fetch/tls.ts';
 import { startGuardedProxy, type GuardedProxy } from './proxy.ts';
@@ -102,6 +102,8 @@ export interface AuditBrowser {
   readonly browser: Browser;
   readonly proxy: GuardedProxy;
   readonly version: string;
+  /** A new browser context, isolated from the others, in which downloads are denied; site code runs only in these. */
+  newContext(): Promise<BrowserContext>;
   close(): Promise<void>;
 }
 
@@ -116,7 +118,13 @@ export interface LaunchOptions {
   readonly ca?: string;
 }
 
-/** Launches Chrome over a pipe (no debugging port), with all traffic through the guarded proxy. */
+/**
+ * Chrome keeps a download policy per browser context and drops it when the DevTools session that set it detaches,
+ * so it is set over the browser connection itself: at launch for the default context, then for each new context.
+ */
+const downloadBehavior = { policy: 'deny' } as const;
+
+/** Launches Chrome over a pipe (no debugging port), with all traffic through the guarded proxy and downloads denied. */
 export async function launchAuditBrowser(options: LaunchOptions): Promise<AuditBrowser> {
   const executablePath = options.executablePath ?? findChrome();
   if (!executablePath) throw new Error('Chrome or Chromium was not found. Install it or set CHROME_PATH.');
@@ -131,6 +139,7 @@ export async function launchAuditBrowser(options: LaunchOptions): Promise<AuditB
       headless: true,
       pipe: true,
       userDataDir,
+      downloadBehavior,
       args: [
         `--proxy-server=${proxy.url}`,
         '--proxy-bypass-list=<-loopback>',
@@ -154,13 +163,11 @@ export async function launchAuditBrowser(options: LaunchOptions): Promise<AuditB
     await rm(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     throw error;
   }
-  const session = await browser.target().createCDPSession();
-  await session.send('Browser.setDownloadBehavior', { behavior: 'deny' });
-  await session.detach();
   return {
     browser,
     proxy,
     version: await browser.version(),
+    newContext: () => browser.createBrowserContext({ downloadBehavior }),
     close: async () => {
       await browser.close().catch(() => {});
       await proxy.close();
@@ -368,7 +375,7 @@ export async function renderPage(audit: AuditBrowser, url: string, options: Rend
   const started = performance.now();
   const viewport = options.viewport ?? mobileViewport;
   const key = `__altimeter_${randomBytes(6).toString('hex')}`;
-  const context = await audit.browser.createBrowserContext();
+  const context = await audit.newContext();
   const page = await context.newPage();
   const consoleMessages: Array<{ type: 'error' | 'pageerror'; text: string }> = [];
   const failed: Array<{ url: string; error: string }> = [];

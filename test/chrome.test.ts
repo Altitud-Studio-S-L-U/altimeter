@@ -5,7 +5,8 @@ import { createServer as createHttpsServer } from 'node:https';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
 import { Launcher } from 'chrome-launcher';
-import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser } from '../src/render/chrome.ts';
+import type { Target } from 'puppeteer-core';
+import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser, type RenderResult } from '../src/render/chrome.ts';
 import { createTestCertificates } from './support/certificates.ts';
 
 const chrome = findChrome();
@@ -87,6 +88,10 @@ before(async () => {
     if (req.url === '/overlays') return void res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(overlayPage);
     if (req.url === '/blocked.js') return void res.writeHead(200, { 'content-type': 'text/javascript' })
       .end("document.querySelector('main').insertAdjacentHTML('beforeend', '<p id=\"from-blocked\">From blocked script</p>');");
+    if (req.url === '/attachment') return void res.writeHead(200, { 'content-type': 'application/octet-stream', 'content-disposition': 'attachment; filename="report.txt"' })
+      .end('A file the audited site wants saved.\n');
+    if (req.url === '/download') return void res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
+      .end('<!doctype html><title>Download</title><h1>Download</h1><a id="file" href="/attachment" download>Report</a><script>setTimeout(() => document.getElementById(\'file\').click(), 100);</script>');
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(page);
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -165,6 +170,34 @@ describe('renderPage', { skip: chrome ? false : 'Chrome is not installed' }, () 
     assert.deepEqual([block('Fifth slide text')?.hidden, block('Fifth slide text')?.inScroller], ['offscreen', true]);
     assert.deepEqual([block('Pushed aside text')?.hidden, block('Pushed aside text')?.inScroller], ['offscreen', undefined]);
     assert.equal(result.overlays, undefined, 'overlays are measured in the user render only');
+  });
+
+  test('denies downloads: a download the page starts is canceled, and every context it renders in refuses them', async t => {
+    const contexts = t.mock.method(audit!.browser, 'createBrowserContext');
+    const downloads: string[] = [];
+    const watch = (target: Target) => {
+      if (target.type() !== 'page') return;
+      void target.createCDPSession().then(async session => {
+        session.on('Page.downloadWillBegin', event => downloads.push(`${event.suggestedFilename} started`));
+        session.on('Page.downloadProgress', event => {
+          if (event.state !== 'inProgress') downloads.push(event.state);
+        });
+        await session.send('Page.enable');
+      }).catch(() => {});
+    };
+    audit!.browser.on('targetcreated', watch);
+    let rendered: RenderResult;
+    try {
+      rendered = await renderPage(audit!, `${base}/download`, { mode: 'googlebot', userAgent });
+    } finally {
+      audit!.browser.off('targetcreated', watch);
+    }
+    assert.equal(rendered.status, 200);
+    assert.deepEqual(downloads, ['report.txt started', 'canceled'], 'Chrome canceled the download, so no file was saved');
+    const attachment = await renderPage(audit!, `${base}/attachment`, { mode: 'googlebot', userAgent });
+    assert.match(attachment.error?.message ?? '', /ERR_ABORTED/u, 'the attachment did not replace the page');
+    assert.deepEqual(contexts.mock.calls.map(call => call.arguments[0]), [{ downloadBehavior: { policy: 'deny' } }, { downloadBehavior: { policy: 'deny' } }],
+      'downloads are denied in each render context, not left to what the Chrome build does by default');
   });
 
   test('pages cannot reach blocked addresses through the browser', async () => {

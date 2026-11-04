@@ -48,3 +48,16 @@ describe('runLighthouse', { skip: chrome ? false : 'Chrome is not installed' }, 
     assert.equal(summary.validRuns, 1);
   });
 });
+
+test('opens each run in a new context of the audit browser, where downloads are denied, and closes it', async () => {
+  const contexts: string[] = [];
+  const browser = {
+    browser: { createBrowserContext: async () => { throw new Error('a context without the download policy of the audit browser'); } },
+    newContext: async () => {
+      contexts.push('opened');
+      return { newPage: async () => { throw new Error('no page in this test'); }, close: async () => { contexts.push('closed'); } };
+    },
+  } as unknown as AuditBrowser;
+  assert.deepEqual(await runLighthouse(browser, 'http://127.0.0.1:9/', { runs: 2 }), { ok: false, error: 'no page in this test' });
+  assert.deepEqual(contexts, ['opened', 'closed', 'opened', 'closed']);
+});
