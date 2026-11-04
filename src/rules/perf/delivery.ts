@@ -1,4 +1,4 @@
-import { evidenceLabel, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { PageFacts } from '../../core/facts.ts';
 import { headerValue, type Hop } from '../../fetch/http.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -13,7 +13,9 @@ function hopEvidence(evidence: EvidenceStore, hop: Hop): string {
 }
 
 function headerEvidence(evidence: EvidenceStore, url: string, name: string, value: string | undefined, label: EvidenceLabel): string {
-  return evidence.add({ kind: 'header', url, label, excerpt: value === undefined ? `${name}: (absent)` : `${name}: ${value}` });
+  return value === undefined
+    ? evidence.add({ kind: 'header', url, label: joinLabels(label, evidenceLabel('(no {header} header)', { header: name })) })
+    : evidence.add({ kind: 'header', url, label, excerpt: `${name}: ${value}` });
 }
 
 // Render-blocking resources.
@@ -160,14 +162,25 @@ export const textCompression: RuleImplementation = {
     if (fetch.status === 200 && !fetch.truncated && uncompressed(type, encoding, fetch.body.length)) {
       results.push({ outcome: 'fail', severity: 'medium', reason: 'document', params: { size: formatKib(fetch.body.length) },
         evidence: [headerEvidence(evidence, fetch.finalUrl, 'content-encoding', encoding, evidenceLabel('compression of the HTML response')),
-          evidence.add({ kind: 'http', url: fetch.finalUrl, label: evidenceLabel('decoded size of the HTML response'), excerpt: `${fetch.body.length} bytes, ${type ?? 'no content-type'}` })] });
+          evidence.add({
+            kind: 'http', url: fetch.finalUrl,
+            label: type === undefined
+              ? evidenceLabel('decoded size of the HTML response, served without a Content-Type header: {bytes} bytes', { bytes: fetch.body.length })
+              : evidenceLabel('decoded size of the HTML response, served as {type}: {bytes} bytes', { type, bytes: fetch.body.length }),
+          })] });
     }
-    const assets: Array<{ url: string; detail: string }> = [];
+    const assets: Array<{ url: string; label: EvidenceLabel }> = [];
     for (const resource of site.resources) {
       if (resource.referencedBy !== page!.url || resource.fetch.status !== 200) continue;
       const resourceType = headerValue(resource.fetch.headers, 'content-type');
       if (uncompressed(resourceType, headerValue(resource.fetch.headers, 'content-encoding'), resource.fetch.body.length)) {
-        assets.push({ url: resource.url, detail: `${resource.fetch.body.length} bytes ${resourceType ?? ''} without content-encoding`.trim() });
+        const bytes = resource.fetch.body.length;
+        assets.push({
+          url: resource.url,
+          label: resourceType === undefined
+            ? evidenceLabel('text resource served without Content-Type or Content-Encoding headers: {bytes} bytes', { bytes })
+            : evidenceLabel('text resource served as {type} without a Content-Encoding header: {bytes} bytes', { type: resourceType, bytes }),
+        });
       }
     }
     // A response that transfers more bytes than it decodes to was not compressed.
@@ -176,12 +189,12 @@ export const textCompression: RuleImplementation = {
       if (request.url === page!.fetch.finalUrl || request.statusCode !== 200) continue;
       const size = request.resourceSize ?? 0;
       if (size > compressionMinBytes && (request.transferSize ?? 0) >= size && textType.test(request.mimeType ?? '')) {
-        assets.push({ url: request.url, detail: `transferSize=${request.transferSize} bytes, resourceSize=${size} bytes (lab)` });
+        assets.push({ url: request.url, label: evidenceLabel('text resource the lab run transferred uncompressed: {transfer} bytes transferred for {size} bytes of content', { transfer: request.transferSize ?? 0, size }) });
       }
     }
     if (assets.length > 0) {
       results.push({ outcome: 'fail', severity: 'low', reason: 'assets', params: { count: assets.length, urls: summarizeList(assets.map(asset => asset.url)) },
-        evidence: assets.slice(0, 5).map(asset => evidence.add({ kind: 'http', url: asset.url, label: evidenceLabel('text resource served without compression'), excerpt: asset.detail })) });
+        evidence: assets.slice(0, 5).map(asset => evidence.add({ kind: 'http', url: asset.url, label: asset.label })) });
     }
     if (results.length > 0) return results;
     return { outcome: 'pass', evidence: [headerEvidence(evidence, fetch.finalUrl, 'content-encoding', encoding, evidenceLabel('compression of the HTML response'))] };

@@ -175,7 +175,7 @@
       "fail": "Una solicitud con el user-agent {agent} ha recibido un trato distinto al de una solicitud de navegador.",
       "fail:ua-blocked": "Una solicitud con el user-agent {agent} ha recibido HTTP {status} o un desafío, mientras que un navegador ha recibido la página. Esto muestra un bloqueo basado en el user-agent; el rastreador real, verificado por su IP, puede recibir un trato distinto.",
       "fail:blocked-as-robots-says": "Una solicitud con el user-agent {agent} ha recibido HTTP {status} o un desafío, y robots.txt también bloquea a {agent}, así que el perímetro y robots.txt coinciden.",
-      "fail:content-differs": "Una solicitud con el user-agent {agent} ha recibido una página cuyo texto solo coincide en un {similarity} % con el del navegador."
+      "fail:content-differs": "Una solicitud con el user-agent {agent} ha recibido una página cuyo texto solo coincide en un {similarity, number, percent} con el del navegador."
     }
   },
   "ai-cdn-cloudflare-detected": {
@@ -250,10 +250,10 @@
     "why": "Google renderiza JavaScript, pero un estudio basado en mediciones observó que GPTBot, ClaudeBot y PerplexityBot obtienen los archivos JavaScript sin ejecutarlos. El contenido principal que falta en el HTML del servidor es invisible para esos rastreadores.",
     "fix": "Renderiza en el servidor o genera de forma estática el contenido principal, los encabezados, los enlaces y el JSON-LD. Añade la interactividad después mediante hidratación.",
     "messages": {
-      "fail": "El HTML original contiene {rawWords} palabras de texto principal frente a {renderedWords} después del renderizado ({ratio} %).",
-      "fail:mostly-rendered": "El HTML original contiene {rawWords} palabras de texto principal frente a {renderedWords} después del renderizado ({ratio} %). Es probable que los rastreadores que no ejecutan JavaScript vean poco del contenido.",
+      "fail": "El HTML original contiene {rawWords, plural, one {# palabra} other {# palabras}} de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}).",
+      "fail:mostly-rendered": "El HTML original contiene {rawWords, plural, one {# palabra} other {# palabras}} de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}). Es probable que los rastreadores que no ejecutan JavaScript vean poco del contenido.",
       "fail:h1-missing": "El HTML original no tiene h1; el h1 solo aparece después del renderizado, así que es probable que los rastreadores que no ejecutan JavaScript no vean el encabezado principal.",
-      "fail:partly-rendered": "El HTML original contiene {rawWords} palabras de texto principal frente a {renderedWords} después del renderizado ({ratio} %); es probable que parte del contenido solo exista tras ejecutar JavaScript."
+      "fail:partly-rendered": "El HTML original contiene {rawWords, plural, one {# palabra} other {# palabras}} de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}); es probable que parte del contenido solo exista tras ejecutar JavaScript."
     }
   },
   "ai-textual-content-for-media": {
@@ -343,10 +343,10 @@
     "why": "Google incluye entre los requisitos básicos de las funciones de IA que el rastreo esté permitido por robots.txt y por cualquier infraestructura de CDN o de alojamiento, y OpenAI indica que los sitios que excluyen su rastreador de búsqueda no se muestran en las respuestas de la búsqueda de ChatGPT. Las solicitudes verificadas de estos rastreadores que reciben 401, 402, 403, 429 o un desafío muestran que el perímetro bloquea al rastreador real, algo que un sondeo con un user-agent prestado no puede demostrar.",
     "fix": "Busca la regla del CDN, del cortafuegos o de limitación de frecuencia que responde al rastreador y permítelo, por ejemplo, en AI Crawl Control de Cloudflare o con una regla del WAF que omita los bots verificados. Si el 402 viene de Pay per crawl, exime a los rastreadores de búsqueda y de respuestas. Sigue rechazando las solicitudes que no superen la verificación.",
     "messages": {
-      "fail": "{agent} se ha rechazado {blocked} de {total} veces ({share}; {statuses}) aunque robots.txt lo permite.",
-      "fail:refused": "Las solicitudes verificadas de {agent} se han rechazado {blocked} de {total} veces ({share}; {statuses}) aunque robots.txt permite el rastreador, así que no puede leer esas páginas.",
-      "fail:payment-required": "Las solicitudes verificadas de {agent} han recibido HTTP 402 Payment Required u otro rechazo {blocked} de {total} veces ({share}; {statuses}): el perímetro cobra o bloquea a un rastreador que robots.txt permite.",
-      "fail:unverified-claims": "Las solicitudes que dicen ser de {agent} se han rechazado {blocked} de {total} veces ({share}; {statuses}); no se han podido verificar, así que el perímetro puede estar rechazando a impostores."
+      "fail": "{agent} se ha rechazado {blocked} de {total} veces ({share, number, percent}; {statuses}) aunque robots.txt lo permite.",
+      "fail:refused": "Las solicitudes verificadas de {agent} se han rechazado {blocked} de {total} veces ({share, number, percent}; {statuses}) aunque robots.txt permite el rastreador, así que no puede leer esas páginas.",
+      "fail:payment-required": "Las solicitudes verificadas de {agent} han recibido HTTP 402 Payment Required u otro rechazo {blocked} de {total} veces ({share, number, percent}; {statuses}): el perímetro cobra o bloquea a un rastreador que robots.txt permite.",
+      "fail:unverified-claims": "Las solicitudes que dicen ser de {agent} se han rechazado {blocked} de {total} veces ({share, number, percent}; {statuses}); no se han podido verificar, así que el perímetro puede estar rechazando a impostores."
     }
   },
   "ai-bots-search-not-seen": {

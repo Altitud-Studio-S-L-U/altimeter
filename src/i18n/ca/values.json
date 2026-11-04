@@ -24,6 +24,9 @@
   "assistants": {
     "none by referrer": "cap identificat pel referent"
   },
+  "audits": {
+    "none": "cap"
+  },
   "band": {
     "good": "bona",
     "needs improvement": "cal millorar",
@@ -45,7 +48,7 @@
   "contentType": {
     "(none)": "(cap)"
   },
-  "crawl-js-content-dependency/share": {
+  "crawl-js-content-dependency/fields": {
     "title": "títol",
     "meta description": "metadescripció",
     "structured data types": "tipus de dades estructurades"
@@ -56,8 +59,6 @@
   "detail": {
     "HTTP error": "error HTTP",
     "{count} URLs": "{count} URL",
-    "{count} lines": "{count} línies",
-    "{count} entries": "{count} entrades",
     "{entries} entries, {bytes} bytes": "{entries} entrades, {bytes} bytes",
     "not a sitemap": "no és un mapa del lloc",
     "index inside an index": "índex dins d'un altre índex",
@@ -71,7 +72,8 @@
     "unknown": "desconeguda"
   },
   "embeds": {
-    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} sol·licituds, {size}, fil principal {time}"
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests, plural, one {# sol·licitud} other {# sol·licituds}}, {size}, fil principal {time}",
+    "{name}: {requests} request, {size}, main thread {time}": "{name}: {requests, plural, one {# sol·licitud} other {# sol·licituds}}, {size}, fil principal {time}"
   },
   "entities": {
     "{entity}: main thread {time}, transfer {size}": "{entity}: fil principal {time}, transferència {size}"
@@ -80,10 +82,24 @@
     "no answer": "sense resposta",
     "unknown error": "error desconegut"
   },
+  "fetchError": {
+    "invalid-url": "URL no vàlida",
+    "unsupported-protocol": "protocol no admès",
+    "blocked-address": "adreça no pública",
+    "dns": "error de DNS",
+    "connection": "error de connexió",
+    "tls": "error de TLS",
+    "timeout": "temps d'espera esgotat",
+    "redirect-loop": "bucle de redireccions",
+    "too-many-redirects": "massa redireccions",
+    "decode": "error de descodificació",
+    "aborted": "sol·licitud cancel·lada"
+  },
   "field": {
     "title": "títol",
     "meta description": "metadescripció",
-    "image alt texts": "textos alternatius de les imatges"
+    "image alt texts": "textos alternatius de les imatges",
+    "structured data types": "tipus de dades estructurades"
   },
   "fileReason": {
     "contains {token}": "conté {token}",
@@ -110,9 +126,17 @@
     "PHONE": "telèfon",
     "DESKTOP": "ordinador"
   },
+  "format": {
+    "unknown": "desconegut"
+  },
   "includeSubDomains": {
     "yes": "sí",
     "no": "no"
+  },
+  "intl-hreflang-outside-head/cause": {
+    "<{tag}> element": "element <{tag}>",
+    "text content": "contingut de text",
+    "not determined": "sense determinar"
   },
   "issuer": {
     "unknown": "desconegut"
@@ -162,8 +186,16 @@
     "{metric} {value} ({band})": "{metric} {value} ({band})",
     "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} enfront de {withSoftnavs} amb navegacions suaus"
   },
+  "mode": {
+    "no-quirks": "estàndard (no-quirks)",
+    "quirks": "quirks",
+    "limited-quirks": "gairebé estàndard (limited-quirks)"
+  },
   "operators": {
     "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloquejat, {training} permès)"
+  },
+  "otherAudits": {
+    "none": "cap"
   },
   "outcome": {
     "failed": "fallida",
@@ -189,6 +221,33 @@
     "empty member": "membre buit",
     "invalid key \"{key}\"": "clau «{key}» no vàlida",
     "{key} needs y or n": "{key} necessita y o n"
+  },
+  "progress": {
+    "Fetching {url}": "Obtenint {url}",
+    "Reading sitemaps": "Llegint els mapes del lloc",
+    "Probing URL variants and an unknown path": "Provant variants de la URL i un camí desconegut",
+    "Probing crawler user agents": "Provant els agents d'usuari dels rastrejadors",
+    "Fetching referenced resources and language probes": "Obtenint els recursos referenciats i les proves de llengua",
+    "Fetching the hreflang alternates of the page": "Obtenint les alternatives hreflang de la pàgina",
+    "Crawling the site": "Rastrejant el lloc",
+    "Crawled {done}/{max}": "Pàgines rastrejades: {done}/{max}",
+    "Rendering {url}": "Renderitzant {url}",
+    "Running Lighthouse": "Executant Lighthouse",
+    "Querying Chrome UX Report field data": "Consultant les dades de camp de Chrome UX Report",
+    "Reading Cloudflare analytics for {zone}": "Llegint les analítiques de Cloudflare de la zona {zone}",
+    "Reading {file}": "Llegint {file}",
+    "Checking {count} crawler address in reverse DNS": "Comprovant {count} adreça de rastrejador al DNS invers",
+    "Checking {count} crawler addresses in reverse DNS": "Comprovant {count} adreces de rastrejadors al DNS invers",
+    "Reading robots.txt and the sitemaps of {origin}": "Llegint el robots.txt i els mapes del lloc ({origin})",
+    "No --site given: robots.txt and sitemaps are not compared.": "Sense --site: no es comparen el robots.txt ni els mapes del lloc.",
+    "Asking {engine} ({caller}, {pass})": "Consultant {engine} ({caller}, {pass})",
+    "Asking {engine}: {queryId}, run {run} of {runs}": "Consultant {engine}: {queryId}, execució {run} de {runs}",
+    "Checking {target}": "Comprovant {target}"
+  },
+  "purpose": {
+    "search": "cerca",
+    "training": "entrenament",
+    "user-triggered": "a petició de l'usuari"
   },
   "query": {
     "query {number}": "consulta {number}"
@@ -237,6 +296,12 @@
     "document": "document",
     "other": "altre recurs"
   },
+  "schema-breadcrumb/items": {
+    "none": "sense posició"
+  },
+  "schema-product-variants/items": {
+    "variant": "variant sense nom"
+  },
   "schemes": {
     "cctld": "ccTLD",
     "subdomain": "subdomini",
@@ -249,12 +314,23 @@
     "origin-level": "nivell d'origen"
   },
   "scripts": {
-    "not attributed": "sense atribuir"
+    "not attributed": "sense atribuir",
+    "{url} (first party, {time})": "{url} (propi, {time})",
+    "{url} (third party, {time})": "{url} (de tercers, {time})"
+  },
+  "searchAudits": {
+    "none": "cap"
   },
   "second": {
     "html": "HTML",
     "header": "capçalera HTTP Link",
     "sitemap": "mapa del lloc"
+  },
+  "signal": {
+    "title": "títol",
+    "canonical": "canònica",
+    "robots": "directives robots",
+    "h1": "h1"
   },
   "snippet": {
     "async-hide class": "classe async-hide",
@@ -290,12 +366,24 @@
   },
   "status": {
     "none": "sense resposta",
-    "unknown": "desconegut"
+    "unknown": "desconegut",
+    "invalid-url": "URL no vàlida",
+    "unsupported-protocol": "protocol no admès",
+    "blocked-address": "adreça no pública",
+    "dns": "error de DNS",
+    "connection": "error de connexió",
+    "tls": "error de TLS",
+    "timeout": "temps d'espera esgotat",
+    "redirect-loop": "bucle de redireccions",
+    "too-many-redirects": "massa redireccions",
+    "decode": "error de descodificació",
+    "aborted": "sol·licitud cancel·lada",
+    "error": "error"
   },
   "subparts": {
-    "time to first byte {share}": "temps fins al primer byte {share}",
-    "resource load delay {share}": "retard de càrrega del recurs {share}",
-    "element render delay {share}": "retard de renderització de l'element {share}"
+    "time to first byte {share}%": "temps fins al primer byte {share}\u00a0%",
+    "resource load delay {share}%": "retard de càrrega del recurs {share}\u00a0%",
+    "element render delay {share}%": "retard de renderització de l'element {share}\u00a0%"
   },
   "tech-favicon-file-valid/problem": {
     "not-200": "no respon 200",
@@ -314,6 +402,15 @@
   },
   "url": {
     "unknown": "URL desconeguda"
+  },
+  "variant": {
+    "trailing-slash": "«barra final»",
+    "index-file": "«index.html»",
+    "uppercase": "«majúscules»",
+    "tracking-parameter": "«paràmetre de seguiment»",
+    "double-slash": "«barra doble»",
+    "http": "«http»",
+    "www": "«www»"
   },
   "warning": {
     "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "S'han demanat dades de Search Console, però no s'ha trobat cap credencial. Executa «altimeter gsc login --client <client_secret.json> --remember <dpapi|file>» o defineix ALTIMETER_GSC_ACCESS_TOKEN.",
@@ -335,7 +432,7 @@
     "Cloudflare allows {hours} hours per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare permet {hours} hores per consulta i Altimeter fa com a màxim {queries} consultes per execució, de manera que només s'han llegit les dades des del {date}.",
     "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.": "Algunes consultes a Cloudflare han retornat el màxim de files, de manera que poden faltar rastrejadors o camins poc freqüents i les xifres són valors mínims.",
     "{name}: reading stopped early ({error}).": "{name}: la lectura s'ha aturat abans d'hora ({error}).",
-    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: un {share} % de les seves sol·licituds venen d'una o dues adreces, cosa que sembla un proxy o un balancejador de càrrega, de manera que les seves adreces no s'han fet servir per verificar rastrejadors. Registra l'adreça del client i fes servir --ip-source.",
+    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: un {share}\u00a0% de les seves sol·licituds venen d'una o dues adreces, cosa que sembla un proxy o un balancejador de càrrega, de manera que les seves adreces no s'han fet servir per verificar rastrejadors. Registra l'adreça del client i fes servir --ip-source.",
     "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} fa servir el Common Log Format, que no té agent d'usuari, de manera que no s'hi poden identificar els rastrejadors.",
     "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} no registra l'agent d'usuari (Netlify elimina client_ip i user_agent quan s'exclouen les dades personals), de manera que no s'hi poden identificar els rastrejadors.",
     "{name} records no user agent, so crawlers cannot be identified in it.": "{name} no registra l'agent d'usuari, de manera que no s'hi poden identificar els rastrejadors.",
@@ -346,21 +443,26 @@
     "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.": "No s'ha pogut actualitzar la llista d'adreces {id} ({error}); s'ha fet servir la còpia de la memòria cau del {date}.",
     "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.": "No s'ha pogut actualitzar la llista d'adreces {id} ({error}); s'ha fet servir la còpia de la memòria cau d'una execució anterior.",
     "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.": "El DNS invers s'ha limitat a les {limit} adreces amb més activitat; les sol·licituds de les altres queden sense verificar quan les seves llistes no les verifiquen.",
-    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} sol·licitud(s) de rastrejadors porten adreces privades o de loopback, de manera que els registres anoten un proxy o un balancejador de càrrega; registra l'adreça del client i fes servir --ip-source.",
-    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} sol·licitud(s) de rastrejadors venen de les adreces pròpies de Cloudflare, de manera que els registres anoten Cloudflare en lloc del client; registra CF-Connecting-IP i fes servir --ip-source.",
+    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} sol·licituds de rastrejadors porten adreces privades o de loopback, de manera que els registres anoten un proxy o un balancejador de càrrega; registra l'adreça del client i fes servir --ip-source.",
+    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} sol·licituds de rastrejadors venen de les adreces pròpies de Cloudflare, de manera que els registres anoten Cloudflare en lloc del client; registra CF-Connecting-IP i fes servir --ip-source.",
     "No request falls within the window ({start} to {end}); check the dates of {files}.": "Cap sol·licitud no cau dins del període (del {start} al {end}); comprova les dates dels fitxers {files}.",
     "No request falls within the window ({start} to {end}).": "Cap sol·licitud no cau dins del període (del {start} al {end}).",
     "Cloudflare reported no request from a known crawler in the window.": "Cloudflare no ha indicat cap sol·licitud de cap rastrejador conegut durant el període.",
     "The analysis did not run because no provider CLI is available.": "L'anàlisi no s'ha executat perquè no hi ha cap CLI de proveïdor disponible.",
     "Verification was turned off, so every analysis finding stays unverified.": "La verificació estava desactivada, de manera que totes les troballes de l'anàlisi queden sense verificar.",
     "{error} Findings stay unverified.": "{error} Les troballes queden sense verificar.",
-    "{count} analysis calls were left out to stay within the call limit.": "S'han omès {count} crida(es) de l'anàlisi per no superar el límit de crides.",
+    "{count} analysis calls were left out to stay within the call limit.": "S'han omès {count} crides de l'anàlisi per no superar el límit de crides.",
     "{caller} call {id} ({pass}) {outcome}: {error}": "Crida {id} ({caller}, {pass}) {outcome}: {error}",
     "{name} {version} is not a verified version; it runs with {flags}.": "{name} {version} no és una versió verificada; s'executa amb {flags}.",
     "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.": "Es declaren {declared} mapes del lloc i només se n'han llegit els {read} primers, de manera que les comprovacions que fan servir les URL dels mapes del lloc només en veuen una part.",
     "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.": "Els índexs de mapes del lloc enumeren {listed} mapes del lloc secundaris i només se n'han llegit {read}, de manera que les comprovacions que fan servir les URL dels mapes del lloc només en veuen una part.",
     "{file} is empty, so it was skipped.": "{file} és buit, de manera que s'ha omès.",
-    "The format of {file} was not recognised, so it was skipped.": "No s'ha reconegut el format de {file}, de manera que s'ha omès."
+    "The format of {file} was not recognised, so it was skipped.": "No s'ha reconegut el format de {file}, de manera que s'ha omès.",
+    "{count} analysis call was left out to stay within the call limit.": "S'ha omès {count} crida de l'anàlisi per no superar el límit de crides.",
+    "Cloudflare keeps {days} day of this data for the zone, so the window starts on {date}.": "Cloudflare conserva {days} dia d'aquestes dades per a la zona, de manera que el període comença el {date}.",
+    "Cloudflare allows {hours} hour per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare permet {hours} hora per consulta i Altimeter fa com a màxim {queries} consultes per execució, de manera que només s'han llegit les dades des del {date}.",
+    "{count} crawler request carries a private or loopback address, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} sol·licitud de rastrejador porta una adreça privada o de loopback, de manera que els registres anoten un proxy o un balancejador de càrrega; registra l'adreça del client i fes servir --ip-source.",
+    "{count} crawler request comes from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} sol·licitud de rastrejador ve de les adreces pròpies de Cloudflare, de manera que els registres anoten Cloudflare en lloc del client; registra CF-Connecting-IP i fes servir --ip-source."
   },
   "where": {
     "title": "títol",

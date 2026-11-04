@@ -22,8 +22,8 @@
     "why": "Cumulative Layout Shift és una de les Core Web Vitals. web.dev defineix com a bo un valor de 0,1 o menys i com a deficient un de més de 0,25 al percentil 75. El CLS de camp cobreix tota la vida de la pàgina, de manera que pot ser pitjor que el CLS de laboratori.",
     "fix": "Dona mides a les imatges, els iframes i els anuncis, reserva espai per a la interfície injectada tard (bàners de galetes) o superposa-la, fes servir animacions amb transform, ajusta les fonts de reserva i mantén les pàgines aptes per a la bfcache.",
     "messages": {
-      "fail": "El CLS de camp al p75 és {value} (dispositiu: {formFactor}; dades de CrUX: {scope}; franja: {band}); es considera bo un valor de 0,1 o menys.",
-      "fail:origin-level": "El CLS de camp al p75 és {value} (dispositiu: {formFactor}; franja: {band}); es considera bo un valor de 0,1 o menys. Són dades de CrUX ({scope}) que cobreixen totes les pàgines de l'origen, no només aquesta URL."
+      "fail": "El CLS de camp al p75 és {value, number, ::.00} (dispositiu: {formFactor}; dades de CrUX: {scope}; franja: {band}); es considera bo un valor de 0,1 o menys.",
+      "fail:origin-level": "El CLS de camp al p75 és {value, number, ::.00} (dispositiu: {formFactor}; franja: {band}); es considera bo un valor de 0,1 o menys. Són dades de CrUX ({scope}) que cobreixen totes les pàgines de l'origen, no només aquesta URL."
     }
   },
   "perf-crux-cwv-assessment": {
@@ -78,7 +78,7 @@
     "why": "CrUX indica quantes navegacions enrere i endavant se serveixen des de la memòria cau endavant/enrere. web.dev inclou la bfcache entre les millores més efectives, perquè les pàgines restaurades es carreguen a l'instant.",
     "fix": "Executa perf-bfcache-eligibility. Elimina els detectors d'unload, evita no-store quan no calgui i tanca les connexions obertes a pagehide.",
     "messages": {
-      "fail": "Amb dades de CrUX ({scope}) per al dispositiu {formFactor}, un {backForward} de les navegacions són navegacions enrere/endavant que no s'han restaurat des de la memòria cau endavant/enrere, enfront d'un {restored} que sí. El llindar del 5 % és una heurística de l'eina."
+      "fail": "Amb dades de CrUX ({scope}) per al dispositiu {formFactor}, un {backForward, number, percent} de les navegacions són navegacions enrere/endavant que no s'han restaurat des de la memòria cau endavant/enrere, enfront d'un {restored, number, percent} que sí. El llindar del 5\u00a0% és una heurística de l'eina."
     }
   },
   "perf-crux-softnav-experimental": {
@@ -132,8 +132,8 @@
     "why": "El CLS de laboratori només cobreix els desplaçaments de disseny durant la càrrega de la pàgina i sol ser més baix que el CLS de camp, de manera que un resultat de laboratori net no refuta un valor de camp deficient.",
     "fix": "Consulta perf-cls-culprits.",
     "messages": {
-      "fail": "El CLS de laboratori és {value} ({conditions}), per sobre de 0,1. El CLS de laboratori només cobreix la càrrega de la pàgina.",
-      "fail:field-precedence": "El CLS de laboratori és {value} ({conditions}), per sobre de 0,1. Hi ha CLS de camp, de manera que el resultat de camp decideix l'estat i aquest valor de laboratori és un diagnòstic."
+      "fail": "El CLS de laboratori és {value, number, ::.000} ({conditions}), per sobre de 0,1. El CLS de laboratori només cobreix la càrrega de la pàgina.",
+      "fail:field-precedence": "El CLS de laboratori és {value, number, ::.000} ({conditions}), per sobre de 0,1. Hi ha CLS de camp, de manera que el resultat de camp decideix l'estat i aquest valor de laboratori és un diagnòstic."
     }
   },
   "perf-lcp-lazy-loaded": {
@@ -206,7 +206,7 @@
     "why": "Cada redirecció a la sol·licitud del document afegeix un viatge d'anada i tornada complet abans que arribi l'HTML, que compta en el TTFB i l'LCP. Lighthouse 13.6 ho indica a document-latency-insight.",
     "fix": "Enllaça internament a les URL finals i redueix les cadenes http->https->www a un sol salt.",
     "messages": {
-      "fail": "{from} redirigeix {hops} vegada(es) abans que respongui {to}; cada salt s'afegeix al TTFB i a l'LCP."
+      "fail": "{from} redirigeix {hops, plural, one {# vegada} other {# vegades}} abans que respongui {to}; cada salt s'afegeix al TTFB i a l'LCP."
     }
   },
   "perf-server-response-time": {
@@ -267,7 +267,7 @@
     "why": "Els detectors d'unload deixen les pàgines fora de la memòria cau endavant/enrere en alguns navegadors. Chrome ha declarat obsolet unload, de manera que l'impacte que queda és sobretot en altres navegadors.",
     "fix": "Substitueix-los per pagehide/visibilitychange. Opcionalment, envia Permissions-Policy: unload=() (només Chromium).",
     "messages": {
-      "fail": "La pàgina registra {count} detector(s) d'unload. Chrome ja no dispara unload per defecte, però aquests detectors encara poden deixar la pàgina fora de la memòria cau endavant/enrere d'altres navegadors."
+      "fail": "La pàgina registra {count, plural, one {# detector} other {# detectors}} d'unload. Chrome ja no dispara unload per defecte, però {count, plural, one {aquest detector encara pot} other {aquests detectors encara poden}} deixar la pàgina fora de la memòria cau endavant/enrere d'altres navegadors."
     }
   },
   "perf-unsized-images": {
@@ -275,8 +275,8 @@
     "why": "web.dev documenta que les imatges sense atributs width i height (o sense aspect-ratio) causen desplaçaments de disseny quan es carreguen. Lighthouse 13.6 les indica a l'auditoria unsized-images.",
     "fix": "Afegeix els atributs width i height (mantén la mateixa relació d'aspecte entre les opcions de srcset) o estableix aspect-ratio al CSS.",
     "messages": {
-      "fail": "{count} imatge(s) no tenen dimensions explícites (a la primera àrea de visualització de l'execució de laboratori: {aboveFold}).",
-      "fail:below-fold": "{count} imatge(s) no tenen dimensions explícites, i cap no és a la primera àrea de visualització de l'execució de laboratori."
+      "fail": "{count, plural, one {# imatge no té} other {# imatges no tenen}} dimensions explícites (a la primera àrea de visualització de l'execució de laboratori: {aboveFold}).",
+      "fail:below-fold": "{count, plural, one {# imatge no té dimensions explícites i no és a la primera àrea de visualització de l'execució de laboratori.} other {# imatges no tenen dimensions explícites, i cap no és a la primera àrea de visualització de l'execució de laboratori.}}"
     }
   },
   "perf-cls-culprits": {
@@ -284,8 +284,8 @@
     "why": "Lighthouse 13.6 atribueix a cls-culprits-insight els desplaçaments de disseny a causes com els elements multimèdia sense mida, el contingut injectat i les fonts web. Sovint, l'element desplaçat no n'és la causa.",
     "fix": "Corregeix la causa que indica l'anàlisi: dimensions, espai reservat, mètriques de les fonts de reserva, animacions amb transform.",
     "messages": {
-      "fail": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score} (clústers per sobre de 0,05: {clusters}). Causes arrel que atribueix Lighthouse: {causes}.",
-      "fail:no-root-cause": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score} (clústers per sobre de 0,05: {clusters}) i Lighthouse no hi ha atribuït cap causa arrel; l'element que s'ha mogut no n'és necessàriament la causa."
+      "fail": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score, number, ::.000} (clústers per sobre de 0,05: {clusters}). Causes arrel que atribueix Lighthouse: {causes}.",
+      "fail:no-root-cause": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score, number, ::.000} (clústers per sobre de 0,05: {clusters}) i Lighthouse no hi ha atribuït cap causa arrel; l'element que s'ha mogut no n'és necessàriament la causa."
     }
   },
   "perf-embed-reserved-space": {
@@ -303,7 +303,7 @@
     "why": "Les animacions de propietats que provoquen recàlculs de disseny, com top, margin o width, s'executen al fil principal i poden causar desplaçaments de disseny. Lighthouse 13.6 les indica a non-composited-animations.",
     "fix": "Anima transform/opacity en lloc seu; respecta prefers-reduced-motion.",
     "messages": {
-      "fail": "{count} element(s) executen animacions que el navegador no pot compondre: {reasons}."
+      "fail": "{count, plural, one {# element executa} other {# elements executen}} animacions que el navegador no pot compondre: {reasons}."
     }
   },
   "perf-font-display": {
@@ -327,8 +327,8 @@
     "why": "WOFF2 és el format de font més petit amb una compatibilitat àmplia, i molts fitxers de fonts a la càrrega inicial competeixen amb els recursos crítics.",
     "fix": "Serveix només WOFF2, fes subconjunts amb unicode-range i fes servir menys famílies o gruixos, o una font variable quan estalviï bytes.",
     "messages": {
-      "fail": "{count} fitxer(s) de fonts no són WOFF2: {fonts}.",
-      "fail:not-woff2": "{count} fitxer(s) de fonts no són WOFF2: {fonts}.",
+      "fail": "{count, plural, one {# fitxer de fonts no és} other {# fitxers de fonts no són}} WOFF2: {fonts}.",
+      "fail:not-woff2": "{count, plural, one {# fitxer de fonts no és} other {# fitxers de fonts no són}} WOFF2: {fonts}.",
       "fail:many-files": "La pàgina carrega {count} fitxers de fonts ({size}) al laboratori; el criteri de més de sis és una heurística de l'eina, no un límit."
     }
   },
@@ -359,7 +359,7 @@
     "messages": {
       "fail": "Les imatges es podrien lliurar amb menys bytes (estimació de laboratori).",
       "fail:lcp-image": "La imatge LCP {url} podria ser uns {savings} més petita amb canvis de mida, de format o de compressió (estimació de laboratori).",
-      "fail:images": "{count} imatge(s) podrien estalviar uns {savings} en total amb canvis de mida, de format o de compressió (estimació de laboratori)."
+      "fail:images": "{count, plural, one {# imatge podria} other {# imatges podrien}} estalviar uns {savings} en total amb canvis de mida, de format o de compressió (estimació de laboratori)."
     }
   },
   "perf-long-tasks": {

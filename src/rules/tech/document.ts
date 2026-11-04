@@ -65,7 +65,9 @@ export const doctypeStandardsMode: RuleImplementation = {
     const cite = citer(context);
     const node = raw.parsed.document.childNodes.find(child => child.nodeName === '#documentType') as { name?: string; publicId?: string; systemId?: string; sourceCodeLocation?: { startOffset: number; endOffset: number; startLine: number } } | undefined;
     const doctype = node?.sourceCodeLocation ? raw.html.slice(node.sourceCodeLocation.startOffset, node.sourceCodeLocation.endOffset) : undefined;
-    const evidence = [cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('document type declaration and parsing mode'), excerpt: `${doctype ?? '(no doctype)'}; mode=${raw.parsed.mode}`, line: node?.sourceCodeLocation?.startLine })];
+    const evidence = [doctype === undefined
+      ? cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('no document type declaration, so the page is parsed in {mode} mode', { mode: raw.parsed.mode }) })
+      : cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('document type declaration, parsed in {mode} mode', { mode: raw.parsed.mode }), excerpt: doctype, line: node?.sourceCodeLocation?.startLine })];
     if (!node) return fail('low', evidence, 'missing', { mode: raw.parsed.mode });
     if (raw.parsed.mode !== 'no-quirks') return fail('low', evidence, raw.parsed.mode, { doctype: doctype ?? '' });
     // Lighthouse also fails a legacy doctype that still yields standards mode, such as HTML 4.01 Strict.
@@ -116,7 +118,9 @@ function charsetResult(page: PageFacts, cite: Cite): RuleResult {
   const headerLabel = /charset\s*=\s*["']?([\w.:-]+)/iu.exec(contentType)?.[1];
   const header = headerLabel === undefined ? undefined : normalizeLabel(headerLabel);
   const metas = metaCharsets(body);
-  const headerEvidence = cite({ kind: 'header', url, label: evidenceLabel('Content-Type header of the HTML response'), excerpt: `Content-Type: ${contentType || '(absent)'}` });
+  const headerEvidence = contentType
+    ? cite({ kind: 'header', url, label: evidenceLabel('Content-Type header of the HTML response'), excerpt: `Content-Type: ${contentType}` })
+    : cite({ kind: 'header', url, label: evidenceLabel('HTML response without a Content-Type header') });
   const metaEvidence = metas.slice(0, 3).map(meta => cite({ kind: 'html', url, label: meta.early ? evidenceLabel('meta charset within the first 1024 bytes') : evidenceLabel('meta charset after the first 1024 bytes'), excerpt: meta.excerpt }));
   const evidence = [headerEvidence, ...metaEvidence];
   const metaLabels = [...new Set(metas.map(meta => meta.label))];
@@ -181,7 +185,7 @@ export const iframeMainContent: RuleImplementation = {
     if (content.length > 0 && words < 150) {
       const evidence = [
         ...content.slice(0, 5).map(frame => cite({ kind: 'html', url: base, label: evidenceLabel('iframe that is not a common embed'), excerpt: startTag(doc, frame), line: lineOf(frame) })),
-        cite({ kind: 'text', url: base, label: evidenceLabel('word count of the page text outside frames'), excerpt: String(words) }),
+        cite({ kind: 'text', url: base, label: evidenceLabel('words of the page text outside frames: {words}', { words }) }),
       ];
       results.push(fail('low', evidence, 'content-in-iframe', { count: content.length, words }, true));
     }
@@ -212,7 +216,7 @@ export const noscriptContent: RuleImplementation = {
       const sample = text.slice(0, 80).toLowerCase();
       const absent = renderedText === '' || (sample !== '' && !renderedText.includes(sample));
       if ((words >= 50 || links >= 3) && absent) {
-        candidates.push(cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('noscript block with {words} words and {links} links not found in the rendered page', { words, links }), excerpt: shorten(inner.trim(), 600), line: lineOf(block) }));
+        candidates.push(cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('noscript block with {words, plural, one {# word} other {# words}} and {links, plural, one {# link} other {# links}} not found in the rendered page', { words, links }), excerpt: shorten(inner.trim(), 600), line: lineOf(block) }));
       }
     }
     if (candidates.length === 0) return pass();

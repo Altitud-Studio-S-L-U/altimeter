@@ -14,7 +14,8 @@ function run(id: string, facts: SiteFacts | SiteSpec, url?: string) {
   assert.ok(implementation, `${id} is implemented`);
   const { findings, evidence } = evaluate(implementation, 'pages' in facts && !(facts.pages instanceof Map) ? site(facts as SiteSpec) : facts as SiteFacts);
   const picked = url ? findings.filter(entry => entry.scope.kind === 'page' && entry.scope.url === url) : findings;
-  return { finding: picked[0]!, findings: picked, excerpts: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? '') };
+  return { finding: picked[0]!, findings: picked, excerpts: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? ''),
+    labels: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.label ?? '') };
 }
 
 function assertFail(finding: Finding, severity: Severity, reason?: string) {
@@ -160,6 +161,13 @@ describe('crawl-robots-parse-errors', () => {
     assertFail(finding, 'medium', 'misspelled-field');
     assert.deepEqual(excerpts(), ['dissallow: /private/']);
   });
+  test('counts and lists a line with two problems once', () => {
+    const { finding } = run(id, { pages: [home()], robots: 'User-agent: *\nDissallow: private/' });
+    assertFail(finding, 'medium', 'misspelled-field');
+    assert.equal(finding.evidence.length, 2);
+    assert.deepEqual(finding.params, { url: 'https://example.com/robots.txt', count: 1, lines: '2' });
+    assert.equal(findingMessage('es', id, 'fail', finding.reason, finding.params), '1 línea de https://example.com/robots.txt no se lee como se pretende (línea: 2), incluido un nombre de campo mal escrito.');
+  });
   test('fails low on a rule outside any group', () => {
     const { finding, excerpts } = run(id, { pages: [home()], robots: 'Disallow: /old/\nUser-agent: *\nDisallow: /tmp/' });
     assertFail(finding, 'low', 'rule-outside-group');
@@ -201,9 +209,10 @@ describe('crawl-robots-blocks-site', () => {
     assertOutcome(run(id, { pages: [home()], robots: 'User-agent: *\nDisallow: /private/' }).finding, 'pass');
   });
   test('fails critical when Googlebot cannot fetch the home page', () => {
-    const { finding, excerpts } = run(id, { pages: [home()], robots: 'User-agent: *\nDisallow: /' });
+    const { finding, excerpts, labels } = run(id, { pages: [home()], robots: 'User-agent: *\nDisallow: /' });
     assertFail(finding, 'critical', 'home-googlebot');
-    assert.deepEqual(excerpts(), ['disallow: / (group *)']);
+    assert.deepEqual(excerpts(), ['disallow: /']);
+    assert.match(labels()[0]!, / \(group \*\)$/u);
   });
   test('fails high when only Bingbot is blocked', () => {
     assertFail(run(id, { pages: [home()], robots: 'User-agent: bingbot\nDisallow: /\n\nUser-agent: *\nDisallow:' }).finding, 'high', 'home-bingbot');
@@ -248,9 +257,10 @@ describe('crawl-robots-blocks-page', () => {
     assertOutcome(run(id, { pages: [postPage()], robots: 'User-agent: *\nDisallow: /private/' }, post).finding, 'pass');
   });
   test('fails medium when the page is disallowed', () => {
-    const { finding, excerpts } = run(id, { pages: [postPage()], robots: 'User-agent: *\nDisallow: /blog/' }, post);
+    const { finding, excerpts, labels } = run(id, { pages: [postPage()], robots: 'User-agent: *\nDisallow: /blog/' }, post);
     assertFail(finding, 'medium', 'disallowed');
-    assert.deepEqual(excerpts(), ['disallow: /blog/ (group *)']);
+    assert.deepEqual(excerpts(), ['disallow: /blog/']);
+    assert.deepEqual(labels(), ['rule that disallows the URL for Googlebot (group *)']);
   });
   test('fails critical when a sitemap also lists the page', () => {
     const { finding, excerpts } = run(id, { pages: [postPage()], robots: 'User-agent: *\nDisallow: /blog/', sitemaps: [{ url: `${origin}/sitemap.xml`, xml: urlset([post]) }] }, post);
@@ -272,7 +282,7 @@ describe('crawl-robots-group-override', () => {
   test('fails medium when Googlebot drops a crawl-trap rule', () => {
     const { finding, excerpts } = run(id, { pages: [home()], robots: 'User-agent: *\nDisallow: /search\n\nUser-agent: Googlebot\nDisallow: /private/' });
     assertFail(finding, 'medium', 'crawl-trap');
-    assert.deepEqual(excerpts(), ['Disallow: /search (group *, line 2)']);
+    assert.deepEqual(excerpts(), ['Disallow: /search']);
   });
   test('fails low when an AI crawler group drops a non-trap rule', () => {
     assertFail(run(id, { pages: [home()], robots: 'User-agent: *\nDisallow: /drafts/\n\nUser-agent: GPTBot\nDisallow: /private/' }).finding, 'low', 'missing-rules');
@@ -321,7 +331,7 @@ describe('crawl-noindex-blocked-by-robots', () => {
   test('fails high when robots.txt hides the noindex', () => {
     const { finding, excerpts } = run(id, { pages: [noindexPage()], robots: 'User-agent: *\nDisallow: /old/' }, old);
     assertFail(finding, 'high');
-    assert.deepEqual(excerpts(), ['disallow: /old/ (group *)', 'noindex']);
+    assert.deepEqual(excerpts(), ['disallow: /old/', 'noindex']);
   });
   test('does not apply to pages without noindex', () => {
     assertOutcome(run(id, { pages: [home()], robots: 'User-agent: *\nDisallow: /' }, `${origin}/`).finding, 'not_applicable', 'no-noindex');

@@ -266,7 +266,7 @@ export const noLanguageCatchall: RuleImplementation = {
         const values = [...new Set(group.map(annotation => annotation.value))];
         results.push(fail('low', [...groupBy(group, annotation => annotation.value.toLowerCase()).values()].map(entries => entries[0]!).slice(0, maxEvidence)
           .map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('region-specific hreflang for {code} without a language-only value', { code: language }))),
-        { language, values: list(values.map(value => `"${value}"`), 4) }));
+        { code: language, values: list(values.map(value => `"${value}"`), 4) }));
       }
     }
     return results.length > 0 ? results : pass();

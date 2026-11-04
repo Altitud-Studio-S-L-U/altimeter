@@ -30,7 +30,8 @@ const gsc = (overrides: Partial<GscData> = {}): GscData => ({
 function check(id: string, data: GscData, extra: Partial<SiteSpec> = {}, head = '') {
   const result = evaluate(rule(id), site({ pages: [page(url, { html: html(head) })], owner: { gsc: data }, ...extra }));
   const excerpts = (finding: Finding | undefined) => (finding?.evidence ?? []).map(entry => result.evidence.get(entry)?.excerpt);
-  return { findings: result.findings, first: result.findings[0], excerpts, evidence: result.evidence };
+  const labels = (finding: Finding | undefined) => (finding?.evidence ?? []).map(entry => result.evidence.get(entry)?.label);
+  return { findings: result.findings, first: result.findings[0], excerpts, labels, evidence: result.evidence };
 }
 
 describe('crawl-gsc-index-status', () => {
@@ -124,16 +125,16 @@ describe('Search Console performance rules', () => {
 
   test('content-gsc-low-ctr names the page and keeps its queries in a redactable excerpt', () => {
     const { first, evidence } = check('content-gsc-low-ctr', performance);
-    assert.deepEqual([first?.severity, first?.params?.page, first?.params?.ctr], ['low', `${origin}/b`, '0.4%']);
+    assert.deepEqual([first?.severity, first?.params?.page, first?.params?.ctr], ['low', `${origin}/b`, 0.0044444444444444444]);
     const queries = first!.evidence.map(id => evidence.get(id)!).find(item => item.path === searchQueriesPath);
-    assert.match(queries?.excerpt ?? '', /^custom software andorra \(600 impressions, position 2\.4\)/u);
+    assert.equal(queries?.label, 'query with impressions for the page: custom software andorra (impressions: 600; average position: 2.4)');
   });
 
   test('content-gsc-cannibalization, striking distance and traffic drop', () => {
     const shared = check('content-gsc-cannibalization', performance).first;
     assert.deepEqual([shared?.severity, shared?.params?.query, shared?.params?.count], ['info', 'software development studio', 2]);
     const near = check('content-gsc-striking-distance', performance).first;
-    assert.deepEqual([near?.severity, near?.params?.query, near?.params?.position], ['info', 'erp integration', '14.0']);
+    assert.deepEqual([near?.severity, near?.params?.query, near?.params?.position], ['info', 'erp integration', 14]);
     const drop = check('content-gsc-traffic-drop', performance).first;
     assert.deepEqual([drop?.severity, drop?.params?.page, drop?.params?.before, drop?.params?.now], ['low', `${origin}/b`, 60, 4]);
   });
@@ -164,9 +165,9 @@ describe('Search Console performance rules', () => {
     const shared = facts('content-gsc-cannibalization');
     assert.equal(shared.findings[0]?.params?.query, 'query 1');
     const lowCtr = facts('content-gsc-low-ctr');
-    const excerpts = lowCtr.findings.flatMap(finding => finding.evidence.map(id => lowCtr.evidence.get(id)?.excerpt ?? '')).join('\n');
-    assert.doesNotMatch(excerpts, /custom software|software development/u);
-    assert.match(excerpts, /^query 1 \(600 impressions/mu);
+    const labels = lowCtr.findings.flatMap(finding => finding.evidence.map(id => lowCtr.evidence.get(id)?.label ?? '')).join('\n');
+    assert.doesNotMatch(labels, /custom software|software development/u);
+    assert.match(labels, /^query with impressions for the page: query 1 \(impressions: 600;/mu);
   });
 
   test('do not apply to a property without search data', () => {
@@ -214,11 +215,11 @@ describe('Search Console context rules', () => {
       [{ owner: { gsc: gsc(), bing, bots: activity() } }, 'all-sources', /arrive as Google search and cannot be told apart/u],
     ];
     for (const [extra, reason, text] of cases) {
-      const { first, excerpts } = check('ai-measurement-context', gsc(), extra);
+      const { first, labels } = check('ai-measurement-context', gsc(), extra);
       assert.deepEqual([first?.outcome, first?.severity, first?.reason], ['fail', 'info', reason]);
       assert.match(message(first), /AI Overviews and AI Mode in the web search type, so the Search Console analyses for sc-domain:example\.com include them/u);
       assert.match(message(first), text, reason);
-      assert.match(excerpts(first)[0] ?? '', /^Search Console sc-domain:example\.com: /u);
+      assert.match(labels(first)[0] ?? '', /^Search Console sc-domain:example\.com: /u);
     }
   });
 });

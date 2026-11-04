@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { criticalRequestChains, fontDisplay, fontFormat, fontPreloadCrossorigin, imageDelivery, preconnectHints } from '../../src/rules/perf/resources.ts';
 import { page } from '../support/facts.ts';
-import { assertExcerpt, assertFail, assertOutcome, check, html, lab, list, requests, table } from './perf-fixtures.ts';
+import { assertExcerpt, assertFail, assertLabel, assertOutcome, check, html, lab, list, requests, table } from './perf-fixtures.ts';
 
 const url = 'https://example.com/';
 
@@ -61,7 +61,8 @@ describe('perf-font-format', () => {
   test('fails low on legacy formats and on many files', () => {
     const checked = check(fontFormat, page(url, { html: html(''), lighthouse: fonts([['old.ttf', 'font/ttf']]) }));
     assertFail(checked, 'low', 'not-woff2');
-    assertExcerpt(checked, /old\.ttf \(font\/ttf, 20000 bytes\)/u);
+    assertExcerpt(checked, /old\.ttf$/u);
+    assertLabel(checked, /^web font request \(font\/ttf, 20,000 bytes\) \(lab/u);
     const many = check(fontFormat, page(url, { html: html(''), lighthouse: fonts(Array.from({ length: 7 }, (_, index): [string, string] => [`f${index}.woff2`, 'font/woff2'])) }));
     assertFail(many, 'low', 'many-files');
     assert.equal(many.finding.params?.count, 7);
@@ -120,7 +121,8 @@ describe('perf-critical-request-chains', () => {
     const checked = check(criticalRequestChains, page(url, { html: html(''), lighthouse: tree([url, `${url}a.js`, `${url}b.js`, `${url}c.js`, `${url}d.json`]) }));
     assertFail(checked, 'low');
     assert.deepEqual(checked.finding.params, { depth: 4, duration: '1400 ms' });
-    assertExcerpt(checked, /c\.js -> https:\/\/example\.com\/d\.json; longest chain 1400 ms$/u);
+    assertExcerpt(checked, /c\.js -> https:\/\/example\.com\/d\.json$/u);
+    assertLabel(checked, /^deepest critical request chain \(longest chain 1400 ms\) \(lab/u);
   });
 
   test('is not evaluated without the insight', () => {

@@ -92,7 +92,7 @@
       "fail": "La posició de la marca al títol es podria millorar.",
       "fail:brand-absent": "El títol no esmenta el lloc («{brand}»); Google pot mostrar el nom del lloc a part, de manera que això és informatiu.",
       "fail:repeated": "El títol esmenta «{brand}» {count} vegades.",
-      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadament un {share} % de l'amplada del títol.",
+      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadament un {share, number, percent} de l'amplada del títol.",
       "fail:mid-title": "La marca «{brand}» és al mig del títol en lloc del principi o el final."
     }
   },
@@ -140,7 +140,7 @@
       "fail": "data-nosnippet es fa servir d'una manera que Google no respecta tal com es pretén.",
       "fail:unsupported-element": "{count} atribut(s) data-nosnippet són en elements que Google no respecta ({tags}); només s'admeten span, div i section.",
       "fail:added-by-javascript": "JavaScript afegeix {count} atribut(s) data-nosnippet a elements que existeixen a l'HTML del servidor sense aquest atribut.",
-      "fail:covers-main-content": "Els elements amb data-nosnippet contenen aproximadament un {share} % del contingut principal, de manera que aquest text queda fora dels fragments i de l'entrada de les AI Overviews."
+      "fail:covers-main-content": "Els elements amb data-nosnippet contenen aproximadament un {share, number, percent} del contingut principal, de manera que aquest text queda fora dels fragments i de l'entrada de les AI Overviews."
     }
   },
   "content-image-preview-large": {
@@ -200,7 +200,7 @@
     "why": "Google rebutja els nombres de paraules preferits, però pregunta si una pàgina aporta un valor substancial. Les pàgines en què el text de plantilla eclipsa el contingut únic sovint tenen poc valor, però molts tipus de pàgina són complets amb poques paraules.",
     "fix": "Assegura't que cada pàgina indexable tingui contingut substancial específic del seu propòsit, o consolida les variants amb poc contingut o aplica-hi noindex.",
     "messages": {
-      "fail": "{url} té {uniqueWords} paraules de text específic de la pàgina i un {share} % de text de plantilla; l'analista hauria de jutjar si el contingut compleix el propòsit de la pàgina."
+      "fail": "{url} té {uniqueWords, plural, one {# paraula} other {# paraules}} de text específic de la pàgina i un {share, number, percent} de text de plantilla; l'analista hauria de jutjar si el contingut compleix el propòsit de la pàgina."
     }
   },
   "content-filler-before-mc": {
@@ -222,7 +222,7 @@
     "why": "Les polítiques de Google contra el contingut brossa i les directrius per als avaluadors consideren de baixa qualitat el contingut principal copiat o lleugerament parafrasejat sense valor afegit. El contingut amb llicència i el contingut sindicat no són còpia.",
     "fix": "Afegeix anàlisi, dades, elements multimèdia o experiència originals. Canonicalitza o atribueix les còpies sindicades. Elimina les pàgines extretes automàticament d'altres llocs.",
     "messages": {
-      "fail": "Un {overlap} % del text principal d'aquesta pàgina també apareix a {other}; l'analista hauria de jutjar si és copiat o compartit legítimament."
+      "fail": "Un {overlap, number, percent} del text principal d'aquesta pàgina també apareix a {other}; l'analista hauria de jutjar si és copiat o compartit legítimament."
     }
   },
   "content-scaled-doorway": {
@@ -230,7 +230,7 @@
     "why": "Les polítiques de Google sobre l'abús de contingut a gran escala i les pàgines porta inclouen moltes pàgines generades principalment per posicionar-se, ja sigui per IA, per persones o per totes dues, incloses pàgines gairebé idèntiques que només canvien un lloc o una paraula clau i pàgines creades per captar variants de consultes. La regla informa d'un patró de risc, mai d'una penalització.",
     "fix": "Fusiona-les en una pàgina útil per a cada oferta real, o afegeix contingut realment local o únic (personal, preus, casos, fotos de cada ubicació). Aplica noindex a les variants generades automàticament o elimina-les.",
     "messages": {
-      "fail": "{count} pàgines tenen un text principal que difereix com a màxim en un 5 % de les paraules ({urls}); l'analista hauria de comprovar si hi ha un patró de pàgines porta."
+      "fail": "{count} pàgines tenen un text principal que difereix com a màxim en un 5\u00a0% de les paraules ({urls}); l'analista hauria de comprovar si hi ha un patró de pàgines porta."
     }
   },
   "content-ai-artifacts": {
@@ -260,7 +260,7 @@
     "why": "Les polítiques de Google contra el contingut brossa prohibeixen el text ocult per als usuaris però present per als cercadors, com el text del color del fons, darrere d'imatges o posicionat fora de la pantalla. Permeten explícitament pestanyes, acordions, controls lliscants, indicadors de funció i text per a lectors de pantalla.",
     "fix": "Elimina el text ocult o fes-lo visible com a contingut útil.",
     "messages": {
-      "fail": "{words} paraules estan ocultes per als usuaris en {blocks} bloc(s) de text ({reasons}); l'analista hauria de jutjar si això correspon a la política sobre text ocult."
+      "fail": "Text ocult per als usuaris: {words, plural, one {# paraula} other {# paraules}} en {blocks, plural, one {# bloc} other {# blocs}} ({reasons}); l'analista hauria de jutjar si això correspon a la política sobre text ocult."
     }
   },
   "content-hidden-links": {
@@ -510,7 +510,7 @@
     "why": "Una pàgina que apareix sovint però que rep pocs clics en la seva posició sol tenir un títol o un fragment que no coincideix amb el que volen els usuaris que cerquen. La comparació fa servir el CTR del mateix lloc a cada posició, no una corba del sector.",
     "fix": "Reescriu el títol i la metadescripció per a les consultes de la llista, de manera que continuïn sent fidels a la pàgina. Comprova si un resultat enriquit o una pàgina del lloc que s'hi adequa millor s'emporta els clics.",
     "messages": {
-      "fail": "{page} ha obtingut {impressions} impressions a la posició {position} amb un CTR de {ctr}, enfront de {expected} per al lloc en aquesta posició."
+      "fail": "{page} ha obtingut {impressions} impressions a la posició {position, number, ::.0} amb un CTR de {ctr, number, ::percent .0}, enfront de {expected, number, ::percent .0} per al lloc en aquesta posició."
     }
   },
   "content-gsc-cannibalization": {
@@ -526,7 +526,7 @@
     "why": "Les consultes per a les quals una pàgina ja es posiciona entre les posicions 11 i 20 són les que costa menys millorar: la pàgina és rellevant, i una resposta millor o uns enllaços interns més forts la poden portar a la primera pàgina.",
     "fix": "Per a cada consulta, comprova que la pàgina la respon de manera completa i aviat, i enllaça-hi des de pàgines relacionades amb un text d'ancoratge descriptiu.",
     "messages": {
-      "fail": "Consultes entre les posicions 11 i 20: {count}; per exemple, «{query}» per a {page} a la posició {position}."
+      "fail": "Consultes entre les posicions 11 i 20: {count}; per exemple, «{query}» per a {page} a la posició {position, number, ::.0}."
     }
   },
   "content-gsc-traffic-drop": {
@@ -542,7 +542,7 @@
     "why": "Una pàgina que Bing mostra sovint però a la qual els usuaris rarament fan clic sol tenir un títol o un fragment que no coincideix amb el que busquen. La comparació fa servir el CTR de les altres pàgines del lloc en una posició semblant a Bing, no una corba del sector.",
     "fix": "Reescriu el títol i la metadescripció per a les consultes de la llista, de manera que continuïn sent fidels a la pàgina. Comprova a Bing si un resultat més complet o una altra pàgina del lloc s'emporta els clics.",
     "messages": {
-      "fail": "{page} ha obtingut {impressions} impressions a Bing a la posició {position} amb un CTR de {ctr}, enfront de {expected} de les altres pàgines del lloc en aquesta posició, del {start} al {end}."
+      "fail": "{page} ha obtingut {impressions} impressions a Bing a la posició {position, number, ::.0} amb un CTR de {ctr, number, ::percent .0}, enfront de {expected, number, ::percent .0} de les altres pàgines del lloc en aquesta posició, del {start} al {end}."
     }
   },
   "content-bing-ai-performance": {

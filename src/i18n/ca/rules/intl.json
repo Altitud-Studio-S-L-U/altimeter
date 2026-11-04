@@ -219,7 +219,7 @@
     "why": "Google recomana una anotació només de llengua, com «de», a més de les regionals, perquè coincideixi amb els usuaris d'aquesta llengua d'altres regions.",
     "fix": "Afegeix un valor només de llengua (per exemple, hreflang=\"es\") que apunti a una de les pàgines regionals perquè els parlants d'altres països (Mèxic, els EUA) hi quedin coberts.",
     "messages": {
-      "fail": "Tots els valors de la llengua «{language}» porten una regió ({values}) i el clúster no té cap valor «{language}» sense regió ni x-default, de manera que els parlants de la llengua «{language}» d'altres països no tenen cap versió que hi coincideixi."
+      "fail": "Tots els valors de la llengua «{code}» porten una regió ({values}) i el clúster no té cap valor «{code}» sense regió ni x-default, de manera que els parlants de la llengua «{code}» d'altres països no tenen cap versió que hi coincideixi."
     }
   },
   "intl-hreflang-source-conflict": {
@@ -312,7 +312,7 @@
     "why": "Google recomana una sola llengua per pàgina per al contingut principal i la navegació, perquè detecta la llengua de la pàgina a partir del contingut visible i les pàgines mixtes són més difícils de fer coincidir amb els usuaris.",
     "fix": "Fes servir una sola llengua per al contingut i la navegació de cada pàgina. Posa les traduccions en URL separades.",
     "messages": {
-      "fail": "Aproximadament un {share} % del contingut principal sembla escrit en {secondary} en una pàgina que és majoritàriament en {primary}. Confirma si és intencionat, com una citació o un text legal bilingüe."
+      "fail": "Aproximadament un {share, number, percent} del contingut principal sembla escrit en {secondary} en una pàgina que és majoritàriament en {primary}. Confirma si és intencionat, com una citació o un text legal bilingüe."
     }
   },
   "intl-untranslated-variant": {
@@ -321,7 +321,7 @@
     "fix": "Tradueix el contingut principal, o elimina la configuració regional sense traduir de les anotacions hreflang i canonicalitza-la a l'original.",
     "messages": {
       "fail": "{url} i {other} es declaren per a llengües diferents ({languages}), però semblen sense traduir.",
-      "fail:near-identical": "{url} i {other} es declaren per a llengües diferents ({languages}), però el seu contingut principal és idèntic en un {similarity} %.",
+      "fail:near-identical": "{url} i {other} es declaren per a llengües diferents ({languages}), però el seu contingut principal és idèntic en un {similarity, number, percent}.",
       "fail:same-language": "{url} i {other} es declaren per a llengües diferents ({languages}), però totes dues semblen escrites en {detected}."
     }
   },

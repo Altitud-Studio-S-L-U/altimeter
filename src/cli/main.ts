@@ -14,6 +14,7 @@ import { rule as catalogRule, rules as catalogRules } from '../catalog/index.ts'
 import { categories, type Category } from '../core/types.ts';
 import { format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
+import { localizeValue } from '../i18n/values.ts';
 import { findChrome } from '../render/chrome.ts';
 import { compareReports } from '../report/compare.ts';
 import { analysisSummary } from '../report/markdown.ts';
@@ -195,7 +196,7 @@ async function auditCommand(args: string[]): Promise<number> {
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 1000) throw new UsageError('--max-pages must be a whole number from 1 to 1000.');
   const lang = language(values.lang);
   const quiet = values.quiet === true;
-  const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(message)}\n`);
+  const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(localizeValue(lang, 'progress', message))}\n`);
   const useGsc = values.gsc === true || values['gsc-property'] !== undefined;
   const useBing = values.bing === true || values['bing-site'] !== undefined;
   if (values['bing-site'] !== undefined && !/^https?:\/\/[^/]/iu.test(values['bing-site'])) throw new UsageError('--bing-site must be the URL of a Bing Webmaster Tools site, for example https://example.com/.');
@@ -264,14 +265,14 @@ async function auditCommand(args: string[]): Promise<number> {
     const { score, coverage, tasks } = report;
     process.stdout.write(`\nAltimeter ${version} · ${cleanLine(report.target.url)}\n`);
     process.stdout.write(`${t.score} ${score.overall ?? t.notScored} · ${t.indexability}: ${t.indexabilityStates[score.indexability]}\n`);
-    process.stdout.write(`${cleanLine(format(t.coverageLine, { evaluated: coverage.evaluated, notEvaluated: coverage.notEvaluated, notApplicable: coverage.notApplicable }))}\n`);
+    process.stdout.write(`${cleanLine(format(t.coverageLine, { evaluated: coverage.evaluated, notEvaluated: coverage.notEvaluated, notApplicable: coverage.notApplicable }, lang))}\n`);
     if (report.ai) process.stdout.write(`${cleanLine(analysisSummary(report.ai, lang))}\n`);
     if (tasks.length > 0) process.stdout.write(`\n${t.topActions}:\n`);
     for (const task of tasks.slice(0, 5)) {
       const rule = catalogRule(task.ruleId);
       process.stdout.write(`  ${task.priority}. [${t.severities[task.severity]}] ${cleanLine(rule ? ruleTexts(lang, rule).title : task.title, 120)} (${task.id})\n`);
     }
-    for (const warning of [...report.run.warnings, ...(report.ai?.warnings ?? [])]) process.stderr.write(`! ${cleanLine(warning)}\n`);
+    for (const warning of [...report.run.warnings, ...(report.ai?.warnings ?? [])]) process.stderr.write(`! ${cleanLine(localizeValue(lang, 'warning', warning))}\n`);
     process.stdout.write(`\n${shown}${process.platform === 'win32' ? '\\' : '/'}report.md\n`);
   }
   return auditExitCode(result, failOn);
@@ -423,11 +424,13 @@ function explainCommand(args: string[]): number {
   if (positionals.length !== 1) throw new UsageError('explain needs a rule id, for example crawl-meta-robots-noindex.');
   const entry = catalogRule(positionals[0]!);
   if (!entry) throw new UsageError(`No rule ${positionals[0]}. List them with "altimeter rules".`);
-  const texts = ruleTexts(language(values.lang), entry);
+  const lang = language(values.lang);
+  const texts = ruleTexts(lang, entry);
+  const t = ui(lang);
   process.stdout.write([
-    `${entry.id} · ${entry.category} · max ${entry.maxSeverity} · ${entry.status}`,
-    texts.title, '', texts.why, '', `Fix: ${texts.fix}`, '', `Thresholds: ${entry.thresholds}`, '',
-    ...entry.sources.map(source => `Source: ${source.url} (verified ${source.verified})`), '',
+    `${entry.id} · ${t.categories[entry.category]} · ${format(t.maxSeverity, { severity: t.severities[entry.maxSeverity] }, lang)} · ${entry.status}`,
+    texts.title, '', texts.why, '', `${t.fix}: ${texts.fix}`, '', `${t.thresholds}: ${entry.thresholds}`, '',
+    ...entry.sources.map(source => `${t.source}: ${source.url} (${format(t.verified, { date: source.verified }, lang)})`), '',
   ].join('\n'));
   return 0;
 }

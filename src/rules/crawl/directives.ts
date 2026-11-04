@@ -70,7 +70,10 @@ const noindexRawVsRendered: RuleImplementation = {
     const rawIds = sourcesWith(target, target.raw, 'noindex').map(entry => citeSource(evidence, url, entry, 'raw'));
     const renderedIds = sourcesWith(target, rendered, 'noindex').map(entry => citeSource(evidence, url, entry, 'rendered'));
     if (rawNoindex) {
-      const none = evidence.add({ kind: 'render', url, label: evidenceLabel('robots directives in the rendered DOM'), excerpt: [...effectiveDirectives(target, rendered)].join(', ') || '(none)' });
+      const directives = [...effectiveDirectives(target, rendered)].join(', ');
+      const none = directives
+        ? evidence.add({ kind: 'render', url, label: evidenceLabel('robots directives in the rendered DOM'), excerpt: directives })
+        : evidence.add({ kind: 'render', url, label: evidenceLabel('no robots directives in the rendered DOM') });
       return failure({ severity: 'critical', evidence: [...rawIds, none], reason: 'removed-by-js', params: { url } });
     }
     const errorView = target.pageType === 'error' || errorWording.test(pageHeadlines(rendered));

@@ -67,7 +67,7 @@ export { format, placeholders };
  */
 export function findingMessage(language: Language, ruleId: string, outcome: string, reason: string | undefined, params?: Readonly<Record<string, string | number>>): string | undefined {
   const found = messageTemplate(language, ruleId, outcome, reason);
-  return found && format(found.template, params && found.language !== 'en' ? localizeParams(found.language, params, ruleId) : params);
+  return found && format(found.template, params && found.language !== 'en' ? localizeParams(found.language, params, ruleId) : params, found.language);
 }
 
 /** findingMessage, or undefined when the template it would use has a placeholder that `params` gives no value for. */

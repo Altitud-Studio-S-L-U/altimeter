@@ -56,7 +56,7 @@ describe('perf-crux-inp-p75 and perf-crux-cls-p75', () => {
     assertExcerpt(inp, /p75=520 ms/u);
     const cls = check(cruxCls, withCrux({ url: { DESKTOP: { metrics: { cumulative_layout_shift: 0.18 } } } }));
     assertFail(cls, 'medium');
-    assert.equal(cls.finding.params?.value, '0.18');
+    assert.equal(cls.finding.params?.value, 0.18);
   });
 
   test('are not evaluated without the metric', () => {
@@ -179,7 +179,7 @@ describe('perf-crux-navigation-types', () => {
   test('flags back/forward navigations that miss the cache', () => {
     const checked = check(cruxNavigationTypes, withCrux({ url: { PHONE: { navigationTypes: { navigate: 0.8, back_forward: 0.09, back_forward_cache: 0.03 } } } }));
     assertFail(checked, 'low');
-    assert.equal(checked.finding.params?.backForward, '9%');
+    assert.equal(checked.finding.params?.backForward, 0.09);
     assertExcerpt(checked, /back_forward=0\.090/u);
   });
 

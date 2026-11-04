@@ -141,7 +141,7 @@ const aiprefSignals: RuleImplementation = {
     if (broken.length > 0) {
       return {
         outcome: 'fail', severity: 'info', reason: 'parse-error', evidence: broken.map(entry => entry.signal.evidence),
-        params: { problems: summarizeList(broken.flatMap(entry => entry.problems), 3) },
+        params: { problems: summarizeList([...new Set(broken.flatMap(entry => entry.problems))], 3) },
       };
     }
     return { outcome: 'pass', evidence: [...signals.map(signal => signal.evidence), ...groupEvidence] };

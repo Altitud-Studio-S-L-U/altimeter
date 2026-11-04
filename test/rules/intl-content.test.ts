@@ -151,7 +151,7 @@ describe('intl-untranslated-variant', () => {
     const { findings, evidence } = evaluate(untranslatedVariant, site({ pages }));
     const finding = only(findings);
     assertFail(finding, 'medium', 'near-identical');
-    assert.equal(finding.params?.similarity, 100);
+    assert.equal(finding.params?.similarity, 1);
     assert.ok(excerpts(finding, evidence).every(excerpt => excerpt.startsWith('We are a design studio')));
   });
 

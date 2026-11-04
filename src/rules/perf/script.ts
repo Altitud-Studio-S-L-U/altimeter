@@ -18,12 +18,14 @@ export const longTasks: RuleImplementation = {
     if (!auditRan(audit)) return notEvaluated('no-long-tasks-audit');
     const tasks = rows(audit.details).filter(row => (num(row.duration) ?? 0) > longTaskMs);
     const blocking = tasks.reduce((sum, row) => sum + num(row.duration)! - longTaskMs, 0);
-    const cited = labEvidence(evidence, page!, summary, 'long-tasks', evidenceLabel('lab long tasks on the main thread'), `${tasks.length} tasks over ${longTaskMs} ms; blocking portion ${Math.round(blocking)} ms`);
+    const cited = labEvidence(evidence, page!, summary, 'long-tasks', evidenceLabel('lab long tasks on the main thread: {count, plural, one {# task} other {# tasks}} over {limit} ms, with a blocking portion of {blocking} ms', { count: tasks.length, limit: longTaskMs, blocking: Math.round(blocking) }));
     if (blocking <= blockingLimitMs) return { outcome: 'pass', evidence: [cited] };
     const scripts = rows(auditOf(summary, 'bootup-time')?.details).filter(row => str(row.url) && (num(row.total) ?? 0) > 0)
       .sort((a, b) => num(b.total)! - num(a.total)!).slice(0, 3);
     const top = scripts.map(row => `${str(row.url)} (${firstParty(str(row.url)!, page!) ? 'first party' : 'third party'}, ${formatMs(num(row.total)!)})`);
-    const extra = scripts.length > 0 ? [labEvidence(evidence, page!, summary, 'bootup-time', evidenceLabel('scripts with the most lab execution time'), top.join('; '))] : [];
+    const extra = scripts.map(row => labEvidence(evidence, page!, summary, 'bootup-time', firstParty(str(row.url)!, page!)
+      ? evidenceLabel('first-party script with {time} ms of lab execution time', { time: Math.round(num(row.total)!) })
+      : evidenceLabel('third-party script with {time} ms of lab execution time', { time: Math.round(num(row.total)!) }), str(row.url)));
     return { outcome: 'fail', severity: 'medium', evidence: [cited, ...extra], params: { count: tasks.length, blocking: formatMs(blocking), scripts: top.length > 0 ? top.join('; ') : 'not attributed' } };
   },
 };
@@ -51,7 +53,7 @@ export const domSize: RuleImplementation = {
   id: 'perf-dom-size',
   evaluate({ page, evidence }) {
     const count = elements(page!.rendered).length;
-    const cited = evidence.add({ kind: 'render', url: page!.url, label: evidenceLabel('elements in the rendered DOM'), excerpt: String(count) });
+    const cited = evidence.add({ kind: 'render', url: page!.url, label: evidenceLabel('elements in the rendered DOM: {count}', { count }) });
     const summary = labOf(page);
     const insight = auditOf(summary, 'dom-size-insight');
     const costly = summary !== undefined && insight?.scoreDisplayMode === 'informative';
@@ -122,9 +124,12 @@ export const thirdPartyFacades: RuleImplementation = {
       return { kind, requests: own, bytes: own.reduce((sum, request) => sum + (request.transferSize ?? 0), 0), mainThread: num(entity?.mainThreadTime) ?? 0 };
     }).filter(entry => entry.requests.length > 0);
     if (present.length === 0) return notApplicable('no-embeds');
-    const describe = (entry: (typeof present)[number]) => `${entry.kind.name}: ${entry.requests.length} requests, ${formatKib(entry.bytes)}, main thread ${formatMs(entry.mainThread)}`;
+    const describe = (entry: (typeof present)[number]) => `${entry.kind.name}: ${entry.requests.length} ${entry.requests.length === 1 ? 'request' : 'requests'}, ${formatKib(entry.bytes)}, main thread ${formatMs(entry.mainThread)}`;
     const costly = present.filter(entry => entry.bytes >= facadeBytes || entry.mainThread >= facadeMainThreadMs);
-    const cited = (costly.length > 0 ? costly : present).map(entry => labEvidence(evidence, page!, summary, 'network-requests', evidenceLabel('embed loaded before any interaction in the lab load'), describe(entry)));
+    const cited = (costly.length > 0 ? costly : present).map(entry => labEvidence(evidence, page!, summary, 'network-requests', evidenceLabel(
+      '{name} embed loaded before any interaction in the lab load: {requests, plural, one {# request} other {# requests}}, {size} KiB, {time} ms of main thread',
+      { name: entry.kind.name, requests: entry.requests.length, size: Math.round(entry.bytes / kib), time: Math.round(entry.mainThread) },
+    )));
     if (costly.length === 0) return { outcome: 'pass', evidence: cited };
     return { outcome: 'fail', severity: 'low', evidence: cited, params: { embeds: costly.map(describe).join('; ') } };
   },

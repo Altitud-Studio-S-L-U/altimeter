@@ -1,5 +1,6 @@
 import { evidenceLabel, joinLabels, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
+import type { NotEvaluatedReason } from '../../core/types.ts';
 import type { CruxFormFactor, CruxRecord } from '../../data/crux.ts';
 import { isElement, walk, type HtmlElement } from '../../parse/html.ts';
 import type { LighthouseAudit, LighthouseSummary } from '../../render/lighthouse.ts';
@@ -30,11 +31,7 @@ export function formatKib(bytes: number): string {
   return `${Math.round(bytes / kib)} KiB`;
 }
 
-export function percent(fraction: number): string {
-  return `${Math.round(fraction * 100)}%`;
-}
-
-export function notEvaluated(reason: string): RuleResult {
+export function notEvaluated(reason: NotEvaluatedReason): RuleResult {
   return { outcome: 'not_evaluated', reason };
 }
 
@@ -224,7 +221,7 @@ export function fieldRecord(page: PageFacts | undefined, form: CruxFormFactor): 
 }
 
 /** Why no field value was found: every query failed, or CrUX answered without data. */
-export function missingFieldReason(page: PageFacts | undefined, fallback = 'no-field-data'): string {
+export function missingFieldReason(page: PageFacts | undefined, fallback: NotEvaluatedReason = 'no-field-data'): NotEvaluatedReason {
   const outcomes = [...Object.values(page?.crux?.url ?? {}), ...Object.values(page?.crux?.origin ?? {})];
   const answered = outcomes.some(outcome => outcome?.status === 'ok' || outcome?.status === 'no-data');
   return !answered && outcomes.some(outcome => outcome?.status === 'error') ? 'crux-error' : fallback;
@@ -249,15 +246,16 @@ export function scopeLabel(field: FieldRecord): string {
   return field.scope === 'url' ? 'URL-level' : 'origin-level';
 }
 
-export function fieldEvidence(evidence: EvidenceStore, field: FieldRecord, metric: string, excerpt: string): string {
+export function fieldEvidence(evidence: EvidenceStore, field: FieldRecord, metric: string, excerpt?: string): string {
   const { record } = field;
   const { first, last } = record.collectionPeriod;
   const facts = { metric, formFactor: record.formFactor, scope: scopeLabel(field) };
+  const label = first && last ? evidenceLabel('CrUX {metric}, {formFactor}, {scope}, {first} to {last}', { ...facts, first, last }) : evidenceLabel('CrUX {metric}, {formFactor}, {scope}', facts);
   return evidence.add({
     kind: 'crux',
     url: record.key,
-    label: first && last ? evidenceLabel('CrUX {metric}, {formFactor}, {scope}, {first} to {last}', { ...facts, first, last }) : evidenceLabel('CrUX {metric}, {formFactor}, {scope}', facts),
-    excerpt: record.normalizedUrl && record.normalizedUrl !== record.key ? `${excerpt} (CrUX matched ${record.normalizedUrl})` : excerpt,
+    label: record.normalizedUrl && record.normalizedUrl !== record.key ? joinLabels(label, evidenceLabel('(CrUX matched {url})', { url: record.normalizedUrl })) : label,
+    ...(excerpt === undefined ? {} : { excerpt }),
     path: `metrics.${metric}`,
   });
 }

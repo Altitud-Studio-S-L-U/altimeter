@@ -137,8 +137,8 @@ const excerptLength = 300;
 export function languageEvidence(evidence: EvidenceStore, url: string, language: DocumentLanguage): string {
   const { guess } = language;
   const verdict = guess.language === 'und'
-    ? evidenceLabel('language of the main content undetermined ({words} words)', { words: guess.words })
-    : evidenceLabel('main content detected as {language} (confidence {confidence}, {words} words)', { language: languageLabel(guess.language), confidence: guess.confidence.toFixed(2), words: guess.words });
+    ? evidenceLabel('language of the main content undetermined ({words, plural, one {# word} other {# words}})', { words: guess.words })
+    : evidenceLabel('main content detected as {language} (confidence {confidence, number, ::.00}, {words} words)', { language: languageLabel(guess.language), confidence: guess.confidence, words: guess.words });
   return evidence.add({ kind: 'text', url, label: verdict, excerpt: language.text.slice(0, excerptLength) });
 }
 

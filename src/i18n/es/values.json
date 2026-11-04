@@ -24,6 +24,9 @@
   "assistants": {
     "none by referrer": "ninguna identificada por la URL de referencia"
   },
+  "audits": {
+    "none": "ninguna"
+  },
   "band": {
     "good": "«buena»",
     "needs improvement": "«necesita mejorar»",
@@ -45,7 +48,7 @@
   "contentType": {
     "(none)": "(ninguno)"
   },
-  "crawl-js-content-dependency/share": {
+  "crawl-js-content-dependency/fields": {
     "title": "título",
     "meta description": "metadescripción",
     "structured data types": "tipos de datos estructurados"
@@ -56,8 +59,6 @@
   "detail": {
     "HTTP error": "error HTTP",
     "{count} URLs": "{count} URLs",
-    "{count} lines": "{count} líneas",
-    "{count} entries": "{count} entradas",
     "{entries} entries, {bytes} bytes": "{entries} entradas, {bytes} bytes",
     "not a sitemap": "no es un sitemap",
     "index inside an index": "índice dentro de otro índice",
@@ -71,7 +72,8 @@
     "unknown": "desconocida"
   },
   "embeds": {
-    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} solicitudes, {size}, hilo principal {time}"
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests, plural, one {# solicitud} other {# solicitudes}}, {size}, hilo principal {time}",
+    "{name}: {requests} request, {size}, main thread {time}": "{name}: {requests, plural, one {# solicitud} other {# solicitudes}}, {size}, hilo principal {time}"
   },
   "entities": {
     "{entity}: main thread {time}, transfer {size}": "{entity}: hilo principal {time}, transferencia {size}"
@@ -80,10 +82,24 @@
     "no answer": "sin respuesta",
     "unknown error": "error desconocido"
   },
+  "fetchError": {
+    "invalid-url": "URL no válida",
+    "unsupported-protocol": "protocolo no admitido",
+    "blocked-address": "dirección no pública",
+    "dns": "error de DNS",
+    "connection": "error de conexión",
+    "tls": "error de TLS",
+    "timeout": "tiempo de espera agotado",
+    "redirect-loop": "bucle de redirecciones",
+    "too-many-redirects": "demasiadas redirecciones",
+    "decode": "error de descodificación",
+    "aborted": "solicitud cancelada"
+  },
   "field": {
     "title": "título",
     "meta description": "metadescripción",
-    "image alt texts": "textos alternativos de las imágenes"
+    "image alt texts": "textos alternativos de las imágenes",
+    "structured data types": "tipos de datos estructurados"
   },
   "fileReason": {
     "contains {token}": "contiene {token}",
@@ -110,9 +126,17 @@
     "PHONE": "móvil",
     "DESKTOP": "ordenador"
   },
+  "format": {
+    "unknown": "desconocido"
+  },
   "includeSubDomains": {
     "yes": "sí",
     "no": "no"
+  },
+  "intl-hreflang-outside-head/cause": {
+    "<{tag}> element": "elemento <{tag}>",
+    "text content": "contenido de texto",
+    "not determined": "sin determinar"
   },
   "issuer": {
     "unknown": "desconocido"
@@ -162,8 +186,16 @@
     "{metric} {value} ({band})": "{metric} {value} ({band})",
     "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} frente a {withSoftnavs} con navegaciones suaves"
   },
+  "mode": {
+    "no-quirks": "estándar (no-quirks)",
+    "quirks": "quirks",
+    "limited-quirks": "casi estándar (limited-quirks)"
+  },
   "operators": {
     "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloqueado, {training} permitido)"
+  },
+  "otherAudits": {
+    "none": "ninguna"
   },
   "outcome": {
     "failed": "fallida",
@@ -189,6 +221,33 @@
     "empty member": "miembro vacío",
     "invalid key \"{key}\"": "clave «{key}» no válida",
     "{key} needs y or n": "{key} necesita «y» o «n»"
+  },
+  "progress": {
+    "Fetching {url}": "Obteniendo {url}",
+    "Reading sitemaps": "Leyendo los sitemaps",
+    "Probing URL variants and an unknown path": "Probando variantes de la URL y una ruta desconocida",
+    "Probing crawler user agents": "Probando los user-agents de rastreadores",
+    "Fetching referenced resources and language probes": "Obteniendo los recursos referenciados y las pruebas de idioma",
+    "Fetching the hreflang alternates of the page": "Obteniendo las alternativas hreflang de la página",
+    "Crawling the site": "Rastreando el sitio",
+    "Crawled {done}/{max}": "Páginas rastreadas: {done}/{max}",
+    "Rendering {url}": "Renderizando {url}",
+    "Running Lighthouse": "Ejecutando Lighthouse",
+    "Querying Chrome UX Report field data": "Consultando los datos de campo de Chrome UX Report",
+    "Reading Cloudflare analytics for {zone}": "Leyendo las analíticas de Cloudflare de la zona {zone}",
+    "Reading {file}": "Leyendo {file}",
+    "Checking {count} crawler address in reverse DNS": "Comprobando {count} dirección de rastreador en el DNS inverso",
+    "Checking {count} crawler addresses in reverse DNS": "Comprobando {count} direcciones de rastreadores en el DNS inverso",
+    "Reading robots.txt and the sitemaps of {origin}": "Leyendo el robots.txt y los sitemaps de {origin}",
+    "No --site given: robots.txt and sitemaps are not compared.": "Sin --site: no se comparan el robots.txt ni los sitemaps.",
+    "Asking {engine} ({caller}, {pass})": "Consultando a {engine} ({caller}, {pass})",
+    "Asking {engine}: {queryId}, run {run} of {runs}": "Consultando a {engine}: {queryId}, ejecución {run} de {runs}",
+    "Checking {target}": "Comprobando {target}"
+  },
+  "purpose": {
+    "search": "búsqueda",
+    "training": "entrenamiento",
+    "user-triggered": "a petición del usuario"
   },
   "query": {
     "query {number}": "consulta {number}"
@@ -237,6 +296,12 @@
     "document": "documento",
     "other": "otro recurso"
   },
+  "schema-breadcrumb/items": {
+    "none": "sin posición"
+  },
+  "schema-product-variants/items": {
+    "variant": "variante sin nombre"
+  },
   "schemes": {
     "cctld": "ccTLD",
     "subdomain": "subdominio",
@@ -249,12 +314,23 @@
     "origin-level": "nivel de origen"
   },
   "scripts": {
-    "not attributed": "sin atribuir"
+    "not attributed": "sin atribuir",
+    "{url} (first party, {time})": "{url} (propio, {time})",
+    "{url} (third party, {time})": "{url} (de terceros, {time})"
+  },
+  "searchAudits": {
+    "none": "ninguna"
   },
   "second": {
     "html": "HTML",
     "header": "cabecera HTTP Link",
     "sitemap": "sitemap"
+  },
+  "signal": {
+    "title": "título",
+    "canonical": "URL canónica",
+    "robots": "directivas robots",
+    "h1": "h1"
   },
   "snippet": {
     "async-hide class": "clase async-hide",
@@ -290,12 +366,24 @@
   },
   "status": {
     "none": "sin respuesta",
-    "unknown": "desconocido"
+    "unknown": "desconocido",
+    "invalid-url": "URL no válida",
+    "unsupported-protocol": "protocolo no admitido",
+    "blocked-address": "dirección no pública",
+    "dns": "error de DNS",
+    "connection": "error de conexión",
+    "tls": "error de TLS",
+    "timeout": "tiempo de espera agotado",
+    "redirect-loop": "bucle de redirecciones",
+    "too-many-redirects": "demasiadas redirecciones",
+    "decode": "error de descodificación",
+    "aborted": "solicitud cancelada",
+    "error": "error"
   },
   "subparts": {
-    "time to first byte {share}": "tiempo hasta el primer byte {share}",
-    "resource load delay {share}": "retraso de carga del recurso {share}",
-    "element render delay {share}": "retraso de renderizado del elemento {share}"
+    "time to first byte {share}%": "tiempo hasta el primer byte {share}\u00a0%",
+    "resource load delay {share}%": "retraso de carga del recurso {share}\u00a0%",
+    "element render delay {share}%": "retraso de renderizado del elemento {share}\u00a0%"
   },
   "tech-favicon-file-valid/problem": {
     "not-200": "no responde 200",
@@ -314,6 +402,15 @@
   },
   "url": {
     "unknown": "URL desconocida"
+  },
+  "variant": {
+    "trailing-slash": "«barra final»",
+    "index-file": "«index.html»",
+    "uppercase": "«mayúsculas»",
+    "tracking-parameter": "«parámetro de seguimiento»",
+    "double-slash": "«barra doble»",
+    "http": "«http»",
+    "www": "«www»"
   },
   "warning": {
     "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "Se han pedido datos de Search Console, pero no se ha encontrado ninguna credencial. Ejecuta \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" o define ALTIMETER_GSC_ACCESS_TOKEN.",
@@ -335,7 +432,7 @@
     "Cloudflare allows {hours} hours per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare permite {hours} horas por consulta y Altimeter hace como máximo {queries} consultas por ejecución, así que solo se han leído los datos desde el {date}.",
     "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.": "Algunas consultas a Cloudflare han devuelto el máximo de filas, así que pueden faltar rastreadores o rutas poco frecuentes y las cifras son mínimos.",
     "{name}: reading stopped early ({error}).": "{name}: la lectura se ha detenido antes de tiempo ({error}).",
-    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: el {share} % de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy o un balanceador de carga, así que sus direcciones no se han usado para verificar rastreadores. Registra la dirección del cliente y usa --ip-source.",
+    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: el {share}\u00a0% de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy o un balanceador de carga, así que sus direcciones no se han usado para verificar rastreadores. Registra la dirección del cliente y usa --ip-source.",
     "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} usa el Common Log Format, que no tiene user-agent, así que no se pueden identificar los rastreadores.",
     "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} no registra el user-agent (Netlify elimina client_ip y user_agent cuando se excluyen los datos personales), así que no se pueden identificar los rastreadores.",
     "{name} records no user agent, so crawlers cannot be identified in it.": "{name} no registra el user-agent, así que no se pueden identificar los rastreadores.",
@@ -360,7 +457,12 @@
     "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.": "Se declaran {declared} sitemaps y solo se han leído los {read} primeros, así que las comprobaciones que usan las URLs de los sitemaps solo ven una parte.",
     "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.": "Los índices de sitemaps enumeran {listed} sitemaps secundarios y solo se han leído {read}, así que las comprobaciones que usan las URLs de los sitemaps solo ven una parte.",
     "{file} is empty, so it was skipped.": "{file} está vacío, así que se ha omitido.",
-    "The format of {file} was not recognised, so it was skipped.": "No se ha reconocido el formato de {file}, así que se ha omitido."
+    "The format of {file} was not recognised, so it was skipped.": "No se ha reconocido el formato de {file}, así que se ha omitido.",
+    "{count} analysis call was left out to stay within the call limit.": "Se ha omitido {count} llamada del análisis para no superar el límite de llamadas.",
+    "Cloudflare keeps {days} day of this data for the zone, so the window starts on {date}.": "Cloudflare conserva {days} día de estos datos para la zona, así que la ventana empieza el {date}.",
+    "Cloudflare allows {hours} hour per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare permite {hours} hora por consulta y Altimeter hace como máximo {queries} consultas por ejecución, así que solo se han leído los datos desde el {date}.",
+    "{count} crawler request carries a private or loopback address, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} solicitud de rastreador lleva una dirección privada o de loopback, así que los registros recogen la dirección de un proxy o de un balanceador de carga; registra la dirección del cliente y usa --ip-source.",
+    "{count} crawler request comes from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} solicitud de rastreador viene de direcciones de Cloudflare, así que los registros recogen la dirección de Cloudflare en lugar de la del cliente; registra CF-Connecting-IP y usa --ip-source."
   },
   "where": {
     "title": "el título",

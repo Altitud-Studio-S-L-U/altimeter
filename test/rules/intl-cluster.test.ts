@@ -217,7 +217,7 @@ describe('intl-hreflang-no-language-catchall', () => {
     const { findings, evidence } = evaluate(noLanguageCatchall, site({ pages: [member(es, 'es', links([['es-ES', es], ['es-AD', url('/es-ad/')]]))] }));
     const finding = only(findings);
     assertFail(finding, 'low');
-    assert.equal(finding.params?.language, 'es');
+    assert.equal(finding.params?.code, 'es');
     assert.match(excerpts(finding, evidence).join('\n'), /hreflang="es-AD"/u);
   });
 

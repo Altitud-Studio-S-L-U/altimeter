@@ -65,7 +65,7 @@ function certificateResult(tls: TlsFacts, cite: Cite): RuleResult {
     ...(tls.validFrom ? [`validFrom=${tls.validFrom}`] : []),
     ...(tls.validTo ? [`validTo=${tls.validTo}`] : []),
     ...(tls.issuer ? [`issuer=${tls.issuer}`] : []),
-    `subjectAltNames=${tls.subjectAltNames.join(' ') || '(none)'}`,
+    `subjectAltNames=${tls.subjectAltNames.length > 0 ? tls.subjectAltNames.join(' ') : '[]'}`,
     `chainLength=${tls.chainLength}`,
   ].join('; ');
   const evidence = [cite({ kind: 'probe', url: `https://${tls.host}:${tls.port}/`, label: evidenceLabel('TLS certificate presented to a client that sends SNI'), excerpt })];
@@ -234,7 +234,7 @@ export const hstsHeader: RuleImplementation = {
     const cite = citer(context);
     const value = firstHeader(page.fetch.headers, 'strict-transport-security');
     const policy = parseHsts(value);
-    if (!policy) return fail('info', [cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('HTTPS response without a Strict-Transport-Security header'), excerpt: 'Strict-Transport-Security: (absent)' })], 'missing');
+    if (!policy) return fail('info', [cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('HTTPS response without a Strict-Transport-Security header') })], 'missing');
     const evidence = [cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('Strict-Transport-Security header on the HTTPS response'), excerpt: `Strict-Transport-Security: ${policy.raw}` })];
     const params = { maxAge: policy.maxAge ?? 'invalid', includeSubDomains: policy.includeSubDomains ? 'yes' : 'no', preload: policy.preload ? 'yes' : 'no' };
     if (policy.maxAge === undefined) return fail('info', evidence, 'invalid', params);

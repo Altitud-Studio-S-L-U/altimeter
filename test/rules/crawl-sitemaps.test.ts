@@ -11,7 +11,8 @@ function run(id: string, facts: SiteFacts | SiteSpec) {
   const implementation = implementations.find(entry => entry.id === id);
   assert.ok(implementation, `${id} is implemented`);
   const { findings, evidence } = evaluate(implementation, facts.pages instanceof Map ? facts as SiteFacts : site(facts as SiteSpec));
-  return { finding: findings[0]!, findings, evidence, excerpts: (finding: Finding = findings[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? '') };
+  return { finding: findings[0]!, findings, evidence, excerpts: (finding: Finding = findings[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? ''),
+    labels: (finding: Finding = findings[0]!) => finding.evidence.map(ref => evidence.get(ref)?.label ?? '') };
 }
 
 function assertFail(finding: Finding, severity: Severity, reason?: string, needsJudgment = false) {
@@ -60,9 +61,9 @@ describe('crawl-sitemap-validity', () => {
   });
   test('fails high over the entry limit and counts every entry', () => {
     const xml = urlset(Array.from({ length: 50_001 }, (_, index) => entry(`${origin}/p/${index}`)));
-    const { finding, excerpts } = run(id, { pages: [home()], sitemaps: [{ url: map, xml }] });
+    const { finding, labels } = run(id, { pages: [home()], sitemaps: [{ url: map, xml }] });
     assertFail(finding, 'high', 'over-limit');
-    assert.match(excerpts()[0]!, /^50001 entries, /u);
+    assert.match(labels()[0]!, /^sitemap entries \(50,001\) and uncompressed bytes /u);
     assert.match(String(finding.params?.detail), /^50001 entries, /u);
   });
   test('fails medium on relative locs, unreachable children and nested indexes', () => {
@@ -78,7 +79,7 @@ describe('crawl-sitemap-validity', () => {
     const { finding, findings, evidence } = run(id, { pages: [home()], sitemaps: [{ url: map, xml }] });
     assert.equal(findings.length, 1);
     assertFail(finding, 'medium', 'invalid-urls');
-    assert.equal(finding.params?.detail, '2 entries');
+    assert.equal(finding.params?.count, 2);
     assert.deepEqual(finding.evidence.map(ref => [evidence.get(ref)?.line, evidence.get(ref)?.excerpt]), [[4, undefined], [5, '/relative']]);
   });
   test('fails medium on a bad line in a text sitemap', () => {
@@ -163,9 +164,10 @@ describe('crawl-sitemap-lastmod', () => {
   });
   test('fails medium when every lastmod is the generation time', () => {
     const facts = servedAt(site({ pages: [home()], sitemaps: [{ url: map, xml: dated(Array(25).fill('2026-11-04T10:00:00+00:00')) }] }), 'Wed, 04 Nov 2026 10:02:00 GMT');
-    const { finding, excerpts } = run(id, facts);
+    const { finding, excerpts, labels } = run(id, facts);
     assertFail(finding, 'medium', 'generation-time');
-    assert.deepEqual(excerpts(), ['2026-11-04T10:00:00+00:00 (25 of 25)', 'Wed, 04 Nov 2026 10:02:00 GMT']);
+    assert.deepEqual(excerpts(), ['2026-11-04T10:00:00+00:00', 'Wed, 04 Nov 2026 10:02:00 GMT']);
+    assert.equal(labels()[0], 'lastmod value shared by 25 of 25 dated URLs');
   });
   test('hands a uniform older date to the analyst and reports future dates as low', () => {
     assertFail(run(id, { pages: [home()], sitemaps: [{ url: map, xml: dated(Array(25).fill('2025-01-01')) }] }).finding, 'medium', 'uniform', true);
@@ -173,9 +175,9 @@ describe('crawl-sitemap-lastmod', () => {
     assertFail(run(id, future).finding, 'low', 'future-dates');
   });
   test('reports low when no URL has lastmod, and does not apply without listed URLs', () => {
-    const { finding, excerpts } = run(id, { pages: [home()], sitemaps: [{ url: map, xml: locs(['/a', '/b']) }] });
+    const { finding, labels } = run(id, { pages: [home()], sitemaps: [{ url: map, xml: locs(['/a', '/b']) }] });
     assertFail(finding, 'low', 'missing');
-    assert.deepEqual(excerpts(), ['2 URLs, none with lastmod']);
+    assert.deepEqual(labels(), ['URLs listed in the sitemaps, none with lastmod: 2']);
     assertOutcome(run(id, { pages: [home()], sitemaps: [{ url: map, status: 404 }] }).finding, 'not_applicable', 'no-sitemap-urls');
   });
 });

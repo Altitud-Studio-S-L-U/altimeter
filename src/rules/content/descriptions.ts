@@ -130,7 +130,7 @@ export const dataNosnippetInvalid: RuleImplementation = {
     }
     const coverage = mainCoverage(doc, marked);
     if (coverage !== undefined && coverage >= 0.5) {
-      results.push({ outcome: 'fail', severity: 'info', reason: 'covers-main-content', params: { share: Math.round(coverage * 100) },
+      results.push({ outcome: 'fail', severity: 'info', reason: 'covers-main-content', params: { share: coverage },
         evidence: marked.slice(0, 3).map(visit => cite(context, 'html', evidenceLabel('data-nosnippet element'), { excerpt: sourceOf(doc, visit), line: lineOf(visit.element) })) });
     }
     return results.length > 0 ? results : { outcome: 'pass' };

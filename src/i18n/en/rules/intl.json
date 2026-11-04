@@ -81,7 +81,7 @@
     "messages": {
       "fail": "The hreflang set of {url} does not include the page itself.",
       "fail:near-miss": "The hreflang set does not list {url} exactly; the closest entry ({value}) points to {closest}. A self entry must match the page URL, including scheme and trailing slash.",
-      "fail:absent": "None of the {count} hreflang entries points to the page itself, {url}. Each version must list itself as well as the other versions."
+      "fail:absent": "{count, plural, one {The only hreflang entry does not point to the page itself, {url}.} other {None of the # hreflang entries points to the page itself, {url}.}} Each version must list itself as well as the other versions."
     }
   },
   "intl-hreflang-one-url-many-languages": {
@@ -122,7 +122,7 @@
   },
   "intl-hreflang-no-language-catchall": {
     "messages": {
-      "fail": "Every {language} value carries a region ({values}) and the cluster has no language-only {language} value or x-default, so {language} speakers in other countries have no matching version."
+      "fail": "Every hreflang value for the language {code} carries a region ({values}), and the cluster has no language-only {code} value or x-default, so speakers of that language in other countries have no matching version."
     }
   },
   "intl-hreflang-source-conflict": {
@@ -226,13 +226,13 @@
   },
   "intl-mixed-language-page": {
     "messages": {
-      "fail": "About {share}% of the main content reads as {secondary} on a page that is mostly {primary}. Confirm whether this is intentional, such as a quotation or bilingual legal text."
+      "fail": "About {share, number, percent} of the main content reads as {secondary} on a page that is mostly {primary}. Confirm whether this is intentional, such as a quotation or bilingual legal text."
     }
   },
   "intl-untranslated-variant": {
     "messages": {
       "fail": "{url} and {other} are declared as different languages ({languages}) but look untranslated.",
-      "fail:near-identical": "{url} and {other} are declared as different languages ({languages}) but their main content is {similarity}% identical.",
+      "fail:near-identical": "{url} and {other} are declared as different languages ({languages}) but their main content is {similarity, number, percent} identical.",
       "fail:same-language": "{url} and {other} are declared as different languages ({languages}) but both read as {detected}."
     }
   },

@@ -223,7 +223,7 @@ export const titleBranding: RuleImplementation = {
     const rest = withoutBrand(title.text, [brand]);
     if (rest === '' || isHome(context.site, page)) return { outcome: 'pass', evidence };
     const share = arialWidth(brand, desktopTitleFontSize) / Math.max(arialWidth(title.text, desktopTitleFontSize), 1);
-    if (share > 0.5) return { outcome: 'fail', severity: 'low', reason: 'brand-dominant', evidence, params: { brand, share: Math.round(share * 100) } };
+    if (share > 0.5) return { outcome: 'fail', severity: 'low', reason: 'brand-dominant', evidence, params: { brand, share } };
     const segments = titleSegments(title.text).map(fold);
     const atEdge = segments[0] === fold(brand) || segments.at(-1) === fold(brand) || fold(title.text).startsWith(fold(brand)) || fold(title.text).endsWith(fold(brand));
     // On a page about the brand, the brand is the subject of the title rather than a label added to it.

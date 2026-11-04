@@ -5,6 +5,7 @@ import { searchConsoleToken } from '../audit.ts';
 import { HttpClient } from '../fetch/http.ts';
 import { publicOnly, type NetworkPolicy } from '../fetch/ip-guard.ts';
 import { languages, type Language } from '../i18n/messages.ts';
+import { localizeValue } from '../i18n/values.ts';
 import { fetchGscData, type GscData } from '../owner/gsc.ts';
 import { probeStrings } from '../probe/i18n.ts';
 import { defaultRuns, maxRuns, planProbe, type PlanInput } from '../probe/plan.ts';
@@ -157,7 +158,7 @@ export async function aiProbeCommand(args: string[], context: AiProbeContext = {
         language,
         env: context.env ?? process.env,
         refresh: values.refresh === true,
-        log: message => warn(`· ${cleanLine(message)}\n`),
+        log: message => warn(`· ${cleanLine(localizeValue(language, 'progress', message))}\n`),
         signal: context.probe?.signal ? AbortSignal.any([interrupted.signal, context.probe.signal]) : interrupted.signal,
       });
     } finally {

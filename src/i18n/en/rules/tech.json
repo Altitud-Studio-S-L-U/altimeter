@@ -52,7 +52,7 @@
       "fail:missing": "The HTTPS response has no Strict-Transport-Security header. This is security context, not a Search factor.",
       "fail:invalid": "The Strict-Transport-Security header has no valid max-age, so browsers ignore it.",
       "fail:disabled": "The Strict-Transport-Security header sets max-age=0, which removes the policy.",
-      "fail:short-max-age": "Strict-Transport-Security max-age is {maxAge} seconds, below one year (includeSubDomains: {includeSubDomains}, preload: {preload})."
+      "fail:short-max-age": "Strict-Transport-Security max-age is {maxAge, plural, one {# second} other {# seconds}}, below one year (includeSubDomains: {includeSubDomains}, preload: {preload})."
     }
   },
   "tech-hsts-preload-eligibility": {
@@ -79,7 +79,7 @@
     "messages": {
       "fail": "The consent banner withholds the page content from a visitor who has not consented.",
       "fail:consent-redirect": "The page redirects to a consent page ({target}) before showing its content, so crawlers that do not consent never reach it.",
-      "fail:content-withheld": "Before consent, the render holds {renderedWords} words against {rawWords} in the served HTML, while a consent container is shown."
+      "fail:content-withheld": "Before consent, the render holds {renderedWords, plural, one {# word} other {# words}} against {rawWords} in the served HTML, while a consent container is shown."
     }
   },
   "tech-consent-mode-ordering": {
@@ -112,7 +112,7 @@
   },
   "tech-legible-font-size": {
     "messages": {
-      "fail": "Only {share}% of the visible text in the phone render is 12px or larger."
+      "fail": "Only {share, number, percent} of the visible text in the phone render is 12px or larger."
     }
   },
   "tech-tap-target-size": {
@@ -171,7 +171,7 @@
     "messages": {
       "fail": "Iframes on this page need review.",
       "fail:missing-title": "{count} visible iframe(s) have no title, aria-label or aria-labelledby.",
-      "fail:content-in-iframe": "The page has {words} words of its own text and {count} iframe(s) that are not common embeds; the main content may be in a frame. To be confirmed by the analyst."
+      "fail:content-in-iframe": "The page has {words, plural, one {# word} other {# words}} of its own text and {count, plural, one {# iframe that is not a common embed} other {# iframes that are not common embeds}}; the main content may be in a frame. To be confirmed by the analyst."
     }
   },
   "tech-noscript-content": {
@@ -258,10 +258,10 @@
   },
   "tech-intrusive-interstitial": {
     "messages": {
-      "fail": "An overlay covers {coverage}% of the phone screen as the page loads.",
-      "fail:promotion": "A promotional overlay covers {coverage}% of the phone screen as the page loads. Google asks that banners use a small fraction of the screen.",
-      "fail:access-dialog": "A login or subscription overlay covers {coverage}% of the phone screen at load. That is fine for content that is not public; confirm it does not hide content meant to be indexed.",
-      "fail:overlay": "An overlay covers {coverage}% of the phone screen at load. Confirm whether it is a notice the law requires, which Google exempts, or an interstitial that hides the content."
+      "fail": "An overlay covers {coverage, number, percent} of the phone screen as the page loads.",
+      "fail:promotion": "A promotional overlay covers {coverage, number, percent} of the phone screen as the page loads. Google asks that banners use a small fraction of the screen.",
+      "fail:access-dialog": "A login or subscription overlay covers {coverage, number, percent} of the phone screen at load. That is fine for content that is not public; confirm it does not hide content meant to be indexed.",
+      "fail:overlay": "An overlay covers {coverage, number, percent} of the phone screen at load. Confirm whether it is a notice the law requires, which Google exempts, or an interstitial that hides the content."
     }
   }
 }

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { EvidenceStore } from '../core/evidence.ts';
 import type { PageFacts, SiteFacts } from '../core/facts.ts';
-import { severities, type InputId, type Outcome, type RuleMeta, type Severity } from '../core/types.ts';
+import { severities, type InputId, type NotEvaluatedReason, type Outcome, type RuleMeta, type Severity } from '../core/types.ts';
 
 export type RuleResult =
   | { readonly outcome: 'pass'; readonly evidence?: readonly string[] }
@@ -20,7 +20,10 @@ export type RuleResult =
     readonly needsJudgment?: boolean;
   }
   | { readonly outcome: 'not_applicable'; readonly reason: string }
-  | { readonly outcome: 'not_evaluated'; readonly reason: string };
+  | { readonly outcome: 'not_evaluated'; readonly reason: NotEvaluatedReason };
+
+/** A result the engine records itself: its not-evaluated reasons name missing inputs, an unauditable page or an error. */
+type EngineResult = RuleResult | { readonly outcome: 'not_evaluated'; readonly reason: `missing-input:${string}` | `page-not-auditable:${string}` | `rule-error:${string}` };
 
 export interface RuleContext {
   readonly rule: RuleMeta;
@@ -120,7 +123,7 @@ export function evidenceSignature(ruleId: string, scope: FindingScope, evidence:
   return createHash('sha256').update(JSON.stringify([ruleId, scope, reason ?? '', facts])).digest('hex').slice(0, 16);
 }
 
-function toFinding(rule: RuleMeta, scope: FindingScope, result: RuleResult, evidence: EvidenceStore): Finding {
+function toFinding(rule: RuleMeta, scope: FindingScope, result: EngineResult, evidence: EvidenceStore): Finding {
   const ids = result.outcome === 'fail' || result.outcome === 'pass' ? [...(result.evidence ?? [])] : [];
   for (const id of ids) if (!evidence.has(id)) throw new Error(`${rule.id} cited unknown evidence ${id}`);
   const reason = result.outcome === 'pass' ? undefined : result.reason;
@@ -169,7 +172,7 @@ export function runRules(input: EngineInput): Finding[] {
       findings.push(toFinding(rule, scope, { outcome: 'not_applicable', reason: `page-type:${page.pageType}` }, input.evidence));
       return;
     }
-    let results: readonly RuleResult[];
+    let results: readonly EngineResult[];
     try {
       const value = implementation.evaluate({ rule, site: input.site, evidence: input.evidence, ...(page ? { page } : {}) });
       results = Array.isArray(value) ? value : [value as RuleResult];

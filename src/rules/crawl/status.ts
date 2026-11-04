@@ -13,7 +13,7 @@ import {
 } from './shared.ts';
 
 function citeHop(evidence: EvidenceStore, hop: Hop, index: number): string {
-  return evidence.add({ kind: 'redirect', url: hop.url, label: evidenceLabel('redirect hop {number}', { number: index + 1 }), excerpt: `${hop.status} -> ${hop.location ?? '(no location)'}` });
+  return evidence.add({ kind: 'redirect', url: hop.url, label: evidenceLabel('redirect hop {number}', { number: index + 1 }), excerpt: `${hop.status} -> ${hop.location ?? ''}` });
 }
 
 function redirectHops(hops: readonly Hop[]): Hop[] {
@@ -155,7 +155,10 @@ const soft404: RuleImplementation = {
     if (status === undefined) return notEvaluated('probe-failed');
     if (status >= 500) return notEvaluated('probe-server-error');
     const results: RuleResult[] = [];
-    const probeId = evidence.add({ kind: 'probe', url: probe.url, label: evidenceLabel('response to a random unknown path'), excerpt: `HTTP ${status}${probe.fetch.hops.length > 1 ? ` after redirect to ${probe.fetch.finalUrl}` : ''}` });
+    const probeId = evidence.add({
+      kind: 'probe', url: probe.url, excerpt: `HTTP ${status}`,
+      label: probe.fetch.hops.length > 1 ? evidenceLabel('response to a random unknown path, after redirects to {location}', { location: probe.fetch.finalUrl }) : evidenceLabel('response to a random unknown path'),
+    });
     if (status === 200 && probe.fetch.hops.length === 1) {
       const title = probe.parsed?.titles[0]?.text;
       const ids = [probeId, ...(title ? [evidence.add({ kind: 'probe', url: probe.url, label: evidenceLabel('title of the unknown path response'), excerpt: title })] : [])];
@@ -227,13 +230,15 @@ const serverErrorsRate: RuleImplementation = {
     if (fetched.length === 0) return notApplicable('no-pages');
     const failing = fetched.filter(page => page.fetch.error?.code === 'timeout' || (page.fetch.status ?? 0) >= 500 || page.fetch.status === 429);
     const share = failing.length / fetched.length;
-    const ids = failing.slice(0, 5).map(page => evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: evidenceLabel('crawled URL answering a server error'), excerpt: page.fetch.status === undefined ? page.fetch.error?.code ?? 'error' : `HTTP ${page.fetch.status}` }));
-    if (share >= 0.01) return failure({ severity: 'high', evidence: ids, reason: 'error-rate', params: { count: failing.length, total: fetched.length, share: `${(share * 100).toFixed(1)}%` } });
+    const ids = failing.slice(0, 5).map(page => (page.fetch.status === undefined
+      ? evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: evidenceLabel('crawled URL that got no response ({fetchError})', { fetchError: page.fetch.error?.code ?? 'connection' }) })
+      : evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: evidenceLabel('crawled URL answering a server error'), excerpt: `HTTP ${page.fetch.status}` })));
+    if (share >= 0.01) return failure({ severity: 'high', evidence: ids, reason: 'error-rate', params: { count: failing.length, total: fetched.length, share } });
     // A 503 without Retry-After is tech-maintenance-503's; rate limiting is reported here.
     const noRetry = fetched.filter(page => page.fetch.status === 429 && headerValue(page.fetch.headers, 'retry-after') === undefined);
     if (noRetry.length > 0) {
-      return failure({ severity: 'low', evidence: noRetry.slice(0, 5).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('Retry-After header'), excerpt: '(absent)' })),
-        reason: 'no-retry-after', params: { count: noRetry.length, total: fetched.length, share: `${(share * 100).toFixed(1)}%` } });
+      return failure({ severity: 'low', evidence: noRetry.slice(0, 5).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('response without a Retry-After header'), excerpt: `HTTP ${page.fetch.status}` })),
+        reason: 'no-retry-after', params: { count: noRetry.length, total: fetched.length, share } });
     }
     return passed();
   },
@@ -264,7 +269,9 @@ const hostVariantConsolidation: RuleImplementation = {
         if (canonical === preferred) continue;
         if (!base.raw || !sameContent(parsed.bodyText, base.raw.parsed.bodyText)) continue;
         const ids = [
-          evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('URL variant ({variant}) answering 200 with the same content', { variant: variant.label }), excerpt: `HTTP 200, canonical ${canonical ?? '(none)'}` }),
+          canonical
+            ? evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('canonical of the URL variant ({variant}) that answers 200 with the same content', { variant: variant.label }), excerpt: canonical })
+            : evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('URL variant ({variant}) that answers 200 with the same content and declares no canonical', { variant: variant.label }) }),
           evidence.add({ kind: 'http', url: preferred, label: evidenceLabel('preferred URL'), excerpt: `HTTP ${base.fetch.status}` }),
         ];
         results.push(failure({ severity: 'high', evidence: ids, reason: 'duplicate-200', params: { url: variant.url, preferred, variant: variant.label } }));
@@ -337,7 +344,7 @@ const conditionalRequests: RuleImplementation = {
       return passed([evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('cache validator on the HTML response'), excerpt: headerValue(page.fetch.headers, 'etag') ?? headerValue(page.fetch.headers, 'last-modified')! })]);
     }
     if (!site.crawled || site.pages.size < 1000) return notEvaluated('site-size-unknown');
-    const ids = html.slice(0, 3).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('ETag and Last-Modified headers'), excerpt: '(absent)' }));
+    const ids = html.slice(0, 3).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('HTML response without an ETag or Last-Modified header') }));
     return failure({ severity: 'low', evidence: ids, reason: 'no-validators', params: { url: html[0]!.fetch.finalUrl, value: '' } });
   },
 };
@@ -374,7 +381,12 @@ const htmlSizeLimit: RuleImplementation = {
     const raw = target.raw!;
     const url = target.fetch.finalUrl;
     const bytes = Math.max(target.fetch.body.length, Buffer.byteLength(raw.html, 'utf8'));
-    const sizeId = evidence.add({ kind: 'http', url, label: target.fetch.truncated ? evidenceLabel('uncompressed HTML size in bytes (at least; the fetch was cut)') : evidenceLabel('uncompressed HTML size in bytes'), excerpt: String(bytes) });
+    const sizeId = evidence.add({
+      kind: 'http', url,
+      label: target.fetch.truncated
+        ? evidenceLabel('uncompressed HTML size: at least {bytes, plural, one {# byte} other {# bytes}}, as the fetch was cut', { bytes })
+        : evidenceLabel('uncompressed HTML size: {bytes, plural, one {# byte} other {# bytes}}', { bytes }),
+    });
     if (bytes <= googlebotHtmlLimit) return passed([sizeId]);
     const cut = charOffsetAtByte(raw.html, googlebotHtmlLimit);
     const parsed = raw.parsed;

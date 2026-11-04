@@ -98,7 +98,7 @@ describe('perf-lab-cls', () => {
   test('grades the lab CLS', () => {
     const checked = check(labCls, labPage({ 'cumulative-layout-shift': { numericValue: 0.31 } }));
     assertFail(checked, 'medium');
-    assert.equal(checked.finding.params?.value, '0.310');
+    assert.equal(checked.finding.params?.value, 0.31);
     assertFail(check(labCls, labPage({ 'cumulative-layout-shift': { numericValue: 0.15 } })), 'low');
   });
 

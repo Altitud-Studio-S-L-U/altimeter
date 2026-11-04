@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { clsCulprits, consentLabBias, embedReservedSpace, nonCompositedAnimations, unsizedImages } from '../../src/rules/perf/layout.ts';
 import { page } from '../support/facts.ts';
-import { assertExcerpt, assertFail, assertOutcome, breakdown, check, html, lab, list, node, table } from './perf-fixtures.ts';
+import { assertExcerpt, assertFail, assertLabel, assertOutcome, breakdown, check, html, lab, list, node, table } from './perf-fixtures.ts';
 
 const url = 'https://example.com/';
 
@@ -44,7 +44,7 @@ describe('perf-cls-culprits', () => {
   test('fails medium with the root cause Lighthouse attributed', () => {
     const checked = check(clsCulprits, page(url, { html: html(''), lighthouse: audit(cluster(0.18, [{ cause: 'Web font', value: 'https://example.com/brand.woff2' }])) }));
     assertFail(checked, 'medium');
-    assertExcerpt(checked, /^cluster score=0\.180$/u);
+    assertLabel(checked, /^worst layout shift cluster, with a score of 0\.180 /u);
     assertExcerpt(checked, /^Web font: https:\/\/example\.com\/brand\.woff2$/u);
   });
 

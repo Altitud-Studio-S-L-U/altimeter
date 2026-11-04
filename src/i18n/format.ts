@@ -1,14 +1,283 @@
-const placeholder = /\{([a-zA-Z][a-zA-Z0-9]*)\}/gu;
+import type { Language } from './messages.ts';
 
-/** The placeholder names of a template, sorted, with repeats. */
-export function placeholders(template: string): string[] {
-  return [...template.matchAll(placeholder)].map(match => match[1]!).sort();
+export type TemplateParams = Readonly<Record<string, string | number>>;
+
+/**
+ * How `{name, number, <style>}` writes a number: `percent` takes a fraction (0.2 is 20 %), and an ICU skeleton
+ * after `::` combines the stem `percent` with a precision such as `.0` (exactly one decimal) or `.##` (up to two).
+ */
+interface NumberStyle {
+  readonly percent: boolean;
+  readonly minimumFractionDigits?: number;
+  readonly maximumFractionDigits?: number;
+  /** The style as the template writes it, normalized, so a translation can be compared with English. */
+  readonly key: string;
+}
+
+type Argument =
+  | { readonly kind: 'value'; readonly name: string; readonly style?: NumberStyle; readonly source: string }
+  | { readonly kind: 'plural'; readonly name: string; readonly branches: ReadonlyMap<string, readonly Piece[]>; readonly source: string };
+
+type Piece = string | Argument | { readonly kind: 'count' };
+
+interface Parsed {
+  readonly pieces: readonly Piece[];
+  readonly problems: readonly string[];
+}
+
+const simpleArgument = /\{([a-zA-Z][a-zA-Z0-9]*)\}/yu;
+const typedArgument = /\{([a-zA-Z][a-zA-Z0-9]*)\s*,\s*([a-zA-Z]+)\s*([,}])/yu;
+const styleText = /\s*([^{}]*?)\s*\}/yu;
+const pluralSelector = /\s*(=\d+|zero|one|two|few|many|other)\s*\{/yu;
+const pluralEnd = /\s*\}/yu;
+const pluralCategories = new Set(['zero', 'one', 'two', 'few', 'many', 'other']);
+
+function sticky(pattern: RegExp, text: string, index: number): RegExpExecArray | null {
+  pattern.lastIndex = index;
+  return pattern.exec(text);
+}
+
+function numberStyle(text: string): NumberStyle | undefined {
+  if (text === 'percent') return { percent: true, key: 'percent' };
+  if (!text.startsWith('::')) return undefined;
+  let percent = false;
+  let precision: { readonly min: number; readonly max: number; readonly stem: string } | undefined;
+  for (const stem of text.slice(2).trim().split(/\s+/u)) {
+    const digits = /^\.(0*)(#*)$/u.exec(stem);
+    if (stem === 'percent' && !percent) percent = true;
+    else if (digits && stem.length > 1 && !precision) precision = { min: digits[1]!.length, max: digits[1]!.length + digits[2]!.length, stem };
+    else return undefined;
+  }
+  return {
+    percent,
+    ...(precision ? { minimumFractionDigits: precision.min, maximumFractionDigits: precision.max } : {}),
+    key: [percent ? 'percent' : '', precision?.stem ?? ''].filter(Boolean).join(' '),
+  };
 }
 
 /**
- * Fills a template. Values are inserted as plain text; escaping for HTML or Markdown is the renderer's job.
- * A missing value leaves the placeholder visible rather than inventing text.
+ * Reads a template: `{name}` for a value, `{name, number, <style>}` for a formatted number and
+ * `{name, plural, one {...} other {...}}` for a count, whose branches hold text, values and `#`, the count itself.
+ * `other` is required, `=0` style branches match a count exactly, and any other brace is plain text. A malformed
+ * argument stays as text and is listed as a problem.
  */
-export function format(template: string, params: Readonly<Record<string, string | number>> = {}): string {
-  return template.replace(placeholder, (match, name: string) => (params[name] === undefined ? match : String(params[name])));
+class Parser {
+  readonly text: string;
+  index = 0;
+  readonly problems: string[] = [];
+
+  constructor(text: string) {
+    this.text = text;
+  }
+
+  pieces(inBranch: boolean): Piece[] {
+    const pieces: Piece[] = [];
+    let text = '';
+    const flush = () => {
+      if (text !== '') pieces.push(text);
+      text = '';
+    };
+    while (this.index < this.text.length) {
+      const character = this.text[this.index]!;
+      if (inBranch && character === '}') break;
+      if (inBranch && character === '#') {
+        flush();
+        pieces.push({ kind: 'count' });
+        this.index += 1;
+        continue;
+      }
+      const argument = character === '{' ? this.argument() : undefined;
+      if (argument) {
+        flush();
+        pieces.push(argument);
+        continue;
+      }
+      text += character;
+      this.index += 1;
+    }
+    flush();
+    return pieces;
+  }
+
+  argument(): Argument | undefined {
+    const start = this.index;
+    const simple = sticky(simpleArgument, this.text, start);
+    if (simple) {
+      this.index = start + simple[0].length;
+      return { kind: 'value', name: simple[1]!, source: simple[0] };
+    }
+    const typed = sticky(typedArgument, this.text, start);
+    if (!typed) return undefined;
+    const [head, name, type, after] = typed as unknown as readonly [string, string, string, string];
+    if (type === 'number') {
+      if (after === '}') {
+        this.index = start + head.length;
+        return { kind: 'value', name, source: head };
+      }
+      const styled = sticky(styleText, this.text, start + head.length);
+      const style = styled ? numberStyle(styled[1]!) : undefined;
+      if (!styled || !style) return this.malformed(start, `{${name}, number, ...} has an unknown style`);
+      this.index = start + head.length + styled[0].length;
+      return { kind: 'value', name, style, source: this.text.slice(start, this.index) };
+    }
+    if (type !== 'plural') return this.malformed(start, `{${name}, ${type}} is not a known argument type`);
+    if (after !== ',') return this.malformed(start, `{${name}, plural} has no branches`);
+    this.index = start + head.length;
+    const branches = new Map<string, readonly Piece[]>();
+    for (;;) {
+      const end = sticky(pluralEnd, this.text, this.index);
+      if (end) {
+        this.index += end[0].length;
+        break;
+      }
+      const selector = sticky(pluralSelector, this.text, this.index);
+      if (!selector) return this.malformed(start, `{${name}, plural, ...} has a malformed branch`);
+      this.index += selector[0].length;
+      const branch = this.pieces(true);
+      if (this.text[this.index] !== '}') return this.malformed(start, `{${name}, plural, ...} has an unclosed branch`);
+      this.index += 1;
+      if (branches.has(selector[1]!)) return this.malformed(start, `{${name}, plural, ...} repeats its ${selector[1]} branch`);
+      branches.set(selector[1]!, branch);
+    }
+    if (!branches.has('other')) return this.malformed(start, `{${name}, plural, ...} has no other branch`);
+    return { kind: 'plural', name, branches, source: this.text.slice(start, this.index) };
+  }
+
+  malformed(start: number, problem: string): undefined {
+    this.problems.push(problem);
+    this.index = start;
+    return undefined;
+  }
+}
+
+const parsedTemplates = new Map<string, Parsed>();
+
+function parse(template: string): Parsed {
+  let parsed = parsedTemplates.get(template);
+  if (!parsed) {
+    const parser = new Parser(template);
+    parsed = { pieces: parser.pieces(false), problems: parser.problems };
+    if (parsedTemplates.size >= 5000) parsedTemplates.clear();
+    parsedTemplates.set(template, parsed);
+  }
+  return parsed;
+}
+
+function* argumentsOf(pieces: readonly Piece[]): Generator<Argument> {
+  for (const piece of pieces) {
+    if (typeof piece === 'string' || piece.kind === 'count') continue;
+    yield piece;
+    if (piece.kind === 'plural') for (const branch of piece.branches.values()) yield* argumentsOf(branch);
+  }
+}
+
+/** The names of the values a template fills in, sorted, each once. */
+export function placeholders(template: string): string[] {
+  return [...new Set([...argumentsOf(parse(template).pieces)].map(piece => piece.name))].sort();
+}
+
+/**
+ * What a template does with its values: each name, with its style when it is a formatted number. A translation gives
+ * the same list as the English template, so every value reaches the reader written the same way; whether a count
+ * also picks a plural form is up to each language.
+ */
+export function argumentSignature(template: string): string[] {
+  return [...new Set([...argumentsOf(parse(template).pieces)].map(piece => (piece.kind === 'value' && piece.style ? `${piece.name}:${piece.style.key}` : piece.name)))].sort();
+}
+
+/** Syntax problems of a template, and plural branches for forms that `language` does not have. */
+export function templateProblems(template: string, language?: Language): string[] {
+  const parsed = parse(template);
+  const problems = [...parsed.problems];
+  if (language === undefined) return problems;
+  const forms = new Set<string>(pluralRules(language).resolvedOptions().pluralCategories);
+  for (const piece of argumentsOf(parsed.pieces)) {
+    if (piece.kind !== 'plural') continue;
+    for (const selector of piece.branches.keys()) {
+      if (pluralCategories.has(selector) && !forms.has(selector)) problems.push(`{${piece.name}, plural, ...} has a ${selector} branch, which ${language} does not use`);
+    }
+  }
+  return problems;
+}
+
+const numberFormats = new Map<string, Intl.NumberFormat>();
+const pluralRulesByLanguage = new Map<Language, Intl.PluralRules>();
+
+function pluralRules(language: Language): Intl.PluralRules {
+  let rules = pluralRulesByLanguage.get(language);
+  if (!rules) {
+    rules = new Intl.PluralRules(language);
+    pluralRulesByLanguage.set(language, rules);
+  }
+  return rules;
+}
+
+function numberWith(value: number, language: Language, style: NumberStyle | undefined): string {
+  const key = `${language} ${style?.key ?? ''}`;
+  let formatter = numberFormats.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(language, {
+      useGrouping: 'min2',
+      ...(style?.percent ? { style: 'percent' } : {}),
+      ...(style?.minimumFractionDigits === undefined ? {} : { minimumFractionDigits: style.minimumFractionDigits }),
+      ...(style?.maximumFractionDigits === undefined ? {} : { maximumFractionDigits: style.maximumFractionDigits }),
+    });
+    numberFormats.set(key, formatter);
+  }
+  return formatter.format(value);
+}
+
+/**
+ * A number as `language` writes it, in a style of `{name, number, <style>}` such as `percent` or `::.0`. Four-digit
+ * numbers take no group separator in any language, and Spanish and Catalan write a decimal comma and a non-breaking
+ * space before the percent sign, as Intl.NumberFormat does.
+ */
+export function formatNumber(value: number, language: Language = 'en', style?: string): string {
+  const parsed = style === undefined ? undefined : numberStyle(style);
+  if (style !== undefined && !parsed) throw new Error(`Unknown number style ${style}`);
+  return numberWith(value, language, parsed);
+}
+
+/** A count given as a number or as the digits code wrote into a value; NaN for anything else. */
+function countOf(value: string | number): number {
+  if (typeof value === 'number') return value;
+  return /^-?\d+(?:\.\d+)?$/u.test(value) ? Number(value) : Number.NaN;
+}
+
+interface Count {
+  readonly value: string | number;
+  readonly number: number;
+}
+
+function render(pieces: readonly Piece[], params: TemplateParams, language: Language, count: Count | undefined): string {
+  let text = '';
+  for (const piece of pieces) {
+    if (typeof piece === 'string') {
+      text += piece;
+    } else if (piece.kind === 'count') {
+      text += count === undefined ? '#' : Number.isNaN(count.number) ? String(count.value) : numberWith(count.number, language, undefined);
+    } else {
+      const value = params[piece.name];
+      if (value === undefined) {
+        text += piece.source;
+      } else if (piece.kind === 'value') {
+        text += typeof value === 'number' ? numberWith(value, language, piece.style) : value;
+      } else {
+        const number = countOf(value);
+        const form = Number.isNaN(number) ? 'other' : pluralRules(language).select(number);
+        const branch = piece.branches.get(`=${number}`) ?? piece.branches.get(form) ?? piece.branches.get('other')!;
+        text += render(branch, params, language, { value, number });
+      }
+    }
+  }
+  return text;
+}
+
+/**
+ * Fills a template in `language`: numbers are written as that language writes them, and a plural argument takes the
+ * branch for its count. Values are inserted as plain text; escaping for HTML or Markdown is the renderer's job.
+ * A missing value leaves its argument visible rather than inventing text.
+ */
+export function format(template: string, params: TemplateParams = {}, language: Language = 'en'): string {
+  return render(parse(template).pieces, params, language, undefined);
 }

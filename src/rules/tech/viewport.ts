@@ -43,7 +43,7 @@ export const viewportMeta: RuleImplementation = {
       ? [cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: evidenceLabel('Lighthouse viewport insight'), excerpt: `viewport-insight score=${insight.score}` })]
       : [];
     if (!viewport) {
-      const evidence = [cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('no viewport meta element in the raw HTML or rendered DOM'), excerpt: '<meta name="viewport"> (absent)' }), ...lighthouse];
+      const evidence = [cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('no viewport meta element in the raw HTML or rendered DOM') }), ...lighthouse];
       return fail('high', evidence, 'missing');
     }
     const evidence = [citeViewport(cite, page, viewport), ...lighthouse];
@@ -112,8 +112,8 @@ export const legibleFontSize: RuleImplementation = {
     const cite = citer(context);
     const examples = small.sort((a, b) => b.text.length - a.text.length).slice(0, 3)
       .map(block => cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('text rendered at {size}px in the phone-sized render', { size: block.fontSize }), excerpt: shorten(block.text, 160), path: block.selector }));
-    const summary = cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('share of visible text at 12px or larger'), excerpt: `${legibleShare}% of ${total} characters` });
-    if (legibleShare < 60) return fail('low', [summary, ...examples], undefined, { share: legibleShare });
+    const summary = cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('share of visible text at 12px or larger: {share, number, percent} of {total} characters', { share: legibleShare / 100, total }) });
+    if (legibleShare < 60) return fail('low', [summary, ...examples], undefined, { share: legibleShare / 100 });
     return pass([summary]);
   },
 };
@@ -129,7 +129,7 @@ export const tapTargetSize: RuleImplementation = {
     const items = detailItems(audit);
     const evidence = items.slice(0, 10).map(item => {
       const node = (item.node ?? {}) as Record<string, unknown>;
-      return cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: evidenceLabel('touch target smaller than 24x24 CSS px reported by Lighthouse target-size'), excerpt: String(node.snippet ?? node.nodeLabel ?? 'target'), path: typeof node.selector === 'string' ? node.selector : undefined });
+      return cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: evidenceLabel('touch target smaller than 24x24 CSS px reported by Lighthouse target-size'), ...(node.snippet ?? node.nodeLabel ? { excerpt: String(node.snippet ?? node.nodeLabel) } : {}), path: typeof node.selector === 'string' ? node.selector : undefined });
     });
     if (evidence.length === 0) evidence.push(cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: evidenceLabel('Lighthouse target-size audit'), excerpt: `target-size score=${audit.score}` }));
     return fail('low', evidence, undefined, { count: items.length || 1 });

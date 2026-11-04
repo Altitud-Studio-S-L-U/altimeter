@@ -49,6 +49,8 @@ node --test test/i18n-parity.test.ts test/i18n-values.test.ts test/evidence-labe
 
 The parity tests compare a language's values and labels with English once its file has its first entry.
 
+Templates write numbers the way the report's language does, so code passes them as numbers. A count that needs a plural form takes `{count, plural, one {# page} other {# pages}}`, where `#` is the count, `other` is required and `=0` matches an exact count. A share is a fraction written with `{share, number, percent}`, or `{share, number, ::percent .0}` with one decimal, and `{value, number, ::.00}` writes exactly two decimals. A translation keeps the values and number styles of the English template; it chooses its own plural forms, or puts the count after a label instead (`Páginas: {count}`).
+
 ## Reporting a bug or a wrong finding
 
 Include the Altimeter version, operating system, Node.js version, expected behavior, actual behavior and a minimal reproduction with synthetic pages. For a false positive or a missed issue, use the issue form and include the rule id and the relevant excerpt of `report.json`. Do not post private reports or credentials.

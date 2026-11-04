@@ -75,10 +75,16 @@ export const rootLocaleRedirector: RuleImplementation = {
       return !/accept-language|\*/iu.test(headerValue(hop.headers, 'vary') ?? '') && sharedCacheable(hop.status, hop.headers);
     });
     if (unvaried.length > 0) {
-      results.push(fail('low', unvaried.slice(0, maxEvidence).map(probe => evidence.add({
-        kind: 'header', url: probe.url, label: evidenceLabel('cacheable root redirect without Vary: Accept-Language (Accept-Language: {value})', { value: acceptLanguage(probe) }),
-        excerpt: ['cache-control', 'vary', 'location'].map(name => `${name}: ${headerValue(probe.fetch.hops[0]!.headers, name) ?? '(absent)'}`).join('\n'),
-      })), { count: unvaried.length }, 'missing-vary'));
+      results.push(fail('low', unvaried.slice(0, maxEvidence).map(probe => {
+        const names = ['cache-control', 'vary', 'location'];
+        const value = (name: string) => headerValue(probe.fetch.hops[0]!.headers, name);
+        return evidence.add({
+          kind: 'header', url: probe.url,
+          label: joinLabels(evidenceLabel('cacheable root redirect without Vary: Accept-Language (Accept-Language: {value})', { value: acceptLanguage(probe) }),
+            ...names.filter(name => value(name) === undefined).map(name => evidenceLabel('(no {header} header)', { header: name }))),
+          excerpt: names.filter(name => value(name) !== undefined).map(name => `${name}: ${value(name)}`).join('\n'),
+        });
+      }), { count: unvaried.length }, 'missing-vary'));
     }
     return results.length > 0 ? results : pass(redirecting.slice(0, 3).map(probe => probeEvidence(evidence, probe, evidenceLabel('temporary or uncacheable locale redirect of the root'))));
   },

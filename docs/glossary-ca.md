@@ -12,9 +12,10 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 - Articles: file names are masculine («el robots.txt»); URL is feminine and invariable («la URL», «les URL», «d'URL»); the metrics take the article their spelling asks for («l'LCP», «l'INP», «el CLS», «el TTFB»); Core Web Vitals is feminine plural («les Core Web Vitals»); AI Overviews is feminine plural and AI Mode masculine.
 - Acronyms are invariable in the plural: «els PDF», «les IP», «les API».
 - Weak pronouns before a vowel are elided even before an unstressed i or u («l'indexi», «l'inclou»); the feminine article is not («la indexació», «la URL»).
-- Numbers in prose take the decimal comma («0,1 s», «2,5 s», «1,91:1»). Thousands take a period from five digits («50.000»), and four-digit numbers have none («2048»). The percent sign is separated by a space («un {share} %»). Version numbers keep their dots («Lighthouse 13.6», «HTTP/1.1»), and so do values inside code or JSON examples.
+- Numbers in prose take the decimal comma («0,1 s», «2,5 s», «1,91:1»). Thousands take a period from five digits («50.000»), and four-digit numbers have none («2048»); the numbers that code passes to a template are written this way for you. The percent sign takes a non-breaking space, written `5\u00a0%` in the JSON files; a share that code passes is written with `{share, number, percent}`, which adds it. Version numbers keep their dots («Lighthouse 13.6», «HTTP/1.1»), and so do values inside code or JSON examples.
 - Quotations in prose use «», straight double quotes stay only inside markup and JSON (rel="canonical"), and apostrophes are always straight (').
-- English plural hedges become Catalan ones: «valor(s)», «element(s)», «anotació(ns)», «pàgina(es)», «propietat(s)».
+- A count that can be 1 picks its form with a plural argument, `{count, plural, one {# valor no és vàlid} other {# valors no són vàlids}}`: `#` is the number, `other` is required, and each branch agrees its own verb and adjectives. Many strings instead put the count after a label («Enllaços trencats: {count}», «línies: {lines}»), which reads right for any number; keep that style where a string uses it. Older strings still use hedges («valor(s)», «element(s)», «anotació(ns)», «pàgina(es)»); give them a plural argument when you change them.
+- No «de» right before a host placeholder, which some names would need as «d'»: write «l'amfitrió {host}» or put the host in parentheses («en un altre domini ({host})»).
 - Code fills some placeholders with fixed words (`{band}`, `{scope}`, `{where}`, `{problem}`, language names, «i N més»), which `src/i18n/ca/values.json` translates and `Intl.DisplayNames` names; data such as URLs, numbers and text from the site stays as it is. Templates put those values after a colon or in parentheses («(franja: {band})», «(ubicació: {where})»), so that the sentence stays grammatical whatever the value.
 
 ## Crawling and indexing
@@ -140,3 +141,4 @@ The terms follow TERMCAT (Cercaterm) and Softcatalà usage for computing and the
 | owner, owner data | propietari, dades del propietari | |
 | candidate, analyst | candidat, analista | «l'analista ho hauria de confirmar» |
 | sample, sampled | mostra, de la mostra | |
+| data window | període | «durant el període», «sol·licituds dins del període»; not «finestra» |

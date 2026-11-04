@@ -31,8 +31,6 @@ function normalized(url: string): string {
   }
 }
 
-const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
-
 /** Whether a URL belongs to the property: a domain property covers its subdomains, a URL-prefix property its prefix. */
 function covers(property: GscProperty, url: string): boolean {
   if (property.siteUrl.startsWith('sc-domain:')) {
@@ -56,10 +54,10 @@ function inspectionOf(context: RuleContext): UrlInspection | undefined {
 
 function citeInspection(context: RuleContext, entry: UrlInspection): string {
   const fields = [
-    `verdict=${entry.verdict ?? 'unknown'}`, `coverageState=${entry.coverageState ?? 'unknown'}`,
+    `verdict=${entry.verdict ?? '-'}`, `coverageState=${entry.coverageState ?? '-'}`,
     ...(entry.indexingState ? [`indexingState=${entry.indexingState}`] : []), ...(entry.robotsTxtState ? [`robotsTxtState=${entry.robotsTxtState}`] : []),
     ...(entry.pageFetchState ? [`pageFetchState=${entry.pageFetchState}`] : []), ...(entry.userCanonical ? [`userCanonical=${entry.userCanonical}`] : []),
-    ...(entry.googleCanonical ? [`googleCanonical=${entry.googleCanonical}`] : []), `lastCrawlTime=${entry.lastCrawlTime ?? 'never'}`,
+    ...(entry.googleCanonical ? [`googleCanonical=${entry.googleCanonical}`] : []), `lastCrawlTime=${entry.lastCrawlTime ?? '-'}`,
     ...(entry.crawledAs ? [`crawledAs=${entry.crawledAs}`] : []),
   ];
   return context.evidence.add({ kind: 'owner-data', url: entry.url, label: evidenceLabel('Search Console URL Inspection of the indexed version'), excerpt: fields.join('; ') });
@@ -154,7 +152,7 @@ const sitemapReports: RuleImplementation = {
     const gsc = gscOf(context);
     const results: RuleResult[] = [];
     for (const map of gsc.sitemaps) {
-      const excerpt = `errors=${map.errors}; warnings=${map.warnings}; lastDownloaded=${map.lastDownloaded ?? 'never'}${map.isPending ? '; pending' : ''}`;
+      const excerpt = `errors=${map.errors}; warnings=${map.warnings}; lastDownloaded=${map.lastDownloaded ?? '-'}${map.isPending ? '; isPending=true' : ''}`;
       const cited = () => [context.evidence.add({ kind: 'owner-data', url: map.path, label: evidenceLabel('Search Console report for a submitted sitemap'), excerpt })];
       if (map.errors > 0) results.push({ outcome: 'fail', severity: 'medium', reason: 'errors', evidence: cited(), params: { sitemap: map.path, count: map.errors } });
       else if (map.warnings > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'warnings', evidence: cited(), params: { sitemap: map.path, count: map.warnings } });
@@ -201,12 +199,18 @@ const lowCtr: RuleImplementation = {
     return pages.map(page => ({
       outcome: 'fail' as const, severity: 'low' as const,
       evidence: [
-        context.evidence.add({ kind: 'owner-data', url: page.page, label: evidenceLabel('Search Console performance of the page from {start} to {end}', { start: gsc.period.start, end: gsc.period.end }),
-          excerpt: `impressions=${page.impressions}; clicks=${page.clicks}; ctr=${percent(page.ctr)}; position=${page.position.toFixed(1)}; site CTR at that position=${percent(page.expectedCtr)}` }),
-        context.evidence.add({ kind: 'owner-data', url: page.page, label: evidenceLabel('queries with the most impressions for the page'), path: searchQueriesPath,
-          excerpt: page.topQueries.map((query, index) => `${queryLabel(context, query.query, index)} (${query.impressions} impressions, position ${query.position.toFixed(1)})`).join('\n') }),
+        context.evidence.add({
+          kind: 'owner-data', url: page.page,
+          label: evidenceLabel('Search Console performance of the page from {start} to {end}: impressions: {impressions}; clicks: {clicks}; CTR: {ctr, number, ::percent .0}; average position: {position, number, ::.0}; site CTR at that position: {expected, number, ::percent .0}', {
+            start: gsc.period.start, end: gsc.period.end, impressions: page.impressions, clicks: page.clicks, ctr: page.ctr, position: page.position, expected: page.expectedCtr,
+          }),
+        }),
+        ...page.topQueries.map((query, index) => context.evidence.add({
+          kind: 'owner-data', url: page.page, path: searchQueriesPath,
+          label: evidenceLabel('query with impressions for the page: {query} (impressions: {impressions}; average position: {position, number, ::.0})', { query: queryLabel(context, query.query, index), impressions: query.impressions, position: query.position }),
+        })),
       ],
-      params: { page: page.page, impressions: page.impressions, position: page.position.toFixed(1), ctr: percent(page.ctr), expected: percent(page.expectedCtr) },
+      params: { page: page.page, impressions: page.impressions, position: page.position, ctr: page.ctr, expected: page.expectedCtr },
     }));
   },
 };
@@ -236,8 +240,12 @@ const competingPages: RuleImplementation = {
     if (found.length === 0) return { outcome: 'pass' };
     return found.map((entry, index) => ({
       outcome: 'fail' as const, severity: 'info' as const,
-      evidence: [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('pages sharing the impressions of one query ({impressions} impressions)', { impressions: entry.impressions }), path: searchQueriesPath,
-        excerpt: [queryLabel(context, entry.query, index), ...entry.pages.map(page => `${page.page}: ${percent(page.impressionShare)} of impressions, ${percent(page.clickShare)} of clicks, position ${page.position.toFixed(1)}`)].join('\n') })],
+      evidence: entry.pages.map(page => context.evidence.add({
+        kind: 'owner-data', path: searchQueriesPath,
+        label: evidenceLabel('page sharing the impressions of the query {query} ({impressions} in all): {page} gets {impressionShare, number, ::percent .0} of the impressions and {clickShare, number, ::percent .0} of the clicks, at an average position of {position, number, ::.0}', {
+          query: queryLabel(context, entry.query, index), impressions: entry.impressions, page: page.page, impressionShare: page.impressionShare, clickShare: page.clickShare, position: page.position,
+        }),
+      })),
       params: { query: queryLabel(context, entry.query, index), count: entry.pages.length, pages: summarizeList(entry.pages.map(page => page.page), 3) },
     }));
   },
@@ -250,10 +258,12 @@ const nearFirstPage: RuleImplementation = {
     if (gsc.byPageQuery.length === 0) return noSearchData;
     const found = strikingDistance(gsc).slice(0, 10);
     if (found.length === 0) return { outcome: 'pass' };
-    const id = context.evidence.add({ kind: 'owner-data', label: evidenceLabel('queries at positions 11 to 20 with their pages'), path: searchQueriesPath,
-      excerpt: found.map((entry, index) => `${queryLabel(context, entry.query, index)} -> ${entry.page} (position ${entry.position.toFixed(1)}, ${entry.impressions} impressions)`).join('\n') });
+    const ids = found.map((entry, index) => context.evidence.add({
+      kind: 'owner-data', path: searchQueriesPath,
+      label: evidenceLabel('query at positions 11 to 20: {query} for {page} (average position: {position, number, ::.0}; impressions: {impressions})', { query: queryLabel(context, entry.query, index), page: entry.page, position: entry.position, impressions: entry.impressions }),
+    }));
     const first = found[0]!;
-    return { outcome: 'fail', severity: 'info', evidence: [id], params: { count: found.length, query: queryLabel(context, first.query, 0), page: first.page, position: first.position.toFixed(1) } };
+    return { outcome: 'fail', severity: 'info', evidence: ids, params: { count: found.length, query: queryLabel(context, first.query, 0), page: first.page, position: first.position } };
   },
 };
 
@@ -266,8 +276,12 @@ const trafficDrop: RuleImplementation = {
     if (drops.length === 0) return { outcome: 'pass' };
     return drops.map(trend => ({
       outcome: 'fail' as const, severity: 'low' as const,
-      evidence: [context.evidence.add({ kind: 'owner-data', url: trend.page, label: evidenceLabel('clicks from {previousStart} to {previousEnd} and from {start} to {end}', { previousStart: gsc.previousPeriod.start, previousEnd: gsc.previousPeriod.end, start: gsc.period.start, end: gsc.period.end }),
-        excerpt: `clicks ${trend.clicksBefore} -> ${trend.clicksNow}; z=${trend.z}` })],
+      evidence: [context.evidence.add({
+        kind: 'owner-data', url: trend.page,
+        label: evidenceLabel('clicks from {previousStart} to {previousEnd} and from {start} to {end}: {before} and {now} (z-score {z, number, ::.00})', {
+          previousStart: gsc.previousPeriod.start, previousEnd: gsc.previousPeriod.end, start: gsc.period.start, end: gsc.period.end, before: trend.clicksBefore, now: trend.clicksNow, z: trend.z,
+        }),
+      })],
       params: { page: trend.page, before: trend.clicksBefore, now: trend.clicksNow },
     }));
   },
@@ -280,8 +294,12 @@ const richResults: RuleImplementation = {
     if (!entry) return notInspected;
     if (entry.richResults.length === 0) return { outcome: 'not_applicable', reason: 'no-rich-results-detected' };
     const issues = (severity: string) => entry.richResults.flatMap(result => result.issues.filter(issue => issue.severity === severity).map(issue => `${result.type}: ${issue.message}`));
-    const excerpt = entry.richResults.map(result => `${result.type}: ${result.issues.length === 0 ? 'no issues' : result.issues.map(issue => `${issue.severity} ${issue.message}`).join('; ')}`).join('\n');
-    const evidence = [context.evidence.add({ kind: 'owner-data', url: entry.url, label: evidenceLabel('rich results Google detected in the indexed version'), excerpt })];
+    const evidence = entry.richResults.map(result => (result.issues.length === 0
+      ? context.evidence.add({ kind: 'owner-data', url: entry.url, label: evidenceLabel('rich result {type} that Google detected in the indexed version, without issues', { type: result.type }) })
+      : context.evidence.add({
+        kind: 'owner-data', url: entry.url, excerpt: result.issues.map(issue => `${issue.severity} ${issue.message}`).join('\n'),
+        label: evidenceLabel('rich result {type} that Google detected in the indexed version, with these issues', { type: result.type }),
+      })));
     const errors = issues('ERROR');
     if (errors.length > 0) return { outcome: 'fail', severity: 'high', reason: 'errors', evidence, params: { url: entry.url, count: errors.length, items: summarizeList(errors, 3) } };
     const warnings = issues('WARNING');
@@ -307,13 +325,15 @@ const measurementContext: RuleImplementation = {
     const owner = context.site.owner!;
     const { property } = gscOf(context);
     const bots = owner.bots;
-    const lines = [
-      `Search Console ${property.siteUrl}: AI Overviews and AI Mode are counted in the web search type; the generative AI performance report has no API`,
-      owner.bing ? `Bing Webmaster Tools ${owner.bing.site}: the AI Performance report has no API` : 'Bing Webmaster Tools: not read',
-      bots ? `crawler activity from ${bots.window.start.slice(0, 10)} to ${bots.window.end.slice(0, 10)}, ${bots.referrals ? 'with' : 'without'} referrers` : 'crawler activity: not read',
+    const window = bots ? { start: bots.window.start.slice(0, 10), end: bots.window.end.slice(0, 10) } : undefined;
+    const sources = [
+      evidenceLabel('Search Console {property}: AI Overviews and AI Mode are counted in the web search type, and the generative AI performance report has no API', { property: property.siteUrl }),
+      owner.bing ? evidenceLabel('Bing Webmaster Tools {site}: the AI Performance report has no API', { site: owner.bing.site }) : evidenceLabel('Bing Webmaster Tools: not read'),
+      !window ? evidenceLabel('crawler activity: not read')
+        : bots!.referrals ? evidenceLabel('crawler activity from {start} to {end}, with referrers', window) : evidenceLabel('crawler activity from {start} to {end}, without referrers', window),
     ];
     const reason = owner.bing && bots ? 'all-sources' : owner.bing ? 'without-bots' : bots ? 'without-bing' : 'without-both';
-    const evidence = [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('owner sources this report read about AI search'), excerpt: lines.join('\n') })];
+    const evidence = sources.map(label => context.evidence.add({ kind: 'owner-data', label }));
     return { outcome: 'fail', severity: 'info', reason, evidence, params: { property: property.siteUrl } };
   },
 };

@@ -121,7 +121,7 @@
       "fail": "A request with the {agent} user agent was treated differently from a browser request.",
       "fail:ua-blocked": "A request with the {agent} user agent got HTTP {status} or a challenge while a browser got the page. This shows user-agent based blocking; the real crawler, verified by IP, may be treated differently.",
       "fail:blocked-as-robots-says": "A request with the {agent} user agent got HTTP {status} or a challenge, and robots.txt also disallows {agent}, so the edge and robots.txt agree.",
-      "fail:content-differs": "A request with the {agent} user agent got a page whose text overlaps the browser's by only {similarity}%."
+      "fail:content-differs": "A request with the {agent} user agent got a page whose text overlaps the browser's by only {similarity, number, percent}."
     }
   },
   "ai-cdn-cloudflare-detected": {
@@ -167,10 +167,10 @@
   },
   "ai-js-only-content": {
     "messages": {
-      "fail": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio}%).",
-      "fail:mostly-rendered": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio}%). Crawlers that do not run JavaScript likely see little of the content.",
+      "fail": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}).",
+      "fail:mostly-rendered": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}). Crawlers that do not run JavaScript likely see little of the content.",
       "fail:h1-missing": "The raw HTML has no h1; the h1 appears only after rendering, so crawlers that do not run JavaScript likely miss the main heading.",
-      "fail:partly-rendered": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio}%); part of the content likely exists only after JavaScript."
+      "fail:partly-rendered": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}); part of the content likely exists only after JavaScript."
     }
   },
   "ai-textual-content-for-media": {
@@ -189,9 +189,9 @@
   },
   "ai-hidden-llm-instructions": {
     "messages": {
-      "fail": "{count} pieces of hidden, instruction-like text aimed at AI systems were found; the analyst confirms intent.",
-      "fail:hidden-instructions": "{count} pieces of hidden, instruction-like text aimed at AI systems were found in hidden elements, comments or attributes; the analyst confirms whether they try to steer AI answers.",
-      "fail:invisible-text": "{count} pieces of text hidden from readers were found, including text written in invisible Unicode tag characters, which models can still read; the analyst confirms whether they try to steer AI answers."
+      "fail": "{count, plural, one {# piece of hidden, instruction-like text aimed at AI systems was found} other {# pieces of hidden, instruction-like text aimed at AI systems were found}}; the analyst confirms intent.",
+      "fail:hidden-instructions": "{count, plural, one {# piece of hidden, instruction-like text aimed at AI systems was found} other {# pieces of hidden, instruction-like text aimed at AI systems were found}} in hidden elements, comments or attributes; the analyst confirms whether they try to steer AI answers.",
+      "fail:invisible-text": "{count, plural, one {# piece of text hidden from readers was found} other {# pieces of text hidden from readers were found}}, including text written in invisible Unicode tag characters, which models can still read; the analyst confirms whether they try to steer AI answers."
     }
   },
   "ai-agent-readiness": {
@@ -208,17 +208,17 @@
   },
   "ai-bots-crawl-activity": {
     "messages": {
-      "fail": "Verified AI crawlers fetched the site {verified} times ({crawlers}); {claims} more requests used AI crawler user agents without being verified.",
-      "fail:seen": "Verified AI crawlers fetched the site {verified} times in the window ({crawlers}); {claims} more requests used AI crawler user agents without being verified.",
-      "fail:claims-only": "{claims} requests used AI crawler user agents, but none could be verified, so the data does not show which AI crawlers really visited."
+      "fail": "Verified AI crawlers fetched the site {verified, plural, one {# time} other {# times}} ({crawlers}); {claims, plural, one {# more request used an AI crawler user agent without being verified} other {# more requests used AI crawler user agents without being verified}}.",
+      "fail:seen": "Verified AI crawlers fetched the site {verified, plural, one {# time} other {# times}} in the window ({crawlers}); {claims, plural, one {# more request used an AI crawler user agent without being verified} other {# more requests used AI crawler user agents without being verified}}.",
+      "fail:claims-only": "{claims, plural, one {# request used an AI crawler user agent, but it could not be verified} other {# requests used AI crawler user agents, but none could be verified}}, so the data does not show which AI crawlers really visited."
     }
   },
   "ai-bots-blocked-at-edge": {
     "messages": {
-      "fail": "{agent} was refused {blocked} of {total} times ({share}; {statuses}) although robots.txt allows it.",
-      "fail:refused": "Verified {agent} requests were refused {blocked} of {total} times ({share}; {statuses}) although robots.txt allows the crawler, so it cannot read those pages.",
-      "fail:payment-required": "Verified {agent} requests got HTTP 402 Payment Required or another refusal {blocked} of {total} times ({share}; {statuses}): the edge charges or blocks a crawler that robots.txt allows.",
-      "fail:unverified-claims": "Requests claiming to be {agent} were refused {blocked} of {total} times ({share}; {statuses}); they could not be verified, so the edge may be refusing impostors."
+      "fail": "{agent} was refused {blocked} of {total} times ({share, number, percent}; {statuses}) although robots.txt allows it.",
+      "fail:refused": "Verified {agent} requests were refused {blocked} of {total} times ({share, number, percent}; {statuses}) although robots.txt allows the crawler, so it cannot read those pages.",
+      "fail:payment-required": "Verified {agent} requests got HTTP 402 Payment Required or another refusal {blocked} of {total} times ({share, number, percent}; {statuses}): the edge charges or blocks a crawler that robots.txt allows.",
+      "fail:unverified-claims": "Requests claiming to be {agent} were refused {blocked} of {total} times ({share, number, percent}; {statuses}); they could not be verified, so the edge may be refusing impostors."
     }
   },
   "ai-bots-search-not-seen": {
@@ -230,7 +230,7 @@
   },
   "ai-bots-referrals": {
     "messages": {
-      "fail": "{visits} visits came from AI assistants ({assistants}), and {tagged} carried utm_source=chatgpt.com. Clicks from Google's AI Overviews and AI Mode count as Google Search and cannot be seen here."
+      "fail": "{visits, plural, one {# visit came} other {# visits came}} from AI assistants ({assistants}), and {tagged} carried utm_source=chatgpt.com. Clicks from Google's AI Overviews and AI Mode count as Google Search and cannot be seen here."
     }
   },
   "ai-google-genai-control-context": {

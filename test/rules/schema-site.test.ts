@@ -27,7 +27,7 @@ function failure(rule: RuleImplementation, pages: readonly PageFacts[], reason: 
   const { all, evidence } = siteResult(rule, pages, extra);
   const finding = all.find(entry => entry.outcome === 'fail' && entry.reason === reason);
   assert.ok(finding, `expected a ${reason} failure, got ${JSON.stringify(all.map(entry => [entry.outcome, entry.reason, entry.params]))}`);
-  return { finding, excerpts: finding.evidence.map(id => evidence.get(id)?.excerpt ?? '') };
+  return { finding, excerpts: finding.evidence.map(id => evidence.get(id)?.excerpt ?? ''), labels: finding.evidence.map(id => evidence.get(id)?.label ?? '') };
 }
 
 function passes(rule: RuleImplementation, pages: readonly PageFacts[], extra: Omit<SiteSpec, 'pages'> = {}) {
@@ -65,9 +65,9 @@ describe('image header reader', () => {
 describe('schema-organization', () => {
   test('passes a complete Organization on the home page', () => passes(organization, [at(home, ld(org, website), 'home')]));
   test('reports missing Organization markup as low', () => {
-    const { finding, excerpts } = failure(organization, [at(home, ld(website), 'home')], 'missing');
+    const { finding, labels } = failure(organization, [at(home, ld(website), 'home')], 'missing');
     assert.equal(finding.severity, 'low');
-    assert.equal(excerpts[0], '1 structured data items');
+    assert.equal(labels[0], 'no Organization markup on the home or about page (structured data items found: 1)');
   });
   test('fails an Organization whose url is another host', () => {
     const { finding, excerpts } = failure(organization, [at(home, ld({ ...org, '@id': undefined, url: 'https://other-host.example/' }), 'home')], 'foreign-url');

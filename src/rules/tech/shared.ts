@@ -1,6 +1,6 @@
 import type { EvidenceLabel, NewEvidence } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
-import type { Severity } from '../../core/types.ts';
+import type { NotEvaluatedReason, Severity } from '../../core/types.ts';
 import { headerValue, type HeaderMap } from '../../fetch/http.ts';
 import { isElement, walk, type HtmlElement } from '../../parse/html.ts';
 import type { LighthouseAudit, LighthouseSummary } from '../../render/lighthouse.ts';
@@ -43,7 +43,7 @@ export function fail(severity: Severity, evidence: readonly string[], reason?: s
 
 export const pass = (evidence: readonly string[] = []): RuleResult => (evidence.length > 0 ? { outcome: 'pass', evidence } : { outcome: 'pass' });
 export const notApplicable = (reason: string): RuleResult => ({ outcome: 'not_applicable', reason });
-export const notEvaluated = (reason: string): RuleResult => ({ outcome: 'not_evaluated', reason });
+export const notEvaluated = (reason: NotEvaluatedReason): RuleResult => ({ outcome: 'not_evaluated', reason });
 
 const order: readonly Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 

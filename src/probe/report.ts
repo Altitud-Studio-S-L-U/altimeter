@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { formatNumber } from '../i18n/format.ts';
 import { format, type Language } from '../i18n/messages.ts';
 import { cleanLine, untrustedInline } from '../report/sanitize.ts';
 import { runFolderName, safeFolderName } from '../report/write.ts';
@@ -18,11 +19,11 @@ function originText(t: ProbeStrings, query: PlannedQuery): string {
     case 'keyword':
       return t.origins.keyword;
     case 'search-console':
-      return format(t.origins.searchConsole, { impressions: origin.impressions, clicks: origin.clicks, position: origin.position.toFixed(1), start: origin.start, end: origin.end });
+      return format(t.origins.searchConsole, { impressions: origin.impressions, clicks: origin.clicks, position: formatNumber(origin.position, t.language, '::.0'), start: origin.start, end: origin.end }, t.language);
     case 'inferred':
-      return format(t.origins.inferred, { element: t.elements[origin.element], page: untrustedInline(origin.page, 200) });
+      return format(t.origins.inferred, { element: t.elements[origin.element], page: untrustedInline(origin.page, 200) }, t.language);
     case 'brand':
-      return format(t.origins.brand, { language: t.languageNames[origin.language] });
+      return format(t.origins.brand, { language: t.languageNames[origin.language] }, t.language);
   }
 }
 
@@ -31,7 +32,7 @@ export function planNoteText(t: ProbeStrings, note: PlanNote): string {
     case 'brand-left-out':
       return note.reason === 'no-name' ? t.brandNoName : note.reason === 'names-domain' ? t.brandNamesDomain : t.brandNoRoom;
     case 'search-console-failed':
-      return format(t.searchConsoleFailed, { message: cleanLine(note.message, 300) });
+      return format(t.searchConsoleFailed, { message: cleanLine(note.message, 300) }, t.language);
     case 'search-console-empty':
       return t.searchConsoleEmpty;
     case 'inferred-fallback':
@@ -42,27 +43,27 @@ export function planNoteText(t: ProbeStrings, note: PlanNote): string {
 /** A notice about the site; `url` writes the URL the home page redirects to, which the probed site chose. */
 export function siteNoticeText(t: ProbeStrings, notice: SiteNotice, domain: string, url: (value: string) => string = value => cleanLine(value, 200)): string {
   return notice.code === 'home-unreadable'
-    ? format(t.homeUnreadable, { reason: cleanLine(notice.reason, 100) })
-    : format(t.homeRedirects, { to: url(notice.to), domain });
+    ? format(t.homeUnreadable, { reason: cleanLine(notice.reason, 100) }, t.language)
+    : format(t.homeRedirects, { to: url(notice.to), domain }, t.language);
 }
 
 function engineNoticeText(t: ProbeStrings, notice: EngineNotice, section: EngineSection): string {
   const engine = engineNames[section.engine];
   switch (notice.code) {
     case 'unverified-version':
-      return format(t.unverifiedVersion, { engine, version: cleanLine(notice.version, 60) });
+      return format(t.unverifiedVersion, { engine, version: cleanLine(notice.version, 60) }, t.language);
     case 'stopped':
       return stoppingFailures.has(notice.reason)
-        ? format(t.stopped, { engine, reason: t.failures[notice.reason] })
-        : format(t.stoppedRepeated, { engine, count: notice.consecutive });
+        ? format(t.stopped, { engine, reason: t.failures[notice.reason] }, t.language)
+        : format(t.stoppedRepeated, { engine, count: notice.consecutive }, t.language);
     case 'unrecognised-results':
-      return format(t.unrecognisedResults, { runs: notice.runs });
+      return format(t.unrecognisedResults, { runs: notice.runs }, t.language);
   }
 }
 
 /** The label every section carries: engine, CLI version, model, search mode, locale, dates and runs per query. */
 export function sectionLabel(t: ProbeStrings, section: EngineSection): string {
-  const dates = section.firstRun === undefined ? t.noRuns : section.firstRun === section.lastRun ? section.firstRun : format(t.dateRange, { first: section.firstRun, last: section.lastRun ?? section.firstRun });
+  const dates = section.firstRun === undefined ? t.noRuns : section.firstRun === section.lastRun ? section.firstRun : format(t.dateRange, { first: section.firstRun, last: section.lastRun ?? section.firstRun }, t.language);
   return format(t.label, {
     engine: engineNames[section.engine],
     version: cleanLine(section.cliVersion ?? '?', 60),
@@ -71,7 +72,7 @@ export function sectionLabel(t: ProbeStrings, section: EngineSection): string {
     locale: t.locales[section.locale],
     dates,
     runs: section.runsPerQuery,
-  });
+  }, t.language);
 }
 
 function caveats(t: ProbeStrings, section: EngineSection): string[] {
@@ -88,7 +89,7 @@ function countTable(t: ProbeStrings, title: string, counts: readonly Count[], co
     '',
     `| ${title} | ${t.runsColumn} |`,
     '| --- | --- |',
-    ...counts.map(count => `| ${untrustedInline(count.value, 300)} | ${format(t.ofRuns, { k: count.runs, n: completed })} |`),
+    ...counts.map(count => `| ${untrustedInline(count.value, 300)} | ${format(t.ofRuns, { k: count.runs, n: completed }, t.language)} |`),
   ];
 }
 
@@ -97,12 +98,12 @@ function queryBlock(t: ProbeStrings, query: PlannedQuery, metrics: QueryMetrics,
   const lines = [
     `#### ${query.id} · ${untrustedInline(query.text, 200)}`,
     '',
-    `- ${format(t.runsLine, { completed: n, planned: metrics.planned, fromCache: metrics.fromCache, failed: metrics.failed, skipped: metrics.skipped })}`,
+    `- ${format(t.runsLine, { completed: n, planned: metrics.planned, fromCache: metrics.fromCache, failed: metrics.failed, skipped: metrics.skipped }, t.language)}`,
   ];
   if (n > 0) {
-    lines.push(`- ${format(section.provenance === 'retrieval' ? t.citedRetrieval : t.citedReported, { k: metrics.cited, n })}`);
-    if (metrics.citedUnconfirmed !== undefined && metrics.citedUnconfirmed > 0) lines.push(`- ${format(t.citedUnconfirmed, { k: metrics.citedUnconfirmed, n })}`);
-    lines.push(`- ${format(t.mentioned, { k: metrics.brandMentioned, n })}`, `- ${format(t.searched, { k: metrics.searched, n })}`);
+    lines.push(`- ${format(section.provenance === 'retrieval' ? t.citedRetrieval : t.citedReported, { k: metrics.cited, n }, t.language)}`);
+    if (metrics.citedUnconfirmed !== undefined && metrics.citedUnconfirmed > 0) lines.push(`- ${format(t.citedUnconfirmed, { k: metrics.citedUnconfirmed, n }, t.language)}`);
+    lines.push(`- ${format(t.mentioned, { k: metrics.brandMentioned, n }, t.language)}`, `- ${format(t.searched, { k: metrics.searched, n }, t.language)}`);
   }
   if (metrics.insufficientSample) lines.push(`- ${t.insufficient}`);
   lines.push(
@@ -118,13 +119,13 @@ function queryBlock(t: ProbeStrings, query: PlannedQuery, metrics: QueryMetrics,
 function runDetail(t: ProbeStrings, run: RunRecord): string {
   if (run.error) return `${t.failures[run.error.code]} (\`${run.error.code}\`)`;
   if (run.skipped) return t.skips[run.skipped];
-  return run.mention ? format(t.mentionDetail, { text: untrustedInline(run.mention, 200) }) : '';
+  return run.mention ? format(t.mentionDetail, { text: untrustedInline(run.mention, 200) }, t.language) : '';
 }
 
 function engineBlock(t: ProbeStrings, report: ProbeReport, section: EngineSection): string[] {
   const lines = [`## ${engineNames[section.engine]}`, ''];
   if (section.status === 'unavailable') {
-    return [...lines, format(t.unavailable, { engine: engineNames[section.engine], problem: cleanLine(section.problem ?? '', 300) }), ''];
+    return [...lines, format(t.unavailable, { engine: engineNames[section.engine], problem: cleanLine(section.problem ?? '', 300) }, t.language), ''];
   }
   const label = sectionLabel(t, section);
   lines.push(label, '', caveats(t, section).map(text => `> ${text}`).join('\n>\n'), '');
@@ -150,7 +151,7 @@ function engineBlock(t: ProbeStrings, report: ProbeReport, section: EngineSectio
   lines.push('');
   if (section.costUsd !== undefined) {
     const calls = section.runs.filter(run => run.status === 'ok').length;
-    lines.push(format(t.cost, { cost: section.costUsd.toFixed(2), calls }), '');
+    lines.push(format(t.cost, { cost: formatNumber(section.costUsd, t.language, '::.00'), calls }, t.language), '');
   }
   return lines;
 }
@@ -162,9 +163,9 @@ function engineBlock(t: ProbeStrings, report: ProbeReport, section: EngineSectio
 export function renderProbeMarkdown(report: ProbeReport, language: Language): string {
   const t = probeStrings(language);
   const lines = [
-    `# ${format(t.title, { site: cleanLine(new URL(report.site.origin).host, 200) })}`,
+    `# ${format(t.title, { site: cleanLine(new URL(report.site.origin).host, 200) }, t.language)}`,
     '',
-    format(t.generated, { version: report.tool.version, date: report.generatedAt.slice(0, 10), prompt: report.promptVersion }),
+    format(t.generated, { version: report.tool.version, date: report.generatedAt.slice(0, 10), prompt: report.promptVersion }, t.language),
     '',
     t.intro,
     '',
@@ -198,14 +199,14 @@ export async function writeProbeReport(directory: string, report: ProbeReport, l
 export function renderPlan(plan: ProbePlan, language: Language): string {
   const t = probeStrings(language);
   const lines = [
-    format(t.title, { site: cleanLine(new URL(plan.site.origin).host, 200) }),
-    format(t.planEngines, { engines: plan.engines.map(engine => engineNames[engine]).join(', ') }),
-    format(t.planRuns, { runs: plan.runsPerQuery }),
+    format(t.title, { site: cleanLine(new URL(plan.site.origin).host, 200) }, t.language),
+    format(t.planEngines, { engines: plan.engines.map(engine => engineNames[engine]).join(', ') }, t.language),
+    format(t.planRuns, { runs: plan.runsPerQuery }, t.language),
     t.planQueries,
     ...plan.queries.map(query => `  ${query.id} [${t.classes[query.class]}] ${cleanLine(query.text, 200)}`),
     ...plan.notes.map(note => `  ${planNoteText(t, note)}`),
     ...plan.site.notices.map(notice => `  ${siteNoticeText(t, notice, plan.site.domain)}`),
-    format(t.planCalls, { calls: plan.calls, queries: plan.queries.length, runs: plan.runsPerQuery, engines: plan.engines.length }),
+    format(t.planCalls, { calls: plan.calls, queries: plan.queries.length, runs: plan.runsPerQuery, engines: plan.engines.length }, t.language),
     t.planQuota,
     ...(plan.queries.some(query => query.class === 'search-console') ? [t.planSearchConsole] : []),
   ];
@@ -217,10 +218,10 @@ export function renderSummary(report: ProbeReport, language: Language): string {
   const t = probeStrings(language);
   return `${report.engines.flatMap(section => {
     const engine = engineNames[section.engine];
-    if (section.status === 'unavailable') return [format(t.summaryUnavailable, { engine, problem: cleanLine(section.problem ?? '', 200) })];
+    if (section.status === 'unavailable') return [format(t.summaryUnavailable, { engine, problem: cleanLine(section.problem ?? '', 200) }, t.language)];
     const count = (status: RunRecord['status']) => section.runs.filter(run => run.status === status).length;
     return [
-      format(t.summary, { engine, completed: count('ok') + count('cached'), planned: section.runs.length, fromCache: count('cached'), failed: count('failed'), skipped: count('skipped') }),
+      format(t.summary, { engine, completed: count('ok') + count('cached'), planned: section.runs.length, fromCache: count('cached'), failed: count('failed'), skipped: count('skipped') }, t.language),
       ...section.notices.map(notice => `  ! ${engineNoticeText(t, notice, section)}`),
     ];
   }).join('\n')}\n`;

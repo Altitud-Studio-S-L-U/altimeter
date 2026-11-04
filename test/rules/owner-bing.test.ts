@@ -26,7 +26,8 @@ const flags = { Code301: 1, Code302: 2, Code4xx: 4, Code5xx: 8, BlockedByRobotsT
 function check(id: string, data: BingData, spec: PageSpec = {}, extra: Partial<SiteSpec> = {}) {
   const result = evaluate(rule(id), site({ pages: [page(url, { html: html(), ...spec })], owner: { bing: data }, ...extra }));
   const excerpts = (finding: Finding | undefined) => (finding?.evidence ?? []).map(entry => result.evidence.get(entry)?.excerpt);
-  return { findings: result.findings, first: result.findings[0], excerpts, evidence: result.evidence };
+  const labels = (finding: Finding | undefined) => (finding?.evidence ?? []).map(entry => result.evidence.get(entry)?.label);
+  return { findings: result.findings, first: result.findings[0], excerpts, labels, evidence: result.evidence };
 }
 
 /** Every failure must render a complete English message: a reason without a template, or a missing value, fails. */
@@ -41,9 +42,9 @@ function message(finding: Finding | undefined): string {
 
 describe('crawl-bing-crawl-issues', () => {
   test('passes when Bing lists no crawl issues', () => {
-    const { first, excerpts } = check('crawl-bing-crawl-issues', bing());
+    const { first, labels } = check('crawl-bing-crawl-issues', bing());
     assert.equal(first?.outcome, 'pass');
-    assert.deepEqual(excerpts(first), ['0 URLs']);
+    assert.deepEqual(labels(first), ['crawl issue list Bing returned for the site: no URL']);
   });
 
   test('reports each issue type Bing lists, graded by what it stops Bing from doing', () => {
@@ -64,7 +65,7 @@ describe('crawl-bing-crawl-issues', () => {
     assert.equal(by('server-error')?.params?.examples, `${origin}/b, ${origin}/a`, 'most linked first');
     assert.equal(by('client-error')?.params?.linked, 1);
     for (const finding of findings) message(finding);
-    assert.match(message(by('client-error')), /^Bing got 4xx errors for 2 URL\(s\), 1 of them with inbound links/u);
+    assert.match(message(by('client-error')), /^Bing got 4xx errors for 2 URLs \(1 with inbound links\), for example/u);
     assert.ok(findings.every(finding => finding.origin === 'owner-data'));
   });
 
@@ -75,7 +76,7 @@ describe('crawl-bing-crawl-issues', () => {
 
   test('cites the URLs with their issues, status and inbound links', () => {
     const { first, excerpts } = check('crawl-bing-crawl-issues', bing({ crawlIssues: [issue(`${origin}/b`, flags.Code5xx | flags.TimeOutErrors, 504, 9)] }));
-    assert.deepEqual(excerpts(first), [`${origin}/b (Code5xx, TimeOutErrors; HTTP 504; 9 inbound links)`]);
+    assert.deepEqual(excerpts(first), [`${origin}/b (Code5xx, TimeOutErrors; HTTP 504; 9)`]);
   });
 
   test('keeps a URL someone linked to from turning into a Markdown link in the message', () => {
@@ -121,7 +122,8 @@ describe('crawl-bing-page-issues', () => {
     const data = bing({ crawlIssues: [issue(url, flags.BlockedByRobotsTxt)] });
     const blocked = check('crawl-bing-page-issues', data, {}, { robots: 'User-agent: bingbot\nDisallow: /en/\n' });
     assert.deepEqual([blocked.first?.severity, blocked.first?.reason], ['medium', 'blocked-by-robots']);
-    assert.ok(blocked.excerpts(blocked.first).includes('disallow: /en/ (group bingbot)'));
+    assert.ok(blocked.excerpts(blocked.first).includes('disallow: /en/'));
+    assert.ok(blocked.labels(blocked.first).includes('robots.txt rule that still disallows the URL for Bingbot (group bingbot)'));
     const fixed = check('crawl-bing-page-issues', data, {}, { robots: 'User-agent: *\nDisallow: /private/\n' });
     assert.deepEqual([fixed.first?.severity, fixed.first?.reason], ['low', 'robots-allows-now']);
     message(blocked.first);
@@ -186,17 +188,17 @@ describe('content-bing-low-ctr', () => {
     const { findings, first, evidence } = check('content-bing-low-ctr', bing({ pageStats, pageQueries }));
     assert.equal(findings.length, 1);
     assert.deepEqual([first?.severity, first?.params?.page, first?.params?.ctr, first?.params?.expected, first?.params?.position, first?.params?.start, first?.params?.end],
-      ['low', `${origin}/b`, '0.7%', '10.0%', '2.2', '2026-10-17', '2026-10-31']);
-    const queries = first!.evidence.map(id => evidence.get(id)!).find(item => item.path === searchQueriesPath);
-    assert.equal(queries?.excerpt, 'custom software andorra (500 impressions, position 2.1)\nerp integration (200 impressions, position 2.4)');
+      ['low', `${origin}/b`, 0.006666666666666667, 0.1, 2.2, '2026-10-17', '2026-10-31']);
+    const queries = first!.evidence.map(id => evidence.get(id)!).filter(item => item.path === searchQueriesPath).map(item => item.label);
+    assert.deepEqual(queries, ['query with Bing impressions for the page: custom software andorra (impressions: 500; average position: 2.1)', 'query with Bing impressions for the page: erp integration (impressions: 200; average position: 2.4)']);
     assert.match(message(first), /^https:\/\/example\.com\/b got 900 Bing impressions at position 2\.2 with a 0\.7% CTR, against 10\.0% for the site's other pages/u);
   });
 
   test('writes numbered labels instead of queries when the owner asks for a shareable report', () => {
     const result = evaluate(rule('content-bing-low-ctr'), site({ pages: [page(url, { html: html() })], owner: { bing: bing({ pageStats, pageQueries }), redactQueries: true } }));
-    const excerpts = result.findings.flatMap(finding => finding.evidence.map(id => result.evidence.get(id)?.excerpt ?? '')).join('\n');
-    assert.doesNotMatch(excerpts, /custom software|erp integration/u);
-    assert.match(excerpts, /^query 1 \(500 impressions, position 2\.1\)$/mu);
+    const labels = result.findings.flatMap(finding => finding.evidence.map(id => result.evidence.get(id)?.label ?? '')).join('\n');
+    assert.doesNotMatch(labels, /custom software|erp integration/u);
+    assert.match(labels, /^query with Bing impressions for the page: query 1 \(impressions: 500; average position: 2\.1\)$/mu);
   });
 
   test('leaves each page out of the norm it is compared with', () => {

@@ -222,7 +222,7 @@ describe('ai-agent-readiness', () => {
   test('a failing accessible-name audit is low', () => {
     const { finding, evidence } = on('ai-agent-readiness', { html: '<p>x</p>', lighthouse: lighthouse({ 'button-name': { score: 0, title: 'Buttons do not have an accessible name' }, 'link-name': {} }) });
     assert.deepEqual([finding.severity, finding.reason, finding.params?.audit], ['low', 'button-name', 'button-name']);
-    assert.equal(evidence.get(finding.evidence[0]!)?.excerpt, 'score 0');
+    assert.equal(evidence.get(finding.evidence[0]!)?.label, 'Lighthouse audit button-name, with a score of 0');
   });
 
   test('lab CLS above 0.1 is low', () => {

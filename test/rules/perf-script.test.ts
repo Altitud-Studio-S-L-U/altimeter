@@ -4,7 +4,7 @@ import {
   domSize, forcedReflow, legacyDuplicatedJs, longTasks, minification, thirdPartyCost, thirdPartyFacades, totalByteWeight, unusedCode,
 } from '../../src/rules/perf/script.ts';
 import { page } from '../support/facts.ts';
-import { assertExcerpt, assertFail, assertOutcome, check, html, lab, list, opportunity, requests, table } from './perf-fixtures.ts';
+import { assertExcerpt, assertFail, assertLabel, assertOutcome, check, html, lab, list, opportunity, requests, table } from './perf-fixtures.ts';
 
 const url = 'https://example.com/';
 const kib = 1024;
@@ -21,7 +21,10 @@ describe('perf-long-tasks', () => {
     const checked = check(longTasks, page(url, { html: html(''), lighthouse: lab({ ...tasks([400, 300, 200]), ...bootup }) }));
     assertFail(checked, 'medium');
     assert.equal(checked.finding.params?.blocking, '750 ms');
-    assertExcerpt(checked, /app\.js \(first party, 900 ms\); https:\/\/www\.googletagmanager\.com\/gtm\.js \(third party, 400 ms\)/u);
+    assert.equal(checked.finding.params?.scripts, 'https://example.com/app.js (first party, 900 ms); https://www.googletagmanager.com/gtm.js (third party, 400 ms)');
+    assertLabel(checked, /^first-party script with 900 ms of lab execution time /u);
+    assertLabel(checked, /^third-party script with 400 ms of lab execution time /u);
+    assertExcerpt(checked, /^https:\/\/www\.googletagmanager\.com\/gtm\.js$/u);
   });
 
   test('is not evaluated without the audit', () => {
@@ -52,7 +55,7 @@ describe('perf-dom-size', () => {
   test('passes a small DOM', () => {
     const checked = check(domSize, page(url, { html: html(''), rendered: dom(100) }));
     assertOutcome(checked, 'pass');
-    assertExcerpt(checked, /^103$/u);
+    assertLabel(checked, /^elements in the rendered DOM: 103$/u);
   });
 
   test('fails low above 1400 elements and notes 800 as info', () => {
@@ -113,7 +116,7 @@ describe('perf-third-party-facades', () => {
   test('fails low on an embed costing more than 100 KiB before interaction', () => {
     const checked = check(thirdPartyFacades, page(url, { html: html(''), lighthouse: lab({ 'network-requests': youtube(600 * kib) }) }));
     assertFail(checked, 'low');
-    assertExcerpt(checked, /^YouTube player: 2 requests, 600 KiB, main thread 0 ms$/u);
+    assertLabel(checked, /^YouTube player embed loaded before any interaction in the lab load: 2 requests, 600 KiB, 0 ms of main thread /u);
   });
 
   test('is not evaluated without Lighthouse', () => {

@@ -119,6 +119,13 @@ describe('ai-aipref-signals', () => {
     assert.equal(evidence.get(finding.evidence[0]!)?.excerpt, 'Content-Usage: train-ai=no');
   });
 
+  test('lists a problem that every response repeats once, and cites each response', () => {
+    const pages = ['', 'a', 'b', 'c'].map(path => page(`${homeUrl}${path}`, { html: '<!doctype html><title>Page</title>', headers: { 'content-usage': 'search=maybe, train-ai=n' } }));
+    const finding = only(evaluate(rule('ai-aipref-signals'), site({ pages })).findings);
+    assert.equal(finding.params?.problems, 'search needs y or n');
+    assert.equal(finding.evidence.length, 4);
+  });
+
   test('no signal is not applicable, and missing X-Robots-Tag or Link headers are normal', () => {
     const finding = only(run('ai-aipref-signals', { robots: 'User-agent: *\nDisallow:\n' }).findings);
     assert.deepEqual([finding.outcome, finding.reason], ['not_applicable', 'no-aipref']);
@@ -133,7 +140,8 @@ describe('ai-llms-txt', () => {
     const { findings, evidence } = run('ai-llms-txt', { resources: [llms({ body, headers: { 'content-type': 'text/markdown; charset=utf-8' } })] });
     const finding = only(findings);
     assert.equal(finding.outcome, 'pass');
-    assert.match(evidence.get(finding.evidence[0]!)?.excerpt ?? '', /^HTTP 200; content-type: text\/markdown/u);
+    assert.equal(evidence.get(finding.evidence[0]!)?.label, 'llms.txt response, served as text/markdown; charset=utf-8');
+    assert.match(evidence.get(finding.evidence[0]!)?.excerpt ?? '', /^# Example/u);
   });
 
   test('absence and an HTML page for every path are not findings', () => {

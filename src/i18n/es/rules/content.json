@@ -54,7 +54,7 @@
     "fix": "Pon primero las palabras más importantes para que el truncamiento solo elimine la marca o las palabras secundarias.",
     "messages": {
       "fail": "La longitud del título puede provocar una reescritura o un truncamiento.",
-      "fail:short": "El título tiene {characters} caracteres; los títulos muy cortos se reescriben con más frecuencia.",
+      "fail:short": "El título tiene {characters, plural, one {# carácter} other {# caracteres}}; los títulos muy cortos se reescriben con más frecuencia.",
       "fail:likely-truncated": "El título mide unos {width} px de ancho en Arial a 20 px, así que probablemente se trunque en los resultados para ordenador (es una estimación, no un límite de Google)."
     }
   },
@@ -92,7 +92,7 @@
       "fail": "La posición de la marca en el título se podría mejorar.",
       "fail:brand-absent": "El título no menciona el sitio («{brand}»); Google puede mostrar el nombre del sitio por separado, así que esto es informativo.",
       "fail:repeated": "El título menciona «{brand}» {count} veces.",
-      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadamente el {share} % del ancho del título.",
+      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadamente el {share, number, percent} del ancho del título.",
       "fail:mid-title": "La marca «{brand}» está en mitad del título en lugar de al principio o al final."
     }
   },
@@ -129,7 +129,7 @@
       "fail:placeholder": "La metadescripción contiene un marcador de posición de plantilla sin rellenar.",
       "fail:same-as-title": "La metadescripción repite el título en lugar de resumir la página.",
       "fail:keyword-list": "La metadescripción parece una lista de {segments} frases cortas; el analista debería confirmar si es una lista de palabras clave.",
-      "fail:short": "La metadescripción tiene {words} palabras; el analista debería confirmar si resume la página."
+      "fail:short": "La metadescripción tiene {words, plural, one {# palabra} other {# palabras}}; el analista debería confirmar si resume la página."
     }
   },
   "content-data-nosnippet-invalid": {
@@ -140,7 +140,7 @@
       "fail": "data-nosnippet se usa de una forma que Google no respeta como se pretende.",
       "fail:unsupported-element": "{count} atributo(s) data-nosnippet están en elementos en los que Google no los respeta ({tags}); solo se admiten span, div y section.",
       "fail:added-by-javascript": "JavaScript añade {count} atributo(s) data-nosnippet a elementos que existen sin ese atributo en el HTML del servidor.",
-      "fail:covers-main-content": "Los elementos con data-nosnippet contienen aproximadamente el {share} % del contenido principal, así que ese texto queda fuera de los fragmentos y de la entrada de las Vistas creadas con IA."
+      "fail:covers-main-content": "Los elementos con data-nosnippet contienen aproximadamente el {share, number, percent} del contenido principal, así que ese texto queda fuera de los fragmentos y de la entrada de las Vistas creadas con IA."
     }
   },
   "content-image-preview-large": {
@@ -200,7 +200,7 @@
     "why": "Google rechaza la idea de un número de palabras preferido, pero pregunta si una página aporta un valor sustancial. Las páginas en las que el texto de plantilla eclipsa el contenido único suelen tener poco valor, pero muchos tipos de página están completos con pocas palabras.",
     "fix": "Asegúrate de que cada página indexable tenga contenido sustancial específico para su propósito, o consolida las variantes con poco contenido o aplícales noindex.",
     "messages": {
-      "fail": "{url} tiene {uniqueWords} palabras de texto específico de la página y un {share} % de texto de plantilla; el analista debería juzgar si el contenido cumple el propósito de la página."
+      "fail": "{url} tiene {uniqueWords, plural, one {# palabra} other {# palabras}} de texto específico de la página y un {share, number, percent} de texto de plantilla; el analista debería juzgar si el contenido cumple el propósito de la página."
     }
   },
   "content-filler-before-mc": {
@@ -222,7 +222,7 @@
     "why": "Las políticas de spam de Google y las directrices para evaluadores consideran de baja calidad el contenido principal copiado o ligeramente parafraseado sin valor añadido. El contenido con licencia y el sindicado no son copias.",
     "fix": "Añade análisis, datos, contenido multimedia o experiencia originales. Canonicaliza o atribuye las copias sindicadas. Elimina las páginas de contenido extraído.",
     "messages": {
-      "fail": "El {overlap} % del texto principal de esta página también aparece en {other}; el analista debería juzgar si está copiado o compartido de forma legítima."
+      "fail": "El {overlap, number, percent} del texto principal de esta página también aparece en {other}; el analista debería juzgar si está copiado o compartido de forma legítima."
     }
   },
   "content-scaled-doorway": {
@@ -230,7 +230,7 @@
     "why": "Las políticas de Google sobre el abuso de contenido a gran escala y las páginas puerta abarcan muchas páginas generadas principalmente para posicionar, ya sea mediante IA, personas o ambas, incluidas páginas casi idénticas que solo cambian un lugar o una palabra clave y páginas creadas para captar variantes de consultas. La regla informa de un patrón de riesgo, nunca de una penalización.",
     "fix": "Fusiónalas en una página útil por cada oferta real, o añade contenido realmente local o único (personal, precios, casos, fotos de cada ubicación). Aplica noindex a las variantes generadas automáticamente o elimínalas.",
     "messages": {
-      "fail": "{count} páginas tienen un texto principal que difiere como mucho en un 5 % de sus palabras ({urls}); el analista debería comprobar si hay un patrón de páginas puerta."
+      "fail": "{count} páginas tienen un texto principal que difiere como mucho en un 5\u00a0% de sus palabras ({urls}); el analista debería comprobar si hay un patrón de páginas puerta."
     }
   },
   "content-ai-artifacts": {
@@ -260,7 +260,7 @@
     "why": "Las políticas de spam de Google prohíben el texto oculto para los usuarios pero presente para los buscadores, como el texto del color del fondo, detrás de imágenes o colocado fuera de la pantalla. Permiten de forma explícita las pestañas, los acordeones, los controles deslizantes, las descripciones emergentes y el texto para lectores de pantalla.",
     "fix": "Elimina el texto oculto o hazlo visible como contenido útil.",
     "messages": {
-      "fail": "{words} palabras en {blocks} bloques de texto están ocultas para los usuarios ({reasons}); el analista debería juzgar si esto encaja en la política sobre texto oculto."
+      "fail": "Texto oculto para los usuarios: {words, plural, one {# palabra} other {# palabras}} en {blocks, plural, one {# bloque} other {# bloques}} ({reasons}); el analista debería juzgar si esto encaja en la política sobre texto oculto."
     }
   },
   "content-hidden-links": {
@@ -306,9 +306,9 @@
     "fix": "Limpia la intrusión, aplica los parches al CMS y a los plugins, cambia las credenciales y, si hay una acción manual, solicita una revisión en Search Console.",
     "messages": {
       "fail": "Se han encontrado indicios compatibles con spam inyectado; el analista debería contrastarlos con la temática del sitio.",
-      "fail:spam-urls-in-sitemap": "{count} URLs del sitemap contienen vocabulario típico del spam inyectado.",
+      "fail:spam-urls-in-sitemap": "{count, plural, one {# URL del sitemap contiene} other {# URLs del sitemap contienen}} vocabulario típico del spam inyectado.",
       "fail:spam-vocabulary": "{count} enlace(s) o pasaje(s) contienen vocabulario típico del spam inyectado.",
-      "fail:foreign-script-block": "{count} páginas contienen grandes bloques de texto en chino, japonés o coreano, a diferencia del resto del sitio.",
+      "fail:foreign-script-block": "{count, plural, one {# página contiene} other {# páginas contienen}} grandes bloques de texto en chino, japonés o coreano, a diferencia del resto del sitio.",
       "fail:cloaked-spam": "«{term}» se sirve al user-agent de Googlebot, pero no a un user-agent de navegador."
     }
   },
@@ -510,7 +510,7 @@
     "why": "Una página que aparece a menudo, pero recibe pocos clics para su posición, suele tener un título o un fragmento que no se ajusta a lo que buscan los usuarios. La comparación usa el CTR propio del sitio en cada posición, no una curva del sector.",
     "fix": "Reescribe el título y la metadescripción para las consultas indicadas, sin dejar de ser fiel a la página. Comprueba si un resultado enriquecido u otra página del sitio que se ajusta mejor se lleva los clics.",
     "messages": {
-      "fail": "{page} ha obtenido {impressions} impresiones en la posición {position} con un CTR de {ctr}, frente a {expected} en el sitio para esa posición."
+      "fail": "{page} ha obtenido {impressions} impresiones en la posición {position, number, ::.0} con un CTR de {ctr, number, ::percent .0}, frente a {expected, number, ::percent .0} en el sitio para esa posición."
     }
   },
   "content-gsc-cannibalization": {
@@ -526,7 +526,7 @@
     "why": "Las consultas para las que una página ya se posiciona entre las posiciones 11 y 20 son las más baratas de mejorar: la página es relevante, y una respuesta mejor o unos enlaces internos más sólidos pueden llevarla a la primera página.",
     "fix": "Para cada consulta, comprueba que la página la responde de forma completa y pronto, y enlázala desde páginas relacionadas con un texto del enlace descriptivo.",
     "messages": {
-      "fail": "{count} consultas se posicionan entre las posiciones 11 y 20, por ejemplo, «{query}» para {page} en la posición {position}."
+      "fail": "{count, plural, one {# consulta se posiciona} other {# consultas se posicionan}} entre las posiciones 11 y 20, por ejemplo, «{query}» para {page} en la posición {position, number, ::.0}."
     }
   },
   "content-gsc-traffic-drop": {
@@ -534,7 +534,7 @@
     "why": "Una caída significativa de los clics de una página apunta a una pérdida de posicionamiento, un problema de indexación o un cambio en la demanda, y conviene comprobarla antes de que se extienda.",
     "fix": "Inspecciona la página en busca de cambios de indexación y de URL canónica, compara sus consultas entre los dos periodos en Search Console y revisa las modificaciones recientes de la página.",
     "messages": {
-      "fail": "{page} ha bajado de {before} a {now} clics respecto a los 28 días anteriores."
+      "fail": "{page} ha bajado de {before} a {now, plural, one {# clic} other {# clics}} respecto a los 28 días anteriores."
     }
   },
   "content-bing-low-ctr": {
@@ -542,7 +542,7 @@
     "why": "Una página que Bing muestra a menudo pero en la que pocas personas hacen clic suele tener un título o un fragmento que no coincide con lo que buscan. La comparación usa el CTR de las demás páginas del sitio en una posición similar en Bing, no una curva del sector.",
     "fix": "Reescribe el título y la metadescripción para las consultas indicadas, sin dejar de describir la página con exactitud. Comprueba en Bing si un resultado más completo u otra página del sitio se lleva los clics.",
     "messages": {
-      "fail": "{page} ha obtenido {impressions} impresiones en Bing en la posición {position} con un CTR del {ctr}, frente al {expected} de las demás páginas del sitio en esa posición, del {start} al {end}."
+      "fail": "{page} ha obtenido {impressions} impresiones en Bing en la posición {position, number, ::.0} con un CTR del {ctr, number, ::percent .0}, frente al {expected, number, ::percent .0} de las demás páginas del sitio en esa posición, del {start} al {end}."
     }
   },
   "content-bing-ai-performance": {

@@ -155,6 +155,11 @@ export function assertExcerpt(checked: Checked, pattern: RegExp, finding = check
   assert.ok(checked.excerpts(finding).some(excerpt => pattern.test(excerpt)), `no evidence excerpt matches ${pattern}: ${JSON.stringify(checked.excerpts(finding))}`);
 }
 
+export function assertLabel(checked: Checked, pattern: RegExp, finding = checked.finding): void {
+  const labels = finding.evidence.map(id => checked.evidence.get(id)?.label ?? '');
+  assert.ok(labels.some(label => pattern.test(label)), `no evidence label matches ${pattern}: ${JSON.stringify(labels)}`);
+}
+
 export function assertOutcome(checked: Checked, outcome: Finding['outcome'], reason?: string, finding = checked.finding): void {
   assert.equal(finding.outcome, outcome, `expected ${outcome}, got ${finding.outcome} ${finding.reason ?? ''}`);
   if (reason !== undefined) assert.equal(finding.reason, reason);

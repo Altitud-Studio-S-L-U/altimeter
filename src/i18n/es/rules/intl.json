@@ -80,7 +80,7 @@
     "messages": {
       "fail": "Los enlaces hreflang del DOM renderizado difieren de los del HTML tal como se sirve.",
       "fail:rendered-only": "Los {count} elemento(s) link de hreflang solo existen después de que se ejecute JavaScript. Los rastreadores que no renderizan nunca los ven, y Google no documenta si lee el hreflang insertado.",
-      "fail:differs": "El renderizado cambia los enlaces hreflang: {added} añadidos y {removed} eliminados respecto al HTML tal como se sirve."
+      "fail:differs": "El renderizado cambia los enlaces hreflang: {added, plural, one {# añadido} other {# añadidos}} y {removed, plural, one {# eliminado} other {# eliminados}} respecto al HTML tal como se sirve."
     }
   },
   "intl-hreflang-combined-link-attributes": {
@@ -219,7 +219,7 @@
     "why": "Google recomienda una anotación solo de idioma, como «de», además de las regionales, para que coincidan los usuarios de ese idioma de otras regiones.",
     "fix": "Añade un valor solo de idioma (por ejemplo, hreflang='es') que apunte a una de las páginas regionales para cubrir a los hablantes de otros países (México, EE. UU.).",
     "messages": {
-      "fail": "Todos los valores de {language} llevan región ({values}) y el grupo no tiene un valor {language} solo de idioma ni x-default, así que los hablantes de {language} de otros países no tienen ninguna versión que les corresponda."
+      "fail": "Todos los valores hreflang del idioma «{code}» llevan región ({values}) y el grupo no tiene un valor «{code}» solo de idioma ni x-default, así que quienes hablan ese idioma en otros países no tienen ninguna versión que les corresponda."
     }
   },
   "intl-hreflang-source-conflict": {
@@ -312,7 +312,7 @@
     "why": "Google recomienda un solo idioma por página para el contenido principal y la navegación, porque detecta el idioma de la página a partir del contenido visible y las páginas mixtas son más difíciles de emparejar con los usuarios.",
     "fix": "Usa un solo idioma para el contenido y la navegación de cada página. Pon las traducciones en URLs separadas.",
     "messages": {
-      "fail": "Aproximadamente el {share} % del contenido principal parece estar en {secondary} en una página que está mayoritariamente en {primary}. Confirma si es intencionado, como una cita o un texto legal bilingüe."
+      "fail": "Aproximadamente el {share, number, percent} del contenido principal parece estar en {secondary} en una página que está mayoritariamente en {primary}. Confirma si es intencionado, como una cita o un texto legal bilingüe."
     }
   },
   "intl-untranslated-variant": {
@@ -321,7 +321,7 @@
     "fix": "Traduce el contenido principal, o quita la configuración regional sin traducir de hreflang y canonicalízala al original.",
     "messages": {
       "fail": "{url} y {other} se declaran en idiomas distintos ({languages}), pero parecen sin traducir.",
-      "fail:near-identical": "{url} y {other} se declaran en idiomas distintos ({languages}), pero su contenido principal es idéntico en un {similarity} %.",
+      "fail:near-identical": "{url} y {other} se declaran en idiomas distintos ({languages}), pero su contenido principal es idéntico en un {similarity, number, percent}.",
       "fail:same-language": "{url} y {other} se declaran en idiomas distintos ({languages}), pero ambas parecen estar en {detected}."
     }
   },

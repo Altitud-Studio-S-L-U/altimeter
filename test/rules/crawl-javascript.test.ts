@@ -12,7 +12,8 @@ function run(id: string, facts: SiteFacts | SiteSpec) {
   const implementation = implementations.find(entry => entry.id === id);
   assert.ok(implementation, `${id} is implemented`);
   const { findings, evidence } = evaluate(implementation, facts.pages instanceof Map ? facts as SiteFacts : site(facts as SiteSpec));
-  return { finding: findings[0]!, findings, excerpts: (finding: Finding = findings[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? '') };
+  return { finding: findings[0]!, findings, excerpts: (finding: Finding = findings[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? ''),
+    labels: (finding: Finding = findings[0]!) => finding.evidence.map(ref => evidence.get(ref)?.label ?? '') };
 }
 
 function assertFail(finding: Finding, severity: Severity, reason?: string, needsJudgment = false) {
@@ -62,9 +63,10 @@ describe('crawl-robots-blocks-render-resources', () => {
   test('fails high when the page overflows the phone width only without the blocked stylesheet', () => {
     // Chrome widens innerWidth to the content, so only clientWidth still shows the 412 px layout viewport.
     const facts = one({ html: doc(body), rendered: { html: doc(body), blockedByRobots: [`${origin}/site.css`], scrollWidth: 1536 }, unblockedRender: doc(body) });
-    const { finding, excerpts } = run(id, facts);
+    const { finding, excerpts, labels } = run(id, facts);
     assertFail(finding, 'high', 'layout-break');
-    assert.deepEqual(excerpts(), [`${origin}/site.css`, '1536 > 412']);
+    assert.equal(excerpts()[0], `${origin}/site.css`);
+    assert.equal(labels()[1], 'page width without the blocked requests: 1536 px, wider than the 412 px viewport');
   });
   test('passes when the page overflows with and without the blocked requests', () => {
     const facts = one({ html: doc(body), rendered: { html: doc(body), blockedByRobots: [`${origin}/analytics.js`], scrollWidth: 900 }, unblockedRender: { html: doc(body), scrollWidth: 900 } });
@@ -129,9 +131,10 @@ describe('crawl-js-content-dependency', () => {
     assertOutcome(run(id, one({ html: doc(body), rendered })).finding, 'pass');
   });
   test('fails medium when most text comes from JavaScript', () => {
-    const { finding, excerpts } = run(id, one({ html: doc('<div id="app"></div>'), rendered: doc(body) }));
+    const { finding, labels } = run(id, one({ html: doc('<div id="app"></div>'), rendered: doc(body) }));
     assertFail(finding, 'medium', 'content-after-js');
-    assert.deepEqual(excerpts(), ['100%']);
+    assert.deepEqual(labels(), ['share of the rendered main text that the raw HTML lacks: 100%']);
+    assert.equal(finding.params?.share, 1);
   });
   test('fails medium when links come from JavaScript', () => {
     const links = Array.from({ length: 6 }, (_, index) => `<a href="/p/${index}">Item</a>`).join('');
@@ -164,9 +167,9 @@ describe('crawl-js-lazy-content', () => {
     assertOutcome(run(id, one({ html: doc(body), rendered, userRender: doc(body) })).finding, 'pass');
   });
   test('hands text that appears only after scrolling to the analyst', () => {
-    const { finding, excerpts } = run(id, one({ html: doc('<main></main>'), rendered: doc('<main><h1>Products</h1></main>'), userRender: doc(body) }));
+    const { finding, labels } = run(id, one({ html: doc('<main></main>'), rendered: doc('<main><h1>Products</h1></main>'), userRender: doc(body) }));
     assertFail(finding, 'medium', 'content-after-scroll', true);
-    assert.equal(excerpts()[0], '100%');
+    assert.equal(labels()[0], 'share of the text that appears only after scrolling: 100%');
   });
   test('reports images without a src as low', () => {
     const lazy = doc(`<main><p>${prose(10)}</p><img data-src="/a.jpg" alt="A"></main>`);
@@ -188,9 +191,9 @@ describe('crawl-dynamic-rendering', () => {
     assertOutcome(run(id, probes({ body: full }, { body: full })).finding, 'pass');
   });
   test('fails low when the crawler gets a prerendered page and the browser a shell', () => {
-    const { finding, excerpts } = run(id, probes({ body: full }, { body: doc('<div id="root"></div>') }));
+    const { finding, labels } = run(id, probes({ body: full }, { body: doc('<div id="root"></div>') }));
     assertFail(finding, 'low', 'prerendered-for-bots');
-    assert.deepEqual(excerpts(), ['81 | 0', '100% | 0%']);
+    assert.deepEqual(labels(), ['words in the HTML served to Googlebot Smartphone and to Chrome (mobile): 81 and 0', 'share of the Googlebot Smartphone text missing for Chrome (mobile), and the reverse: 100% and 0%']);
   });
   test('hands different content to the analyst', () => {
     assertFail(run(id, probes({ body: full }, { body: doc(`<main><p>${prose(80, 'offer')}</p></main>`) })).finding, 'low', 'different-content', true);

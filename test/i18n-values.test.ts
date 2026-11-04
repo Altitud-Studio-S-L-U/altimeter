@@ -34,7 +34,7 @@ describe('translating the values of messages and labels', () => {
 
   test('fills patterns whose parts are translated by their own names, without matching across list items', () => {
     assert.equal(localizeValue('es', 'conditions', 'lab, Lighthouse 13.6.0, mobile, simulate throttling'), 'laboratorio, Lighthouse 13.6.0, móvil, limitación simulada');
-    assert.equal(localizeValue('ca', 'metrics', 'LCP 3200 ms (needs improvement), CLS 0.31 (poor)'), 'LCP 3200 ms (cal millorar), CLS 0.31 (deficient)');
+    assert.equal(localizeValue('ca', 'metrics', 'LCP 3200 ms (needs improvement), CLS 0.31 (poor)'), 'LCP 3200 ms (cal millorar), CLS 0,31 (deficient)');
     assert.equal(localizeValue('es', 'entities', 'Tag Manager: main thread 120 ms, transfer 45 KiB; Widget: main thread 80 ms, transfer 30 KiB'),
       'Tag Manager: hilo principal 120 ms, transferencia 45 KiB; Widget: hilo principal 80 ms, transferencia 30 KiB');
     assert.equal(localizeValue('ca', 'operators', 'OpenAI (OAI-SearchBot blocked, GPTBot allowed) and 1 more'), 'OpenAI (OAI-SearchBot bloquejat, GPTBot permès) i 1 més');
@@ -52,6 +52,14 @@ describe('translating the values of messages and labels', () => {
     assert.equal(localizeValue('es', 'problem', 'svg'), 'svg');
   });
 
+  test('names what ended the head early for the hreflang rule, and leaves the site text the head rule quotes alone', () => {
+    const message = (language: 'es' | 'ca', cause: string) => findingMessage(language, 'intl-hreflang-outside-head', 'fail', 'raw-body', { count: 2, line: 7, cause });
+    assert.match(message('es', '<div> element')!, /línea 7 \(elemento <div>\)/u);
+    assert.match(message('ca', 'text content')!, /línia 7 \(contingut de text\)/u);
+    assert.match(message('es', 'not determined')!, /\(sin determinar\)/u);
+    assert.equal(localizeValue('es', 'cause', 'text content', 'crawl-head-invalid-element'), 'text content');
+  });
+
   test('gives a translated message translated values and the English message the English ones', () => {
     const params = { formFactor: 'PHONE', scope: 'origin-level', value: '3200 ms', band: 'poor' };
     assert.match(findingMessage('es', 'perf-crux-lcp-p75', 'fail', undefined, params)!, /en móvil \(datos de CrUX: nivel de origen\), en el rango «deficiente»/u);
@@ -65,7 +73,7 @@ describe('translating the values of messages and labels', () => {
 
   test('translates warnings as whole sentences, with a prefix before them', () => {
     const proxy = 'access.log: 85% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.';
-    assert.match(localizeValue('es', 'warning', `Crawler activity: ${proxy}`), /^Actividad de rastreadores: access\.log: el 85 % de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy/u);
+    assert.match(localizeValue('es', 'warning', `Crawler activity: ${proxy}`), /^Actividad de rastreadores: access\.log: el 85\u00a0% de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy/u);
     assert.equal(localizeValue('ca', 'warning', 'analyst call C3 (content) failed: no answer'), 'Crida C3 (analista, content) fallida: sense resposta');
     assert.equal(localizeValue('es', 'warning', 'Lighthouse did not complete: Target closed, retry'), 'Lighthouse no ha terminado: Target closed, retry');
     assert.equal(localizeValue('es', 'warning', 'A warning nobody translated yet.'), 'A warning nobody translated yet.');
@@ -107,7 +115,7 @@ describe('the value catalogs', () => {
     const normalize = (template: string) => template.replace(/\{[a-zA-Z][a-zA-Z0-9]*\}/gu, '{}');
     const known = new Set(Object.keys(valueCatalogs.en.warning ?? {}).map(normalize));
     // Warnings whose wording code picks from a few fixed variants; the catalog lists each variant.
-    for (const variants of ['{} could not be read: {}', '{} later request{} not sent after Bing Webmaster Tools throttled the requests.', '{} records no user agent{}, so crawlers cannot be identified in it.']) known.add(variants);
+    for (const variants of ['{} could not be read: {}', '{} later request{} not sent after Bing Webmaster Tools throttled the requests.', '{} records no user agent{}, so crawlers cannot be identified in it.', '{} analysis call{} left out to stay within the call limit.', 'Cloudflare keeps {} day{} of this data for the zone, so the window starts on {}.', 'Cloudflare allows {} hour{} per query and Altimeter makes at most {} queries per run, so only the data from {} was read.']) known.add(variants);
     const pushed = /(?:warnings\.push|unavailable\.push)\(\s*(?:'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`)\s*\)|\.\.\.collected\.warnings, (?:'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`)\]/gu;
     const missing: string[] = [];
     let checked = 0;
@@ -121,6 +129,26 @@ describe('the value catalogs', () => {
     }
     assert.ok(checked >= 20, `only ${checked} warnings found`);
     assert.deepEqual(missing, []);
+  });
+
+  test('know every progress line that code logs, so the terminal speaks the language of --lang', () => {
+    const normalize = (template: string) => template.replace(/\{[a-zA-Z][a-zA-Z0-9]*\}/gu, '{}');
+    const known = new Set(Object.keys(valueCatalogs.en.progress ?? {}).map(normalize));
+    known.add('Checking {} crawler address{} in reverse DNS');
+    const logged = /(?<!console\.)\blog(?:\?\.)?\(\s*(?:'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`)\s*\)/gu;
+    const missing: string[] = [];
+    let checked = 0;
+    for (const text of sources(sourceDirectory)) {
+      for (const match of text.matchAll(logged)) {
+        const template = (match[1] ?? match[2] ?? '').replace(/\\'/gu, '\'').replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/gu, '{}');
+        checked += 1;
+        if (!known.has(template)) missing.push(template);
+      }
+    }
+    assert.ok(checked >= 15, `only ${checked} progress lines found`);
+    assert.deepEqual(missing, []);
+    assert.equal(localizeValue('es', 'progress', 'Crawled 4/10'), 'Páginas rastreadas: 4/10');
+    assert.equal(localizeValue('ca', 'progress', 'Checking 1 crawler address in reverse DNS'), 'Comprovant 1 adreça de rastrejador al DNS invers');
   });
 
   test('know every parameter that holds a language name', () => {

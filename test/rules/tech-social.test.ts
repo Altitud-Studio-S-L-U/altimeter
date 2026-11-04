@@ -14,6 +14,10 @@ function excerpt(result: ReturnType<typeof evaluate>, finding: Finding, index = 
   return result.evidence.get(finding.evidence[index]!)?.excerpt;
 }
 
+function label(result: ReturnType<typeof evaluate>, finding: Finding, index = 0): string | undefined {
+  return result.evidence.get(finding.evidence[index]!)?.label;
+}
+
 function png(width: number, height: number, size = 33): Buffer {
   const bytes = Buffer.alloc(Math.max(size, 33));
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(bytes);
@@ -61,7 +65,8 @@ describe('tech-social-og-image', () => {
     const result = evaluate(socialOgImage, site({ pages: [page(url, { html: doc(og()) })], resources: [image(png(1200, 630))] }));
     const finding = outcomeOn(result.findings, url)!;
     assert.equal(finding.outcome, 'pass');
-    assert.match(excerpt(result, finding)!, /^200 image\/png png 1200x630/u);
+    assert.equal(excerpt(result, finding), '200 image/png');
+    assert.match(label(result, finding)!, /^og:image response \(png, 1200x630 px\) \(\d+ bytes\)$/u);
   });
 
   test('passes when several pages share one image', () => {

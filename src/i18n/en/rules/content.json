@@ -36,7 +36,7 @@
   "content-title-width": {
     "messages": {
       "fail": "The title length may lead to a rewrite or truncation.",
-      "fail:short": "The title has {characters} characters; very short titles are rewritten more often.",
+      "fail:short": "The title has {characters, plural, one {# character} other {# characters}}; very short titles are rewritten more often.",
       "fail:likely-truncated": "The title is about {width}px wide in Arial at 20px, so it is likely truncated on desktop results (an estimate, not a Google limit)."
     }
   },
@@ -62,7 +62,7 @@
       "fail": "The brand placement in the title could be improved.",
       "fail:brand-absent": "The title does not name the site (\"{brand}\"); Google may show the site name separately, so this is informational.",
       "fail:repeated": "The title names \"{brand}\" {count} times.",
-      "fail:brand-dominant": "The brand \"{brand}\" takes about {share}% of the title's width.",
+      "fail:brand-dominant": "The brand \"{brand}\" takes about {share, number, percent} of the title's width.",
       "fail:mid-title": "The brand \"{brand}\" sits in the middle of the title rather than at its start or end."
     }
   },
@@ -84,15 +84,15 @@
       "fail:placeholder": "The meta description contains an unfilled template placeholder.",
       "fail:same-as-title": "The meta description repeats the title instead of summarising the page.",
       "fail:keyword-list": "The meta description reads as a list of {segments} short phrases; the analyst should confirm whether it is a keyword list.",
-      "fail:short": "The meta description has {words} words; the analyst should confirm whether it summarises the page."
+      "fail:short": "The meta description has {words, plural, one {# word} other {# words}}; the analyst should confirm whether it summarises the page."
     }
   },
   "content-data-nosnippet-invalid": {
     "messages": {
       "fail": "data-nosnippet is used in a way Google does not honour as intended.",
-      "fail:unsupported-element": "{count} data-nosnippet attributes sit on elements Google does not honour ({tags}); only span, div and section are supported.",
-      "fail:added-by-javascript": "{count} data-nosnippet attributes are added by JavaScript to elements that exist in the server HTML without them.",
-      "fail:covers-main-content": "data-nosnippet elements hold about {share}% of the main content, so that text is kept out of snippets and AI Overviews input."
+      "fail:unsupported-element": "{count, plural, one {# data-nosnippet attribute sits on an element} other {# data-nosnippet attributes sit on elements}} Google does not honour ({tags}); only span, div and section are supported.",
+      "fail:added-by-javascript": "{count, plural, one {# data-nosnippet attribute is added by JavaScript to an element that exists in the server HTML without it.} other {# data-nosnippet attributes are added by JavaScript to elements that exist in the server HTML without them.}}",
+      "fail:covers-main-content": "data-nosnippet elements hold about {share, number, percent} of the main content, so that text is kept out of snippets and AI Overviews input."
     }
   },
   "content-image-preview-large": {
@@ -116,7 +116,7 @@
   },
   "content-heading-level-skips": {
     "messages": {
-      "fail": "Heading levels skip {count} times, first from {from} to {to} at \"{heading}\"; this affects accessibility, not ranking."
+      "fail": "Heading levels skip {count, plural, one {once} other {# times}}, first from {from} to {to} at \"{heading}\"; this affects accessibility, not ranking."
     }
   },
   "content-main-landmark": {
@@ -128,7 +128,7 @@
   },
   "content-boilerplate-ratio": {
     "messages": {
-      "fail": "{url} has {uniqueWords} words of page-specific text and {share}% template text; the analyst should judge whether the content meets the page's purpose."
+      "fail": "{url} has {uniqueWords, plural, one {# word} other {# words}} of page-specific text and {share, number, percent} template text; the analyst should judge whether the content meets the page's purpose."
     }
   },
   "content-filler-before-mc": {
@@ -138,7 +138,7 @@
   },
   "content-originality": {
     "messages": {
-      "fail": "{overlap}% of this page's main text also appears on {other}; the analyst should judge whether it is copied or legitimately shared."
+      "fail": "{overlap, number, percent} of this page's main text also appears on {other}; the analyst should judge whether it is copied or legitimately shared."
     }
   },
   "content-scaled-doorway": {
@@ -155,7 +155,7 @@
   },
   "content-hidden-text": {
     "messages": {
-      "fail": "{words} words in {blocks} text blocks are hidden from users ({reasons}); the analyst should judge whether this matches the hidden text policy."
+      "fail": "Text hidden from users: {words, plural, one {# word} other {# words}} in {blocks, plural, one {# block} other {# blocks}} ({reasons}); the analyst should judge whether this matches the hidden text policy."
     }
   },
   "content-hidden-links": {
@@ -186,9 +186,9 @@
   "content-hacked-signals": {
     "messages": {
       "fail": "Signs consistent with injected spam were found; the analyst should check them against the site's topic.",
-      "fail:spam-urls-in-sitemap": "{count} sitemap URLs carry vocabulary typical of injected spam.",
-      "fail:spam-vocabulary": "{count} links or passages carry vocabulary typical of injected spam.",
-      "fail:foreign-script-block": "{count} pages carry large blocks of Chinese, Japanese or Korean text unlike the rest of the site.",
+      "fail:spam-urls-in-sitemap": "{count, plural, one {# sitemap URL carries} other {# sitemap URLs carry}} vocabulary typical of injected spam.",
+      "fail:spam-vocabulary": "{count, plural, one {# link or passage carries} other {# links or passages carry}} vocabulary typical of injected spam.",
+      "fail:foreign-script-block": "{count, plural, one {# page carries} other {# pages carry}} large blocks of Chinese, Japanese or Korean text unlike the rest of the site.",
       "fail:cloaked-spam": "\"{term}\" is served to the Googlebot user agent but not to a browser user agent."
     }
   },
@@ -204,7 +204,7 @@
   },
   "content-ugc-link-qualifiers": {
     "messages": {
-      "fail": "{count} external links in user-generated content lack rel=\"ugc\" or rel=\"nofollow\"."
+      "fail": "{count, plural, one {# external link in user-generated content lacks} other {# external links in user-generated content lack}} rel=\"ugc\" or rel=\"nofollow\"."
     }
   },
   "content-link-schemes-visible": {
@@ -214,16 +214,16 @@
   },
   "content-anchor-text-empty": {
     "messages": {
-      "fail": "{count} links have no text, image alt or label.",
-      "fail:internal": "{count} links have no text, image alt or label, {internal} of them to pages on this site.",
-      "fail:external": "{count} external links have no text, image alt or label."
+      "fail": "{count, plural, one {# link has} other {# links have}} no text, image alt or label.",
+      "fail:internal": "{count, plural, one {# link has} other {# links have}} no text, image alt or label ({internal} to pages on this site).",
+      "fail:external": "{count, plural, one {# external link has} other {# external links have}} no text, image alt or label."
     }
   },
   "content-anchor-text-quality": {
     "messages": {
       "fail": "Some anchor texts do not describe their target.",
-      "fail:generic": "{count} links in the main content use generic text ({examples}) and no descriptive link to the same page exists.",
-      "fail:too-long": "{count} links have anchor text over 100 characters.",
+      "fail:generic": "{count, plural, one {# link in the main content uses} other {# links in the main content use}} generic text ({examples}) and no descriptive link to the same page exists.",
+      "fail:too-long": "{count, plural, one {# link has} other {# links have}} anchor text over 100 characters.",
       "fail:repeated": "The anchor \"{anchor}\" links to the same page {count} times."
     }
   },
@@ -234,19 +234,19 @@
   },
   "content-img-alt-missing": {
     "messages": {
-      "fail": "{count} of {total} images have no alt attribute ({emptyAlt} others have alt=\"\", which is correct for decorative images).",
-      "fail:content-image": "{count} of {total} images have no alt attribute, including content images in the main content ({emptyAlt} others have alt=\"\", which is correct for decorative images).",
-      "fail:other-image": "{count} of {total} images have no alt attribute ({emptyAlt} others have alt=\"\", which is correct for decorative images)."
+      "fail": "{count, plural, one {# of {total} images has} other {# of {total} images have}} no alt attribute (images with alt=\"\", which is correct for decorative images: {emptyAlt}).",
+      "fail:content-image": "{count, plural, one {# of {total} images has no alt attribute, a content image in the main content} other {# of {total} images have no alt attribute, including content images in the main content}} (images with alt=\"\", which is correct for decorative images: {emptyAlt}).",
+      "fail:other-image": "{count, plural, one {# of {total} images has} other {# of {total} images have}} no alt attribute (images with alt=\"\", which is correct for decorative images: {emptyAlt})."
     }
   },
   "content-img-alt-quality": {
     "messages": {
       "fail": "Some alt texts do not describe their image.",
-      "fail:filename": "{count} images use their file name or a camera name as alt text.",
-      "fail:generic": "{count} images have a generic one-word alt text; the analyst should check them in context.",
-      "fail:keyword-list": "{count} images have alt text made of a keyword list; the analyst should check them.",
+      "fail:filename": "{count, plural, one {# image uses its} other {# images use their}} file name or a camera name as alt text.",
+      "fail:generic": "{count, plural, one {# image has a generic one-word alt text; the analyst should check it in context.} other {# images have a generic one-word alt text; the analyst should check them in context.}}",
+      "fail:keyword-list": "{count, plural, one {# image has alt text made of a keyword list; the analyst should check it.} other {# images have alt text made of a keyword list; the analyst should check them.}}",
       "fail:repeated": "{count} different images share the alt text \"{alt}\"; the analyst should check them.",
-      "fail:too-long": "{count} images have alt text over 250 characters; the analyst should check them."
+      "fail:too-long": "{count, plural, one {# image has alt text over 250 characters; the analyst should check it.} other {# images have alt text over 250 characters; the analyst should check them.}}"
     }
   },
   "content-img-filename": {
@@ -263,13 +263,13 @@
   "content-img-format": {
     "messages": {
       "fail": "Some images use a format Google Images does not index.",
-      "fail:unsupported-format": "{count} images use a format Google Images does not index.",
+      "fail:unsupported-format": "{count, plural, one {# image uses} other {# images use}} a format Google Images does not index.",
       "fail:extension-mismatch": "{url} has a .{extension} extension but its bytes are {actual}."
     }
   },
   "content-img-lazy-misuse": {
     "messages": {
-      "fail": "{count} images load their real source only after scrolling, which Googlebot does not do."
+      "fail": "{count, plural, one {# image loads its} other {# images load their}} real source only after scrolling, which Googlebot does not do."
     }
   },
   "content-preferred-image": {
@@ -313,12 +313,12 @@
   },
   "content-stale-content": {
     "messages": {
-      "fail": "{count} statements on the page are dated to years before {year}; the analyst should judge whether the topic needs fresher information."
+      "fail": "{count, plural, one {# statement on the page is dated} other {# statements on the page are dated}} to years before {year}; the analyst should judge whether the topic needs fresher information."
     }
   },
   "content-gsc-low-ctr": {
     "messages": {
-      "fail": "{page} got {impressions} impressions at position {position} with a {ctr} CTR, against {expected} for the site at that position."
+      "fail": "{page} got {impressions} impressions at position {position, number, ::.0} with a {ctr, number, ::percent .0} CTR, against {expected, number, ::percent .0} for the site at that position."
     }
   },
   "content-gsc-cannibalization": {
@@ -328,17 +328,17 @@
   },
   "content-gsc-striking-distance": {
     "messages": {
-      "fail": "{count} queries rank in positions 11 to 20, for example \"{query}\" for {page} at position {position}."
+      "fail": "{count, plural, one {# query ranks} other {# queries rank}} in positions 11 to 20, for example \"{query}\" for {page} at position {position, number, ::.0}."
     }
   },
   "content-gsc-traffic-drop": {
     "messages": {
-      "fail": "{page} fell from {before} to {now} clicks against the previous 28 days."
+      "fail": "{page} fell from {before} to {now, plural, one {# click} other {# clicks}} against the previous 28 days."
     }
   },
   "content-bing-low-ctr": {
     "messages": {
-      "fail": "{page} got {impressions} Bing impressions at position {position} with a {ctr} CTR, against {expected} for the site's other pages at that position, from {start} to {end}."
+      "fail": "{page} got {impressions} Bing impressions at position {position, number, ::.0} with a {ctr, number, ::percent .0} CTR, against {expected, number, ::percent .0} for the site's other pages at that position, from {start} to {end}."
     }
   },
   "content-bing-ai-performance": {

@@ -4,11 +4,12 @@ import { parseArgs } from 'node:util';
 import type { SiteFacts } from '../core/facts.ts';
 import { HttpClient } from '../fetch/http.ts';
 import { languages, type Language } from '../i18n/messages.ts';
+import { localizeValue } from '../i18n/values.ts';
 import type { BotActivity, IpSource, LogFormat } from '../owner/bots/activity.ts';
 import { BotActivityError, collectBotActivity, type CollectBotActivityOptions, type FolderLogFile } from '../owner/bots/collect.ts';
 import { jsonFieldRoles, logFormats, type JsonFields } from '../owner/bots/formats.ts';
 import type { IpListOptions } from '../owner/bots/ip-ranges.ts';
-import { buildBotsReport, renderBotsMarkdown } from '../owner/bots/report.ts';
+import { botsSummary, buildBotsReport, renderBotsMarkdown } from '../owner/bots/report.ts';
 import { botSiteInput, fetchSiteFacts } from '../owner/bots/site.ts';
 import type { DnsResolver } from '../owner/bots/verify.ts';
 import { cleanLine } from '../report/sanitize.ts';
@@ -114,17 +115,6 @@ function siteOrigin(site: string | undefined, zone: string | undefined): string 
   return undefined;
 }
 
-function summary(activity: BotActivity): string[] {
-  const lines: string[] = [];
-  for (const bot of activity.bots.slice(0, 12)) {
-    const counts = !bot.verifiable && bot.verified.hits === 0
-      ? `${Math.round(bot.unverified.hits)} claimed, no published check`
-      : `${Math.round(bot.verified.hits)} verified, ${Math.round(bot.unverified.hits)} unverified, ${Math.round(bot.spoofed.hits)} spoofed`;
-    lines.push(`  ${bot.name} (${bot.operator}, ${bot.purpose}): ${counts}${activity.sampled ? ' (estimates)' : ''}`);
-  }
-  return lines;
-}
-
 /** `altimeter bots`: reads crawler activity, evaluates the crawler rules and writes bots.json and bots.md. */
 export async function botsCommand(args: string[], context: BotsCommandContext = {}): Promise<number> {
   const out = context.stdout ?? ((text: string) => void process.stdout.write(text));
@@ -160,7 +150,7 @@ export async function botsCommand(args: string[], context: BotsCommandContext = 
   if (files.length === 0 && zone === undefined) throw new BotsUsageError('bots needs --cloudflare-zone or --logs. Run "altimeter bots --help".');
   const origin = siteOrigin(values.site, zone);
   const quiet = values.quiet === true;
-  const log = quiet ? undefined : (message: string) => err(`· ${cleanLine(message)}\n`);
+  const log = quiet ? undefined : (message: string) => err(`· ${cleanLine(localizeValue(language, 'progress', message))}\n`);
   const client = context.client ?? new HttpClient(values['allow-private-network'] ? { policy: { allowPrivate: true } } : {});
   try {
     let site: SiteFacts | undefined;
@@ -197,13 +187,8 @@ export async function botsCommand(args: string[], context: BotsCommandContext = 
     if (quiet) {
       out(`${shown}\n`);
     } else {
-      const failures = report.findings.filter(finding => finding.outcome === 'fail').length;
-      out([
-        `\nCrawler activity from ${activity.window.start.slice(0, 10)} to ${activity.window.end.slice(0, 10)}${activity.sampled ? ' (Cloudflare counts are estimates)' : ''}`,
-        ...(activity.bots.length > 0 ? summary(activity) : ['  No request from a known crawler.']),
-        `${failures} finding(s) · ${shown}${process.platform === 'win32' ? '\\' : '/'}bots.md`, '',
-      ].join('\n'));
-      for (const warning of activity.warnings) err(`! ${cleanLine(warning, 400)}\n`);
+      out(botsSummary(report, `${shown}${process.platform === 'win32' ? '\\' : '/'}bots.md`, language).join('\n'));
+      for (const warning of activity.warnings) err(`! ${cleanLine(localizeValue(language, 'warning', warning), 400)}\n`);
     }
     return 0;
   } finally {

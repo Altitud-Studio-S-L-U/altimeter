@@ -59,7 +59,7 @@ const canonicalPresence: RuleImplementation = {
     if (declared.length > 0) return passed([citeTarget(evidence, url, declared[0]!)]);
     const own = new Set(urlVariants(url).map(variant => variant.url));
     const duplicates = site.variants.filter(variant => own.has(variant.url) && variant.fetch.status === 200 && variant.fetch.hops.length === 1);
-    const ids = [evidence.add({ kind: 'html', url, label: evidenceLabel('canonical declarations found in the raw HTML, rendered DOM and Link header'), excerpt: '(none)' })];
+    const ids = [evidence.add({ kind: 'html', url, label: evidenceLabel('no canonical declaration in the raw HTML, the rendered DOM or a Link header') })];
     for (const variant of duplicates.slice(0, 3)) ids.push(evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('URL variant ({variant}) answering 200 without a redirect', { variant: variant.label }), excerpt: `HTTP ${variant.fetch.status}` }));
     return failure({ severity: duplicates.length > 0 ? 'medium' : 'low', evidence: ids, reason: duplicates.length > 0 ? 'duplicates-answer' : 'missing', params: { url, variants: duplicates.length } });
   },
@@ -94,10 +94,10 @@ const canonicalJsChanged: RuleImplementation = {
     if (!raw && !rendered) return notApplicable('no-canonical');
     if (raw && rendered && (raw.url ?? raw.href) === (rendered.url ?? rendered.href)) return passed([citeTarget(evidence, url, raw)]);
     if (raw && !rendered) {
-      const none = evidence.add({ kind: 'render', url, label: evidenceLabel('rel=canonical in the rendered DOM'), excerpt: '(none)' });
-      return failure({ severity: 'high', evidence: [citeTarget(evidence, url, raw), none], reason: 'removed', params: { url, raw: raw.href, rendered: '(none)' } });
+      const none = evidence.add({ kind: 'render', url, label: evidenceLabel('no rel=canonical in the rendered DOM') });
+      return failure({ severity: 'high', evidence: [citeTarget(evidence, url, raw), none], reason: 'removed', params: { url, raw: raw.href } });
     }
-    if (!raw) return failure({ severity: 'low', evidence: [citeTarget(evidence, url, rendered!)], reason: 'added', params: { url, raw: '(none)', rendered: rendered!.href } });
+    if (!raw) return failure({ severity: 'low', evidence: [citeTarget(evidence, url, rendered!)], reason: 'added', params: { url, rendered: rendered!.href } });
     return failure({ severity: 'high', evidence: [citeTarget(evidence, url, raw), citeTarget(evidence, url, rendered!)], reason: 'changed', params: { url, raw: raw.href, rendered: rendered!.href } });
   },
 };
@@ -347,7 +347,7 @@ const canonicalSignalConsistency: RuleImplementation = {
         const toCanonical = graph.inlinks.get(canonical)?.length ?? 0;
         const toMembers = members.reduce((sum, member) => sum + (graph.inlinks.get(member)?.length ?? 0), 0);
         if (toMembers > toCanonical) {
-          const ids = [evidence.add({ kind: 'crawl', url: canonical, label: evidenceLabel('internal links to the canonical URL and to the URLs that name it as canonical'), excerpt: `${toCanonical} vs ${toMembers}` })];
+          const ids = [evidence.add({ kind: 'crawl', url: canonical, label: evidenceLabel('internal links to the canonical URL ({canonical}) and to the URLs that name it as canonical ({others})', { canonical: toCanonical, others: toMembers }) })];
           results.push(failure({ severity: 'medium', evidence: ids, reason: 'links-to-non-canonical', params: { url: canonical, canonicalLinks: toCanonical, otherLinks: toMembers } }));
         }
       }

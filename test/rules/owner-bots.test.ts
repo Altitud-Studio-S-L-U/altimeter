@@ -17,7 +17,8 @@ const robotsTxt = 'User-agent: *\nDisallow: /private/\n\nUser-agent: GPTBot\nDis
 function check(id: string, data: BotActivity, extra: Partial<SiteSpec> = {}) {
   const result = evaluate(rule(id), site({ origin, pages: [], robots: robotsTxt, sitemaps: [{ url: `${origin}/sitemap.xml`, xml: sitemapXml }], owner: { bots: data }, ...extra }));
   const excerpts = (finding: Finding | undefined) => (finding?.evidence ?? []).map(entry => result.evidence.get(entry)?.excerpt ?? '');
-  return { findings: result.findings, first: result.findings[0], excerpts };
+  const labels = (finding: Finding | undefined) => (finding?.evidence ?? []).map(entry => result.evidence.get(entry)?.label ?? '');
+  return { findings: result.findings, first: result.findings[0], excerpts, labels };
 }
 
 /** The finding's English message, which must leave no placeholder unfilled. */
@@ -36,11 +37,12 @@ const meta = (overrides: Partial<BotSummary> = {}) => botSummary({ id: 'meta-ext
 
 describe('ai-bots-crawl-activity', () => {
   test('reports verified AI crawlers and keeps unverifiable operators as claims', () => {
-    const { first, excerpts } = check('ai-bots-crawl-activity', activity({ bots: [gptbot({ verified: verified(10), robotsTxt: 2 }), meta({ unverified: tally({ hits: 3 }) }), googlebot({ verified: verified(50) })] }));
+    const { first, excerpts, labels } = check('ai-bots-crawl-activity', activity({ bots: [gptbot({ verified: verified(10), robotsTxt: 2 }), meta({ unverified: tally({ hits: 3 }) }), googlebot({ verified: verified(50) })] }));
     assert.deepEqual([first?.outcome, first?.severity, first?.reason, first?.params], ['fail', 'info', 'seen', { verified: 10, crawlers: 'GPTBot', claims: 3 }]);
     assert.equal(message(first), 'Verified AI crawlers fetched the site 10 times in the window (GPTBot); 3 more requests used AI crawler user agents without being verified.');
-    assert.match(excerpts(first)[0]!, /meta-externalagent \(Meta, training\): 3 claimed requests; the operator publishes no way to verify them/u);
-    assert.match(excerpts(first)[1]!, /Google-Extended \(Google\)\nApplebot-Extended \(Apple\)/u);
+    assert.match(labels(first)[0]!, /^GPTBot \(OpenAI, training\), from \S+ to \S+: verified requests: 10; unverified: 0; spoofed: 0; last verified: \S+; robots\.txt: 2;/u);
+    assert.match(labels(first)[1]!, /^meta-externalagent \(Meta, training\), from \S+ to \S+: claimed requests: 3; the operator publishes no way to verify them$/u);
+    assert.match(excerpts(first)[2]!, /Google-Extended \(Google\)\nApplebot-Extended \(Apple\)/u);
     assert.equal(first?.origin, 'owner-data');
   });
 
@@ -65,10 +67,10 @@ describe('ai-bots-blocked-at-edge', () => {
 
   test('grades refusals of a verified search crawler that robots.txt allows', () => {
     const medium = check('ai-bots-blocked-at-edge', activity({ bots: [refused({ 403: 8, 200: 2 })] })).first;
-    assert.deepEqual([medium?.severity, medium?.reason, medium?.params], ['medium', 'refused', { agent: 'OAI-SearchBot', blocked: 8, total: 10, share: '80%', statuses: '403 x8' }]);
+    assert.deepEqual([medium?.severity, medium?.reason, medium?.params], ['medium', 'refused', { agent: 'OAI-SearchBot', blocked: 8, total: 10, share: 0.8, statuses: '403 x8' }]);
     assert.match(message(medium), /Verified OAI-SearchBot requests were refused 8 of 10 times/u);
     const low = check('ai-bots-blocked-at-edge', activity({ bots: [refused({ 429: 3, 200: 37 })] })).first;
-    assert.deepEqual([low?.severity, low?.params?.share], ['low', '8%']);
+    assert.deepEqual([low?.severity, low?.params?.share], ['low', 0.075]);
     const charged = check('ai-bots-blocked-at-edge', activity({ bots: [refused({ 402: 6, 200: 4 })] })).first;
     assert.deepEqual([charged?.severity, charged?.reason], ['medium', 'payment-required']);
     message(charged);
@@ -139,7 +141,7 @@ describe('crawl-bots-blocked-at-edge', () => {
 
   test('grades refusals of verified Googlebot from high to low', () => {
     const high = check('crawl-bots-blocked-at-edge', activity({ bots: [engine({ 403: 15, 200: 5 })] })).first;
-    assert.deepEqual([high?.severity, high?.reason, high?.params], ['high', 'refused', { agent: 'Googlebot', count: 15, total: 20, share: '75%', statuses: '403 x15' }]);
+    assert.deepEqual([high?.severity, high?.reason, high?.params], ['high', 'refused', { agent: 'Googlebot', count: 15, total: 20, share: 0.75, statuses: '403 x15' }]);
     assert.match(message(high), /Verified Googlebot requests were refused 15 of 20 times/u);
     assert.equal(check('crawl-bots-blocked-at-edge', activity({ bots: [engine({ 403: 5, 200: 40 })] })).first?.severity, 'medium');
     assert.equal(check('crawl-bots-blocked-at-edge', activity({ bots: [engine({ 429: 3, 200: 97 })] })).first?.severity, 'low');
@@ -169,7 +171,7 @@ describe('crawl-bots-robots-compliance', () => {
   test('reports a verified crawler fetching disallowed paths, quoting the rule', () => {
     const { first, excerpts } = check('crawl-bots-robots-compliance', activity({ bots: [compliant(4)] }));
     assert.deepEqual([first?.severity, first?.reason, first?.params], ['low', 'disallowed', { agent: 'GPTBot', count: 4, hours: 24, since: '2026-09-01' }]);
-    assert.deepEqual(excerpts(first), ['/en/team/x (4 requests, last 2026-10-20)', 'Disallow: /en/team/']);
+    assert.deepEqual(excerpts(first), ['/en/team/x (4, 2026-10-20)', 'Disallow: /en/team/']);
     message(first);
   });
 
@@ -195,7 +197,7 @@ describe('crawl-bots-googlebot-sitemap-coverage', () => {
   test('passes full coverage and grades partial and low coverage', () => {
     assert.equal(check('crawl-bots-googlebot-sitemap-coverage', activity({ bots: [covered(4)] })).first?.outcome, 'pass');
     const partial = check('crawl-bots-googlebot-sitemap-coverage', activity({ bots: [covered(3)] }));
-    assert.deepEqual([partial.first?.severity, partial.first?.reason, partial.first?.params], ['info', 'partial-coverage', { days: 29, fetched: 3, urls: 4, share: '75%' }]);
+    assert.deepEqual([partial.first?.severity, partial.first?.reason, partial.first?.params], ['info', 'partial-coverage', { days: 29, fetched: 3, urls: 4, share: 0.75 }]);
     assert.deepEqual(partial.excerpts(partial.first)[1], `${origin}/en/contact/`);
     const low = check('crawl-bots-googlebot-sitemap-coverage', activity({ bots: [covered(1)] })).first;
     assert.deepEqual([low?.severity, low?.reason], ['low', 'low-coverage']);
@@ -221,7 +223,7 @@ describe('crawl-bots-googlebot-sitemap-coverage', () => {
 describe('crawl-bots-spoofed-crawlers', () => {
   test('reports impostors the edge serves as low and impostors it refuses as info', () => {
     const served = check('crawl-bots-spoofed-crawlers', activity({ bots: [googlebot({ verified: verified(50), spoofed: tally({ hits: 30, statuses: { 200: 30 } }) })] })).first;
-    assert.deepEqual([served?.severity, served?.reason, served?.params], ['low', 'served', { spoofed: 30, checked: 80, share: '38%', served: 30, agents: 'Googlebot' }]);
+    assert.deepEqual([served?.severity, served?.reason, served?.params], ['low', 'served', { spoofed: 30, checked: 80, share: 0.375, served: 30, agents: 'Googlebot' }]);
     assert.match(message(served), /30 of 80 checked crawler requests failed their operators' checks/u);
     const refused = check('crawl-bots-spoofed-crawlers', activity({ bots: [googlebot({ verified: verified(50), spoofed: tally({ hits: 30, statuses: { 403: 30 } }) })] })).first;
     assert.deepEqual([refused?.severity, refused?.reason], ['info', 'refused']);

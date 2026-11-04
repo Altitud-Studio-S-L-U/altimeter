@@ -157,7 +157,7 @@ export const mixedLanguagePage: RuleImplementation = {
       ...otherEntry.samples.map(sample => evidence.add({ kind: 'text', url: page!.fetch.finalUrl, label: evidenceLabel('main-content block detected as {language}', { language: languageLabel(other) }), excerpt: sample.slice(0, 300) })),
       evidence.add({ kind: 'text', url: page!.fetch.finalUrl, label: evidenceLabel('main-content block detected as {language}', { language: languageLabel(primary) }), excerpt: primaryEntry.samples[0]!.slice(0, 300) }),
     ];
-    return fail('medium', ids, { primary: languageLabel(primary), secondary: languageLabel(other), share: Math.round((otherEntry.count / total) * 100) }, undefined, true);
+    return fail('medium', ids, { primary: languageLabel(primary), secondary: languageLabel(other), share: otherEntry.count / total }, undefined, true);
   },
 };
 
@@ -191,7 +191,7 @@ export const untranslatedVariant: RuleImplementation = {
         if (a.languages.some(x => b.languages.some(y => sameLanguage(x, y)))) continue;
         compared += 1;
         const similarity = a.language.guess.words >= 50 && b.language.guess.words >= 50 ? jaccard(a.shingles, b.shingles) : 0;
-        const params = { url: a.url, other: b.url, languages: `${list(a.languages)} / ${list(b.languages)}`, similarity: Math.round(similarity * 100) };
+        const params = { url: a.url, other: b.url, languages: `${list(a.languages)} / ${list(b.languages)}`, similarity };
         const ids = () => [languageEvidence(evidence, a.url, a.language), languageEvidence(evidence, b.url, b.language)];
         if (similarity >= 0.9) {
           results.push(fail('medium', ids(), params, 'near-identical'));
@@ -267,7 +267,7 @@ export const metadataTranslationParity: RuleImplementation = {
       for (const field of candidates) {
         const guess = detectLanguage(field.text);
         if (guess.language === 'und' || guess.confidence < 0.9 || sameLanguage(guess.language, pageCode)) continue;
-        results.push(fail('medium', [evidence.add({ kind: 'html', url: self, label: evidenceLabel('{field} detected as {language} (confidence {confidence})', { field: field.name, language: languageLabel(guess.language), confidence: guess.confidence.toFixed(2) }), excerpt: field.excerpt, ...(field.line ? { line: field.line } : {}) })],
+        results.push(fail('medium', [evidence.add({ kind: 'html', url: self, label: evidenceLabel('{field} detected as {language} (confidence {confidence, number, ::.00})', { field: field.name, language: languageLabel(guess.language), confidence: guess.confidence }), excerpt: field.excerpt, ...(field.line ? { line: field.line } : {}) })],
           { field: field.name, detected: languageLabel(guess.language), expected: languageLabel(pageCode) }, 'field-language', needsConfirmation(guess.language, pageCode)));
       }
     }

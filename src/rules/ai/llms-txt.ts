@@ -38,7 +38,10 @@ const llmsTxt: RuleImplementation = {
     const text = fetch.body.toString('utf8');
     const shape = llmsTxtShape(text);
     const url = fetch.finalUrl;
-    const fileEvidence = evidence.add({ kind: 'http', url, label: evidenceLabel('llms.txt response'), excerpt: `HTTP 200; content-type: ${type || '(none)'}\n${clip(text.trim(), 300)}` });
+    const fileEvidence = evidence.add({
+      kind: 'http', url, excerpt: clip(text.trim(), 300),
+      label: type ? evidenceLabel('llms.txt response, served as {type}', { type }) : evidenceLabel('llms.txt response, served without a Content-Type header'),
+    });
     const results: RuleResult[] = [];
     if (!/^text\/(?:plain|markdown)\b/iu.test(type)) {
       results.push({ outcome: 'fail', severity: 'info', reason: 'content-type', evidence: [fileEvidence], params: { contentType: type || '(none)' } });

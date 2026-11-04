@@ -44,8 +44,8 @@ export const organization: RuleImplementation = {
     const home = located[0]!;
     if (candidates.length === 0) {
       return report([{ reason: 'missing', severity: 'low', subject: 'Organization',
-        evidence: context.evidence.add({ kind: 'structured-data', url: home.page.fetch.finalUrl, label: evidenceLabel('no Organization markup on the home or about page'),
-          excerpt: `${home.graph.nodes.length} structured data items` }) }]);
+        evidence: context.evidence.add({ kind: 'structured-data', url: home.page.fetch.finalUrl,
+          label: evidenceLabel('no Organization markup on the home or about page (structured data items found: {count})', { count: home.graph.nodes.length }) }) }]);
     }
     const siteHost = hostOf(home.page.fetch.finalUrl);
     const owners = candidates.filter(entry => isSiteOwner(entry.graph, entry.node));
@@ -79,16 +79,24 @@ export const organizationLogo: RuleImplementation = {
     let fetchedAny = false;
     for (const { graph, node, url } of unique) {
       const blocked = blockedForImages(context.site, url);
-      const add = (reason: string, label: EvidenceLabel, excerpt: string) => problems.push({ reason, severity: 'medium', subject: url,
-        evidence: context.evidence.add({ kind: reason === 'blocked' ? 'robots' : 'http', url, label, excerpt }), also: [cite(context, graph, node, evidenceLabel('Organization logo'), 'logo', url)] });
+      const add = (reason: string, label: EvidenceLabel, excerpt?: string) => problems.push({ reason, severity: 'medium', subject: url,
+        evidence: context.evidence.add({ kind: reason === 'blocked' ? 'robots' : 'http', url, label, ...(excerpt === undefined ? {} : { excerpt }) }), also: [cite(context, graph, node, evidenceLabel('Organization logo'), 'logo', url)] });
       if (blocked) add('blocked', evidenceLabel('robots.txt rule that disallows the logo for Googlebot-Image'), blocked);
       const resource = context.site.resources.find(entry => entry.url === url);
       if (!resource) continue;
       fetchedAny = true;
       const type = resource.fetch.headers['content-type']?.[0] ?? '';
-      if (resource.fetch.status !== 200) { add('not-200', evidenceLabel('response for the logo'), `${resource.fetch.status ?? resource.fetch.error?.code ?? 'no response'}`); continue; }
+      if (resource.fetch.status !== 200) {
+        if (resource.fetch.status === undefined) add('not-200', evidenceLabel('request for the logo that got no response ({fetchError})', { fetchError: resource.fetch.error?.code ?? 'connection' }));
+        else add('not-200', evidenceLabel('response for the logo'), `HTTP ${resource.fetch.status}`);
+        continue;
+      }
       const info = imageInfo(resource.fetch.body);
-      if (!info) { add('not-image', evidenceLabel('logo response that is not a supported image'), type || 'no content-type'); continue; }
+      if (!info) {
+        if (type) add('not-image', evidenceLabel('logo response that is not a supported image'), type);
+        else add('not-image', evidenceLabel('logo response without a Content-Type header that is not a supported image'));
+        continue;
+      }
       if (info.width === undefined || info.height === undefined) { unmeasured = info.format; continue; }
       if (info.width < 112 || info.height < 112) add('too-small', evidenceLabel('pixel size of the logo'), `${info.width}x${info.height} ${info.format}`);
     }
@@ -183,8 +191,8 @@ export const siteNameWebsite: RuleImplementation = {
     const problems: Problem[] = [];
     if (named.length === 0) {
       return report([{ reason: 'missing', severity: 'low', subject: 'WebSite',
-        evidence: context.evidence.add({ kind: 'structured-data', url: home.fetch.finalUrl, label: evidenceLabel('no WebSite item with a name on the home page Googlebot reaches'),
-          excerpt: `${websites.length} WebSite items` }) }]);
+        evidence: context.evidence.add({ kind: 'structured-data', url: home.fetch.finalUrl,
+          label: evidenceLabel('no WebSite item with a name on the home page Googlebot reaches (WebSite items found: {count})', { count: websites.length }) }) }]);
     }
     if (distinct.length > 1) {
       problems.push({ reason: 'several-websites', severity: 'medium', subject: `${distinct.length} WebSite`, evidence: cite(context, graph, distinct[0]!, evidenceLabel('WebSite item')),

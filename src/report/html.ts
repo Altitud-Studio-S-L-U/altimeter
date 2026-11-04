@@ -6,7 +6,7 @@ import { evidenceLabelText } from '../i18n/evidence.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
 import { localizeValue } from '../i18n/values.ts';
-import { aiFindingMessage, analysisSummary, evidenceWhere, formulaText, listedFailures, mythsListUrl, pageTypeText, providerLabel, ruleTitle } from './markdown.ts';
+import { aiFindingMessage, analysisSummary, evidenceWhere, formulaText, listedFailures, mythsListUrl, notEvaluatedText, pageTypeText, providerLabel, ruleTitle } from './markdown.ts';
 import type { Report, ReportFinding } from './model.ts';
 import { escapeHtml } from './sanitize.ts';
 
@@ -89,7 +89,7 @@ function findingHtml(finding: ReportFinding, language: Language, evidence: Map<s
     const location = evidenceWhere(item!, language);
     return `<li>${escapeHtml(evidenceLabelText(language, item!))}${location ? ` <span class="where">(${escapeHtml(location)})</span>` : ''}${item!.excerpt !== undefined ? `<br><code>${escapeHtml(item!.excerpt.slice(0, 400))}</code>` : ''}</li>`;
   }).join('');
-  const sources = (rule?.sources ?? []).slice(0, 3).map(source => `<li>${safeHttpsLink(source.url, source.url)} <span class="where">(${escapeHtml(format(t.verified, { date: source.verified }))})</span></li>`).join('');
+  const sources = (rule?.sources ?? []).slice(0, 3).map(source => `<li>${safeHttpsLink(source.url, source.url)} <span class="where">(${escapeHtml(format(t.verified, { date: source.verified }, language))})</span></li>`).join('');
   return `<details class="finding" data-finding data-category="${escapeHtml(finding.category)}" data-severity="${escapeHtml(severity)}">
 <summary><b class="sev-${escapeHtml(severity)}">${escapeHtml(t.severities[severity])}</b><span>${escapeHtml(texts.title)}</span><span class="where">${escapeHtml(where)}${finding.judgment === 'confirmed' ? ` · ${escapeHtml(t.analysis.confirmedMark)}` : ''}</span></summary>
 <div class="body"><p>${escapeHtml(message)}</p>${items ? `<p><b>${escapeHtml(t.evidence)}</b></p><ul>${items}</ul>` : ''}
@@ -115,7 +115,7 @@ function analysisHtml(analysis: ReportAnalysis, language: Language, findings: re
   const t = ui(language);
   const a = t.analysis;
   const parts = [`<h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.intro)}</p>`];
-  parts.push(`<p class="where">${escapeHtml(format(a.by, { analyst: providerLabel(analysis.provider.analyst, a.nobody), verifier: providerLabel(analysis.provider.verifier, a.nobody), pages: analysis.pages.join(', ') || '-' }))}<br>${escapeHtml(analysisSummary(analysis, language))}</p>`);
+  parts.push(`<p class="where">${escapeHtml(format(a.by, { analyst: providerLabel(analysis.provider.analyst, a.nobody), verifier: providerLabel(analysis.provider.verifier, a.nobody), pages: analysis.pages.join(', ') || '-' }, language))}<br>${escapeHtml(analysisSummary(analysis, language))}</p>`);
   const failures = analysis.findings.filter(finding => finding.outcome === 'fail');
   parts.push(`<h3>${escapeHtml(a.verified)}</h3>${failures.length === 0 ? `<p class="where">${escapeHtml(a.none)}</p>` : failures.map(finding => aiFindingHtml(finding, language, findings)).join('')}`);
   if (analysis.confirmations.length > 0) {
@@ -186,17 +186,17 @@ export function renderHtml(report: Report, language: Language): string {
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
-<title>${escapeHtml(format(t.reportTitle, { site: host }))}</title>
+<title>${escapeHtml(format(t.reportTitle, { site: host }, language))}</title>
 <style>${style}</style>
 </head>
 <body>
 <main>
-<header><h1>${escapeHtml(format(t.reportTitle, { site: host }))}</h1>
-<p class="meta">${escapeHtml(t.audited)}: ${escapeHtml(report.target.url)} · ${escapeHtml(format(t.generated, { version: report.tool.version, date: report.run.startedAt.slice(0, 10) }))}</p></header>
+<header><h1>${escapeHtml(format(t.reportTitle, { site: host }, language))}</h1>
+<p class="meta">${escapeHtml(t.audited)}: ${escapeHtml(report.target.url)} · ${escapeHtml(format(t.generated, { version: report.tool.version, date: report.run.startedAt.slice(0, 10) }, language))}</p></header>
 <h2>${escapeHtml(t.summary)}</h2>
 <div class="panel"><div class="summary"><div class="overall"><b>${escapeHtml(String(report.score.overall ?? '–'))}</b><span>${escapeHtml(t.overall)}</span></div><div class="bars">${bars}</div></div>
 <p class="gate"><span class="pill">${escapeHtml(t.indexability)}</span> ${escapeHtml(t.indexabilityStates[report.score.indexability])}</p>
-<p class="where">${escapeHtml(format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable }))}</p>
+<p class="where">${escapeHtml(format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable }, language))}</p>
 ${report.run.warnings.length > 0 ? `<p class="where">${report.run.warnings.map(warning => escapeHtml(localizeValue(language, 'warning', warning))).join('<br>')}</p>` : ''}</div>
 <h2>${escapeHtml(t.topActions)}</h2>
 ${tasks ? `<ol class="tasks">${tasks}</ol>` : `<p>${escapeHtml(t.noActions)}</p>`}
@@ -206,13 +206,13 @@ ${tasks ? `<ol class="tasks">${tasks}</ol>` : `<p>${escapeHtml(t.noActions)}</p>
 ${sections}
 ${pending.length > 0 ? `<h2>${escapeHtml(t.pendingReview)}</h2><p class="where">${escapeHtml(t.pendingReviewIntro)}</p><ul>${pending.map(finding => `<li>${escapeHtml(ruleTitle(language, finding.ruleId, finding.title))} <span class="where">${escapeHtml(finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin)}</span></li>`).join('')}</ul>` : ''}
 ${report.ai ? analysisHtml(report.ai, language, report.findings) : ''}
-${notEvaluated.size > 0 ? `<h2>${escapeHtml(t.notEvaluated)}</h2><ul>${[...notEvaluated].sort((a, b) => b[1] - a[1]).map(([reason, count]) => `<li><code>${escapeHtml(reason)}</code>: ${count}</li>`).join('')}</ul>` : ''}
+${notEvaluated.size > 0 ? `<h2>${escapeHtml(t.notEvaluated)}</h2><ul>${[...notEvaluated].sort((a, b) => b[1] - a[1]).map(([reason, count]) => { const text = notEvaluatedText(reason, language); return `<li>${text === undefined ? `<code>${escapeHtml(reason)}</code>` : escapeHtml(text)}: ${count}</li>`; }).join('')}</ul>` : ''}
 <h2>${escapeHtml(t.pages)}</h2>
 <div class="panel"><table><thead><tr><th>${escapeHtml(t.page)}</th><th>${escapeHtml(t.status)}</th><th>${escapeHtml(t.type)}</th><th>${escapeHtml(t.rendered)}</th></tr></thead><tbody>${pages}</tbody></table></div>
 <h2>${escapeHtml(t.method)}</h2>
 <p>${escapeHtml(t.methodIntro)}</p><p class="where">${escapeHtml(formulaText(report, language))}</p>
-<p class="where">${escapeHtml(format(t.mythsLine, { count: myths.length }))} ${safeHttpsLink(mythsListUrl, mythsListUrl)}</p>
-<p class="where">${escapeHtml(format(t.catalogLine, { implemented: report.catalog.implemented, rules: report.catalog.rules })).replace('{hash}', () => `<code>${escapeHtml(report.catalog.hash.slice(0, 12))}</code>`)} · Node ${escapeHtml(report.run.versions.node)}${report.run.versions.chrome ? ` · ${escapeHtml(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${escapeHtml(report.run.versions.lighthouse)}` : ''}</p>
+<p class="where">${escapeHtml(format(t.mythsLine, { count: myths.length }, language))} ${safeHttpsLink(mythsListUrl, mythsListUrl)}</p>
+<p class="where">${escapeHtml(format(t.catalogLine, { implemented: report.catalog.implemented, rules: report.catalog.rules }, language)).replace('{hash}', () => `<code>${escapeHtml(report.catalog.hash.slice(0, 12))}</code>`)} · Node ${escapeHtml(report.run.versions.node)}${report.run.versions.chrome ? ` · ${escapeHtml(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${escapeHtml(report.run.versions.lighthouse)}` : ''}</p>
 </main>
 <script>${script}</script>
 </body>

@@ -49,7 +49,7 @@ interface LabMetric {
   readonly field: string;
   /** Returns the severity of a lab value, or undefined when it passes. */
   readonly grade: (value: number, summary: LighthouseSummary) => Severity | undefined;
-  readonly format: (value: number) => string;
+  readonly format: (value: number) => string | number;
 }
 
 function hasFieldValue(page: PageFacts, summary: LighthouseSummary, metric: string): boolean {
@@ -90,7 +90,7 @@ export const labTbt = labMetricRule({
 });
 
 export const labCls = labMetricRule({
-  id: 'perf-lab-cls', audit: 'cumulative-layout-shift', label: 'Cumulative Layout Shift', field: clsMetric.name, format: value => value.toFixed(3),
+  id: 'perf-lab-cls', audit: 'cumulative-layout-shift', label: 'Cumulative Layout Shift', field: clsMetric.name, format: value => Math.round(value * 1000) / 1000,
   grade: value => (value > clsMetric.poor ? 'medium' : value > clsMetric.good ? 'low' : undefined),
 });
 
