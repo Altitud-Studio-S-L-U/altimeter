@@ -51,7 +51,9 @@ const maxChildSitemaps = 10;
 async function fetchRobots(client: HttpClient, origin: string) {
   const url = new URL('/robots.txt', origin).href;
   const fetch = await client.fetch(url, { maxRedirects: 5, maxBytes: 1024 * 1024 });
-  const availability = robotsAvailability(fetch.error ? undefined : fetch.status, fetch.body, fetch.error?.code === 'too-many-redirects');
+  // Google stops after five redirects and reads the file as missing, which a redirect loop always comes to.
+  const redirectLimit = fetch.error?.code === 'too-many-redirects' || fetch.error?.code === 'redirect-loop';
+  const availability = robotsAvailability(fetch.error ? undefined : fetch.status, fetch.body, redirectLimit);
   return { url, fetch, availability };
 }
 

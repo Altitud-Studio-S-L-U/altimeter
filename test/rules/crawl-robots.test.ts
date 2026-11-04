@@ -45,8 +45,8 @@ function withRobots(facts: SiteFacts, spec: ResponseSpec & { body: Buffer | stri
 /** robots.txt sent with the type Express gives res.send(string). */
 const servedAsHtml = (body: string) => withRobots(site({ pages: [home()], robots: '' }), { body, headers: { 'content-type': 'text/html; charset=utf-8' } });
 
-/** A robots.txt that redirects back to itself, as the HTTP client reports it, with the availability the collector derives and with the one Google applies. */
-function redirectLoop(availability: 'collected' | 'missing-file'): SiteFacts {
+/** A robots.txt that redirects back to itself, as the HTTP client reports it, read as unreachable or, as Google and the collector read it, as a missing file. */
+function redirectLoop(availability: 'unreachable' | 'missing-file'): SiteFacts {
   const url = `${origin}/robots.txt`;
   const hops: Hop[] = [
     { url, status: 301, headers: headers({ location: '/robots.txt/' }), location: `${url}/`, ttfbMs: 10 },
@@ -54,7 +54,7 @@ function redirectLoop(availability: 'collected' | 'missing-file'): SiteFacts {
   ];
   const fetch: FetchResult = { requestedUrl: url, finalUrl: url, hops, status: 301, headers: hops[1]!.headers, body: Buffer.alloc(0), transferBytes: 0, truncated: false,
     durationMs: 20, error: { code: 'redirect-loop', message: `Redirect loop at ${url}` } };
-  const robots = availability === 'collected' ? robotsAvailability(undefined, fetch.body) : robotsAvailability(301, fetch.body, true);
+  const robots = robotsAvailability(undefined, fetch.body, availability === 'missing-file');
   return { ...site({ pages: [home()] }), robots: { url, fetch, availability: robots } };
 }
 
@@ -76,7 +76,7 @@ describe('crawl-robots-fetch-status', () => {
     assertFail(run(id, { pages: [home()], robots: { status: 403 } }).finding, 'info', 'access-denied');
   });
   test('passes on a redirect loop, which Google reads as a missing file and crawl-robots-redirects reports', () => {
-    for (const availability of ['collected', 'missing-file'] as const) {
+    for (const availability of ['unreachable', 'missing-file'] as const) {
       const { finding, excerpts } = run(id, redirectLoop(availability));
       assertOutcome(finding, 'pass');
       assert.deepEqual(excerpts(), ['HTTP 301']);
@@ -103,7 +103,7 @@ describe('crawl-robots-redirects', () => {
     assert.equal(excerpts()[0], '302 -> https://example.com/r1.txt');
   });
   test('fails high on a redirect loop', () => {
-    const { finding, excerpts } = run(id, redirectLoop('collected'));
+    const { finding, excerpts } = run(id, redirectLoop('missing-file'));
     assertFail(finding, 'high', 'loop');
     assert.deepEqual(excerpts(), [`301 -> ${origin}/robots.txt/`, `301 -> ${origin}/robots.txt`]);
   });
