@@ -93,6 +93,19 @@ const shape = (value: string) => withoutProbe(value).replace(httpDate, '#').repl
 /** Values of an owner data label that name what a finding is about, such as one crawler; the others move with the reporting window. */
 const ownerSubjects: ReadonlySet<string> = new Set(['crawler', 'issue']);
 
+/**
+ * Label parts that only say which version of a page's document showed an item. The audited and home pages are
+ * rendered and crawled pages are not, so a template defect is read from both versions; one fix serves them all.
+ */
+const documentVersions: ReadonlySet<string> = new Set(['(raw HTML)', '(rendered DOM)']);
+
+/** The English label without the part that names the version of the document it was read from. */
+function problemLabel(item: EvidenceItem): string {
+  const parts = item.labelParts;
+  if (!parts?.some(part => documentVersions.has(part.template))) return item.label;
+  return parts.filter(part => !documentVersions.has(part.template)).map(part => format(part.template, part.params)).join(' ');
+}
+
 /** The first template of an owner data label, with only the values that name its subject filled in. */
 function ownerLabel(item: EvidenceItem): string {
   const first = item.labelParts?.[0];
@@ -102,7 +115,8 @@ function ownerLabel(item: EvidenceItem): string {
 
 /**
  * A defect repeated on several pages is usually one template fix, so page findings group by the shape of their
- * evidence while the observed values differ from page to page. Site findings keep what tells them apart: where each
+ * evidence while the observed values, and the version of the document that showed them, differ from page to page.
+ * Site findings keep what tells them apart: where each
  * item was observed and what was seen there, except the figures and lists of owner data, which move with the
  * reporting window: an owner data item counts by the first template of its label and the crawler or issue it names.
  * Numbers, dates and the not-found probe's random path never count, so an unchanged problem keeps its id from run to run.
@@ -111,7 +125,7 @@ function groupKey(finding: Finding, evidence: EvidenceLookup): string {
   const page = finding.scope.kind === 'page';
   const items = finding.evidence.map(id => evidence.get(id)).filter((item): item is EvidenceItem => item !== undefined);
   const fact = (item: EvidenceItem) => page
-    ? [item.kind, shape(item.label), shape(item.path ?? '')]
+    ? [item.kind, shape(problemLabel(item)), shape(item.path ?? '')]
     : item.kind === 'owner-data'
       ? [item.kind, withoutProbe(item.url ?? ''), shape(ownerLabel(item)), shape(item.path ?? ''), '']
       : [item.kind, withoutProbe(item.url ?? ''), shape(item.label), shape(item.path ?? ''), shape(item.excerpt ?? '')];

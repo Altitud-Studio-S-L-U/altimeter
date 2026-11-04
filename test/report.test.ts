@@ -109,6 +109,17 @@ describe('tasks', () => {
     assert.deepEqual(kept('intl-hreflang-relative-url'), ['intl-hreflang-outside-head']);
   });
 
+  test('groups a defect read from the rendered DOM of one page and the raw HTML of others into one task', () => {
+    const store = new EvidenceStore();
+    const finding = (url: string, version: '(raw HTML)' | '(rendered DOM)'): Finding => ({
+      ruleId: 'schema-faqpage-retired', scope: { kind: 'page', url }, outcome: 'fail', severity: 'info', reason: 'present',
+      evidence: [store.add({ kind: 'structured-data', url, label: joinLabels(evidenceLabel('FAQPage markup'), evidenceLabel(version)), excerpt: '{"@type":"FAQPage"}', path: 'jsonld[0].@graph[5]' })],
+      evidenceSignature: url, confidence: 'high', origin: 'deterministic',
+    });
+    const tasks = buildTasks([finding('https://example.com/', '(rendered DOM)'), finding('https://example.com/en/', '(raw HTML)'), finding('https://example.com/es/', '(raw HTML)')], rulesById, store);
+    assert.deepEqual(tasks.map(task => task.scopes.length), [3]);
+  });
+
   /** Task ids of site findings, one run each: every finding records its evidence in that run's store. */
   const siteTaskIds = (...findings: ReadonlyArray<readonly [ruleId: string, reason: string | undefined, evidence: readonly NewEvidence[]]>) => {
     const store = new EvidenceStore();
