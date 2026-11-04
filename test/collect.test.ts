@@ -188,4 +188,39 @@ describe('collect on other sites', () => {
       await small.close();
     }
   });
+
+  const document = (head: string) => ({ status: 200, headers: { 'content-type': 'text/html; charset=utf-8' },
+    body: `<!doctype html><html lang="en"><head><title>Docs</title>${head}</head><body><main><h1>Docs</h1></main></body></html>` });
+  const urlset = { status: 200, headers: { 'content-type': 'application/xml' },
+    body: '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</loc></url></urlset>' };
+
+  test('skips a sitemap link that is not a valid http or https URL instead of stopping the audit', async () => {
+    const small = await serveSite({
+      '/': document('<link rel="sitemap" href="https://"><link rel="sitemap" href="//"><link rel="sitemap" href="ftp://files.example/sitemap.xml"><link rel="sitemap" href="/pages.xml">'),
+      '/pages.xml': urlset,
+    });
+    try {
+      const { site } = await collect({ url: `${small.origin}/`, policy, render: false });
+      assert.deepEqual(site.sitemaps.map(entry => [new URL(entry.url).pathname, entry.fetch.status]), [['/pages.xml', 200]]);
+    } finally {
+      await small.close();
+    }
+  });
+
+  test('resolves a sitemap link against the final URL and the base of the page that declares it', async () => {
+    const small = await serveSite({
+      '/docs/guide': { status: 301, headers: { location: '/docs/guide/' } },
+      '/docs/guide/': document('<link rel="sitemap" href="guide.xml">'),
+      '/': { status: 302, headers: { location: '/home/' } },
+      '/home/': document('<base href="/static/"><link rel="sitemap" href="pages.xml">'),
+      '/docs/guide/guide.xml': urlset,
+      '/static/pages.xml': urlset,
+    });
+    try {
+      const { site } = await collect({ url: `${small.origin}/docs/guide`, policy, render: false });
+      assert.deepEqual(site.sitemaps.map(entry => [new URL(entry.url).pathname, entry.fetch.status]), [['/docs/guide/guide.xml', 200], ['/static/pages.xml', 200]]);
+    } finally {
+      await small.close();
+    }
+  });
 });

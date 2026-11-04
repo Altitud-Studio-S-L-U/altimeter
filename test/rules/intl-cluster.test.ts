@@ -295,6 +295,14 @@ describe('intl-hreflang-sitemap-format', () => {
     assertFail(only(evaluate(sitemapFormat, site({ pages: [], origin, robots: robots(5), sitemaps: fetched })).findings), 'medium', 'alternate-not-listed');
   });
 
+  test('finds the sitemap a page links where the collector read it: against the final URL and base of that page', () => {
+    const xml = sitemap([{ loc: en, alternates: [['en', en], ['ca', ca]] }]);
+    const redirected = page(url('/en'), { redirects: [[301, '/en/']], html: html({ head: '<link rel="sitemap" href="sitemap-pages.xml">' }) });
+    assertFail(only(evaluate(sitemapFormat, site({ pages: [redirected], origin, sitemaps: [{ url: url('/en/sitemap-pages.xml'), xml }] })).findings), 'medium', 'alternate-not-listed');
+    const based = page(en, { html: html({ head: '<base href="/maps/"><link rel="sitemap" href="pages.xml">' }) });
+    assertFail(only(evaluate(sitemapFormat, site({ pages: [based], origin, sitemaps: [{ url: url('/maps/pages.xml'), xml }] })).findings), 'medium', 'alternate-not-listed');
+  });
+
   test('does not look for missing entries in a sitemap cut at the 50,000-entry limit', () => {
     const filler = Array.from({ length: 49_999 }, (_, index) => ({ loc: url(`/p/${index}`) }));
     const xml = sitemap([{ loc: en, alternates: [['en', en], ['ca', ca]] }, ...filler, { loc: ca, alternates: [['en', en], ['ca', ca]] }]);

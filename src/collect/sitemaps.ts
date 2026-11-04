@@ -1,10 +1,34 @@
-import type { SitemapFacts } from '../core/facts.ts';
+import type { PageFacts, SitemapFacts } from '../core/facts.ts';
 import type { HttpClient } from '../fetch/http.ts';
 import { parseSitemap } from '../fetch/sitemap.ts';
 
 /** Sitemaps read per run: the first declared ones, and the first children their indexes list. */
 const maxDeclaredSitemaps = 5;
 const maxChildSitemaps = 10;
+
+/**
+ * The sitemaps a page links with rel="sitemap", resolved as the page's other links are: against its first
+ * `<base href>`, else its final URL. A value that is not a valid http or https URL is skipped.
+ */
+export function linkedSitemaps(page: PageFacts): string[] {
+  const parsed = page.raw?.parsed;
+  if (!parsed) return [];
+  let base = page.fetch.finalUrl;
+  const baseHref = parsed.bases.find(element => element.attrs.href !== undefined)?.attrs.href;
+  try {
+    if (baseHref !== undefined) base = new URL(baseHref, page.fetch.finalUrl).href;
+  } catch {}
+  const urls: string[] = [];
+  for (const link of parsed.links) {
+    if (!link.rel.includes('sitemap') || !link.attrs.href) continue;
+    try {
+      const url = new URL(link.attrs.href, base);
+      url.hash = '';
+      if (url.protocol === 'http:' || url.protocol === 'https:') urls.push(url.href);
+    } catch {}
+  }
+  return urls;
+}
 
 /** The sitemaps read, with warnings when the caps on declared and child sitemaps leave some unread. */
 export async function collectSitemaps(client: HttpClient, origin: string, declared: string[]): Promise<{ sitemaps: SitemapFacts[]; warnings: string[] }> {
