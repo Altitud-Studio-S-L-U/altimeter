@@ -424,11 +424,13 @@ function explainCommand(args: string[]): number {
   if (positionals.length !== 1) throw new UsageError('explain needs a rule id, for example crawl-meta-robots-noindex.');
   const entry = catalogRule(positionals[0]!);
   if (!entry) throw new UsageError(`No rule ${positionals[0]}. List them with "altimeter rules".`);
-  const texts = ruleTexts(language(values.lang), entry);
+  const lang = language(values.lang);
+  const texts = ruleTexts(lang, entry);
+  const t = ui(lang);
   process.stdout.write([
-    `${entry.id} · ${entry.category} · max ${entry.maxSeverity} · ${entry.status}`,
-    texts.title, '', texts.why, '', `Fix: ${texts.fix}`, '', `Thresholds: ${entry.thresholds}`, '',
-    ...entry.sources.map(source => `Source: ${source.url} (verified ${source.verified})`), '',
+    `${entry.id} · ${t.categories[entry.category]} · ${format(t.maxSeverity, { severity: t.severities[entry.maxSeverity] }, lang)} · ${entry.status}`,
+    texts.title, '', texts.why, '', `${t.fix}: ${texts.fix}`, '', `${t.thresholds}: ${entry.thresholds}`, '',
+    ...entry.sources.map(source => `${t.source}: ${source.url} (${format(t.verified, { date: source.verified }, lang)})`), '',
   ].join('\n'));
   return 0;
 }

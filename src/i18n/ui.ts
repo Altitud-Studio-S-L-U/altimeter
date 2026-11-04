@@ -31,6 +31,9 @@ export interface UiStrings {
   readonly fix: string;
   readonly source: string;
   readonly verified: string;
+  /** The highest severity a rule can report, as `altimeter explain` prints it. */
+  readonly maxSeverity: string;
+  readonly thresholds: string;
   readonly rule: string;
   readonly page: string;
   /** What a task covers when it is about the whole site rather than some pages. */
@@ -149,6 +152,8 @@ const en: UiStrings = {
   fix: 'Fix',
   source: 'Source',
   verified: 'verified {date}',
+  maxSeverity: 'max {severity}',
+  thresholds: 'Thresholds',
   rule: 'Rule',
   page: 'Page',
   site: 'Site',
@@ -401,6 +406,8 @@ const es: UiStrings = {
   fix: 'Corrección',
   source: 'Fuente',
   verified: 'verificada el {date}',
+  maxSeverity: 'máx. {severity}',
+  thresholds: 'Umbrales',
   rule: 'Regla',
   page: 'Página',
   site: 'Sitio',
@@ -653,6 +660,8 @@ const ca: UiStrings = {
   fix: 'Correcció',
   source: 'Font',
   verified: 'verificada el {date}',
+  maxSeverity: 'màx. {severity}',
+  thresholds: 'Llindars',
   rule: 'Regla',
   page: 'Pàgina',
   site: 'Lloc',
