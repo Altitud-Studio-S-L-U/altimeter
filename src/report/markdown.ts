@@ -3,7 +3,7 @@ import { rule as catalogRule, myths } from '../catalog/index.ts';
 import type { EvidenceItem } from '../core/evidence.ts';
 import { categories, type Category } from '../core/types.ts';
 import { evidenceLabelText, quotedEvidenceLabel } from '../i18n/evidence.ts';
-import { findingMessage, format, ruleTexts, type Language } from '../i18n/messages.ts';
+import { filledMessage, findingMessage, format, placeholders, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
 import { localizeValue } from '../i18n/values.ts';
 import type { FindingScope } from '../rules/engine.ts';
@@ -82,12 +82,24 @@ export function analysisSummary(analysis: ReportAnalysis, language: Language): s
   });
 }
 
-function aiFindingLines(finding: AiFinding, language: Language): string[] {
+/**
+ * The message of a model finding in `language`. One that confirms a code candidate reads the candidate's message,
+ * values included. Any other has only the model's reason code, so it reads its rule's template only when that needs
+ * no value, rather than show a placeholder.
+ */
+export function aiFindingMessage(finding: AiFinding, findings: readonly ReportFinding[], language: Language): string | undefined {
+  const complete = (text: string | undefined) => (text !== undefined && placeholders(text).length === 0 ? text : undefined);
+  const candidate = finding.candidateId === undefined ? undefined : findings.find(entry => entry.id === finding.candidateId);
+  if (candidate) return filledMessage(language, candidate.ruleId, 'fail', candidate.reason, candidate.params) ?? complete(candidate.message);
+  return filledMessage(language, finding.ruleId, 'fail', finding.reason, finding.params) ?? complete(finding.message);
+}
+
+function aiFindingLines(finding: AiFinding, language: Language, findings: readonly ReportFinding[]): string[] {
   const t = ui(language);
   const rule = catalogRule(finding.ruleId);
   const title = rule ? ruleTexts(language, rule).title : finding.title;
   const lines = [`- **[${t.severities[finding.severity ?? 'info']}] ${markdownText(title)}** (\`${finding.ruleId}\`) · ${untrustedInline(scopeLabel(finding.scope), 160)} · ${t.analysis.verification[finding.verification]}`];
-  const text = findingMessage(language, finding.ruleId, 'fail', finding.reason, finding.params) ?? finding.message;
+  const text = aiFindingMessage(finding, findings, language);
   if (text) lines.push(`  ${markdownText(text, 600)}`);
   for (const quote of finding.quotes.slice(0, 3)) lines.push(`  - ${t.analysis.quote} (${markdownText(quote.evidenceId, 40)}): ${untrustedInline(quote.text, 240)}`);
   if (finding.notes[language]) lines.push(`  - ${t.analysis.notes}: ${untrustedInline(finding.notes[language], 240)}`);
@@ -95,7 +107,7 @@ function aiFindingLines(finding: AiFinding, language: Language): string[] {
 }
 
 /** The model analysis: verified findings, decisions on code candidates, proposals, and what was dropped or not run. */
-function analysisLines(analysis: ReportAnalysis, language: Language): string[] {
+function analysisLines(analysis: ReportAnalysis, language: Language, findings: readonly ReportFinding[]): string[] {
   const t = ui(language);
   const a = t.analysis;
   const lines = [`## ${a.title}`, '', a.intro, ''];
@@ -106,7 +118,7 @@ function analysisLines(analysis: ReportAnalysis, language: Language): string[] {
   lines.push(`### ${a.verified}`, '');
   const failures = analysis.findings.filter(finding => finding.outcome === 'fail');
   if (failures.length === 0) lines.push(a.none);
-  for (const finding of failures) lines.push(...aiFindingLines(finding, language));
+  for (const finding of failures) lines.push(...aiFindingLines(finding, language, findings));
   lines.push('');
   if (analysis.confirmations.length > 0) {
     lines.push(`### ${a.decisions}`, '');
@@ -139,7 +151,7 @@ function analysisLines(analysis: ReportAnalysis, language: Language): string[] {
   const unverified = analysis.unverified.filter(finding => finding.outcome === 'fail');
   if (unverified.length > 0) {
     lines.push(`### ${a.unverified}`, '', a.unverifiedIntro, '');
-    for (const finding of unverified) lines.push(...aiFindingLines(finding, language));
+    for (const finding of unverified) lines.push(...aiFindingLines(finding, language, findings));
     lines.push('');
   }
   if (analysis.dropped.length > 0) {
@@ -215,7 +227,7 @@ export function renderMarkdown(report: Report, language: Language): string {
     for (const finding of pending) lines.push(`- ${markdownText(ruleTitle(language, finding.ruleId, finding.title))} (\`${finding.ruleId}\`) · ${untrustedInline(scopeLabel(finding.scope), 160)}`);
     lines.push('');
   }
-  if (report.ai) lines.push(...analysisLines(report.ai, language));
+  if (report.ai) lines.push(...analysisLines(report.ai, language, report.findings));
 
   const notEvaluated = report.findings.filter(finding => finding.outcome === 'not_evaluated');
   if (notEvaluated.length > 0) {

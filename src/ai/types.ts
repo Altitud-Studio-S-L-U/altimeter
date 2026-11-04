@@ -79,7 +79,10 @@ export interface AiFinding extends Finding {
   readonly id: string;
   readonly category: Category;
   readonly title: string;
-  /** English message from the rule's template, when one exists for the reason. */
+  /**
+   * English message: the message of the candidate the finding confirms, or else the rule's template when it needs no
+   * values, since the model gives none. Never a template with a placeholder left in it.
+   */
   readonly message?: string;
   readonly origin: 'ai';
   readonly pass: PassId;

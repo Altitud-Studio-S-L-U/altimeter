@@ -3,16 +3,19 @@ import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
-import type { ReportAnalysis } from '../src/ai/types.ts';
+import type { AiFinding, ReportAnalysis } from '../src/ai/types.ts';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
 import { evidenceLabel, EvidenceStore, type NewEvidence } from '../src/core/evidence.ts';
+import { findingMessage } from '../src/i18n/messages.ts';
+import { ui } from '../src/i18n/ui.ts';
 import { runRules, type Finding, type RuleImplementation } from '../src/rules/engine.ts';
 import { implementations as registered } from '../src/rules/registry.ts';
 import { compareReports } from '../src/report/compare.ts';
 import { renderHtml } from '../src/report/html.ts';
 import { renderFixPlan, renderMarkdown, renderTaskFile, taskFileLimit } from '../src/report/markdown.ts';
-import { buildReport, mergeAnalysis } from '../src/report/model.ts';
+import { buildReport, mergeAnalysis, type ReportFinding } from '../src/report/model.ts';
+import { markdownText } from '../src/report/sanitize.ts';
 import { buildTasks } from '../src/report/tasks.ts';
 import { isInside, runFolderName, safeFolderName, writeReport } from '../src/report/write.ts';
 import { page, site } from './support/facts.ts';
@@ -347,5 +350,30 @@ describe('the model analysis section', () => {
     const dismissed = decide('dismissed', 'partial');
     assert.equal(dismissed.findings.find(finding => finding.id === candidate.id)?.judgment, 'dismissed');
     assert.doesNotMatch(renderMarkdown(dismissed, 'en'), /^## Pending review$/mu);
+  });
+
+  test('shows a model finding that confirms a candidate with the candidate\'s message, and no placeholder the model cannot fill', () => {
+    const scope = { kind: 'page' as const, url: 'https://example.com/b' };
+    const params = { words: 40, blocks: 2, reasons: 'display-none, offscreen' };
+    const hidden: ReportFinding = {
+      id: 'F-hidden', ruleId: 'content-hidden-text', category: 'content', title: 'Hidden text', scope, outcome: 'fail', severity: 'medium', params,
+      evidence: [], evidenceSignature: 'hidden', confidence: 'low', origin: 'deterministic', needsJudgment: true, message: findingMessage('en', 'content-hidden-text', 'fail', undefined, params)!,
+    };
+    const judged = (ruleId: string, extra: Partial<AiFinding>): AiFinding => ({ ...analysis.findings[0]!, id: `F-${ruleId}`, ruleId, reason: 'keyword-block', ...extra });
+    const merged = mergeAnalysis({ ...report, findings: [...report.findings, hidden] }, {
+      ...analysis,
+      findings: [judged('content-hidden-text', { candidateId: hidden.id, title: 'Hidden text' })],
+      unverified: [judged('ai-hidden-llm-instructions', { category: 'ai', title: 'Hidden instructions', verification: 'unverified' })],
+      confirmations: [{ candidateId: hidden.id, ruleId: hidden.ruleId, scope, decision: 'confirmed', findingId: 'F-content-hidden-text', verification: 'supported' }],
+    });
+    for (const language of ['en', 'es', 'ca'] as const) {
+      const title = ui(language).analysis.title;
+      const markdown = renderMarkdown(merged, language);
+      const section = markdown.slice(markdown.indexOf(`## ${title}`));
+      const html = renderHtml(merged, language);
+      const htmlSection = html.slice(html.indexOf(`<h2>${title}</h2>`));
+      assert.ok(section.includes(`  ${markdownText(findingMessage(language, 'content-hidden-text', 'fail', undefined, params)!, 600)}`), language);
+      for (const text of [section, htmlSection]) assert.doesNotMatch(text, /\{[a-zA-Z][a-zA-Z0-9]*\}/u, language);
+    }
   });
 });

@@ -66,11 +66,22 @@ export { format, placeholders };
  * gets the English words that code wrote into its values translated; the English template keeps them as they are.
  */
 export function findingMessage(language: Language, ruleId: string, outcome: string, reason: string | undefined, params?: Readonly<Record<string, string | number>>): string | undefined {
+  const found = messageTemplate(language, ruleId, outcome, reason);
+  return found && format(found.template, params && found.language !== 'en' ? localizeParams(found.language, params, ruleId) : params);
+}
+
+/** findingMessage, or undefined when the template it would use has a placeholder that `params` gives no value for. */
+export function filledMessage(language: Language, ruleId: string, outcome: string, reason: string | undefined, params?: Readonly<Record<string, string | number>>): string | undefined {
+  const found = messageTemplate(language, ruleId, outcome, reason);
+  return found && placeholders(found.template).every(name => params?.[name] !== undefined) ? findingMessage(language, ruleId, outcome, reason, params) : undefined;
+}
+
+function messageTemplate(language: Language, ruleId: string, outcome: string, reason: string | undefined): { readonly template: string; readonly language: Language } | undefined {
   for (const catalogLanguage of language === 'en' ? ['en' as const] : [language, 'en' as const]) {
     const entry = messagesFor(catalogLanguage)[ruleId];
     if (!entry) continue;
     const template = (reason ? entry.messages[`${outcome}:${reason}`] : undefined) ?? entry.messages[outcome];
-    if (template !== undefined) return format(template, params && catalogLanguage !== 'en' ? localizeParams(catalogLanguage, params, ruleId) : params);
+    if (template !== undefined) return { template, language: catalogLanguage };
   }
   return undefined;
 }

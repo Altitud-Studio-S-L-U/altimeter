@@ -77,11 +77,11 @@ function titleEvidence(evidence: EvidenceStore, url: string) {
   return evidence.add({ kind: 'html', url, label: evidenceLabel('title element'), excerpt: roomsTitle });
 }
 
-/** A candidate from code on the rooms page, with the evidence code cited; other pages pass. */
-function candidateOnRooms(id: string, severity: 'medium' | 'low', cite: (evidence: EvidenceStore) => string): RuleImplementation {
+/** A candidate from code on the rooms page, with the evidence code cited and the values of its message; other pages pass. */
+function candidateOnRooms(id: string, severity: 'medium' | 'low', cite: (evidence: EvidenceStore) => string, params?: Readonly<Record<string, string | number>>): RuleImplementation {
   return {
     id,
-    evaluate: ({ page: current, evidence }) => current!.url === roomsUrl ? { outcome: 'fail', severity, needsJudgment: true, evidence: [cite(evidence)] } : { outcome: 'pass' },
+    evaluate: ({ page: current, evidence }) => current!.url === roomsUrl ? { outcome: 'fail', severity, needsJudgment: true, evidence: [cite(evidence)], ...(params ? { params } : {}) } : { outcome: 'pass' },
   };
 }
 
@@ -103,7 +103,7 @@ const implementations: readonly RuleImplementation[] = [
   candidateOnRooms('content-title-obsolete-year', 'medium', evidence => titleEvidence(evidence, roomsUrl)),
   candidateOnRooms('content-img-alt-quality', 'low', evidence => evidence.add({ kind: 'html', url: roomsUrl, label: evidenceLabel('img alt text to judge'), excerpt: 'Double room with a balcony over the valley' })),
   candidateOnRooms('content-keyword-stuffing', 'medium', evidence => evidence.add({ kind: 'text', url: roomsUrl, label: evidenceLabel('paragraph with repeated terms'), excerpt: `Our 45 rooms look over the valley of Andorra la Vella. We don${apostrophe}t rent rooms by the hour.` })),
-  candidateOnRooms('schema-localbusiness', 'medium', evidence => evidence.add({ kind: 'structured-data', url: roomsUrl, label: evidenceLabel('Hotel node on a rooms page'), path: 'jsonld[0]', excerpt: '"@type":"Hotel"' })),
+  candidateOnRooms('schema-localbusiness', 'medium', evidence => evidence.add({ kind: 'structured-data', url: roomsUrl, label: evidenceLabel('Hotel node on a rooms page'), path: 'jsonld[0]', excerpt: '"@type":"Hotel"' }), { items: 'Hotel markup on a rooms page' }),
   candidateOnRooms('schema-visible-content-parity', 'medium', evidence => evidence.add({ kind: 'structured-data', url: roomsUrl, label: evidenceLabel('telephone marked up in JSON-LD'), path: 'jsonld[0].telephone', excerpt: '+376 800 800' })),
 ];
 
