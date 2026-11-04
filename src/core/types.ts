@@ -44,6 +44,7 @@ export type PageType = (typeof pageTypes)[number];
  * the median Lighthouse run, including network requests. crux: Chrome UX Report field data. tls: the certificate.
  * ua-probe: the page fetched as Googlebot and as a browser (page scope) or the home page fetched with each crawler's
  * user agent (site scope). gsc, bing, bot-activity: owner data. ai: the analyst.
+ * A site-scope rule that lists a per-page input runs when at least one auditable page has it.
  */
 export const inputIds = [
   'http',
