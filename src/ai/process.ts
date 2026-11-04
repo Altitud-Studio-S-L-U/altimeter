@@ -93,6 +93,45 @@ async function terminateTree(child: ChildProcess): Promise<void> {
   }
 }
 
+/** Calls running in a POSIX process group of their own, each with the function that stops its tree. */
+const groups = new Set<() => void>();
+const endingSignals = ['SIGINT', 'SIGTERM'] as const;
+
+function stopGroups(): void {
+  for (const stop of [...groups]) stop();
+}
+
+function unwatchGroups(): void {
+  for (const signal of endingSignals) process.removeListener(signal, onEndingSignal);
+  process.removeListener('exit', stopGroups);
+}
+
+/**
+ * A detached group receives none of the signals sent to Altimeter, so Ctrl+C would leave the CLI running and
+ * spending quota. When no other listener takes the signal, it would end the process: the trees are stopped first
+ * and the signal is raised again, so it still ends Altimeter. A caller that listens for it decides by itself.
+ */
+function onEndingSignal(signal: NodeJS.Signals): void {
+  if (process.listenerCount(signal) > 1) return;
+  stopGroups();
+  groups.clear();
+  unwatchGroups();
+  process.kill(process.pid, signal);
+}
+
+/** Keeps a call's group from outliving Altimeter, whether a signal ends it or it exits; returns the release. */
+function watchGroup(stop: () => void): () => void {
+  if (groups.size === 0) {
+    // First in line, so a caller's listener added with once still counts when the signal arrives.
+    for (const signal of endingSignals) process.prependListener(signal, onEndingSignal);
+    process.on('exit', stopGroups);
+  }
+  groups.add(stop);
+  return () => {
+    if (groups.delete(stop) && groups.size === 0) unwatchGroups();
+  };
+}
+
 export interface RunProcessOptions {
   readonly executable: string;
   readonly args: readonly string[];
@@ -136,7 +175,8 @@ export async function removeFolder(directory: string): Promise<void> {
 /**
  * Runs an executable with explicit arguments and no shell. Stdin carries the input; stdout is kept, stderr is
  * counted against the same output budget but never kept, because it can echo credentials or raw responses.
- * A deadline, an abort or the output budget kills the whole process tree that this call started.
+ * A deadline, an abort, the output budget, or Ctrl+C, a termination signal or an exit that ends Altimeter, kills
+ * the whole process tree that this call started.
  */
 export function runProcess(options: RunProcessOptions): Promise<ProcessResult> {
   if (options.signal?.aborted) return Promise.reject(new ProcessError('cancelled', 'The call was cancelled before it started.'));
@@ -176,6 +216,7 @@ export function runProcess(options: RunProcessOptions): Promise<ProcessResult> {
       clearTimeout(grace);
       clearTimeout(terminationWait);
       options.signal?.removeEventListener('abort', onAbort);
+      release?.();
     };
     const settle = (outcome: () => void) => {
       if (settled) return;
@@ -210,6 +251,7 @@ export function runProcess(options: RunProcessOptions): Promise<ProcessResult> {
     const onAbort = () => fail(new ProcessError('cancelled', 'The call was cancelled.'));
     const timer = setTimeout(() => fail(new ProcessError('timeout', `The provider did not finish within ${options.timeoutMs} ms.`)), options.timeoutMs);
     options.signal?.addEventListener('abort', onAbort, { once: true });
+    const release = process.platform === 'win32' ? undefined : watchGroup(onAbort);
 
     const capture = (chunk: Buffer, keep: boolean) => {
       bytes += chunk.length;
