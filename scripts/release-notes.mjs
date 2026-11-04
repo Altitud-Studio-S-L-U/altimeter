@@ -7,8 +7,9 @@ if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u.test(version)) {
   process.exit(2);
 }
 const lines = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8').split(/\r?\n/u);
-const heading = new RegExp(`^## \\[?${version.replaceAll('.', '\\.')}\\]?(?:\\s|$)`, 'u');
-const start = lines.findIndex(line => heading.test(line));
+// A section heading is "## [1.2.3] - date" or "## 1.2.3"; its version is compared as text.
+const headingVersion = line => /^## \[?([^\]\s]+)\]?(?:\s|$)/u.exec(line)?.[1];
+const start = lines.findIndex(line => headingVersion(line) === version);
 if (start === -1) {
   process.stderr.write(`CHANGELOG.md has no section for ${version}.\n`);
   process.exit(1);
