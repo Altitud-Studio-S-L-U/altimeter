@@ -166,4 +166,15 @@ describe('altimeter gsc login', () => {
     assert.equal(result.stderr, 'gsc login needs --remember dpapi (Windows) or --remember file, so that audits can use the login.\n');
     assert.equal(result.stdout, '');
   });
+
+  test('refuses --remember dpapi before the sign-in starts on a system without Windows DPAPI', async () => {
+    const clientFile = join(work, 'client_secret.json');
+    await writeFile(clientFile, JSON.stringify({ installed: { client_id: 'cid.apps.googleusercontent.com', client_secret: 'client-secret' } }));
+    const elsewhere = `data:text/javascript,${encodeURIComponent("Object.defineProperty(process, 'platform', { value: 'linux' });")}`;
+    const result = spawnSync(process.execPath, ['--import', elsewhere, cli, 'gsc', 'login', '--client', clientFile, '--remember', 'dpapi'],
+      { encoding: 'utf8', windowsHide: true, timeout: 60_000, env: { ...process.env, LOCALAPPDATA: work, XDG_STATE_HOME: work, HOME: work } });
+    assert.equal(result.status, 2, result.stderr);
+    assert.equal(result.stderr, '--remember dpapi works only on Windows; use --remember file to keep the login in a file only you can read.\n');
+    assert.equal(result.stdout, '');
+  });
 });

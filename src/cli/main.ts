@@ -372,6 +372,7 @@ export async function gscCommand(args: string[], context: GscCommandContext = {}
   // Audits read only a stored login, and the token is never printed, so a login that is not stored would be lost.
   if (values.remember === undefined) throw new UsageError('gsc login needs --remember dpapi (Windows) or --remember file, so that audits can use the login.');
   if (values.remember !== 'dpapi' && values.remember !== 'file') throw new UsageError('--remember must be dpapi (Windows) or file.');
+  if (values.remember === 'dpapi' && process.platform !== 'win32') throw new UsageError('--remember dpapi works only on Windows; use --remember file to keep the login in a file only you can read.');
   const oauth = await readOAuthClient(resolve(values.client));
   const client = new HttpClient();
   try {
