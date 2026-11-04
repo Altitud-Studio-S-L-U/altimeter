@@ -1,6 +1,8 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
+import { setTimeout as delay } from 'node:timers/promises';
 
 /** Windows rejects command lines over 32,767 characters; staying well below leaves room for quoting differences. */
 export const maxCommandLineLength = 30_000;
@@ -112,6 +114,24 @@ export interface ProcessResult {
 
 /** How long to wait for pipes to close after the tree was killed before giving up on them. */
 const closeGraceMs = 5000;
+/** How long killing the tree may take before that grace period starts anyway; taskkill can be slow under load. */
+const terminationLimitMs = 30_000;
+
+/**
+ * Removes a call's working folder. On Windows a CLI killed at its deadline can still hold the folder while its
+ * process tree is torn down, so removal is retried for up to ten seconds, and a folder that still cannot be
+ * removed never replaces the call's own result.
+ */
+export async function removeFolder(directory: string): Promise<void> {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    try {
+      await rm(directory, { recursive: true, force: true });
+      return;
+    } catch {
+      await delay(200);
+    }
+  }
+}
 
 /**
  * Runs an executable with explicit arguments and no shell. Stdin carries the input; stdout is kept, stderr is
@@ -149,10 +169,12 @@ export function runProcess(options: RunProcessOptions): Promise<ProcessResult> {
     let settled = false;
     let exited = false;
     let grace: NodeJS.Timeout | undefined;
+    let terminationWait: NodeJS.Timeout | undefined;
 
     const cleanup = () => {
       clearTimeout(timer);
       clearTimeout(grace);
+      clearTimeout(terminationWait);
       options.signal?.removeEventListener('abort', onAbort);
     };
     const settle = (outcome: () => void) => {
@@ -160,6 +182,14 @@ export function runProcess(options: RunProcessOptions): Promise<ProcessResult> {
       settled = true;
       cleanup();
       outcome();
+    };
+    const startGrace = () => {
+      if (settled || grace) return;
+      grace = setTimeout(() => {
+        child.stdout?.destroy();
+        child.stderr?.destroy();
+        settle(() => reject(failure));
+      }, closeGraceMs);
     };
     const fail = (error: ProcessError) => {
       failure ??= error;
@@ -171,11 +201,11 @@ export function runProcess(options: RunProcessOptions): Promise<ProcessResult> {
           child.kill('SIGKILL');
         });
       }
-      grace ??= setTimeout(() => {
-        child.stdout?.destroy();
-        child.stderr?.destroy();
-        settle(() => reject(failure));
-      }, closeGraceMs);
+      if (terminationWait) return;
+      // The grace period starts once the tree is gone, so the call never ends while its processes still hold the
+      // working folder; a termination that hangs starts it after a limit.
+      terminationWait = setTimeout(startGrace, terminationLimitMs);
+      void (termination ?? Promise.resolve()).then(startGrace);
     };
     const onAbort = () => fail(new ProcessError('cancelled', 'The call was cancelled.'));
     const timer = setTimeout(() => fail(new ProcessError('timeout', `The provider did not finish within ${options.timeoutMs} ms.`)), options.timeoutMs);

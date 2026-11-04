@@ -6,7 +6,7 @@ import { describe, test, type TestContext } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { resolveProvider } from '../src/ai/providers.ts';
 import { parseClaudeStream, runClaudeProbe, searchesPerRun, searchResultLinks, structuredResultLinks } from '../src/probe/claude.ts';
-import { removeFolder } from '../src/probe/engine.ts';
+import { removeFolder } from '../src/ai/process.ts';
 import { probeInstructions } from '../src/probe/prompt.ts';
 import { ProbeRunError } from '../src/probe/types.ts';
 import { probeDouble } from './fixtures/probe/doubles.ts';

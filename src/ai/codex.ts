@@ -1,7 +1,7 @@
-import { lstat, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { childEnvironment, ProcessError, runProcess } from './process.ts';
+import { childEnvironment, ProcessError, removeFolder, runProcess } from './process.ts';
 import { assertModel, fromProcessError, resolveProvider, type Capabilities, type ProviderCallInput, type ResolvedProvider } from './providers.ts';
 import { systemPrompt } from './system-prompt.ts';
 import { ProviderError, type CallResult, type Usage } from './types.ts';
@@ -14,6 +14,11 @@ const toolFeatures = [
   'browser_use', 'browser_use_external', 'computer_use', 'in_app_browser', 'image_generation', 'multi_agent', 'skill_search', 'hooks', 'view_image',
   'tool_suggest', 'sleep_tool', 'goals',
 ] as const;
+
+/** `-c` switches that turn those tool features off, for the builds known to accept them; none is web search. */
+export function toolFeatureOverrides(capabilities: Capabilities): string[] {
+  return capabilities.extras.has('tool-feature-overrides') ? toolFeatures.flatMap(feature => ['-c', `features.${feature}=false`]) : [];
+}
 
 export function codexArguments(options: { readonly schemaFile: string; readonly answerFile: string; readonly model?: string; readonly capabilities: Capabilities }): string[] {
   const verified = options.capabilities.extras;
@@ -33,7 +38,7 @@ export function codexArguments(options: { readonly schemaFile: string; readonly 
       ? ['-c', 'features.unified_exec=false', '-c', 'features.apps=false', '-c', 'plugins._default.enabled=false', '-c', 'web_search="disabled"']
       : []),
     // Code mode is left alone: switching its host off emits an error item that would fail every call.
-    ...(verified.has('tool-feature-overrides') ? toolFeatures.flatMap(feature => ['-c', `features.${feature}=false`]) : []),
+    ...toolFeatureOverrides(options.capabilities),
     '--json',
     '--color', 'never',
     '--output-schema', options.schemaFile,
@@ -149,7 +154,7 @@ async function attempt(input: ProviderCallInput, provider: ResolvedProvider): Pr
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new ProviderError('invalid-response', 'The Codex answer is not a JSON object.', 'codex');
     return { value, ...(input.model ? { model: input.model } : {}), ...(usage ? { usage } : {}), cliVersion: provider.version };
   } finally {
-    await rm(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    await removeFolder(directory);
   }
 }
 

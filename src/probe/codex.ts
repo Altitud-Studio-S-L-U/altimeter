@@ -2,11 +2,12 @@ import { lstat, mkdtemp, readdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import { childEnvironment, ProcessError, runProcess } from '../ai/process.ts';
+import { toolFeatureOverrides } from '../ai/codex.ts';
+import { childEnvironment, ProcessError, removeFolder, runProcess } from '../ai/process.ts';
 import type { Capabilities } from '../ai/providers.ts';
 import type { Usage } from '../ai/types.ts';
 import { cleanText } from '../report/sanitize.ts';
-import { asRunError, isRecord, removeFolder, toolName, type EngineCall } from './engine.ts';
+import { asRunError, isRecord, toolName, type EngineCall } from './engine.ts';
 import { probeInput } from './prompt.ts';
 import { answerLimit, ProbeRunError, type RawRun } from './types.ts';
 
@@ -33,6 +34,8 @@ export function codexProbeArguments(answerFile: string, capabilities: Capabiliti
     '-c', 'features.unified_exec=false',
     '-c', 'features.apps=false',
     '-c', 'plugins._default.enabled=false',
+    // The browser, computer use, image generation and the other tool features newer builds enable are off too.
+    ...toolFeatureOverrides(capabilities),
     '-c', 'web_search="live"',
     '--json',
     '--color', 'never',

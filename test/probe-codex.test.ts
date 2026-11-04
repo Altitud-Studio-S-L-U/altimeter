@@ -3,8 +3,8 @@ import { existsSync } from 'node:fs';
 import { basename, dirname } from 'node:path';
 import { describe, test, type TestContext } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
-import { resolveProvider } from '../src/ai/providers.ts';
-import { parseCodexStream, runCodexProbe } from '../src/probe/codex.ts';
+import { capabilitiesFor, resolveProvider } from '../src/ai/providers.ts';
+import { codexProbeArguments, parseCodexStream, runCodexProbe } from '../src/probe/codex.ts';
 import { probeInstructions } from '../src/probe/prompt.ts';
 import { ProbeRunError } from '../src/probe/types.ts';
 import { probeDouble } from './fixtures/probe/doubles.ts';
@@ -61,6 +61,13 @@ describe('Codex probe runs', () => {
     const [call] = await double.calls();
     assert.equal(call!.args.includes('--ignore-rules'), false);
     for (const setting of ['features.shell_tool=false', 'features.unified_exec=false', 'web_search="live"']) assert.ok(call!.args.includes(setting), setting);
+  });
+
+  test('switch off the tool features build 0.166.0-alpha.6 enables, and keep live web search', () => {
+    const args = codexProbeArguments('a.json', capabilitiesFor('codex', '0.166.0-alpha.6'));
+    for (const feature of ['browser_use', 'computer_use', 'image_generation', 'multi_agent', 'skill_search', 'hooks']) assert.ok(args.includes(`features.${feature}=false`), feature);
+    assert.ok(args.includes('web_search="live"'));
+    assert.ok(!codexProbeArguments('a.json', capabilitiesFor('codex', '0.165.0')).some(arg => arg.includes('browser_use')));
   });
 
   test('fail when Codex runs a command, changes a file, calls an MCP tool or emits an item it does not know', async t => {
