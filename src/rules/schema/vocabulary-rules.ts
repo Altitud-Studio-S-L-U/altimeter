@@ -38,10 +38,16 @@ export const unknownType: RuleImplementation = {
     })),
 };
 
+/** schema.org's -input and -output annotations of an Action property, such as query-input on a SearchAction (schema.org/docs/actions.html). */
+function actionAnnotation(node: GraphNode, key: string): boolean {
+  const property = /^(.+)-(?:input|output)$/u.exec(key)?.[1];
+  return property !== undefined && isProperty(property) && isA(node.types, 'Action');
+}
+
 export const unknownProperty: RuleImplementation = {
   id: 'schema-unknown-property',
   evaluate: context => overSchemaNodes(context, (graph, node) => ownProperties(node)
-    .filter(key => !isProperty(key) && !isAtticTerm(key))
+    .filter(key => !isProperty(key) && !isAtticTerm(key) && !actionAnnotation(node, key))
     .map(key => {
       const intended = suggestion(key, allPropertyNames());
       return {

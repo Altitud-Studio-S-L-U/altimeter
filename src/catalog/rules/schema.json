@@ -213,7 +213,7 @@
     "status": "v1",
     "fixLocation": "repo",
     "verifiableBy": "local",
-    "notes": "For each property key (excluding JSON-LD keywords @id, @type, @context, @graph, @language, @value, @list, @reverse), check that it exists as a schema.org property in the current vocabulary. Flag typos and case errors ('dateModifed', 'SameAs', 'telephoneNumber', 'logoUrl'). Medium when the intended property is required by a Google feature (e.g. 'startdate' on Event), low otherwise. Custom properties under another declared namespace are not errors."
+    "notes": "For each property key (excluding JSON-LD keywords @id, @type, @context, @graph, @language, @value, @list, @reverse), check that it exists as a schema.org property in the current vocabulary. Flag typos and case errors ('dateModifed', 'SameAs', 'telephoneNumber', 'logoUrl'). Medium when the intended property is required by a Google feature (e.g. 'startdate' on Event), low otherwise. Custom properties under another declared namespace are not errors. The -input and -output annotations that schema.org defines for Action properties, such as query-input on a SearchAction, are not unknown properties."
   },
   {
     "id": "schema-domain-range-mismatch",
