@@ -167,6 +167,11 @@ describe('the model analysis section', () => {
     assert.doesNotMatch(html, /instructions <script>/u);
   });
 
+  test('says which documented myths are never reported, in every language', () => {
+    assert.match(renderMarkdown(report, 'en'), /never reports the \d+ claims that current guidance contradicts.*docs\/rules\.md#myths/u);
+    assert.match(renderHtml(report, 'ca'), /no informa mai de les \d+ afirmacions/u);
+  });
+
   test('leaves the score and the tasks as code computed them', () => {
     assert.deepEqual([merged.score, merged.tasks], [report.score, report.tasks]);
   });

@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import type { AiFinding, ReportAnalysis } from '../ai/types.ts';
-import { rule as catalogRule } from '../catalog/index.ts';
+import { rule as catalogRule, myths } from '../catalog/index.ts';
 import { categories } from '../core/types.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
-import { analysisSummary, listedFailures, providerLabel } from './markdown.ts';
+import { analysisSummary, listedFailures, mythsListUrl, providerLabel } from './markdown.ts';
 import type { Report, ReportFinding } from './model.ts';
 import { escapeHtml } from './sanitize.ts';
 
@@ -209,6 +209,7 @@ ${notEvaluated.size > 0 ? `<h2>${escapeHtml(t.notEvaluated)}</h2><ul>${[...notEv
 <div class="panel"><table><thead><tr><th>${escapeHtml(t.page)}</th><th>${escapeHtml(t.status)}</th><th>${escapeHtml(t.type)}</th><th>${escapeHtml(t.rendered)}</th></tr></thead><tbody>${pages}</tbody></table></div>
 <h2>${escapeHtml(t.method)}</h2>
 <p>${escapeHtml(t.methodIntro)}</p><p class="where">${escapeHtml(report.score.formula)}</p>
+<p class="where">${escapeHtml(format(t.mythsLine, { count: myths.length }))} ${safeHttpsLink(mythsListUrl, mythsListUrl)}</p>
 <p class="where">Catalog <code>${escapeHtml(report.catalog.hash.slice(0, 12))}</code> · ${report.catalog.implemented}/${report.catalog.rules} · Node ${escapeHtml(report.run.versions.node)}${report.run.versions.chrome ? ` · ${escapeHtml(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${escapeHtml(report.run.versions.lighthouse)}` : ''}</p>
 </main>
 <script>${script}</script>

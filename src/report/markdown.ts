@@ -1,5 +1,5 @@
 import type { AiFinding, ProviderSummary, ReportAnalysis } from '../ai/types.ts';
-import { rule as catalogRule } from '../catalog/index.ts';
+import { rule as catalogRule, myths } from '../catalog/index.ts';
 import type { EvidenceItem } from '../core/evidence.ts';
 import { categories, type Category } from '../core/types.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../i18n/messages.ts';
@@ -23,6 +23,9 @@ function evidenceLine(item: EvidenceItem): string {
 function message(language: Language, finding: ReportFinding): string {
   return findingMessage(language, finding.ruleId, 'fail', finding.reason, finding.params) ?? finding.message ?? finding.title;
 }
+
+/** The myths list in the public repository, for readers of a report who do not have the package's docs at hand. */
+export const mythsListUrl = 'https://github.com/Altitud-Studio-S-L-U/altimeter/blob/main/docs/rules.md#myths';
 
 const providerNames = { claude: 'Claude Code', codex: 'Codex' } as const;
 
@@ -192,6 +195,7 @@ export function renderMarkdown(report: Report, language: Language): string {
   lines.push(`## ${t.pages}`, '', `| ${t.page} | ${t.status} | ${t.type} | ${t.rendered} |`, '| --- | --- | --- | --- |');
   for (const page of report.pages) lines.push(`| ${untrustedInline(page.finalUrl, 160)} | ${page.status ?? '-'} | ${page.pageType} | ${page.rendered ? t.yes : t.no} |`);
   lines.push('', `## ${t.method}`, '', t.methodIntro, '', cleanLine(report.score.formula, 1200), '');
+  lines.push(`${format(t.mythsLine, { count: myths.length })} <${mythsListUrl}>`, '');
   lines.push(`Catalog \`${report.catalog.hash.slice(0, 12)}\` · ${report.catalog.implemented}/${report.catalog.rules} · Node ${report.run.versions.node}${report.run.versions.chrome ? ` · ${cleanLine(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${cleanLine(report.run.versions.lighthouse)}` : ''}`, '');
   return lines.join('\n');
 }

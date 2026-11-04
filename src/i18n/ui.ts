@@ -25,6 +25,7 @@ export interface UiStrings {
   readonly pages: string;
   readonly method: string;
   readonly methodIntro: string;
+  readonly mythsLine: string;
   readonly evidence: string;
   readonly fix: string;
   readonly source: string;
@@ -112,6 +113,7 @@ const en: UiStrings = {
   pages: 'Pages audited',
   method: 'Method',
   methodIntro: 'Each check comes from a rule catalog that cites a primary source and the date it was verified. Scores use only deterministic checks.',
+  mythsLine: 'Altimeter never reports the {count} claims that current guidance contradicts, such as keyword density, a minimum word count or fixed title lengths. The myths list explains each one.',
   evidence: 'Evidence',
   fix: 'Fix',
   source: 'Source',
@@ -221,6 +223,7 @@ const es: UiStrings = {
   pages: 'Páginas auditadas',
   method: 'Método',
   methodIntro: 'Cada comprobación procede de un catálogo de reglas que cita una fuente primaria y la fecha en que se verificó. Las puntuaciones solo usan comprobaciones deterministas.',
+  mythsLine: 'Altimeter nunca informa de las {count} afirmaciones que la documentación actual contradice, como la densidad de palabras clave, un mínimo de palabras o longitudes fijas de título. La lista de mitos explica cada una.',
   evidence: 'Evidencia',
   fix: 'Corrección',
   source: 'Fuente',
@@ -330,6 +333,7 @@ const ca: UiStrings = {
   pages: 'Pàgines auditades',
   method: 'Mètode',
   methodIntro: 'Cada comprovació prové d\'un catàleg de regles que cita una font primària i la data en què es va verificar. Les puntuacions només fan servir comprovacions deterministes.',
+  mythsLine: 'Altimeter no informa mai de les {count} afirmacions que la documentació actual contradiu, com la densitat de paraules clau, un mínim de paraules o longituds fixes de títol. La llista de mites explica cadascuna.',
   evidence: 'Evidència',
   fix: 'Correcció',
   source: 'Font',
