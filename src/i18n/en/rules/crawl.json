@@ -522,5 +522,35 @@
       "fail:refused": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents}); the edge refused most of them.",
       "fail:present": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents})."
     }
+  },
+  "crawl-bing-crawl-issues": {
+    "messages": {
+      "fail": "Bing lists {count} URL(s) with the crawl issue {issue}, for example {examples}.",
+      "fail:malware": "Bing flags {count} URL(s) as containing malware, for example {examples}.",
+      "fail:server-error": "Bing got server errors (5xx) for {count} URL(s), for example {examples}.",
+      "fail:dns-error": "Bing could not resolve the host name for {count} URL(s), for example {examples}.",
+      "fail:timeout": "Bing timed out fetching {count} URL(s), for example {examples}.",
+      "fail:client-error": "Bing got 4xx errors for {count} URL(s), {linked} of them with inbound links, for example {examples}.",
+      "fail:important-url-blocked": "robots.txt blocks Bingbot from {count} URL(s) that Bing considers important, for example {examples}.",
+      "fail:blocked-by-robots": "robots.txt blocks Bingbot from {count} URL(s), for example {examples}.",
+      "fail:permanent-redirect": "Bing found a 301 redirect at {count} URL(s), for example {examples}.",
+      "fail:temporary-redirect": "Bing found a 302 redirect at {count} URL(s), for example {examples}."
+    }
+  },
+  "crawl-bing-page-issues": {
+    "messages": {
+      "fail": "Bing reports {issues} for {url}.",
+      "fail:malware": "Bing flags {url} as containing malware ({issues}).",
+      "fail:server-error": "Bing got a server error for {url} (HTTP status {status}; {issues}), and this audit got {live}.",
+      "fail:dns-error": "Bing could not resolve the host name of {url} ({issues}), and this audit got {live}.",
+      "fail:timeout": "Bing timed out fetching {url} ({issues}), and this audit got {live}.",
+      "fail:client-error": "Bing got a client error for {url} (HTTP status {status}; {issues}), and this audit got {live}.",
+      "fail:important-url-blocked": "Bing considers {url} important, but robots.txt blocks Bingbot from it ({issues}).",
+      "fail:blocked-by-robots": "robots.txt blocks Bingbot from {url} ({issues}).",
+      "fail:permanent-redirect": "Bing found a 301 redirect at {url} ({issues}), and this audit got {live}.",
+      "fail:temporary-redirect": "Bing found a 302 redirect at {url} ({issues}), and this audit got {live}.",
+      "fail:not-reproduced": "Bing reports {issues} for {url}, but this audit got {live}: the problem was fixed since Bing's crawl, is intermittent, or reaches only Bingbot.",
+      "fail:robots-allows-now": "Bing reports {issues} for {url}, but the robots.txt this audit read lets Bingbot fetch it, so the issue should clear once Bing reads robots.txt again."
+    }
   }
 }

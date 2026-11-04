@@ -2597,5 +2597,85 @@
     ],
     "fixLocation": "content",
     "verifiableBy": "owner-data"
+  },
+  {
+    "id": "content-bing-low-ctr",
+    "category": "content",
+    "title": "Pages whose Bing click-through rate is far below the site norm",
+    "why": "A page that Bing shows often but searchers rarely click usually has a title or snippet that does not match what they look for. The comparison uses the CTR of the site's other pages at a similar position in Bing, not an industry curve.",
+    "fix": "Rewrite the title and meta description for the queries listed, keeping them accurate to the page. Check in Bing whether a richer result or another page of the site takes the clicks.",
+    "maxSeverity": "low",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bing"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "Most impressions come from queries the page does not answer, which a better-matching page should rank for instead."
+    ],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "official-other-engine",
+    "thresholds": "Low: a page with at least 100 Bing impressions in the twelve weeks that end on the latest week Bing reports, and a CTR under half the CTR of the site's other pages in its average position band (1, 2, 3, 4-5 or 6-10), counting only bands where the other pages have at least 200 impressions. Up to five pages, most impressions first. The window, minimums and ratio are tool conventions; the bands, minimums and ratio match content-gsc-low-ctr.",
+    "sources": [
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.iwebmasterapi.getpagestats?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.iwebmasterapi.getpagequerystats?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.querystats?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Reads GetPageStats (weekly rows per page: Impressions, Clicks, AvgImpressionPosition) and, for the pages flagged, GetPageQueryStats for their queries. A page's position is the impression-weighted average of its weekly positions, and each page is left out of the norm it is compared with. Bing updates these statistics weekly and does not document how many weeks it returns, so the evidence gives the dates read. The queries are owner data: reports written with --redact-queries show numbered labels instead.",
+    "related": [
+      "content-gsc-low-ctr",
+      "content-title-width",
+      "content-meta-description-quality"
+    ],
+    "fixLocation": "content",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "content-bing-ai-performance",
+    "category": "content",
+    "title": "Copilot citations are only in Bing Webmaster Tools",
+    "why": "The AI Performance report of Bing Webmaster Tools shows how often Microsoft Copilot, AI-generated summaries in Bing and select partner integrations cite the site's pages, and for which grounding queries. The Bing Webmaster API has no method for that report, so an audit cannot include it.",
+    "fix": "Open the AI Performance report for the site in Bing Webmaster Tools to see total citations, cited pages and grounding queries. Bing says the grounding queries are a sample of the citation activity.",
+    "maxSeverity": "info",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bing"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-other-engine",
+    "thresholds": "Info whenever Bing data was read: a pointer to the report, never a judgment of the site. It has no passing state.",
+    "sources": [
+      {
+        "url": "https://blogs.bing.com/webmaster/2026/2/Introducing-AI-Performance-in-Bing-Webmaster-Tools-Public-Preview/",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.iwebmasterapi?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "The AI Performance report launched as a public preview on 10 February 2026. None of the IWebmasterApi methods returns its data; when one does, this rule should read it instead of pointing to the report. Never infer citations from Bing search traffic.",
+    "related": [
+      "ai-measurement-context"
+    ],
+    "fixLocation": "external-account",
+    "verifiableBy": "manual"
   }
 ]
