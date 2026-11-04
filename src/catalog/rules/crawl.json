@@ -9,9 +9,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "robots",
-      "http",
-      "redirects"
+      "robots"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -25,10 +23,6 @@
         "verified": "2026-11-03"
       },
       {
-        "url": "https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt",
-        "verified": "2026-11-03"
-      },
-      {
         "url": "https://www.rfc-editor.org/rfc/rfc9309.html",
         "verified": "2026-11-03"
       }
@@ -38,7 +32,9 @@
     "related": [
       "crawl-robots-redirects",
       "tech-maintenance-503"
-    ]
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-robots-redirects",
@@ -50,8 +46,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "robots",
-      "redirects"
+      "robots"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -70,7 +65,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Count redirect hops for /robots.txt and record the final URL and status. Only HTTP 3xx counts: meta refresh, JS and frame redirects are not followed for robots.txt. Redirecting http://example.com/robots.txt to https://www.example.com/robots.txt is normal and fine."
+    "notes": "Count redirect hops for /robots.txt and record the final URL and status. Only HTTP 3xx counts: meta refresh, JS and frame redirects are not followed for robots.txt. Redirecting http://example.com/robots.txt to https://www.example.com/robots.txt is normal and fine.",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-robots-format",
@@ -82,19 +79,18 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "robots",
-      "http"
+      "robots"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Body >500 KiB (512,000 bytes) = fail high if any rule appears after the cut (it is ignored). An HTML body = fail high (Google tries to extract rules but in practice there are none). Non-UTF-8 bytes inside rule paths = medium. A leading BOM = pass (ignored).",
+    "thresholds": "Body >500 KiB (512,000 bytes) = fail high if any rule appears after the cut (it is ignored). An HTML body = fail medium (no rules apply, which equals having no robots.txt, and no Sitemap line is read). Non-UTF-8 bytes inside rule paths = medium. A leading BOM = pass (ignored).",
     "sources": [
       {
-        "url": "https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt",
-        "verified": "2026-11-03"
+        "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
+        "verified": "2026-11-04"
       },
       {
         "url": "https://www.rfc-editor.org/rfc/rfc9309.html",
@@ -102,7 +98,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Measure the uncompressed body size, decode it as UTF-8 and count invalid byte sequences. Check that Content-Type is text/plain. Detect an HTML body (e.g. an SPA fallback serving index.html with 200). Report the exact byte offset where truncation happens and which rules are lost."
+    "notes": "Measure the uncompressed body size, decode it as UTF-8 and count invalid byte sequences. Check that Content-Type is text/plain. Detect an HTML body (e.g. an SPA fallback serving index.html with 200). Report the exact byte offset where truncation happens and which rules are lost.",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-robots-parse-errors",
@@ -121,7 +119,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "web-standard",
-    "thresholds": "A misspelled disallow/allow/user-agent = medium. A rule outside a group = low. An empty 'Disallow:' = info (it allows everything, which is valid).",
+    "thresholds": "A misspelled disallow/allow/user-agent = medium. A rule outside a group, a line without a colon or a path that starts with neither / nor * = low. An empty 'Disallow:' allows everything, which is valid, and passes.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
@@ -133,7 +131,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Parse the file line by line per RFC 9309 / Google. Flag: unknown field names (typos like 'Dissallow', 'User agent'), rules before any user-agent line, allow/disallow with an empty or missing path (ignored), paths that start with neither '/' nor '*', missing colons, and user-agent values containing spaces or version strings. Field names are case-insensitive and paths are case-sensitive. 'Googlebot/2.1' as a user-agent value matches 'googlebot' because text that does not match is ignored."
+    "notes": "Parse the file line by line per RFC 9309 / Google. Flag: unknown field names (typos like 'Dissallow', 'User agent'), rules before any user-agent line, allow/disallow with an empty or missing path (ignored), paths that start with neither '/' nor '*', missing colons, and user-agent values containing spaces or version strings. Field names are case-insensitive and paths are case-sensitive. 'Googlebot/2.1' as a user-agent value matches 'googlebot' because text that does not match is ignored. A body that is an HTML page is reported once, by crawl-robots-format.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-robots-unsupported-directives",
@@ -155,8 +155,8 @@
     "thresholds": "'noindex:' present = high (the owner believes the URLs are deindexed, but Google ignores it). crawl-delay = info for Google. Other unsupported fields = info.",
     "sources": [
       {
-        "url": "https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt",
-        "verified": "2026-11-03"
+        "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
+        "verified": "2026-11-04"
       },
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/block-indexing",
@@ -168,7 +168,9 @@
     "related": [
       "crawl-bing-crawl-delay",
       "crawl-meta-robots-noindex"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-robots-blocks-site",
@@ -180,8 +182,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "robots",
-      "crawl"
+      "robots"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -191,7 +192,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Homepage disallowed for Googlebot = critical. More than 50% of the sampled indexable-intended URLs disallowed = critical. 'Disallow: /' in the * group with no googlebot group = critical.",
+    "thresholds": "Homepage disallowed for Googlebot = critical. More than 50% of the crawled indexable-intended URLs disallowed for Googlebot = critical (evaluated only when a crawl ran). 'Disallow: /' in the * group with no googlebot group = critical. Homepage disallowed for Bingbot while Googlebot is allowed = high.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
@@ -224,7 +225,12 @@
       "crawl-robots-blocks-page",
       "ai-robots-wildcard-disallow-all",
       "crawl-robots-blocks-render-resources"
-    ]
+    ],
+    "optionalInputs": [
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-robots-blocks-page",
@@ -236,9 +242,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "robots",
-      "sitemaps",
-      "crawl"
+      "robots"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -247,7 +251,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Fails when an audited URL is disallowed for Googlebot. Critical when the URL is also listed in a sitemap, is the home page, or is named as a canonical or hreflang target by another page. Medium when it is only linked internally. Disallowed utility URLs (cart, internal search, account) pass.",
+    "thresholds": "Fails when an audited URL is disallowed for Googlebot. Critical when the URL is also listed in a sitemap, is the home page, or is named as a canonical or hreflang target by another page. Medium otherwise. Medium when only Bingbot is disallowed. Disallowed utility URLs (cart, internal search, account) pass.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
@@ -263,7 +267,13 @@
     "related": [
       "crawl-noindex-blocked-by-robots",
       "intl-hreflang-target-blocked-by-robots"
-    ]
+    ],
+    "optionalInputs": [
+      "sitemaps",
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-robots-group-override",
@@ -282,7 +292,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Any '*' disallow of a crawl trap (search, cart, facets) missing from the googlebot group = medium. Full '*' block plus an empty googlebot group = info (intentional allow).",
+    "thresholds": "A '*' disallow of a crawl trap (search, cart, facets, parameters) that the googlebot or bingbot group does not repeat = medium. Other '*' disallow rules that a named group does not repeat = low. A '*' group that disallows / plus named groups = info (the named groups are an intentional allow list).",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
@@ -294,7 +304,9 @@
       }
     ],
     "status": "v1",
-    "notes": "If a group names googlebot (or bingbot) and a '*' group also exists, list the '*' disallow rules missing from the specific group. Google follows only the most specific group, and groups for the same agent are merged. The order of groups in the file does not matter. 'Googlebot-Image' falls back to the 'googlebot' group if it has no group of its own. Applies to every token, including AI crawler groups: a GPTBot or ClaudeBot group drops the * rules for that crawler too."
+    "notes": "If a group names googlebot (or bingbot) and a '*' group also exists, list the '*' disallow rules missing from the specific group. Google follows only the most specific group, and groups for the same agent are merged. The order of groups in the file does not matter. 'Googlebot-Image' falls back to the 'googlebot' group if it has no group of its own. Applies to every token, including AI crawler groups: a GPTBot or ClaudeBot group drops the * rules for that crawler too.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-robots-blocks-render-resources",
@@ -306,17 +318,14 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "robots",
-      "resources",
-      "rendered-dom",
-      "unblocked-render"
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "A blocked JS/CSS/API request whose removal changes the main content, links, title/meta/canonical or causes a mobile layout break = high. A blocked request with no rendered effect (analytics, ads) = pass.",
+    "thresholds": "Blocked requests whose absence changes the title, canonical, robots directives or h1, removes 20% or more of the rendered text or of the internal links, or makes the page wider than the viewport = high. A smaller text loss (5% to 20%) = medium, confirmed by the analyst. Blocked requests with no rendered effect (analytics, ads) = pass.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
@@ -332,10 +341,16 @@
       }
     ],
     "status": "v1",
-    "notes": "During the headless render, record every subresource request (CSS, JS, fonts, images, XHR/fetch API calls), including those on other origins. Evaluate each against its own origin's robots.txt for Googlebot. Measure the impact by rendering again with those requests aborted and diffing the DOM text, links and layout. Google does not run JS from blocked files. Blocking third-party trackers is harmless, so do not flag every blocked request.",
+    "notes": "During the headless render, record every subresource request (CSS, JS, fonts, images, XHR/fetch API calls), including those on other origins. Evaluate each against its own origin's robots.txt for Googlebot. Measure the impact by rendering again with those requests aborted and diffing the DOM text, links and layout. Google does not run JS from blocked files. Blocking third-party trackers is harmless, so do not flag every blocked request. The collector renders a second time without robots.txt blocking only when the Googlebot-like render blocked something; the rule compares those two renders.",
     "related": [
       "tech-failed-render-requests"
-    ]
+    ],
+    "optionalInputs": [
+      "unblocked-render",
+      "robots"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-robots-sitemap-lines",
@@ -347,8 +362,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "robots",
-      "sitemaps"
+      "robots"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -361,8 +375,8 @@
     "thresholds": "A relative Sitemap URL = medium. A declared sitemap that does not answer 200 = medium. No Sitemap line, no <link rel=\"sitemap\"> and no sitemap at /sitemap.xml = low.",
     "sources": [
       {
-        "url": "https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt",
-        "verified": "2026-11-03"
+        "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
+        "verified": "2026-11-04"
       },
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap",
@@ -370,7 +384,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Extract every 'Sitemap:' line. Each must be an absolute URL with a scheme. Fetch each one and record status, content type and whether it parses. Sitemap lines do not belong to any group and may appear anywhere. Search Console submission is invisible to the tool, so a missing sitemap is low, not high."
+    "notes": "Extract every 'Sitemap:' line. Each must be an absolute URL with a scheme. Fetch each one and record status, content type and whether it parses. Sitemap lines do not belong to any group and may appear anywhere. Search Console submission is invisible to the tool, so a missing sitemap is low, not high.",
+    "optionalInputs": [
+      "sitemaps"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-noindex-blocked-by-robots",
@@ -383,9 +402,7 @@
     "scope": "page",
     "inputs": [
       "robots",
-      "raw-html",
-      "http",
-      "unblocked-render"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -408,7 +425,13 @@
     "related": [
       "crawl-meta-robots-noindex",
       "crawl-robots-blocks-page"
-    ]
+    ],
+    "optionalInputs": [
+      "raw-html",
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-meta-robots-noindex",
@@ -421,10 +444,7 @@
     "scope": "page",
     "inputs": [
       "raw-html",
-      "rendered-dom",
-      "http",
-      "sitemaps",
-      "crawl"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -435,7 +455,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Critical when a page with noindex (meta robots or X-Robots-Tag) is the home page, is listed in a sitemap, or is named by another page as its canonical or hreflang target. Medium when an indexable-looking content page carries noindex without any of those conflicts. Pass for utility and policy pages. Links from navigation or the footer never raise the severity.",
+    "thresholds": "Critical when a page with noindex for Googlebot (meta robots or X-Robots-Tag) is the home page, is listed in a sitemap, or is named by another audited page as its canonical or hreflang target. Medium when an indexable-looking content page carries noindex without any of those conflicts, or when only Bingbot is told noindex. Pass for utility, policy and error pages. Links from navigation or the footer never raise the severity.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
@@ -466,7 +486,13 @@
       "crawl-sitemap-url-quality",
       "intl-hreflang-target-noindex",
       "crawl-mobile-parity"
-    ]
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "sitemaps"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-noindex-raw-vs-rendered",
@@ -498,7 +524,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Compare the effective robots directives in the raw HTML with those in the rendered DOM. Documented by Google on 2025-12-15. JS-injected noindex on SPA error views is a documented soft-404 workaround: in that case report info if the view really is an error page."
+    "notes": "Compare the effective robots directives in the raw HTML with those in the rendered DOM. Documented by Google on 2025-12-15. JS-injected noindex on SPA error views is a documented soft-404 workaround: in that case report info if the view really is an error page.",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-robots-directives-conflict",
@@ -511,7 +539,6 @@
     "scope": "page",
     "inputs": [
       "raw-html",
-      "rendered-dom",
       "http"
     ],
     "appliesTo": "all",
@@ -519,7 +546,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "A contradiction involving noindex/nosnippet = medium. A redundant duplicate = low.",
+    "thresholds": "A contradiction involving noindex or snippet limits (index vs noindex, nosnippet vs max-snippet, two max-snippet values) = medium. follow vs nofollow, or two different max-image-preview or max-video-preview values = low. A redundant duplicate = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
@@ -527,7 +554,12 @@
       }
     ],
     "status": "v1",
-    "notes": "List all robots sources (each meta tag, each X-Robots-Tag) with their values. Flag contradictions (index vs noindex, max-snippet:50 vs nosnippet, different values in meta vs header) and report the effective result (most restrictive wins). 'index' and 'follow' are not Google directives (the default is 'all'), so their presence is harmless. Report the effective outcome, not just that duplicates exist."
+    "notes": "List all robots sources (each meta tag, each X-Robots-Tag) with their values. Flag contradictions (index vs noindex, max-snippet:50 vs nosnippet, different values in meta vs header) and report the effective result (most restrictive wins). 'index' and 'follow' are not Google directives (the default is 'all'), so their presence is harmless. Report the effective outcome, not just that duplicates exist.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-robots-directive-validity",
@@ -558,7 +590,12 @@
     "notes": "Tokenise robots values. Unknown tokens, malformed max-snippet/max-video-preview numbers, max-image-preview values other than none|standard|large, and unavailable_after dates not in RFC 822/850/ISO 8601 are all ignored by Google. Flag noarchive, nocache and nositelinkssearchbox as no-ops for Google. Separators: commas. 'noindex nofollow' with a space only is commonly parsed but non-standard: report low and recommend commas.",
     "related": [
       "ai-bing-noarchive-nocache"
-    ]
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-unavailable-after",
@@ -580,7 +617,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Date in the past on a live page = critical (removed from results). Date within 30 days = medium. Unparseable = low (ignored).",
+    "thresholds": "Date in the past on a live page = critical (removed from results). Date within 30 days = medium. Unparseable = low (ignored). The reference date is the Date header of the page response; without it the rule is not evaluated.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
@@ -588,7 +625,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Parse unavailable_after in meta/header. Compare it with today's date. Googlebot also reduces crawling after the date."
+    "notes": "Parse unavailable_after in meta/header. Compare it with today's date. Googlebot also reduces crawling after the date.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-snippet-restrictions",
@@ -596,12 +638,11 @@
     "title": "nosnippet, max-snippet or max-image-preview restricts snippets and AI features on indexable pages",
     "why": "Google documents that nosnippet and max-snippet:0 remove the text snippet and also stop the page from being used as direct input for AI Overviews and AI Mode; a small max-snippet limits how much text these features can use. max-image-preview below large prevents large image previews, including in Discover.",
     "fix": "Remove sitewide snippet restrictions unless they are a deliberate publisher policy. Use data-nosnippet for specific passages.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "page",
     "inputs": [
       "raw-html",
-      "rendered-dom",
       "http"
     ],
     "appliesTo": "all",
@@ -612,7 +653,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "nosnippet or max-snippet:0 on an indexable page = high (no snippet and no direct AI input). A max-snippet below 50 characters = medium. max-image-preview:none or standard on article pages = low. Sitewide restrictions are reported once at site level.",
+    "thresholds": "nosnippet or max-snippet:0 on an indexable page = medium, confirmed by the analyst (no snippet and no direct AI input; the owner may restrict snippets on purpose). A max-snippet below 50 characters = medium, confirmed by the analyst. max-image-preview:none or standard on article pages, or max-video-preview:0 = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
@@ -628,11 +669,16 @@
       }
     ],
     "status": "v1",
-    "notes": "Detect nosnippet, max-snippet:0 or a small value (<50), max-image-preview:none|standard, max-video-preview:0, and data-nosnippet covering most of the main content. Publishers in the EU sometimes set these for legal reasons, so report them as a deliberate trade-off, not as an error. data-nosnippet is valid only on span, div and section.",
+    "notes": "Detect nosnippet, max-snippet:0 or a small value (<50), max-image-preview:none|standard, max-video-preview:0, and data-nosnippet covering most of the main content. Publishers in the EU sometimes set these for legal reasons, so report them as a deliberate trade-off, not as an error. data-nosnippet is valid only on span, div and section. data-nosnippet coverage and sitewide aggregation are not computed in v1.",
     "related": [
       "content-data-nosnippet-invalid",
       "content-image-preview-large"
-    ]
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "owner-decision",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-page-nofollow",
@@ -660,7 +706,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Effective directives include nofollow (or none) on a page with internal links. Google treats link nofollow as a hint. Page-level nofollow still removes the page's links as a discovery path."
+    "notes": "Effective directives include nofollow (or none) on a page with internal links. Google treats link nofollow as a hint. Page-level nofollow still removes the page's links as a discovery path.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-xrobots-non-html",
@@ -701,8 +752,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "For linked PDFs, images, video, docs and feeds, read X-Robots-Tag and the Link rel=canonical header. Flag private or duplicate files (e.g. a PDF that duplicates an HTML page) with neither, and flag noindex headers wrongly applied to every file type (e.g. images). A header with a user-agent prefix ('googlebot: noindex') applies only to that bot."
+    "status": "planned",
+    "notes": "For linked PDFs, images, video, docs and feeds, read X-Robots-Tag and the Link rel=canonical header. Flag private or duplicate files (e.g. a PDF that duplicates an HTML page) with neither, and flag noindex headers wrongly applied to every file type (e.g. images). A header with a user-agent prefix ('googlebot: noindex') applies only to that bot. Planned: the collector fetches only icons, Open Graph images and logos, not the linked PDFs, documents and media this rule needs."
   },
   {
     "id": "crawl-indexifembedded",
@@ -722,7 +773,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Present without noindex = low (no effect).",
+    "thresholds": "Present without noindex = info (no effect). Present with noindex = pass.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
@@ -730,7 +781,12 @@
       }
     ],
     "status": "v1",
-    "notes": "indexifembedded present without noindex on the same resource. It is meant for iframe-embedded resources such as media players."
+    "notes": "indexifembedded present without noindex on the same resource. It is meant for iframe-embedded resources such as media players.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-head-invalid-element",
@@ -742,15 +798,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "rendered-dom"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Canonical or hreflang after the first invalid element = high (ignored by Google). An invalid element with nothing important after it = low.",
+    "thresholds": "Canonical or hreflang after the first invalid element = high (ignored by Google). An invalid element with only other metadata after it = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/valid-page-metadata",
@@ -766,10 +821,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Parse the raw HTML with a spec-compliant parser but read the source token stream: find the first element inside the source <head> that is not title, meta, link, script, style, base, noscript or template (e.g. img, iframe, div, p, a, a non-whitespace text node). Then list any rel=canonical, hreflang or other link/meta that appears after it. Repeat on the rendered DOM's head. An HTML5 parser silently moves an <img> from head into body, so the check has to read source order, not the parsed tree. Robots meta is still honoured outside head (Google, March 2026), so this rule does not neutralise noindex. noscript content in head containing img is a common trigger (GTM/Facebook pixel snippets).",
+    "notes": "Parse the raw HTML with a spec-compliant parser but read the source token stream: find the first element inside the source <head> that is not title, meta, link, script, style, base, noscript or template (e.g. img, iframe, div, p, a, a non-whitespace text node). Then list any rel=canonical, hreflang or other link/meta that appears after it. Repeat on the rendered DOM's head. An HTML5 parser silently moves an <img> from head into body, so the check has to read source order, not the parsed tree. Robots meta is still honoured outside head (Google, March 2026), so this rule does not neutralise noindex. noscript content in head containing img is a common trigger (GTM/Facebook pixel snippets). v1 reads the raw HTML only: a serialized rendered DOM no longer shows where the source head ended.",
     "related": [
       "intl-hreflang-outside-head"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-canonical-presence",
@@ -782,7 +839,6 @@
     "scope": "page",
     "inputs": [
       "raw-html",
-      "rendered-dom",
       "http"
     ],
     "appliesTo": "all",
@@ -798,7 +854,13 @@
       }
     ],
     "status": "v1",
-    "notes": "Collect rel=canonical from the raw head, the rendered head and the Link HTTP header. On a page meant to be indexed, check that one exists and record whether it points to itself (after normalising the scheme/host case and default port). Escalate to medium when the page has known duplicates (parameter variants, host variants that answer 200)."
+    "notes": "Collect rel=canonical from the raw head, the rendered head and the Link HTTP header. On a page meant to be indexed, check that one exists and record whether it points to itself (after normalising the scheme/host case and default port). Escalate to medium when the page has known duplicates (parameter variants, host variants that answer 200).",
+    "optionalInputs": [
+      "rendered-dom",
+      "variants"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-canonical-multiple",
@@ -811,7 +873,6 @@
     "scope": "page",
     "inputs": [
       "raw-html",
-      "rendered-dom",
       "http"
     ],
     "appliesTo": "all",
@@ -831,7 +892,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Count distinct canonical targets across raw head, rendered head and Link header, and across several link elements. Compare after URL normalisation. Only 'http://' vs 'https://' differing is still a conflict."
+    "notes": "Count distinct canonical targets across raw head, rendered head and Link header, and across several link elements. Compare after URL normalisation. Only 'http://' vs 'https://' differing is still a conflict. Each document (raw HTML and rendered DOM, both with the Link header) is checked on its own; a raw value that JavaScript changes is reported once, by crawl-canonical-js-changed.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-canonical-js-changed",
@@ -863,7 +929,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Diff the raw-HTML canonical against the rendered-DOM canonical. Documented by Google 2025-12-17. Client routers (Next/Nuxt) often keep the previous route's canonical after navigation: test the initial load, not a client-side transition."
+    "notes": "Diff the raw-HTML canonical against the rendered-DOM canonical. Documented by Google 2025-12-17. Client routers (Next/Nuxt) often keep the previous route's canonical after navigation: test the initial load, not a client-side transition.",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-canonical-format",
@@ -891,7 +959,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Validate the canonical href: absolute http(s) URL, parseable, no fragment, not empty, not 'about:blank' or a template placeholder ('{{url}}', 'undefined'), host resolves. Resolve relative values against <base href> if present, since that is how crawlers resolve them."
+    "notes": "Validate the canonical href: absolute http(s) URL, parseable, no fragment, not empty, not 'about:blank' or a template placeholder ('{{url}}', 'undefined'), host resolves. Resolve relative values against <base href> if present, since that is how crawlers resolve them.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-canonical-ignored-attributes-placement",
@@ -903,8 +973,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "rendered-dom"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -923,7 +992,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Flag rel=canonical link elements that are in body (in source order), or that carry hreflang, lang, media or type attributes. Clarified by Google on 2024-02-15."
+    "notes": "Flag rel=canonical link elements that are in body (in source order), or that carry hreflang, lang, media or type attributes. Clarified by Google on 2024-02-15. A canonical that an early-closed head pushed into the body is reported by crawl-head-invalid-element, not here.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-canonical-target-health",
@@ -936,9 +1010,7 @@
     "scope": "page",
     "inputs": [
       "raw-html",
-      "http",
-      "robots",
-      "crawl"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -959,7 +1031,14 @@
       }
     ],
     "status": "v1",
-    "notes": "Fetch the canonical target without following redirects. Check its status, robots.txt allowance, noindex, and its own canonical. Use a Googlebot smartphone UA. Some sites geo-redirect the target, so report the redirect location."
+    "notes": "Fetch the canonical target without following redirects. Check its status, robots.txt allowance, noindex, and its own canonical. Use a Googlebot smartphone UA. Some sites geo-redirect the target, so report the redirect location. The target is judged only from responses the collector already received (audited pages, siblings, URL variants, redirect hops); an unfetched target is not evaluated.",
+    "optionalInputs": [
+      "robots",
+      "variants",
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-canonical-protocol-host",
@@ -971,19 +1050,14 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "raw-html",
-      "http",
-      "redirects",
-      "variants",
-      "tls",
-      "sitemaps"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "HTTPS to HTTP canonical or redirect = high. Invalid certificate = critical (it strongly pushes Google to prefer HTTP). Canonical host differs from the redirect target host = high.",
+    "thresholds": "An HTTPS page canonicalising to HTTP = high. A canonical host that differs from the host the www/apex variant redirects to = high. Invalid certificates are owned by tech-tls-certificate-valid and HTTPS-to-HTTP redirects by tech-https-to-http-downgrade.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -996,7 +1070,12 @@
       "crawl-host-variant-consolidation",
       "tech-https-final-url",
       "intl-hreflang-mixed-protocol-or-host"
-    ]
+    ],
+    "optionalInputs": [
+      "variants"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-canonical-cross-domain",
@@ -1008,9 +1087,7 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "rendered-dom",
-      "crawl"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1020,7 +1097,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Cross-domain to a known sister property with matching content = info. Cross-domain to an unrelated domain or mismatched content = high (possible misconfiguration or hijack). The analyst compares the two contents.",
+    "thresholds": "Same registrable domain = pass. A staging host canonicalising to production = pass. Production canonicalising to a staging host = high. Any other cross-domain canonical = medium, and the analyst compares the two contents (a sister property or syndication original is fine; an unrelated domain is a possible misconfiguration or hijack).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/canonicalization-troubleshooting",
@@ -1028,7 +1105,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Compare the registrable domain (public suffix list) of the canonical with the page's. Staging domains canonicalising to production are fine. Production canonicalising to staging is critical."
+    "notes": "Compare the registrable domain (public suffix list) of the canonical with the page's. Staging domains canonicalising to production are fine. Production canonicalising to staging is critical. Without a public suffix list, the registrable domain is approximated as the last two labels, or three under second-level labels such as co.uk.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-canonical-pagination",
@@ -1040,8 +1122,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "raw-html",
-      "crawl"
+      "http"
     ],
     "appliesTo": [
       "listing",
@@ -1061,7 +1142,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Detect paginated series (?page=, /page/N, rel=next/prev, numbered links) and check whether page N>1 canonicalises to page 1 or to the unparameterised URL. A 'view-all' page as canonical is a legitimate alternative when it exists and loads fast."
+    "notes": "Detect paginated series (?page=, /page/N, rel=next/prev, numbered links) and check whether page N>1 canonicalises to page 1 or to the unparameterised URL. A 'view-all' page as canonical is a legitimate alternative when it exists and loads fast.",
+    "optionalInputs": [
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-canonical-chains",
@@ -1073,14 +1159,14 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "crawl"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "industry-consensus",
-    "thresholds": "Loop = high. Chain ≥2 = medium.",
+    "thresholds": "Loop = medium. Chain of 2 or more canonical hops = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -1092,7 +1178,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Over the crawl graph, follow canonical edges (A→B where B's canonical is C) and redirect edges. Detect chains longer than 1, loops, and canonicals pointing into redirects. Google does not document a canonical hop limit. The severity comes from conflicting signals, not from a known hard failure."
+    "notes": "Over the crawl graph, follow canonical edges (A→B where B's canonical is C) and redirect edges. Detect chains longer than 1, loops, and canonicals pointing into redirects. Google does not document a canonical hop limit. The severity comes from conflicting signals, not from a known hard failure.",
+    "optionalInputs": [
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-canonical-signal-consistency",
@@ -1104,16 +1195,14 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "crawl",
-      "sitemaps",
-      "raw-html"
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Sitemap lists URL X while X canonicalises to Y = medium. Internal links mostly point at a non-canonical variant = medium. hreflang points at non-canonical URLs = high (see the hreflang dimension).",
+    "thresholds": "Sitemap lists URL X while X canonicalises to Y = medium. Internal links point more often at URLs that canonicalise elsewhere than at their canonical = medium (evaluated when a crawl ran). hreflang pointing at non-canonical URLs is owned by the intl rules.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -1125,7 +1214,13 @@
       }
     ],
     "status": "v1",
-    "notes": "For each canonical cluster in the crawl, compare: the declared canonical, the sitemap URL, the internal link targets (the most-linked variant), hreflang alternates, redirect targets, and the HTTPS/host preference. Strength order: redirects > rel=canonical > sitemap. A disagreement makes Google more likely to choose its own canonical."
+    "notes": "For each canonical cluster in the crawl, compare: the declared canonical, the sitemap URL, the internal link targets (the most-linked variant), hreflang alternates, redirect targets, and the HTTPS/host preference. Strength order: redirects > rel=canonical > sitemap. A disagreement makes Google more likely to choose its own canonical.",
+    "optionalInputs": [
+      "http",
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-host-variant-consolidation",
@@ -1137,10 +1232,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "variants",
-      "http",
-      "redirects",
-      "raw-html"
+      "variants"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1150,7 +1242,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "A variant that answers 200 with the same content and no canonical to the preferred URL = high. A 302 or 307 used for permanent consolidation = low. More than one hop to the preferred URL = low.",
+    "thresholds": "A variant that answers 200 with the same content and no canonical to the preferred URL = high. A 302 or 307 used for permanent consolidation = low. More than one hop to the preferred URL = low. Tracking-parameter variants are owned by crawl-parameter-urls.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -1178,7 +1270,12 @@
     "related": [
       "crawl-redirect-type",
       "tech-http-to-https-redirect"
-    ]
+    ],
+    "optionalInputs": [
+      "http"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-duplicate-clusters",
@@ -1190,8 +1287,7 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "crawl",
-      "rendered-dom"
+      "crawl"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1201,7 +1297,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "A cluster without consolidation = medium. A cluster where members canonicalise to different targets = high. The analyst confirms that the pages are true duplicates (same primary content and language), not templated pages that legitimately differ (e.g. product variants with unique specs).",
+    "thresholds": "A cluster of pages with the same main text and language whose members do not share one canonical = medium, confirmed by the analyst (true duplicates, not templated pages that legitimately differ).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/canonicalization",
@@ -1221,7 +1317,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Hash the normalised main-content text (boilerplate removed) of every crawled 200 page. Cluster exact duplicates and near duplicates (e.g. SimHash/MinHash similarity ≥0.9). For each cluster, check whether all members share one canonical or redirect to it. Translated pages are not duplicates. Pages translated only in header/footer are. Google may keep a cluster for up to two weeks after fixes. The 0.9 threshold is a tool heuristic, not a Google number."
+    "notes": "Hash the normalised main-content text (boilerplate removed) of every crawled 200 page. Cluster exact duplicates and near duplicates (e.g. SimHash/MinHash similarity ≥0.9). For each cluster, check whether all members share one canonical or redirect to it. Translated pages are not duplicates. Pages translated only in header/footer are. Google may keep a cluster for up to two weeks after fixes. The 0.9 threshold is a tool heuristic, not a Google number. v1 clusters exact text duplicates only; near-duplicate similarity is not computed.",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-parameter-urls",
@@ -1233,8 +1331,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "crawl",
-      "sitemaps"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1243,7 +1340,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Session IDs in URLs = high. Tracking parameters in internal links = medium. A content-neutral parameter answering 200 with no canonical to the clean URL = medium.",
+    "thresholds": "Session IDs in internal links or sitemap URLs = medium. Tracking parameters in internal links or sitemap URLs = medium. A URL with a tracking parameter answering 200 with no canonical to the clean URL = medium.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/url-structure",
@@ -1255,7 +1352,14 @@
       }
     ],
     "status": "v1",
-    "notes": "Find internal links and sitemap URLs that contain utm_*, gclid, fbclid, msclkid, sessionid, sid, PHPSESSID, jsessionid, ref, sort or order parameters, and parameters that do not change content (compare content hashes with and without the parameter). UTM links from external campaigns are normal. Flag only internal links and sitemaps."
+    "notes": "Find internal links and sitemap URLs that contain utm_*, gclid, fbclid, msclkid, sessionid, sid, PHPSESSID, jsessionid, ref, sort or order parameters, and parameters that do not change content (compare content hashes with and without the parameter). UTM links from external campaigns are normal. Flag only internal links and sitemaps.",
+    "optionalInputs": [
+      "sitemaps",
+      "variants",
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-faceted-navigation",
@@ -1288,8 +1392,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Over the crawl, group URLs by path plus parameter-key set. Detect combinatorial growth (many parameter combinations per template), repeated or unordered filter keys, non-'&' separators (',', ';', '[]'), calendar or date links going unbounded, relative links that create ever-deeper bogus paths, and filter URLs answering 200 with zero results. The 1,000 threshold is a tool heuristic. Small sites with a few facets are fine. Fragment-based filters (#color=red) do not create crawlable URLs."
+    "status": "planned",
+    "notes": "Over the crawl, group URLs by path plus parameter-key set. Detect combinatorial growth (many parameter combinations per template), repeated or unordered filter keys, non-'&' separators (',', ';', '[]'), calendar or date links going unbounded, relative links that create ever-deeper bogus paths, and filter URLs answering 200 with zero results. The 1,000 threshold is a tool heuristic. Small sites with a few facets are fine. Fragment-based filters (#color=red) do not create crawlable URLs. Planned: combinatorial growth can only be observed in a crawl much larger than the bounded v1 collection."
   },
   {
     "id": "crawl-status-final",
@@ -1311,7 +1415,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Final 4xx (400/401/403/404/410/411) = critical for a page meant to be indexed (not indexed, and removed if it was). Final 5xx = critical (temporary, but persistent errors cause removal). 429 = high (treated as a server error). 204 = high (no content). 200 = pass.",
+    "thresholds": "Final 4xx (400/401/403/404/410/411) = critical when the URL is the home page, is listed in a sitemap, or is linked or named as a canonical or hreflang target by another audited page (not indexed, and removed if it was). An unreferenced 4xx is treated as intentionally removed. Final 5xx = critical (temporary, but persistent errors cause removal). 429 = high (treated as a server error). 204 = high (no content). 2xx = pass.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
@@ -1323,7 +1427,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Fetch the URL as Googlebot Smartphone and as a desktop browser. Record the full chain and the final status. Google may skip rendering non-200 pages, so content injected by JS into a 404 shell is not seen. Retry 5xx once before reporting."
+    "notes": "Fetch the URL as Googlebot Smartphone and as a desktop browser. Record the full chain and the final status. Google may skip rendering non-200 pages, so content injected by JS into a 404 shell is not seen. Retry 5xx once before reporting.",
+    "optionalInputs": [
+      "sitemaps"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-bot-blocking",
@@ -1345,7 +1454,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "A Googlebot Smartphone or Bingbot user agent receives 403, 429, 503 or a challenge page while a browser user agent receives 200 = high. Materially different main content for the crawler user agent = high, reported with crawl-dynamic-rendering. Blocking of spoofed user agents verified by IP cannot be distinguished from outside: report as not_evaluated with a request to confirm in Search Console.",
+    "thresholds": "A Googlebot Smartphone or Bingbot user agent receiving 403, 429, 503 or a challenge page while a browser user agent receives 200 = not evaluated, with a request to confirm in Search Console Crawl Stats or URL Inspection (real crawlers are verified by IP). Materially different main content for the crawler user agent is reported by crawl-dynamic-rendering.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
@@ -1364,8 +1473,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Fetch the same URL with a Chrome UA, a Googlebot Smartphone UA and a bingbot UA. Compare status, final URL, content-length and main-content hash. Detect challenge pages (Cloudflare 'Just a moment', captcha, 403/503 with challenge markers). The tool cannot come from Google IPs. A site that blocks only fake Googlebot UAs is behaving correctly. Report this as 'unverifiable from outside, confirm in Search Console Crawl Stats / URL Inspection'.",
+    "status": "planned",
+    "notes": "Fetch the same URL with a Chrome UA, a Googlebot Smartphone UA and a bingbot UA. Compare status, final URL, content-length and main-content hash. Detect challenge pages (Cloudflare 'Just a moment', captcha, 403/503 with challenge markers). The tool cannot come from Google IPs. A site that blocks only fake Googlebot UAs is behaving correctly. Report this as 'unverifiable from outside, confirm in Search Console Crawl Stats / URL Inspection'. Planned: from outside, every difference that depends only on the user agent is unverifiable, so the rule could only report not evaluated; it needs Search Console crawl data.",
     "related": [
       "ai-edge-ua-block-probe",
       "crawl-dynamic-rendering",
@@ -1382,15 +1491,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "redirects",
-      "crawl"
+      "redirects"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Loop = critical. >10 hops = critical (Googlebot gives up). 3-10 hops = medium. 2 hops = low. 1 hop = pass.",
+    "thresholds": "Loop = medium. >10 hops = medium (Googlebot gives up). 3-10 hops = medium. 2 hops = low. 1 hop = pass. A root-to-locale entry hop is not counted.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
@@ -1399,17 +1507,18 @@
       {
         "url": "https://developers.google.com/crawling/docs/crawl-budget",
         "verified": "2026-11-03"
-      },
-      {
-        "url": "https://developers.google.com/search/docs/crawling-indexing/http-network-errors",
-        "verified": "2026-11-03"
       }
     ],
     "status": "v1",
     "notes": "Follow the HTTP redirect chain manually for the audited URL and for every internal link target. Count the hops and detect loops. Hops across meta refresh or JS also count for users, but Google's 10-hop limit is documented for HTTP redirects.",
     "related": [
       "perf-document-redirects"
-    ]
+    ],
+    "optionalInputs": [
+      "crawl"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-redirect-type",
@@ -1421,8 +1530,7 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "redirects",
-      "raw-html"
+      "redirects"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1433,7 +1541,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Temporary redirect for http→https, host canonicalisation or a site migration = medium (weak canonical signal). Temporary redirect for geo/A-B/login = pass.",
+    "thresholds": "Temporary redirect for http->https, host, trailing-slash, case or index-file consolidation = medium (weak canonical signal). Other temporary redirects that move a URL = medium, confirmed by the analyst (it may be a migration). Temporary redirects for locale entry points, login, or per-visitor responses (Cache-Control private or no-store) = pass.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/301-redirects",
@@ -1445,7 +1553,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Classify each redirect: 301/308, meta refresh 0 s and JS location are permanent signals. 302/303/307 and meta refresh >0 s are temporary. Flag host/protocol consolidation and old→new URL moves implemented with temporary redirects. Google says 308 behaves like 301 and 307 like 302."
+    "notes": "Classify each redirect: 301/308, meta refresh 0 s and JS location are permanent signals. 302/303/307 and meta refresh >0 s are temporary. Flag host/protocol consolidation and old→new URL moves implemented with temporary redirects. Google says 308 behaves like 301 and 307 like 302.",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-meta-refresh-js-redirect",
@@ -1457,9 +1567,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "rendered-dom",
-      "redirects"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1476,7 +1584,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Detect <meta http-equiv=refresh> (parse the delay and URL), the HTTP Refresh header, and the rendered navigation away from the URL (location changes during the render). Static hosts without server redirects (e.g. GitHub Pages) may legitimately need meta refresh 0: report low. Lighthouse 13.6 reports timed meta refresh as the accessibility audit meta-refresh."
+    "notes": "Detect <meta http-equiv=refresh> (parse the delay and URL), the HTTP Refresh header, and the rendered navigation away from the URL (location changes during the render). Static hosts without server redirects (e.g. GitHub Pages) may legitimately need meta refresh 0: report low. Lighthouse 13.6 reports timed meta refresh as the accessibility audit meta-refresh.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-soft-404",
@@ -1488,10 +1601,7 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "not-found-probe",
-      "http",
-      "rendered-dom",
-      "crawl"
+      "not-found-probe"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1501,7 +1611,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Random-path probe answers 200 = high (sitewide soft 404s). A confirmed soft-404 page in the sitemap or internal links = high.",
+    "thresholds": "Random-path probe answers 200 = high (sitewide soft 404s). An audited page answering 200 whose title or h1 says the page does not exist = medium, confirmed by the analyst.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
@@ -1514,14 +1624,17 @@
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics",
         "verified": "2026-11-03"
-      },
-      {
-        "url": "https://developers.google.com/search/docs/crawling-indexing/http-network-errors",
-        "verified": "2026-11-03"
       }
     ],
     "status": "v1",
-    "notes": "(1) Probe a random nonexistent path on each host (e.g. /altimeter-probe-<random>/) and record its status. (2) For every 200 page, compute candidates: very little main text, title/H1 matching error patterns in any language ('not found', 'no encontrado', '404', 'no results', 'out of stock' with no product), identical body hash to the probe page. The LLM confirms the candidates. Thin but valid pages (contact, short category) are not soft 404s, so require error semantics, not just length. SPAs often return 200 for every path: check the rendered error view."
+    "notes": "(1) Probe a random nonexistent path on each host (e.g. /altimeter-probe-<random>/) and record its status. (2) For every 200 page, compute candidates: very little main text, title/H1 matching error patterns in any language ('not found', 'no encontrado', '404', 'no results', 'out of stock' with no product), identical body hash to the probe page. The LLM confirms the candidates. Thin but valid pages (contact, short category) are not soft 404s, so require error semantics, not just length. SPAs often return 200 for every path: check the rendered error view.",
+    "optionalInputs": [
+      "http",
+      "rendered-dom",
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-redirect-to-home",
@@ -1533,8 +1646,7 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "redirects",
-      "crawl"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1544,7 +1656,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Mass redirects to the homepage = medium (treated as soft 404s).",
+    "thresholds": "The unknown-path probe, or a URL variant of a non-home page, redirecting to the homepage = medium (treated as a soft 404). An audited non-home URL redirecting to the homepage = medium, confirmed by the analyst.",
     "sources": [
       {
         "url": "https://support.google.com/webmasters/answer/2445990?hl=en",
@@ -1552,7 +1664,14 @@
       }
     ],
     "status": "v1",
-    "notes": "Find internal or sitemap URLs, and the probe path, that 3xx to the homepage or to a generic page unrelated to the source (compare slugs and titles). A language or country root redirecting to the homepage is legitimate."
+    "notes": "Find internal or sitemap URLs, and the probe path, that 3xx to the homepage or to a generic page unrelated to the source (compare slugs and titles). A language or country root redirecting to the homepage is legitimate.",
+    "optionalInputs": [
+      "not-found-probe",
+      "variants",
+      "crawl"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-server-errors-rate",
@@ -1564,8 +1683,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "crawl",
-      "http"
+      "crawl"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -1587,10 +1705,6 @@
         "verified": "2026-11-03"
       },
       {
-        "url": "https://developers.google.com/search/docs/crawling-indexing/http-network-errors",
-        "verified": "2026-11-03"
-      },
-      {
         "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/seo/http-status-code.js",
         "verified": "2026-11-03"
       }
@@ -1599,7 +1713,9 @@
     "notes": "Over the bounded crawl, compute the share of responses that are 5xx, 429 or timeouts, and read Retry-After headers. Back off when they appear. The tool's own crawl rate may trigger 429s, so throttle it and report the rate it used. The 1% threshold is a tool heuristic.",
     "related": [
       "tech-maintenance-503"
-    ]
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-internal-links-broken-redirected",
@@ -1611,9 +1727,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "crawl",
-      "http",
-      "redirects"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1623,7 +1737,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Any link to 4xx/5xx from navigation/footer = medium. Links to 3xx = low (high count = medium).",
+    "thresholds": "Links to 4xx/5xx from navigation, header or footer = medium; from the content = low. Links to 3xx = low (10 or more = medium). Only link targets whose response the collector received are judged.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -1634,8 +1748,8 @@
         "verified": "2026-11-03"
       },
       {
-        "url": "https://developers.google.com/search/docs/crawling-indexing/http-network-errors",
-        "verified": "2026-11-03"
+        "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
+        "verified": "2026-11-04"
       },
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/links-crawlable",
@@ -1651,7 +1765,12 @@
     "related": [
       "tech-broken-external-links",
       "tech-internal-links-to-http"
-    ]
+    ],
+    "optionalInputs": [
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-sitemap-validity",
@@ -1686,7 +1805,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For each discovered sitemap (robots.txt lines, /sitemap.xml, /sitemap_index.xml, index children): gunzip if needed, parse the XML, check the sitemaps.org namespace, UTF-8, entity escaping, <loc> present, absolute URLs with a scheme, <2,048 chars, ≤50,000 URLs and ≤50 MB (52,428,800 bytes) uncompressed per file, index ≤50,000 sitemaps, no index nested in an index. Text sitemaps: one URL per line. Google's docs do not state the nesting rule explicitly. Sitemaps.org implies indexes list sitemaps only, so report nesting as medium. Search Console allows up to 500 index files per site."
+    "notes": "For each discovered sitemap (robots.txt lines, /sitemap.xml, /sitemap_index.xml, index children): gunzip if needed, parse the XML, check the sitemaps.org namespace, UTF-8, entity escaping, <loc> present, absolute URLs with a scheme, <2,048 chars, ≤50,000 URLs and ≤50 MB (52,428,800 bytes) uncompressed per file, index ≤50,000 sitemaps, no index nested in an index. Text sitemaps: one URL per line. Google's docs do not state the nesting rule explicitly. Sitemaps.org implies indexes list sitemaps only, so report nesting as medium. Search Console allows up to 500 index files per site.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-sitemap-scope",
@@ -1698,8 +1819,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "sitemaps",
-      "robots"
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -1722,7 +1842,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Each <loc> must share the sitemap file's scheme and host (and port), and sit under the sitemap's directory, unless that host's robots.txt references the sitemap (cross-submission). Search Console submission with verified ownership also lifts the scope restriction, and the tool cannot see that, so phrase it as 'unless submitted in Search Console'."
+    "notes": "Each <loc> must share the sitemap file's scheme and host (and port), and sit under the sitemap's directory, unless that host's robots.txt references the sitemap (cross-submission). Search Console submission with verified ownership also lifts the scope restriction, and the tool cannot see that, so phrase it as 'unless submitted in Search Console'.",
+    "optionalInputs": [
+      "robots"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-sitemap-url-quality",
@@ -1734,17 +1859,14 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "sitemaps",
-      "http",
-      "robots",
-      "raw-html"
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": ">10% of the sampled URLs problematic = high. Any robots-blocked or noindex URL = medium. Otherwise pass.",
+    "thresholds": "More than 10% of at least 10 classified sitemap URLs problematic = high. Any robots-blocked or noindex URL = medium. With fewer than 10 classified URLs, a redirect, error or canonicalised URL = low. Otherwise pass.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap",
@@ -1756,11 +1878,17 @@
       }
     ],
     "status": "v1",
-    "notes": "Fetch every sitemap URL (or a bounded sample). Classify: 200 indexable self-canonical; redirect; 4xx/5xx; noindex; robots-blocked; canonicalised elsewhere; soft 404. The 10% threshold is a tool heuristic. Bing also asks for canonical-only sitemaps.",
+    "notes": "Fetch every sitemap URL (or a bounded sample). Classify: 200 indexable self-canonical; redirect; 4xx/5xx; noindex; robots-blocked; canonicalised elsewhere; soft 404. The 10% threshold is a tool heuristic. Bing also asks for canonical-only sitemaps. Robots matching covers every listed URL; status, noindex and canonical are known only for URLs the collector fetched.",
     "related": [
       "crawl-meta-robots-noindex",
       "crawl-canonical-signal-consistency"
-    ]
+    ],
+    "optionalInputs": [
+      "robots",
+      "http"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-sitemap-lastmod",
@@ -1772,9 +1900,7 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "sitemaps",
-      "raw-html",
-      "rendered-dom"
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1784,7 +1910,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Invalid format = medium. Uniform or generation-time lastmod across >90% of URLs = medium (Google stops trusting it). Future dates = low.",
+    "thresholds": "Invalid format = medium. More than 90% of at least 20 URLs sharing one lastmod = medium: deterministic when the value is within 10 minutes of the sitemap response time (generation time), otherwise confirmed by the analyst. Future dates (more than one day after the response) = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/blog/2023/06/sitemaps-lastmod-ping",
@@ -1808,7 +1934,9 @@
     "related": [
       "content-date-consistency",
       "content-date-manipulation"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-sitemap-ignored-tags",
@@ -1839,7 +1967,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Detect changefreq and priority elements. Never score this."
+    "notes": "Detect changefreq and priority elements. Never score this.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-sitemap-crawl-reconciliation",
@@ -1873,8 +2003,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Set A = indexable canonical 200 URLs found by the crawl. Set S = sitemap URLs. Report A\\S (indexable pages missing from the sitemap) and S\\A (sitemap URLs not reachable through internal links, i.e. orphans). A bounded crawl may not reach deep pages: report crawl coverage and do not call pages orphans unless the crawl completed or the page has no inlinks in a complete crawl."
+    "status": "planned",
+    "notes": "Set A = indexable canonical 200 URLs found by the crawl. Set S = sitemap URLs. Report A\\S (indexable pages missing from the sitemap) and S\\A (sitemap URLs not reachable through internal links, i.e. orphans). A bounded crawl may not reach deep pages: report crawl coverage and do not call pages orphans unless the crawl completed or the page has no inlinks in a complete crawl. Planned: SiteFacts does not say whether the crawl completed, and the exemption for bounded crawls cannot be decided without it."
   },
   {
     "id": "crawl-orphan-and-deep-pages",
@@ -1908,8 +2038,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Compute inlinks and the shortest click depth from the homepage via crawlable <a href> links in rendered pages. The depth threshold is industry folklore-adjacent: keep it low severity and never claim that Google ranks by depth."
+    "status": "planned",
+    "notes": "Compute inlinks and the shortest click depth from the homepage via crawlable <a href> links in rendered pages. The depth threshold is industry folklore-adjacent: keep it low severity and never claim that Google ranks by depth. Planned: SiteFacts does not say whether the crawl completed, so a page cannot be called an orphan."
   },
   {
     "id": "crawl-js-links-crawlable",
@@ -1917,12 +2047,11 @@
     "title": "Navigation and pagination use crawlable <a href> links",
     "why": "Google documents that it follows links only from <a> elements with an href attribute that resolves to a URL. Navigation built from buttons, onclick handlers or href-less anchors is not followed.",
     "fix": "Use <a href='/real/url'> for every navigational target. Link text (or img alt) should describe the target.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
-      "raw-html"
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1931,7 +2060,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Primary navigation or pagination reachable only through non-<a href> elements = high. Isolated cases = low.",
+    "thresholds": "Three or more clickable elements without a crawlable <a href> in navigation, header or footer = medium, confirmed by the analyst. Isolated cases = low, confirmed by the analyst.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/links-crawlable",
@@ -1947,7 +2076,12 @@
       }
     ],
     "status": "v1",
-    "notes": "In the rendered DOM, find clickable navigation elements: elements with onclick or role=link, buttons that change location, <a> without href, href='#', 'javascript:', routerLink. Compare the URLs reachable by clicking (record pushState navigations) with the <a href> set. Buttons for in-page actions (add to cart, open modal) are not links. Lighthouse 13.6 reports the same condition as the crawlable-anchors SEO audit; do not count it twice."
+    "notes": "In the rendered DOM, find clickable navigation elements: elements with onclick or role=link, buttons that change location, <a> without href, href='#', 'javascript:', routerLink. Compare the URLs reachable by clicking (record pushState navigations) with the <a href> set. Buttons for in-page actions (add to cart, open modal) are not links. Lighthouse 13.6 reports the same condition as the crawlable-anchors SEO audit; do not count it twice.",
+    "optionalInputs": [
+      "raw-html"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-js-fragment-routing",
@@ -1959,8 +2093,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "rendered-dom",
-      "crawl"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1969,7 +2102,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Content routes only via fragments = high (Google ignores fragments).",
+    "thresholds": "Two or more distinct internal routes in the fragment (#/ or #!) = high (Google ignores fragments). A single one = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics",
@@ -1981,7 +2114,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Detect internal links whose distinct content depends on the fragment (#/, #!), or routers using hash mode. In-page anchors (#section) are fine."
+    "notes": "Detect internal links whose distinct content depends on the fragment (#/, #!), or routers using hash mode. In-page anchors (#section) are fine.",
+    "optionalInputs": [
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-js-content-dependency",
@@ -2023,7 +2161,9 @@
       "content-title-raw-rendered-mismatch",
       "schema-raw-rendered-conflict",
       "intl-hreflang-rendered-only"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-js-lazy-content",
@@ -2046,7 +2186,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Primary content or item links appearing only after a click or a scroll event = medium. Images without a src until scroll (data-src only) = low.",
+    "thresholds": "20% or more of the text, or 5 or more internal links (20% or more), appearing only in the scrolling render = medium, confirmed by the analyst. Images without a src in the Googlebot-like render (data-src only) = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/lazy-loading",
@@ -2058,7 +2198,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Render twice: (a) a tall viewport with no interaction, (b) after scrolling to the bottom and clicking 'load more' / tabs. Diff the text, links, images (src present on img/video). Content hidden in tabs or accordions but present in the DOM is fine."
+    "notes": "Render twice: (a) a tall viewport with no interaction, (b) after scrolling to the bottom and clicking 'load more' / tabs. Diff the text, links, images (src present on img/video). Content hidden in tabs or accordions but present in the DOM is fine.",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-dynamic-rendering",
@@ -2070,7 +2212,6 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "raw-html",
       "ua-probe"
     ],
     "appliesTo": "all",
@@ -2080,7 +2221,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Prerendered HTML for bots with equivalent content = low (deprecated workaround). Materially different content = high (cloaking risk, the analyst judges).",
+    "thresholds": "The Googlebot user agent receives prerendered HTML that contains the browser HTML and much more text = low (deprecated workaround). Otherwise materially different text = low, confirmed by the analyst (cloaking risk). Differences under 10% in both directions pass.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/dynamic-rendering",
@@ -2091,7 +2232,9 @@
     "notes": "Compare raw HTML served to the Googlebot UA with the browser UA: framework markers, content hashes, links. Minor differences (ads, personalisation, CSRF tokens) are not cloaking.",
     "related": [
       "content-cloaking-ua"
-    ]
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-mobile-parity",
@@ -2135,8 +2278,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Render with mobile emulation (Googlebot Smartphone UA, ~412px) and desktop. Compare: main-content text similarity, H1-H6, internal link sets, title, meta description, robots directives, canonical, hreflang, structured data types and key fields, image URLs and alt. For separate m-dot sites, check rel=alternate media on desktop and a canonical to desktop on mobile. Responsive sites are usually identical: skip the deep diff when the HTML hashes match. Collapsed accordions are acceptable. The 20% threshold is a tool heuristic."
+    "status": "planned",
+    "notes": "Render with mobile emulation (Googlebot Smartphone UA, ~412px) and desktop. Compare: main-content text similarity, H1-H6, internal link sets, title, meta description, robots directives, canonical, hreflang, structured data types and key fields, image URLs and alt. For separate m-dot sites, check rel=alternate media on desktop and a canonical to desktop on mobile. Responsive sites are usually identical: skip the deep diff when the HTML hashes match. Collapsed accordions are acceptable. The 20% threshold is a tool heuristic. Planned: the collector renders and probes only with phone user agents; no desktop fetch or render is collected to compare."
   },
   {
     "id": "crawl-html-size-limit",
@@ -2148,15 +2291,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "resources"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "HTML >2 MB uncompressed with important content or links after the cut = high. >2 MB with only trailing scripts = low. A JS/CSS file >2 MB = medium. PDF >64 MB = medium. Other Google crawlers default to 15 MB.",
+    "thresholds": "HTML >2 MB uncompressed with links, canonical or hreflang, headings, JSON-LD or more than 200 characters of text after the cut = high. >2 MB with only trailing scripts = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/googlebot",
@@ -2176,7 +2318,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Measure the uncompressed byte size of the HTML document and of each render-critical JS/CSS file. Locate which content, links, canonical or JSON-LD appear after byte 2,097,152. The limit applies to uncompressed data, so do not use the transfer size. The 2 MB Googlebot-for-Search figure has been documented since 2026-02-03, and Google describes it as a clarification. Re-verify periodically."
+    "notes": "Measure the uncompressed byte size of the HTML document and of each render-critical JS/CSS file. Locate which content, links, canonical or JSON-LD appear after byte 2,097,152. The limit applies to uncompressed data, so do not use the transfer size. The 2 MB Googlebot-for-Search figure has been documented since 2026-02-03, and Google describes it as a clarification. Re-verify periodically. JS, CSS and PDF sizes are not collected in v1, so only the HTML document is measured.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-conditional-requests",
@@ -2197,7 +2341,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "No validators = low. Validators present but no 304 on revalidation = low. Malformed Last-Modified date = low.",
+    "thresholds": "Malformed Last-Modified date = low. No validators on any HTML page = low, evaluated only when a crawl shows at least 1,000 pages; otherwise not evaluated. Validators present = pass.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/crawlers-fetchers/overview-google-crawlers",
@@ -2209,7 +2353,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Read ETag and Last-Modified on HTML. Re-request with If-None-Match / If-Modified-Since and expect 304. Only material for large or frequently crawled sites. Google ignores other caching directives for crawl scheduling."
+    "notes": "Read ETag and Last-Modified on HTML. Re-request with If-None-Match / If-Modified-Since and expect 304. Only material for large or frequently crawled sites. Google ignores other caching directives for crawl scheduling. v1 does not re-request with If-None-Match or If-Modified-Since.",
+    "optionalInputs": [
+      "crawl"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "crawl-http-protocol",
@@ -2235,8 +2384,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Record the ALPN-negotiated protocol and whether a 421 is returned for HTTP/2. Never score."
+    "status": "planned",
+    "notes": "Record the ALPN-negotiated protocol and whether a 421 is returned for HTTP/2. Never score. Planned: the TLS probe records the TLS version, not the ALPN-negotiated HTTP protocol."
   },
   {
     "id": "crawl-url-hygiene",
@@ -2248,15 +2397,14 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "crawl",
-      "sitemaps"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": ">2,048 chars = medium. Unencoded characters in hrefs = low. Underscores/uppercase/ID-only = low (best practice only).",
+    "thresholds": "Internal hrefs or sitemap locs longer than 2,048 characters, with spaces or backslashes, with a double slash in the path or with a repeated parameter key = low. Style choices (uppercase, underscores, ID-only slugs) are not reported.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/url-structure",
@@ -2264,7 +2412,13 @@
       }
     ],
     "status": "v1",
-    "notes": "For internal link hrefs and sitemap locs: unencoded non-ASCII or spaces, uppercase letters, underscores as word separators, double slashes, very long URLs (>2,048 chars, which also breaks sitemaps), ID-only slugs, non-standard parameter separators, duplicate keys. Changing existing URLs just for style costs more than it gains. Recommend it only for new URLs, never as a redirect migration."
+    "notes": "For internal link hrefs and sitemap locs: unencoded non-ASCII or spaces, uppercase letters, underscores as word separators, double slashes, very long URLs (>2,048 chars, which also breaks sitemaps), ID-only slugs, non-standard parameter separators, duplicate keys. Changing existing URLs just for style costs more than it gains. Recommend it only for new URLs, never as a redirect migration.",
+    "optionalInputs": [
+      "sitemaps",
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-base-href",
@@ -2276,9 +2430,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "rendered-dom",
-      "crawl"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -2297,7 +2449,13 @@
       }
     ],
     "status": "v1",
-    "notes": "If <base> exists, check that it is absolute, on the same host, and that relative links resolved against it return 200 (sample them). Detect base pointing to staging/dev hosts or to a path that makes relative links nest endlessly. Base also affects how relative canonical and hreflang values resolve. Only the first <base href> counts (WHATWG)."
+    "notes": "If <base> exists, check that it is absolute, on the same host, and that relative links resolved against it return 200 (sample them). Detect base pointing to staging/dev hosts or to a path that makes relative links nest endlessly. Base also affects how relative canonical and hreflang values resolve. Only the first <base href> counts (WHATWG).",
+    "optionalInputs": [
+      "rendered-dom",
+      "crawl"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-rel-next-prev",
@@ -2323,8 +2481,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Detect link rel=next/prev. Never report the absence of rel=next/prev as a problem."
+    "status": "planned",
+    "notes": "Detect link rel=next/prev. Never report the absence of rel=next/prev as a problem. Planned: the rule only observes presence, which has no passing state to test; the analyst sees the links in the evidence."
   },
   {
     "id": "crawl-bing-crawl-delay",
@@ -2343,7 +2501,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "speculative",
-    "thresholds": "crawl-delay ≥10 on sites with >1,000 URLs = medium for Bing (very slow crawl). Any value = info for Google.",
+    "thresholds": "crawl-delay of 10 or more in the group Bingbot follows on a site whose sitemaps list more than 1,000 URLs = low (very slow crawl for Bing). Any other value = info. Google ignores the field.",
     "sources": [
       {
         "url": "https://blogs.bing.com/webmaster/May-2012/To-crawl-or-not-to-crawl,-that-is-BingBot-s-questi/",
@@ -2362,7 +2520,12 @@
     "notes": "Read the crawl-delay value in the group bingbot follows (bingbot or *). Support comes from older Bing blog posts (2009/2012). Current Bing guidelines do not restate it, hence the speculative evidence level. The thresholds are a tool heuristic.",
     "related": [
       "crawl-robots-unsupported-directives"
-    ]
+    ],
+    "optionalInputs": [
+      "sitemaps"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "crawl-indexnow",
