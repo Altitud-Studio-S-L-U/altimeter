@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -152,6 +152,21 @@ describe('altimeter bots', () => {
       api.closeAllConnections();
       await new Promise(resolve => api.close(resolve));
     }
+  });
+
+  test('skips the files of a log folder that are not access logs, but not a file named itself', async () => {
+    const folder = join(work, 'nginx');
+    await mkdir(folder);
+    await writeFile(join(folder, 'access.log'), await readFile(logFixture('combined.log')));
+    await writeFile(join(folder, 'error.log'), '2026/11/03 10:00:00 [error] 1234#0: *1 open() "/var/www/html/favicon.ico" failed (2: No such file or directory)\n');
+    const out = join(work, 'out-folder');
+    const result = await run(['--logs', folder, '--out', out]);
+    assert.equal(result.code, 0);
+    assert.match(result.stderr, /The format of error\.log was not recognised, so it was skipped\./u);
+    const { json } = await output(out);
+    assert.deepEqual(json.activity.sources.map(source => source.kind === 'access-log' && source.file), ['access.log']);
+    await assert.rejects(run(['--logs', folder, '--logs', join(folder, 'error.log')]),
+      (error: unknown) => error instanceof BotsUsageError && /The format of error\.log was not recognised\. Pass --log-format/u.test(error.message), 'a file named itself is still checked');
   });
 
   test('rejects wrong options with a message and prints help', async () => {
