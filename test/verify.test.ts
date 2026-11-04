@@ -158,6 +158,21 @@ describe('static server and rebasing', () => {
     }
   });
 
+  test('answers a path with an empty segment as unknown instead of serving another page', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
+    const server = await serveStatic(build);
+    const client = new HttpClient({ policy: { allowPrivate: false, privateHosts: new Set(['127.0.0.1']) } });
+    try {
+      for (const path of ['//about', '//about/', '/about//', '//']) {
+        const answer = await client.fetch(`${server.origin}${path}`, { followRedirects: false });
+        assert.deepEqual([answer.status, answer.hops[0]?.location], [404, undefined], path);
+      }
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
   test('presents local facts with the production origin', () => {
     const local = site({ pages: [page('http://127.0.0.1:5000/en/', { html: '<title>x</title>', redirects: [[301, 'http://127.0.0.1:5000/en/']] })], homeUrl: 'http://127.0.0.1:5000/' });
     const rebased = rebaseSite(local, 'http://127.0.0.1:5000', 'https://example.com');

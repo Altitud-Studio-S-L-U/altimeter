@@ -48,19 +48,25 @@ export interface StaticSite {
   close(): Promise<void>;
 }
 
+/** A request target in origin form (`/a?b`, where `//a` is a path and not a host) or in absolute form. */
+function requestUrl(target: string): URL {
+  return new URL(target.startsWith('/') ? `http://localhost${target}` : target);
+}
+
 /**
  * Serves a static build the way common static hosts do: `/path/` serves `path/index.html`, `/path` redirects to
- * `/path/` when it is a folder or serves `path.html`, and unknown paths answer 404 with `404.html` when present.
- * Requests can never read outside `root`.
+ * `/path/` when it is a folder or serves `path.html`, and unknown paths, including those with an empty segment such
+ * as `//path`, answer 404 with `404.html` when present. Requests can never read outside `root`.
  */
 export async function serveStatic(root: string): Promise<StaticSite> {
   const base = resolve(root);
   if (!(await isDirectory(base))) throw new Error(`${root} is not a folder`);
   const server: Server = createServer((req, res) => {
     void (async () => {
-      const url = new URL(req.url ?? '/', 'http://localhost');
+      let url: URL;
       let path: string;
       try {
+        url = requestUrl(req.url ?? '/');
         path = decodeURIComponent(url.pathname);
       } catch {
         res.writeHead(400).end();
@@ -76,6 +82,13 @@ export async function serveStatic(root: string): Promise<StaticSite> {
         if (req.method === 'HEAD') res.end();
         else createReadStream(file).pipe(res);
       };
+      const notFound = async () => {
+        const page = join(base, '404.html');
+        if (await isFile(page)) return send(page, 404);
+        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('Not found');
+      };
+      // No file of the build has an empty name, so `//about` is unknown rather than `/about`.
+      if (path.includes('//')) return notFound();
       if (path.endsWith('/')) {
         const index = join(target, 'index.html');
         if (await isFile(index)) return send(index);
@@ -87,9 +100,7 @@ export async function serveStatic(root: string): Promise<StaticSite> {
       } else if (await isFile(`${target}.html`)) {
         return send(`${target}.html`);
       }
-      const notFound = join(base, '404.html');
-      if (await isFile(notFound)) return send(notFound, 404);
-      res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('Not found');
+      return notFound();
     })().catch(() => {
       if (!res.headersSent) res.writeHead(500);
       res.end();
