@@ -72,7 +72,13 @@ export interface RenderResult {
   readonly viewport: { readonly width: number; readonly height: number };
   readonly documentHeight: number;
   readonly scrollWidth: number;
+  /** Chrome's phone emulation widens this to fit content that overflows, so it cannot show the overflow. */
   readonly innerWidth: number;
+  /**
+   * Width of the initial containing block, which content overflowing the screen does not widen: the phone width on a
+   * page with a mobile viewport, 980 CSS px on a page without one.
+   */
+  readonly clientWidth: number;
   readonly console: readonly { readonly type: 'error' | 'pageerror'; readonly text: string }[];
   readonly failed: readonly { readonly url: string; readonly error: string }[];
   readonly blockedByRobots: readonly string[];
@@ -458,6 +464,7 @@ export async function renderPage(audit: AuditBrowser, url: string, options: Rend
           documentHeight: document.documentElement.scrollHeight,
           scrollWidth: document.documentElement.scrollWidth,
           innerWidth: window.innerWidth,
+          clientWidth: document.documentElement.clientWidth,
           shifts: store?.shifts ?? [],
           lcp: store?.lcp ?? null,
         };
@@ -470,6 +477,7 @@ export async function renderPage(audit: AuditBrowser, url: string, options: Rend
       documentHeight: metrics.documentHeight,
       scrollWidth: metrics.scrollWidth,
       innerWidth: metrics.innerWidth,
+      clientWidth: metrics.clientWidth,
       layoutShifts: options.mode === 'user' ? metrics.shifts as RenderResult['layoutShifts'] : [],
       lcp: (metrics.lcp ?? undefined) as RenderResult['lcp'],
       textBlocks,
@@ -490,6 +498,7 @@ export async function renderPage(audit: AuditBrowser, url: string, options: Rend
       documentHeight: 0,
       scrollWidth: 0,
       innerWidth: 0,
+      clientWidth: 0,
       console: consoleMessages,
       failed,
       blockedByRobots,

@@ -107,7 +107,7 @@
   },
   "tech-content-fits-viewport": {
     "messages": {
-      "fail": "In the phone render the document is {scrollWidth}px wide in a {innerWidth}px viewport, so it scrolls sideways by {overflow}px."
+      "fail": "In the phone render the document is {scrollWidth}px wide in a {viewportWidth}px viewport, so it scrolls sideways by {overflow}px."
     }
   },
   "tech-legible-font-size": {

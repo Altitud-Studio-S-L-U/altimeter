@@ -63,9 +63,9 @@ const robotsBlocksRenderResources: RuleImplementation = {
       const id = evidence.add({ kind: 'render', url, label: evidenceLabel('internal links that render only when the blocked requests load'), excerpt: summarizeList(lostLinks, 5) });
       return failure({ severity: 'high', evidence: [...blockedIds, id], reason: 'links-missing', params });
     }
-    const broke = rendered.result.scrollWidth > rendered.result.innerWidth && unblocked.result.scrollWidth <= unblocked.result.innerWidth;
-    if (broke) {
-      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('page width and viewport width without the blocked requests'), excerpt: `${rendered.result.scrollWidth} > ${rendered.result.innerWidth}` });
+    const overflows = (render: typeof rendered) => render.result.clientWidth > 0 && render.result.scrollWidth > render.result.clientWidth + 1;
+    if (overflows(rendered) && !overflows(unblocked)) {
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('page width and viewport width without the blocked requests'), excerpt: `${rendered.result.scrollWidth} > ${rendered.result.clientWidth}` });
       return failure({ severity: 'high', evidence: [...blockedIds, id], reason: 'layout-break', params });
     }
     if (textLoss >= 0.05) {

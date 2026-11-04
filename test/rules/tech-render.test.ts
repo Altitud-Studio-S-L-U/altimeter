@@ -87,11 +87,17 @@ describe('tech-content-fits-viewport', () => {
     assert.equal(outcomeOn(evaluate(contentFitsViewport, site({ pages: [page(url, { html: doc(), userRender: { html: doc() } })] })).findings, url)?.outcome, 'pass');
   });
 
-  test('fails low on horizontal overflow', () => {
-    const result = evaluate(contentFitsViewport, site({ pages: [page(url, { html: doc(), userRender: { html: doc(), scrollWidth: 520, innerWidth: 412 } })] }));
+  test('fails low on horizontal overflow, which Chrome hides from innerWidth by widening it', () => {
+    const result = evaluate(contentFitsViewport, site({ pages: [page(url, { html: doc(), userRender: { html: doc(), scrollWidth: 520, innerWidth: 520 } })] }));
     const finding = outcomeOn(result.findings, url)!;
-    assert.deepEqual([finding.outcome, finding.severity, finding.params?.overflow], ['fail', 'low', 108]);
-    assert.equal(excerpt(result, finding), 'scrollWidth=520 innerWidth=412');
+    assert.deepEqual([finding.outcome, finding.severity, finding.params?.overflow, finding.params?.viewportWidth], ['fail', 'low', 108, 412]);
+    assert.equal(excerpt(result, finding), 'scrollWidth=520 clientWidth=412');
+  });
+
+  test('does not apply without a mobile viewport, which tech-viewport-meta reports', () => {
+    const desktop = doc('<p>Body</p>', '');
+    const result = evaluate(contentFitsViewport, site({ pages: [page(url, { html: desktop, userRender: { html: desktop, scrollWidth: 981, clientWidth: 980 } })] }));
+    assert.deepEqual([outcomeOn(result.findings, url)?.outcome, outcomeOn(result.findings, url)?.reason], ['not_applicable', 'viewport-not-mobile-optimized']);
   });
 
   test('is not evaluated without the phone render', () => {

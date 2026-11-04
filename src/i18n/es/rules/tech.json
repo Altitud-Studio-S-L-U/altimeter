@@ -163,7 +163,7 @@
     "why": "El contenido más ancho que el viewport del móvil obliga a desplazarse en horizontal. Google indexa el renderizado para móviles y su documentación sobre la experiencia en la página abarca la usabilidad en móviles.",
     "fix": "Limita los elementos anchos (max-width:100%, overflow-x:auto en tablas y código, imágenes adaptables).",
     "messages": {
-      "fail": "En el renderizado para móvil, el documento mide {scrollWidth} px de ancho en un viewport de {innerWidth} px, así que se desplaza lateralmente {overflow} px."
+      "fail": "En el renderizado para móvil, el documento mide {scrollWidth} px de ancho en un viewport de {viewportWidth} px, así que se desplaza lateralmente {overflow} px."
     }
   },
   "tech-legible-font-size": {

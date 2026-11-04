@@ -163,7 +163,7 @@
     "why": "El contingut més ample que l'àrea de visualització mòbil obliga a desplaçar-se horitzontalment. Google indexa la renderització mòbil i les seves directrius sobre l'experiència de pàgina inclouen la usabilitat mòbil.",
     "fix": "Limita els elements amples (max-width:100%, overflow-x:auto a les taules i al codi, imatges adaptatives).",
     "messages": {
-      "fail": "A la renderització de telèfon, el document fa {scrollWidth} px d'amplada en una àrea de visualització de {innerWidth} px, de manera que es desplaça lateralment {overflow} px."
+      "fail": "A la renderització de telèfon, el document fa {scrollWidth} px d'amplada en una àrea de visualització de {viewportWidth} px, de manera que es desplaça lateralment {overflow} px."
     }
   },
   "tech-legible-font-size": {

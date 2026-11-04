@@ -81,12 +81,14 @@ export const contentFitsViewport: RuleImplementation = {
   id: 'tech-content-fits-viewport',
   evaluate(context) {
     const page = context.page!;
+    // Without a mobile viewport the page is laid out 980 px wide; tech-viewport-meta reports that first.
+    if ((page.raw || page.rendered) && !mobileOptimized(viewportOf(page))) return notApplicable('viewport-not-mobile-optimized');
     const result = page.userRender!.result;
-    if (result.innerWidth <= 0) return notEvaluated('no-layout-metrics');
+    if (result.clientWidth <= 0) return notEvaluated('no-layout-metrics');
     const cite = citer(context);
-    const evidence = [cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('document width in the phone-sized render'), excerpt: `scrollWidth=${result.scrollWidth} innerWidth=${result.innerWidth}` })];
-    if (result.scrollWidth > result.innerWidth + 1) {
-      return fail('low', evidence, undefined, { scrollWidth: result.scrollWidth, innerWidth: result.innerWidth, overflow: result.scrollWidth - result.innerWidth });
+    const evidence = [cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('document width in the phone-sized render'), excerpt: `scrollWidth=${result.scrollWidth} clientWidth=${result.clientWidth}` })];
+    if (result.scrollWidth > result.clientWidth + 1) {
+      return fail('low', evidence, undefined, { scrollWidth: result.scrollWidth, viewportWidth: result.clientWidth, overflow: result.scrollWidth - result.clientWidth });
     }
     return pass(evidence);
   },

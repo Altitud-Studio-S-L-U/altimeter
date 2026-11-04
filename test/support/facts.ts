@@ -52,7 +52,9 @@ export interface RenderSpec {
   readonly failed?: RenderResult['failed'];
   readonly lcp?: RenderResult['lcp'];
   readonly scrollWidth?: number;
+  /** Follows scrollWidth when absent, as Chrome's phone emulation widens innerWidth to fit overflowing content. */
   readonly innerWidth?: number;
+  readonly clientWidth?: number;
   readonly error?: RenderResult['error'];
   readonly mode?: RenderResult['mode'];
   readonly overlays?: RenderResult['overlays'];
@@ -69,7 +71,8 @@ export function render(url: string, spec: RenderSpec): RenderFacts {
     viewport: { width: 412, height: 823 },
     documentHeight: 823,
     scrollWidth: spec.scrollWidth ?? 412,
-    innerWidth: spec.innerWidth ?? 412,
+    innerWidth: spec.innerWidth ?? Math.max(412, spec.scrollWidth ?? 412),
+    clientWidth: spec.clientWidth ?? 412,
     console: spec.console ?? [],
     failed: spec.failed ?? [],
     blockedByRobots: spec.blockedByRobots ?? [],

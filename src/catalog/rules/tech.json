@@ -604,7 +604,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Fail when scrollWidth exceeds innerWidth by more than 1 px.",
+    "thresholds": "Fail when the document is more than 1 px wider than the layout viewport of the phone render (the root element's scrollWidth over its clientWidth). Not applicable without a mobile-optimized viewport, which tech-viewport-meta reports.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/page-experience",
@@ -618,7 +618,7 @@
     "status": "v1",
     "fixLocation": "repo",
     "verifiableBy": "local",
-    "notes": "In the mobile emulation (412 px CSS width) after load, fail if document.scrollingElement.scrollWidth > window.innerWidth + 1. Identify the offending elements (bounding right edge > innerWidth) for the report. Elements hidden with overflow-x:hidden on html or body don't cause scroll but may clip content. Intentional horizontal carousels inside an overflow container are fine. Lighthouse no longer has a dedicated SEO audit for this, so the check is the tool's own."
+    "notes": "In the mobile emulation (412 px CSS width) after load, fail if document.documentElement.scrollWidth > document.documentElement.clientWidth + 1. Do not compare with window.innerWidth: Chrome's mobile emulation widens the layout viewport to fit content that overflows, so innerWidth grows with the content (Chrome 156). Identify the offending elements (bounding right edge > clientWidth) for the report. Elements hidden with overflow-x:hidden on html or body don't cause scroll but may clip content. Intentional horizontal carousels inside an overflow container are fine. Lighthouse no longer has a dedicated SEO audit for this, so the check is the tool's own."
   },
   {
     "id": "tech-legible-font-size",

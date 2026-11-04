@@ -59,6 +59,17 @@ describe('crawl-robots-blocks-render-resources', () => {
     const facts = one({ html: doc(body), rendered: { html: doc(body), blockedByRobots: ['https://cdn.consent.example/sdk.js'] }, unblockedRender: doc(`${body}${banner}`) });
     assertOutcome(run(id, facts).finding, 'pass');
   });
+  test('fails high when the page overflows the phone width only without the blocked stylesheet', () => {
+    // Chrome widens innerWidth to the content, so only clientWidth still shows the 412 px layout viewport.
+    const facts = one({ html: doc(body), rendered: { html: doc(body), blockedByRobots: [`${origin}/site.css`], scrollWidth: 1536 }, unblockedRender: doc(body) });
+    const { finding, excerpts } = run(id, facts);
+    assertFail(finding, 'high', 'layout-break');
+    assert.deepEqual(excerpts(), [`${origin}/site.css`, '1536 > 412']);
+  });
+  test('passes when the page overflows with and without the blocked requests', () => {
+    const facts = one({ html: doc(body), rendered: { html: doc(body), blockedByRobots: [`${origin}/analytics.js`], scrollWidth: 900 }, unblockedRender: { html: doc(body), scrollWidth: 900 } });
+    assertOutcome(run(id, facts).finding, 'pass');
+  });
   test('does not apply when nothing was blocked and is not evaluated without the unblocked render', () => {
     assertOutcome(run(id, one({ html: doc(body), rendered: doc(body) })).finding, 'not_applicable', 'nothing-blocked');
     assertOutcome(run(id, one({ html: doc(body), rendered: { html: doc(body), blockedByRobots: [`${origin}/app.js`] } })).finding, 'not_evaluated', 'no-unblocked-render');
