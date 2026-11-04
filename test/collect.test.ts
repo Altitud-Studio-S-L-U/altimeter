@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import type { LookupAddress } from 'node:dns';
 import { createServer, type Server } from 'node:http';
+import { createServer as createHttpsServer } from 'node:https';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
 import { collect } from '../src/collect/index.ts';
 import { findChrome } from '../src/render/chrome.ts';
+import { createTestCertificates } from './support/certificates.ts';
 
 let server: Server;
 let origin: string;
@@ -82,5 +85,46 @@ describe('collect', () => {
     assert.equal(target?.rendered?.parsed.titles[0]?.text, 'About the studio');
     assert.equal(target?.unblockedRender?.parsed.titles[0]?.text, 'About the studio (tracked)');
     assert.ok(target?.userRender);
+  });
+});
+
+describe('collect with an extra CA', () => {
+  const { ca, leaf } = createTestCertificates(['site.test', 'www.site.test']);
+  const lookup = ((_host: string, _options: unknown, callback: (error: null, addresses: LookupAddress[]) => void) => {
+    callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  }) as never;
+  const sitePolicy = { allowPrivate: false, privateHosts: new Set(['site.test', 'www.site.test']) };
+  let secure: ReturnType<typeof createHttpsServer>;
+  let port: number;
+
+  before(async () => {
+    secure = createHttpsServer({ key: leaf.key, cert: leaf.chain }, (req, res) => {
+      if (req.url === '/') return void res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(layout('Private CA', '<h1>Staging home</h1>'));
+      res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' }).end(layout('Not found', '<h1>Not found</h1>'));
+    });
+    await new Promise<void>(resolve => secure.listen(0, '127.0.0.1', resolve));
+    port = (secure.address() as AddressInfo).port;
+  });
+
+  after(async () => {
+    secure.closeAllConnections();
+    await new Promise(resolve => secure.close(resolve));
+  });
+
+  test('fetches and probes a site whose certificate chains to the CA', async () => {
+    const { site } = await collect({ url: `https://site.test:${port}/`, policy: sitePolicy, lookup, ca: ca.cert, render: false });
+    const home = site.pages.get(`https://site.test:${port}/`);
+    assert.equal(home?.fetch.status, 200);
+    assert.equal(home?.raw?.parsed.titles[0]?.text, 'Private CA');
+    assert.equal(site.tls?.authorized, true);
+    assert.equal(site.counterpartTls?.host, 'www.site.test');
+    assert.equal(site.counterpartTls?.authorized, true);
+  });
+
+  test('without the CA the same site fails verification, as before', async () => {
+    const { site } = await collect({ url: `https://site.test:${port}/`, policy: sitePolicy, lookup, render: false });
+    assert.equal(site.pages.get(`https://site.test:${port}/`)?.fetch.error?.code, 'tls');
+    assert.equal(site.tls?.authorized, false);
+    assert.equal(site.tls?.error, 'SELF_SIGNED_CERT_IN_CHAIN');
   });
 });
