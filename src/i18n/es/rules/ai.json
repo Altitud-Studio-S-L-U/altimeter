@@ -273,7 +273,7 @@
       "fail": "Hay que revisar el archivo /llms.txt.",
       "fail:content-type": "/llms.txt se sirve como {contentType} en lugar de text/plain o text/markdown.",
       "fail:structure": "/llms.txt no sigue la estructura propuesta: {problems}.",
-      "fail:disallowed-links": "/llms.txt enlaza a {count} rutas del mismo sitio que robots.txt bloquea para un rastreador de búsqueda."
+      "fail:disallowed-links": "/llms.txt enlaza a {count} ruta(s) del mismo sitio que robots.txt bloquea para un rastreador de búsqueda."
     }
   },
   "ai-hidden-llm-instructions": {
@@ -332,9 +332,9 @@
     "why": "robots.txt solo dice qué rastreadores pueden obtener el sitio; los registros de acceso del propietario o las analíticas del CDN muestran cuáles lo han hecho. Cualquiera puede enviar el user-agent de un rastreador, así que cada declaración se comprueba con la lista de IP o el DNS inverso que publica el operador, y los operadores que no publican ninguna comprobación (Meta, ByteDance, MistralAI-Training) se indican como declaraciones que no se pueden verificar, nunca como cero.",
     "fix": "No hay nada que corregir. Compara los rastreadores que obtienen el sitio con la política de robots.txt: bloquea los rastreadores de entrenamiento si no quieres ese uso, y mantén permitidos los rastreadores de búsqueda y de respuestas si quieres citas en las respuestas de IA.",
     "messages": {
-      "fail": "Los rastreadores de IA verificados han obtenido el sitio {verified} veces ({crawlers}); otras {claims} solicitudes han usado user-agents de rastreadores de IA sin estar verificadas.",
-      "fail:seen": "Los rastreadores de IA verificados han obtenido el sitio {verified} veces en la ventana ({crawlers}); otras {claims} solicitudes han usado user-agents de rastreadores de IA sin estar verificadas.",
-      "fail:claims-only": "{claims} solicitudes han usado user-agents de rastreadores de IA, pero no se ha podido verificar ninguna, así que los datos no muestran qué rastreadores de IA han visitado realmente el sitio."
+      "fail": "Solicitudes de rastreadores de IA verificados: {verified} ({crawlers}). Solicitudes con user-agents de rastreadores de IA que no se han podido verificar: {claims}.",
+      "fail:seen": "Solicitudes de rastreadores de IA verificados en la ventana: {verified} ({crawlers}). Solicitudes con user-agents de rastreadores de IA que no se han podido verificar: {claims}.",
+      "fail:claims-only": "Solicitudes con user-agents de rastreadores de IA: {claims}, pero no se ha podido verificar ninguna, así que los datos no muestran qué rastreadores de IA han visitado realmente el sitio."
     }
   },
   "ai-bots-blocked-at-edge": {
@@ -363,7 +363,7 @@
     "why": "Los clics desde asistentes de IA llegan con el host del asistente en la cabecera Referer, y los enlaces de ChatGPT pueden llevar utm_source=chatgpt.com. Contarlos muestra qué asistentes envían visitantes. De forma predeterminada, los navegadores solo envían el origen entre sitios, y las apps o los enlaces noreferrer no envían nada, así que las cifras son mínimos.",
     "fix": "No hay nada que corregir. Segmenta estos referentes en la analítica. Los clics desde las Vistas creadas con IA y el Modo IA de Google se cuentan en el tipo de búsqueda web de Search Console y llegan como Búsqueda de Google, así que ningún registro puede separarlos.",
     "messages": {
-      "fail": "{visits} visitas han llegado desde asistentes de IA ({assistants}), y {tagged} llevaban utm_source=chatgpt.com. Los clics desde las Vistas creadas con IA y el Modo IA de Google cuentan como Búsqueda de Google y no se pueden ver aquí."
+      "fail": "Visitas desde asistentes de IA: {visits} ({assistants}); visitas con utm_source=chatgpt.com: {tagged}. Los clics desde las Vistas creadas con IA y el Modo IA de Google cuentan como Búsqueda de Google y no se pueden ver aquí."
     }
   }
 }

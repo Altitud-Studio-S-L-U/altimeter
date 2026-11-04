@@ -101,7 +101,7 @@
     "messages": {
       "fail": "El conjunto hreflang de {url} no incluye la propia página.",
       "fail:near-miss": "El conjunto hreflang no incluye {url} exactamente; la entrada más parecida ({value}) apunta a {closest}. Una entrada propia debe coincidir con la URL de la página, incluidos el esquema y la barra final.",
-      "fail:absent": "Ninguna de las {count} entradas hreflang apunta a la propia página, {url}. Cada versión debe incluirse a sí misma y a las demás versiones."
+      "fail:absent": "Ninguna de las entradas hreflang ({count}) apunta a la propia página, {url}. Cada versión debe incluirse a sí misma y a las demás versiones."
     }
   },
   "intl-hreflang-missing-return-link": {
@@ -367,7 +367,7 @@
     "messages": {
       "fail": "La página no enlaza a sus otras versiones de idioma con enlaces rastreables.",
       "fail:homepages-only": "Los enlaces de idioma van a las páginas de inicio de cada configuración regional ({count}) en lugar de a la página equivalente en cada idioma.",
-      "fail:no-crawlable-links": "Ninguna de las {count} otras versiones de idioma de esta página está enlazada con un <a href>; se han encontrado {controls} control(es) de idioma sin enlaces. Confirma cómo cambian de idioma los visitantes."
+      "fail:no-crawlable-links": "Ninguna de las otras versiones de idioma de esta página ({count}) está enlazada con un <a href>; se han encontrado {controls} control(es) de idioma sin enlaces. Confirma cómo cambian de idioma los visitantes."
     }
   },
   "intl-auto-redirect-by-language": {

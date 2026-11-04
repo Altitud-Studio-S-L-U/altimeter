@@ -138,8 +138,8 @@
     "fix": "Usa data-nosnippet solo en elementos span, div o section. Inclúyelo en el HTML del servidor o cuando JS inserte el elemento por primera vez.",
     "messages": {
       "fail": "data-nosnippet se usa de una forma que Google no respeta como se pretende.",
-      "fail:unsupported-element": "{count} atributos data-nosnippet están en elementos en los que Google no los respeta ({tags}); solo se admiten span, div y section.",
-      "fail:added-by-javascript": "JavaScript añade {count} atributos data-nosnippet a elementos que existen sin ellos en el HTML del servidor.",
+      "fail:unsupported-element": "{count} atributo(s) data-nosnippet están en elementos en los que Google no los respeta ({tags}); solo se admiten span, div y section.",
+      "fail:added-by-javascript": "JavaScript añade {count} atributo(s) data-nosnippet a elementos que existen sin ese atributo en el HTML del servidor.",
       "fail:covers-main-content": "Los elementos con data-nosnippet contienen aproximadamente el {share} % del contenido principal, así que ese texto queda fuera de los fragmentos y de la entrada de las Vistas creadas con IA."
     }
   },
@@ -176,7 +176,7 @@
     "why": "Saltarse niveles de encabezado hace que el esquema sea más difícil de seguir con tecnologías de apoyo. Google afirma que el orden de los encabezados no importa para el posicionamiento, así que esto es una cuestión de accesibilidad.",
     "fix": "Usa los niveles de encabezado para reflejar la estructura (h2 para secciones, h3 para subsecciones). Aplica los estilos con CSS, no con el nivel de encabezado.",
     "messages": {
-      "fail": "Los niveles de encabezado se saltan {count} veces, la primera de {from} a {to} en «{heading}»; esto afecta a la accesibilidad, no al posicionamiento."
+      "fail": "Saltos de nivel de encabezado: {count}; el primero, de {from} a {to} en «{heading}». Esto afecta a la accesibilidad, no al posicionamiento."
     }
   },
   "content-headings-descriptive": {
@@ -349,9 +349,9 @@
     "why": "Google usa el texto del enlace para entender la página enlazada, y el texto alternativo de una imagen sirve como texto del enlace en los enlaces de imagen. Los enlaces sin texto ni alt no dan ningún contexto.",
     "fix": "Añade texto descriptivo. En los enlaces de imagen, usa un alt que describa el destino.",
     "messages": {
-      "fail": "{count} enlaces no tienen texto, alt de imagen ni etiqueta.",
-      "fail:internal": "{count} enlaces no tienen texto, alt de imagen ni etiqueta, {internal} de ellos a páginas de este sitio.",
-      "fail:external": "{count} enlaces externos no tienen texto, alt de imagen ni etiqueta."
+      "fail": "Enlaces sin texto, alt de imagen ni etiqueta: {count}.",
+      "fail:internal": "Enlaces sin texto, alt de imagen ni etiqueta: {count} ({internal} de ellos a páginas de este sitio).",
+      "fail:external": "Enlaces externos sin texto, alt de imagen ni etiqueta: {count}."
     }
   },
   "content-anchor-text-quality": {
@@ -378,9 +378,9 @@
     "why": "Google usa el texto alternativo, junto con la visión artificial y el texto circundante, para entender las imágenes, y el texto alternativo sirve como texto del enlace en las imágenes enlazadas. Si falta el atributo alt, no queda ninguna alternativa textual; un alt vacío es correcto para las imágenes decorativas.",
     "fix": "Añade un texto alternativo que describa la imagen en el contexto de la página. Usa alt=\"\" solo para imágenes puramente decorativas.",
     "messages": {
-      "fail": "{count} de {total} imágenes no tienen atributo alt (otras {emptyAlt} tienen alt=\"\", lo que es correcto para las imágenes decorativas).",
-      "fail:content-image": "{count} de {total} imágenes no tienen atributo alt, incluidas imágenes de contenido dentro del contenido principal (otras {emptyAlt} tienen alt=\"\", lo que es correcto para las imágenes decorativas).",
-      "fail:other-image": "{count} de {total} imágenes no tienen atributo alt (otras {emptyAlt} tienen alt=\"\", lo que es correcto para las imágenes decorativas)."
+      "fail": "{count} de {total} imágenes no tienen atributo alt (imágenes con alt=\"\", lo que es correcto para las decorativas: {emptyAlt}).",
+      "fail:content-image": "{count} de {total} imágenes no tienen atributo alt, incluidas imágenes de contenido dentro del contenido principal (imágenes con alt=\"\", lo que es correcto para las decorativas: {emptyAlt}).",
+      "fail:other-image": "{count} de {total} imágenes no tienen atributo alt (imágenes con alt=\"\", lo que es correcto para las decorativas: {emptyAlt})."
     }
   },
   "content-img-alt-quality": {

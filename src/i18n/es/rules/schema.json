@@ -273,7 +273,7 @@
     "messages": {
       "fail": "El marcado de nombre del sitio WebSite de la página de inicio requiere atención: {items}",
       "fail:missing": "La página de inicio a la que llega Googlebot no tiene ningún elemento WebSite con nombre; Google elegirá el nombre del sitio a partir de otras señales.",
-      "fail:several-websites": "La página de inicio tiene {items} elementos; Google pide un solo nodo WebSite.",
+      "fail:several-websites": "La página de inicio tiene varios elementos WebSite ({items}); Google pide un solo nodo WebSite.",
       "fail:url-other-host": "La url de WebSite apunta a otro host: {items}",
       "fail:name-conflict": "El nombre del sitio difiere entre el marcado WebSite y otras fuentes: {items}"
     }

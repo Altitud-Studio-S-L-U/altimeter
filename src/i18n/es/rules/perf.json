@@ -195,9 +195,9 @@
     "why": "Los scripts y las hojas de estilos síncronos del head retrasan el primer renderizado. Lighthouse 13.6 los indica en render-blocking-insight, que sustituyó a render-blocking-resources.",
     "fix": "Aplica defer o async a los scripts; inserta en línea el CSS crítico pequeño y carga el resto sin bloquear; reduce el tamaño del CSS.",
     "messages": {
-      "fail": "{count} scripts externos del head bloquean el analizador: {scripts}.",
-      "fail:parser-blocking-script": "{count} scripts externos del head bloquean el analizador (sin async, defer ni type=module): {scripts}.",
-      "fail:consent-script": "{count} scripts de consentimiento del head se cargan de forma síncrona: {scripts}. Algunas herramientas de consentimiento deben ejecutarse primero; comprueba si el proveedor ofrece un cargador asíncrono que siga bloqueando las etiquetas hasta que haya consentimiento.",
+      "fail": "{count} script(s) externo(s) del head bloquean el analizador: {scripts}.",
+      "fail:parser-blocking-script": "{count} script(s) externo(s) del head bloquean el analizador (sin async, defer ni type=module): {scripts}.",
+      "fail:consent-script": "{count} script(s) de consentimiento del head se cargan de forma síncrona: {scripts}. Algunas herramientas de consentimiento deben ejecutarse primero; comprueba si el proveedor ofrece un cargador asíncrono que siga bloqueando las etiquetas hasta que haya consentimiento.",
       "fail:render-blocking-requests": "Lighthouse estima que quitar de la ruta crítica las solicitudes que bloquean el renderizado ahorra {savings} de FCP de laboratorio: {requests}."
     }
   },
@@ -319,7 +319,7 @@
     "why": "Las fuentes se obtienen en modo CORS, así que una precarga o una preconexión para una fuente sin el atributo crossorigin no se reutiliza y la fuente se descarga dos veces.",
     "fix": "Añade crossorigin (anonymous) a las precargas de fuentes y a la preconexión al origen de las fuentes.",
     "messages": {
-      "fail": "A {count} indicaciones de precarga o preconexión de fuentes les falta el atributo crossorigin, así que la solicitud de la fuente no puede reutilizarlas."
+      "fail": "A {count} indicación(es) de precarga o preconexión de fuentes les falta el atributo crossorigin, así que la solicitud de la fuente no puede reutilizarlas."
     }
   },
   "perf-font-format": {

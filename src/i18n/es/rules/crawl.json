@@ -35,11 +35,11 @@
     "why": "Los analizadores del RFC 9309 omiten las líneas que no pueden analizar. Por tanto, un nombre de campo mal escrito o una regla fuera de cualquier grupo no tiene efecto, aunque el propietario crea que está en vigor.",
     "fix": "Corrige la ortografía de los campos y pon cada regla debajo de una línea user-agent.",
     "messages": {
-      "fail": "{count} líneas de {url} no se leen como se pretende (líneas {lines}).",
-      "fail:misspelled-field": "{count} líneas de {url} no se leen como se pretende (líneas {lines}), incluido un nombre de campo mal escrito.",
-      "fail:rule-outside-group": "{count} líneas de {url} no se leen como se pretende (líneas {lines}), incluidas reglas anteriores a cualquier línea user-agent, que no se aplican a ningún rastreador.",
-      "fail:missing-separator": "{count} líneas de {url} no se leen como se pretende (líneas {lines}), incluidas líneas sin dos puntos, que se ignoran.",
-      "fail:path-without-slash": "{count} líneas de {url} no se leen como se pretende (líneas {lines}), incluidas rutas que no empiezan ni por / ni por *."
+      "fail": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}).",
+      "fail:misspelled-field": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}), incluido un nombre de campo mal escrito.",
+      "fail:rule-outside-group": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}), incluidas reglas anteriores a cualquier línea user-agent, que no se aplican a ningún rastreador.",
+      "fail:missing-separator": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}), incluidas líneas sin dos puntos, que se ignoran.",
+      "fail:path-without-slash": "{count} línea(s) de {url} no se leen como se pretende (líneas: {lines}), incluidas rutas que no empiezan ni por / ni por *."
     }
   },
   "crawl-robots-unsupported-directives": {
@@ -48,7 +48,7 @@
     "fix": "Usa noindex en la etiqueta meta robots o en X-Robots-Tag en URLs rastreables en lugar de noindex en robots.txt. Google no tiene ninguna directiva de frecuencia de rastreo: en caso de emergencia, devuelve temporalmente 503/429.",
     "messages": {
       "fail": "{url} usa campos que Google no admite: {fields}.",
-      "fail:noindex": "{url} contiene {count} líneas noindex. Google ignora noindex en robots.txt, así que esas URLs no se retiran de los resultados. Campos no admitidos encontrados: {fields}.",
+      "fail:noindex": "{url} contiene {count} línea(s) noindex. Google ignora noindex en robots.txt, así que esas URLs no se retiran de los resultados. Campos no admitidos encontrados: {fields}.",
       "fail:ignored-fields": "{url} usa campos que Google ignora: {fields}. Es posible que otros buscadores sí los lean."
     }
   },
@@ -333,7 +333,7 @@
     "messages": {
       "fail": "Las señales de canonicalización de {url} no coinciden.",
       "fail:sitemap-non-canonical": "Un sitemap incluye {url}, que indica {target} como su URL canónica.",
-      "fail:links-to-non-canonical": "Los enlaces internos apuntan {otherLinks} veces a URLs que se canonicalizan a {url} y {canonicalLinks} veces a la propia {url}."
+      "fail:links-to-non-canonical": "Enlaces internos a URLs que se canonicalizan a {url}: {otherLinks}; a la propia {url}: {canonicalLinks}."
     }
   },
   "crawl-host-variant-consolidation": {
@@ -361,9 +361,9 @@
     "why": "Google recomienda mantener los ID de sesión y los parámetros de seguimiento fuera de los enlaces internos y los sitemaps, porque cada combinación de parámetros es una URL distinta que desperdicia rastreo y crea duplicados.",
     "fix": "Quita los parámetros de seguimiento de los enlaces internos, guarda las sesiones en cookies y canonicaliza o redirige a la URL limpia.",
     "messages": {
-      "fail": "{count} enlaces internos o URLs del sitemap llevan parámetros que duplican páginas.",
-      "fail:session-id": "{count} enlaces internos o URLs del sitemap llevan un parámetro de sesión, que crea una URL nueva en cada visita.",
-      "fail:tracking-parameter": "{count} enlaces internos o URLs del sitemap llevan parámetros de seguimiento, que crean URLs duplicadas.",
+      "fail": "Enlaces internos o URLs del sitemap con parámetros que duplican páginas: {count}.",
+      "fail:session-id": "Enlaces internos o URLs del sitemap con un parámetro de sesión, que crea una URL nueva en cada visita: {count}.",
+      "fail:tracking-parameter": "Enlaces internos o URLs del sitemap con parámetros de seguimiento, que crean URLs duplicadas: {count}.",
       "fail:parameter-duplicate": "Una URL con un parámetro de seguimiento responde 200 sin una URL canónica hacia la URL limpia."
     }
   },
@@ -440,7 +440,7 @@
     "messages": {
       "fail": "{count} de {total} URLs rastreadas ({share}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
       "fail:error-rate": "{count} de {total} URLs rastreadas ({share}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
-      "fail:no-retry-after": "{count} URLs rastreadas han respondido 503 o 429 sin una cabecera Retry-After."
+      "fail:no-retry-after": "URLs rastreadas que han respondido 503 o 429 sin una cabecera Retry-After: {count}."
     }
   },
   "crawl-internal-links-broken-redirected": {
@@ -472,9 +472,9 @@
     "why": "Según el protocolo de sitemaps, un sitemap solo puede incluir URLs de su propio host y de su ruta, salvo que el envío entre sitios se demuestre en robots.txt o en Search Console. Las URLs fuera de ámbito pueden ignorarse.",
     "fix": "Aloja los sitemaps en la raíz de cada host o haz referencia a ellos desde el robots.txt de cada host.",
     "messages": {
-      "fail": "{count} URLs de {sitemap} están fuera de su ámbito.",
-      "fail:out-of-scope": "{count} URLs de {sitemap} están fuera del host o del directorio del sitemap, y este no está declarado en el robots.txt de ese host, así que pueden ignorarse salvo que se envíen en Search Console.",
-      "fail:http-urls": "{count} URLs de {sitemap} usan http en un sitio https."
+      "fail": "{count} URL(s) de {sitemap} están fuera de su ámbito.",
+      "fail:out-of-scope": "{count} URL(s) de {sitemap} están fuera del host o del directorio del sitemap, y este no está declarado en el robots.txt de ese host, así que pueden ignorarse salvo que se envíen en Search Console.",
+      "fail:http-urls": "{count} URL(s) de {sitemap} usan http en un sitio https."
     }
   },
   "crawl-sitemap-url-quality": {
@@ -482,13 +482,13 @@
     "why": "Google y Bing piden sitemaps que incluyan solo URLs canónicas e indexables que respondan 200. Incluir redirecciones, errores o URLs con noindex o bloqueadas envía señales contradictorias y desperdicia rastreo.",
     "fix": "Incluye solo las URLs canónicas e indexables que responden 200 y que quieres en los resultados. Genera el sitemap a partir de la misma fuente de verdad que las URLs canónicas.",
     "messages": {
-      "fail": "{count} URLs del sitemap no son páginas canónicas indexables ({share} de {classified} clasificadas).",
-      "fail:high-share": "{count} de {classified} URLs clasificadas del sitemap ({share}) no son páginas canónicas indexables.",
-      "fail:robots-blocked": "{count} URLs del sitemap no son páginas canónicas indexables, incluidas URLs bloqueadas en robots.txt.",
-      "fail:noindex": "{count} URLs del sitemap no son páginas canónicas indexables, incluidas URLs que llevan noindex.",
-      "fail:error": "{count} URLs del sitemap no son páginas canónicas indexables, incluidas URLs que responden con un error.",
-      "fail:redirect": "{count} URLs del sitemap no son páginas canónicas indexables, incluidas URLs que redirigen.",
-      "fail:canonicalised": "{count} URLs del sitemap no son páginas canónicas indexables, incluidas URLs que indican otra URL canónica."
+      "fail": "{count} URL(s) del sitemap no son páginas canónicas indexables ({share} de las {classified} que se han podido clasificar).",
+      "fail:high-share": "{count} de las {classified} URLs del sitemap que se han podido clasificar ({share}) no son páginas canónicas indexables.",
+      "fail:robots-blocked": "{count} URL(s) del sitemap no son páginas canónicas indexables, incluidas URLs bloqueadas en robots.txt.",
+      "fail:noindex": "{count} URL(s) del sitemap no son páginas canónicas indexables, incluidas URLs que llevan noindex.",
+      "fail:error": "{count} URL(s) del sitemap no son páginas canónicas indexables, incluidas URLs que responden con un error.",
+      "fail:redirect": "{count} URL(s) del sitemap no son páginas canónicas indexables, incluidas URLs que redirigen.",
+      "fail:canonicalised": "{count} URL(s) del sitemap no son páginas canónicas indexables, incluidas URLs que indican otra URL canónica."
     }
   },
   "crawl-sitemap-lastmod": {
@@ -496,12 +496,12 @@
     "why": "Google solo usa lastmod cuando es exacto de forma constante, es decir, cuando refleja cambios significativos en el contenido principal. Cuando todas las URLs muestran la hora de generación, Google deja de confiar en el campo. Bing también usa lastmod para volver a rastrear y para la actualidad en Copilot.",
     "fix": "Establece lastmod solo cuando haya cambios significativos (contenido principal, datos estructurados, enlaces). Es mejor omitirlo que falsearlo. Bing prefiere el formato ISO 8601 completo con la hora.",
     "messages": {
-      "fail": "Los valores lastmod de los sitemaps no son fiables ({count} entradas, {value}).",
-      "fail:invalid-format": "{count} valores lastmod no son fechas en formato W3C Datetime, por ejemplo, {value}.",
+      "fail": "Los valores lastmod de los sitemaps no son fiables ({count} entrada(s), {value}).",
+      "fail:invalid-format": "{count} valor(es) lastmod no son fechas en formato W3C Datetime, por ejemplo, {value}.",
       "fail:generation-time": "{count} URLs comparten el lastmod {value}, la hora en que se generó el sitemap, así que Google deja de confiar en el campo.",
       "fail:uniform": "{count} URLs comparten el lastmod {value}. Confirma que refleja cambios reales del contenido y no una fecha de recompilación.",
-      "fail:future-dates": "{count} valores lastmod son fechas futuras, por ejemplo, {value}.",
-      "fail:missing": "Ninguna de las {count} URLs de los sitemaps tiene fecha lastmod. Google usa lastmod cuando es exacto de forma constante, y Bing lo considera una señal clave para programar nuevos rastreos."
+      "fail:future-dates": "{count} valor(es) lastmod son fechas futuras, por ejemplo, {value}.",
+      "fail:missing": "Ninguna de las URLs de los sitemaps ({count}) tiene fecha lastmod. Google usa lastmod cuando es exacto de forma constante, y Bing lo considera una señal clave para programar nuevos rastreos."
     }
   },
   "crawl-sitemap-ignored-tags": {
@@ -705,7 +705,7 @@
     "fix": "Inspecciona en Search Console las URLs que faltan. Enlázalas desde páginas que Googlebot rastrea, mantén su lastmod exacto y asegúrate de que responden 200 rápidamente. Los registros de un origen detrás de un CDN no incluyen las solicitudes que el CDN ha servido desde la caché, así que usa los registros del CDN cuando sea posible.",
     "messages": {
       "fail": "Googlebot verificado ha obtenido {fetched} de {urls} URLs del sitemap ({share}) en {days} días de datos.",
-      "fail:not-seen": "No aparece ninguna solicitud de Googlebot verificado en {days} días de datos, así que no se ha obtenido ninguna de las {urls} URLs del sitemap.",
+      "fail:not-seen": "No aparece ninguna solicitud de Googlebot verificado en {days} días de datos, así que no se ha obtenido ninguna de las URLs del sitemap ({urls}).",
       "fail:low-coverage": "Googlebot verificado solo ha obtenido {fetched} de {urls} URLs del sitemap ({share}) en {days} días de datos.",
       "fail:partial-coverage": "Googlebot verificado ha obtenido {fetched} de {urls} URLs del sitemap ({share}) en {days} días de datos."
     }
