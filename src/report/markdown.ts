@@ -308,9 +308,9 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
 export function renderFixPlan(report: Report, language: Language): string {
   const t = ui(language);
   const header = [`# ${format(t.fixPlanTitle, { site: cleanLine(new URL(report.target.origin).host) }, language)}`, '',
-    format(t.generated, { version: report.tool.version, date: report.run.startedAt.slice(0, 10) }, language), '', ...t.fixPlanIntro.map(line => `- ${line}`), ''];
-  if (report.tasks.length === 0) return [...header, t.noActions, ''].join('\n');
-  return [...header, ...report.tasks.map(task => taskBody(report, task, language, 6000)), ''].join('\n\n');
+    format(t.generated, { version: report.tool.version, date: report.run.startedAt.slice(0, 10) }, language), '', ...t.fixPlanIntro.map(line => `- ${line}`)].join('\n');
+  if (report.tasks.length === 0) return `${header}\n\n${t.noActions}\n`;
+  return `${[header, ...report.tasks.map(task => taskBody(report, task, language, 6000))].join('\n\n')}\n`;
 }
 
 /** Forge accepts task files up to 24,000 UTF-8 bytes. */
