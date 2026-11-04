@@ -78,7 +78,7 @@
     "why": "CrUX indica cuántas navegaciones hacia atrás y hacia delante se sirven desde la caché de atrás y adelante. web.dev incluye la bfcache entre las mejoras más eficaces, porque las páginas restauradas se cargan al instante.",
     "fix": "Ejecuta perf-bfcache-eligibility. Elimina los detectores de eventos unload, evita no-store cuando no sea necesario y cierra las conexiones abiertas en pagehide.",
     "messages": {
-      "fail": "En {formFactor} (datos de CrUX: {scope}), el {backForward, number, percent} de las navegaciones son navegaciones hacia atrás o hacia delante que no se han restaurado desde la caché de atrás y adelante, frente al {restored, number, percent} que sí. El umbral del 5 % es una heurística de la herramienta."
+      "fail": "En {formFactor} (datos de CrUX: {scope}), el {backForward, number, percent} de las navegaciones son navegaciones hacia atrás o hacia delante que no se han restaurado desde la caché de atrás y adelante, frente al {restored, number, percent} que sí. El umbral del 5\u00a0% es una heurística de la herramienta."
     }
   },
   "perf-crux-softnav-experimental": {

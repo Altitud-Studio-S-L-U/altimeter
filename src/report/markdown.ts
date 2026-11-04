@@ -3,6 +3,7 @@ import { rule as catalogRule, myths } from '../catalog/index.ts';
 import type { EvidenceItem } from '../core/evidence.ts';
 import { categories, type Category } from '../core/types.ts';
 import { evidenceLabelText, quotedEvidenceLabel } from '../i18n/evidence.ts';
+import { formatNumber } from '../i18n/format.ts';
 import { filledMessage, findingMessage, format, placeholders, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
 import { localizeValue } from '../i18n/values.ts';
@@ -75,7 +76,7 @@ export function analysisSummary(analysis: ReportAnalysis, language: Language): s
   const calls = analysis.calls.filter(call => call.status !== 'skipped' && call.status !== 'planned');
   // Codex reports no cost, so a total of zero there means unknown rather than free.
   const priced = calls.some(call => call.costUsd !== undefined);
-  const cost = new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(analysis.costUsd);
+  const cost = formatNumber(analysis.costUsd, language, '::.00');
   return format(strings.summaryLine, {
     findings: analysis.findings.filter(finding => finding.outcome === 'fail').length, proposals: analysis.proposals.length,
     judgments: analysis.findings.length + analysis.confirmations.length, calls: calls.length,

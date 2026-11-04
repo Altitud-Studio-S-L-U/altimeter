@@ -230,7 +230,7 @@
     "why": "Las políticas de Google sobre el abuso de contenido a gran escala y las páginas puerta abarcan muchas páginas generadas principalmente para posicionar, ya sea mediante IA, personas o ambas, incluidas páginas casi idénticas que solo cambian un lugar o una palabra clave y páginas creadas para captar variantes de consultas. La regla informa de un patrón de riesgo, nunca de una penalización.",
     "fix": "Fusiónalas en una página útil por cada oferta real, o añade contenido realmente local o único (personal, precios, casos, fotos de cada ubicación). Aplica noindex a las variantes generadas automáticamente o elimínalas.",
     "messages": {
-      "fail": "{count} páginas tienen un texto principal que difiere como mucho en un 5 % de sus palabras ({urls}); el analista debería comprobar si hay un patrón de páginas puerta."
+      "fail": "{count} páginas tienen un texto principal que difiere como mucho en un 5\u00a0% de sus palabras ({urls}); el analista debería comprobar si hay un patrón de páginas puerta."
     }
   },
   "content-ai-artifacts": {

@@ -2,6 +2,7 @@ import { rule as catalogRule, rules as catalogRules } from '../../catalog/index.
 import { EvidenceStore, type EvidenceItem } from '../../core/evidence.ts';
 import type { SiteFacts } from '../../core/facts.ts';
 import { evidenceLabelText } from '../../i18n/evidence.ts';
+import { formatNumber } from '../../i18n/format.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../../i18n/messages.ts';
 import { ui } from '../../i18n/ui.ts';
 import { localizeValue } from '../../i18n/values.ts';
@@ -232,12 +233,12 @@ const day = (iso: string | undefined) => iso?.slice(0, 10) ?? '-';
 
 /** A count in the report's language; a tilde marks estimates from a sampling source. */
 function amount(activity: BotActivity, language: Language, value: number): string {
-  return `${activity.sampled ? '~' : ''}${Math.round(value).toLocaleString(language)}`;
+  return `${activity.sampled ? '~' : ''}${formatNumber(Math.round(value), language)}`;
 }
 
-function statuses(values: Readonly<Record<string, number>>): string {
+function statuses(values: Readonly<Record<string, number>>, language: Language): string {
   const entries = Object.entries(values).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  return entries.length === 0 ? '-' : entries.map(([status, hits]) => `${status} x${Math.round(hits)}`).join(', ');
+  return entries.length === 0 ? '-' : entries.map(([status, hits]) => `${status} x${formatNumber(Math.round(hits), language)}`).join(', ');
 }
 
 function evidenceLine(item: EvidenceItem, language: Language): string {
@@ -306,12 +307,15 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
     lines.push('', `### ${l.answers}`, '', `| ${l.answerColumns.join(' | ')} |`, `| ${l.answerColumns.map(() => '---').join(' | ')} |`);
     for (const bot of activity.bots) {
       const tally = bot.basis === 'verified' ? bot.verified : bot.unverified;
-      lines.push(`| ${bot.name} | ${statuses(tally.statuses)} | ${amount(activity, language, tally.challenges)} | ${amount(activity, language, bot.scripts)} | ${amount(activity, language, bot.stylesheets)} | ${amount(activity, language, tally.bytes)} |`);
+      lines.push(`| ${bot.name} | ${statuses(tally.statuses, language)} | ${amount(activity, language, tally.challenges)} | ${amount(activity, language, bot.scripts)} | ${amount(activity, language, bot.stylesheets)} | ${amount(activity, language, tally.bytes)} |`);
     }
     const covered = activity.bots.filter(bot => bot.coverage && bot.basis === 'verified');
     if (covered.length > 0) {
       lines.push('', `### ${l.coverage}`, '', `| ${l.coverageColumns.join(' | ')} |`, `| ${l.coverageColumns.map(() => '---').join(' | ')} |`);
-      for (const bot of covered) lines.push(`| ${bot.name} | ${bot.coverage!.fetched} / ${bot.coverage!.urls} | ${bot.coverage!.ok} / ${bot.coverage!.urls} |`);
+      for (const bot of covered) {
+        const { fetched, ok, urls } = bot.coverage!;
+        lines.push(`| ${bot.name} | ${formatNumber(fetched, language)} / ${formatNumber(urls, language)} | ${formatNumber(ok, language)} / ${formatNumber(urls, language)} |`);
+      }
     }
     lines.push('');
   }

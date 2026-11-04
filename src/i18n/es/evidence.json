@@ -488,7 +488,7 @@
   "og:type product on a page without Product markup": "og:type product en una página sin marcado Product",
   "og:type value": "valor de og:type",
   "og:url in the raw HTML": "og:url en el HTML original",
-  "one of {count} pages whose main text differs by at most 5% of its words": "una de {count} páginas cuyo texto principal difiere como máximo en el 5 % de sus palabras",
+  "one of {count} pages whose main text differs by at most 5% of its words": "una de {count} páginas cuyo texto principal difiere como máximo en el 5\u00a0% de sus palabras",
   "one-word generic alt text": "texto alternativo genérico de una sola palabra",
   "Open Graph tag present only after rendering": "etiqueta de Open Graph presente solo después del renderizado",
   "Open Graph tags absent or empty in the raw HTML": "etiquetas de Open Graph ausentes o vacías en el HTML original",

@@ -65,6 +65,21 @@ for (const language of ['es', 'ca'] as const satisfies readonly Language[]) {
       assert.deepEqual(templateProblems('evidence', labelCatalogs.en, labels, language), []);
     });
   });
+
+  test(`${language} texts put a non-breaking space between a number and the percent sign`, () => {
+    const texts: Array<[string, string]> = [
+      ...uiTexts(ui(language)),
+      ...Object.entries(labels).map(([key, text]): [string, string] => [`evidence "${key}"`, text]),
+      ...Object.entries(values).flatMap(([section, entries]) => Object.entries(entries).map(([key, text]): [string, string] => [`values.${section} "${key}"`, text])),
+      ...Object.values(catalogsByCategory[language]).flatMap(catalog => Object.entries(catalog).flatMap(([id, entry]) => [
+        ...(['title', 'why', 'fix'] as const).map((field): [string, string] => [`${id}.${field}`, entry[field] ?? '']),
+        ...Object.entries(entry.messages).map(([key, text]): [string, string] => [`${id}.${key}`, text]),
+      ])),
+    ];
+    // A number or a value right before %, or a plain space between them, outside code spans and CSS values such as width:100%.
+    const plain = /(?<![:\w.,])\d+(?:[.,]\d+)? ?%|\} ?%/u;
+    assert.deepEqual(texts.filter(([, text]) => plain.test(text.replace(/`[^`]+`/gu, ''))).map(([where]) => where), []);
+  });
 }
 
 /**

@@ -73,7 +73,7 @@ describe('translating the values of messages and labels', () => {
 
   test('translates warnings as whole sentences, with a prefix before them', () => {
     const proxy = 'access.log: 85% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.';
-    assert.match(localizeValue('es', 'warning', `Crawler activity: ${proxy}`), /^Actividad de rastreadores: access\.log: el 85 % de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy/u);
+    assert.match(localizeValue('es', 'warning', `Crawler activity: ${proxy}`), /^Actividad de rastreadores: access\.log: el 85\u00a0% de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy/u);
     assert.equal(localizeValue('ca', 'warning', 'analyst call C3 (content) failed: no answer'), 'Crida C3 (analista, content) fallida: sense resposta');
     assert.equal(localizeValue('es', 'warning', 'Lighthouse did not complete: Target closed, retry'), 'Lighthouse no ha terminado: Target closed, retry');
     assert.equal(localizeValue('es', 'warning', 'A warning nobody translated yet.'), 'A warning nobody translated yet.');

@@ -78,7 +78,7 @@
     "why": "CrUX indica quantes navegacions enrere i endavant se serveixen des de la memòria cau endavant/enrere. web.dev inclou la bfcache entre les millores més efectives, perquè les pàgines restaurades es carreguen a l'instant.",
     "fix": "Executa perf-bfcache-eligibility. Elimina els detectors d'unload, evita no-store quan no calgui i tanca les connexions obertes a pagehide.",
     "messages": {
-      "fail": "Amb dades de CrUX ({scope}) per al dispositiu {formFactor}, un {backForward, number, percent} de les navegacions són navegacions enrere/endavant que no s'han restaurat des de la memòria cau endavant/enrere, enfront d'un {restored, number, percent} que sí. El llindar del 5 % és una heurística de l'eina."
+      "fail": "Amb dades de CrUX ({scope}) per al dispositiu {formFactor}, un {backForward, number, percent} de les navegacions són navegacions enrere/endavant que no s'han restaurat des de la memòria cau endavant/enrere, enfront d'un {restored, number, percent} que sí. El llindar del 5\u00a0% és una heurística de l'eina."
     }
   },
   "perf-crux-softnav-experimental": {
