@@ -86,7 +86,9 @@ AI Overviews and AI Mode arrive as Google search and cannot be told apart.
 | `crawl-bots-googlebot-sitemap-coverage` | Sitemap URLs verified Googlebot did not fetch in the window. |
 | `crawl-bots-spoofed-crawlers` | Requests that used a crawler's user agent from addresses its operator does not use. |
 
-Each rule's thresholds and sources are in the [rule catalog](rules.md).
+Each rule's thresholds and sources are in the [rule catalog](rules.md). Sitemap URLs come from the sitemaps an audit
+reads, with the same limits (see [methodology](methodology.md#1-collect)); `altimeter bots` reads only those robots.txt
+declares, or `/sitemap.xml` when it declares none.
 
 ## Privacy
 
