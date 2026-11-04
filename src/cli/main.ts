@@ -26,7 +26,11 @@ import { verifyExitCode, verifyTasks } from '../verify/index.ts';
 import { HttpClient } from '../fetch/http.ts';
 import { deleteLogin, loadLogin, loginStatus, saveLogin } from '../owner/credential-store.ts';
 import { readOAuthClient, startLoopbackLogin } from '../owner/google-auth.ts';
+import { ipListCacheDirectory } from '../owner/bots/ip-ranges.ts';
+import { probeCacheDirectory } from '../probe/cache.ts';
 import { version } from '../version.ts';
+import { aiProbeCommand } from './ai-probe.ts';
+import { botsCommand, logFiles } from './bots.ts';
 
 export const help = `Altimeter ${version}: evidence-based SEO audits.
 
@@ -40,10 +44,18 @@ Usage:
   altimeter explain <rule-id>                      Show a rule and its sources.
   altimeter doctor [--probe]                       Check Node.js, Chrome and the Claude Code and Codex CLIs; --probe
                                                    sends each CLI one tiny request (a little of your plan's quota).
-  altimeter cache clear                            Delete cached model answers.
+  altimeter cache clear                            Delete cached model answers, probe runs and crawler IP lists.
   altimeter gsc login --client <client_secret.json> [--remember <dpapi|file>]
   altimeter gsc logout | gsc status                Manage read-only Search Console access.
+  altimeter bots [--cloudflare-zone <domain>] [--logs <file>]...
+                                                   Show which crawlers really fetch the site, each verified by its
+                                                   operator's IP list or reverse DNS.
+  altimeter ai-probe <domain> [--keyword <query>]... [--yes]
+                                                   Ask Claude Code and Codex whether they cite the site; without
+                                                   --yes it only prints the plan.
   altimeter --version                              Print the version.
+
+Run "altimeter <command> --help" for the options of bots and ai-probe.
 
 Audit options:
   --lang <en|es|ca>          Report language (default en).
@@ -51,7 +63,13 @@ Audit options:
   --max-pages <n>            Pages to audit when crawling, 1 to 1000 (default 100).
   --gsc                      Add Search Console data (from ALTIMETER_GSC_ACCESS_TOKEN, ALTIMETER_GSC_SA_KEY or gsc login).
   --gsc-property <property>  Use this property, for example sc-domain:example.com.
-  --redact-queries           Write numbered labels instead of Search Console queries, for a report to share.
+  --bing                     Add Bing Webmaster Tools data (API key in BING_WEBMASTER_API_KEY).
+  --bing-site <url>          Use this Bing site, for example https://example.com/.
+  --redact-queries           Write numbered labels instead of Search Console and Bing queries, for a report to share.
+  --bots-from <source>       Add the crawler requests the site really received: cloudflare (read-only token in
+                             ALTIMETER_CLOUDFLARE_API_TOKEN) or an access log file or folder; repeat it for several.
+  --bots-days <n>            Days of crawler activity, ending now, 1 to 400 (default 30).
+  --no-bots-dns              Skip reverse DNS checks; crawlers that need them stay unverified.
   --source <dir>             The site's repository: tasks name the files that most likely hold each fix (read only).
   --out <dir>                Parent folder for reports (default ./altimeter-report).
   --no-render                Skip Chrome rendering and Lighthouse.
@@ -73,8 +91,9 @@ Model analysis options (Claude Code or Codex, run with your own login; the pages
   --no-ai-cache              Ask the provider again instead of reusing cached answers.
 
 Field data from the Chrome UX Report is queried when ALTIMETER_GOOGLE_API_KEY holds a Google Cloud API key
-with the Chrome UX Report API enabled. The key is sent in a header to Google only. Search Console data never
-reaches the model.
+with the Chrome UX Report API enabled. The key is sent in a header to Google only. Search Console, Bing and
+crawler activity data never reach the model. For log formats, proxies and other crawler options, run
+"altimeter bots --help".
 
 Exit status: 0 done, 1 a check failed at --fail-on or above, 2 error, 3 the page could not be audited.
 `;
@@ -147,7 +166,8 @@ async function auditCommand(args: string[]): Promise<number> {
       crawl: { type: 'boolean' }, 'max-pages': { type: 'string' }, gsc: { type: 'boolean' }, 'gsc-property': { type: 'string' },
       'redact-queries': { type: 'boolean' }, source: { type: 'string' }, provider: { type: 'string' }, verifier: { type: 'string' }, model: { type: 'string' },
       'ai-pages': { type: 'string' }, 'ai-max-calls': { type: 'string' }, keyword: { type: 'string', multiple: true }, 'dry-run': { type: 'string' },
-      'use-api-keys': { type: 'boolean' }, 'no-ai-cache': { type: 'boolean' },
+      'use-api-keys': { type: 'boolean' }, 'no-ai-cache': { type: 'boolean' }, bing: { type: 'boolean' }, 'bing-site': { type: 'string' },
+      'bots-from': { type: 'string', multiple: true }, 'bots-days': { type: 'string' }, 'no-bots-dns': { type: 'boolean' },
     },
   });
   if (positionals.length !== 1) throw new UsageError('audit needs exactly one URL.');
@@ -168,6 +188,15 @@ async function auditCommand(args: string[]): Promise<number> {
   const quiet = values.quiet === true;
   const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(message)}\n`);
   const useGsc = values.gsc === true || values['gsc-property'] !== undefined;
+  const useBing = values.bing === true || values['bing-site'] !== undefined;
+  if (values['bing-site'] !== undefined && !/^https?:\/\/[^/]/iu.test(values['bing-site'])) throw new UsageError('--bing-site must be the URL of a Bing Webmaster Tools site, for example https://example.com/.');
+  const redactQueries = values['redact-queries'] === true;
+  const botsFrom = (values['bots-from'] ?? []).map(entry => entry.trim()).filter(Boolean);
+  if (botsFrom.length === 0 && (values['bots-days'] !== undefined || values['no-bots-dns'])) throw new UsageError('--bots-days and --no-bots-dns need --bots-from.');
+  const botsFromCloudflare = botsFrom.some(entry => entry.toLowerCase() === 'cloudflare');
+  // Paths are checked now: a missing log should stop the run before the crawl, not after it.
+  const botLogs = await logFiles(botsFrom.filter(entry => entry.toLowerCase() !== 'cloudflare'));
+  const botsDays = wholeNumber(values['bots-days'], 30, 1, 400, '--bots-days');
   const ai = analysisOptions(values);
   const outRoot = resolve(values.out ?? 'altimeter-report');
   const source = values.source === undefined ? undefined : resolve(values.source);
@@ -176,8 +205,9 @@ async function auditCommand(args: string[]): Promise<number> {
     // The repository is only read; a report folder inside it could end up committed with the site.
     if (isInside(source, outRoot)) throw new UsageError('--out must be outside the --source repository.');
   }
+  const botActivity = botsFromCloudflare && botLogs.length > 0 ? 'cloudflare+logs' : botsFromCloudflare ? 'cloudflare' : botLogs.length > 0 ? 'logs' : 'none';
   const recordedOptions = {
-    crawl: values.crawl === true, maxPages, searchConsole: useGsc, redactQueries: values['redact-queries'] === true, source: source !== undefined, render: values['no-render'] !== true,
+    crawl: values.crawl === true, maxPages, searchConsole: useGsc, bing: useBing, botActivity, redactQueries, source: source !== undefined, render: values['no-render'] !== true,
     lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true,
     provider: ai.provider, verifier: ai.verifier, aiPages: ai.aiPages, aiMaxCalls: ai.maxCalls, dryRun: ai.dryRunDir !== undefined,
   };
@@ -190,7 +220,17 @@ async function auditCommand(args: string[]): Promise<number> {
     labRuns,
     crawl: values.crawl === true,
     maxPages,
-    ...(useGsc ? { gsc: { ...(values['gsc-property'] ? { property: values['gsc-property'] } : {}), redactQueries: values['redact-queries'] === true } } : {}),
+    ...(useGsc ? { gsc: { ...(values['gsc-property'] ? { property: values['gsc-property'] } : {}), redactQueries } } : {}),
+    ...(useBing ? { bing: { ...(values['bing-site'] ? { site: values['bing-site'] } : {}), redactQueries } } : {}),
+    ...(botActivity === 'none' ? {} : {
+      bots: {
+        ...(botLogs.length > 0 ? { logs: botLogs } : {}),
+        // Cloudflare finds the zone from the audited host, trying its parent domains.
+        ...(botsFromCloudflare ? { cloudflare: { zone: url.hostname } } : {}),
+        days: botsDays,
+        dns: values['no-bots-dns'] !== true,
+      },
+    }),
     ...(process.env.ALTIMETER_GOOGLE_API_KEY ? { cruxKey: process.env.ALTIMETER_GOOGLE_API_KEY } : {}),
     ...(log ? { log } : {}),
     recordedOptions,
@@ -397,8 +437,10 @@ async function doctorCommand(args: string[]): Promise<number> {
 
 async function cacheCommand(args: string[]): Promise<number> {
   if (args.length !== 1 || args[0] !== 'clear') throw new UsageError('Use "altimeter cache clear".');
-  const removed = await clearCache();
-  process.stdout.write(`Removed ${removed} cached model answer(s).\n`);
+  const answers = await clearCache();
+  const probes = await clearCache({ directory: probeCacheDirectory() });
+  const lists = await clearCache({ directory: ipListCacheDirectory() });
+  process.stdout.write(`Removed ${answers} cached model answer(s), ${probes} cached probe run(s) and ${lists} crawler IP list(s).\n`);
   return 0;
 }
 
@@ -423,6 +465,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
       case 'explain': return explainCommand(rest);
       case 'doctor': return await doctorCommand(rest);
       case 'cache': return await cacheCommand(rest);
+      case 'bots': return await botsCommand(rest);
+      case 'ai-probe': return await aiProbeCommand(rest);
       default:
         throw new UsageError(`Unknown command: ${command}. Run "altimeter --help".`);
     }

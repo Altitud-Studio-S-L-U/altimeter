@@ -4,19 +4,20 @@ import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promis
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { userCacheDirectory } from '../src/ai/providers.ts';
 
 const cli = fileURLToPath(new URL('../src/cli/main.ts', import.meta.url));
 let server: Server;
 let origin: string;
 let work: string;
 
-function run(args: string[], cwd = work): Promise<{ status: number | null; stdout: string; stderr: string }> {
+function run(args: string[], cwd = work, env: Readonly<Record<string, string>> = {}): Promise<{ status: number | null; stdout: string; stderr: string }> {
   return new Promise(resolve => {
     // No test may reach a real Claude Code or Codex: they would spend the user's quota.
-    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true, env: { ...process.env, ALTIMETER_PROVIDER: 'none' } });
+    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true, env: { ...process.env, ALTIMETER_PROVIDER: 'none', ...env } });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', chunk => (stdout += chunk));
@@ -85,6 +86,27 @@ describe('altimeter audit', () => {
     assert.equal((await run(['audit', `${origin}/`, '--lang', 'fr'])).status, 2);
     assert.equal((await run(['audit', `${origin}/`, '--fail-on', 'some'])).status, 2);
   });
+
+  test('checks the owner data options before collecting anything', async () => {
+    const days = await run(['audit', `${origin}/`, '--bots-days', '7']);
+    assert.equal(days.status, 2);
+    assert.match(days.stderr, /need --bots-from/u);
+    const missing = await run(['audit', `${origin}/`, '--bots-from', join(work, 'missing.log')]);
+    assert.equal(missing.status, 2);
+    assert.match(missing.stderr, /missing\.log does not exist/u);
+    assert.equal((await run(['audit', `${origin}/`, '--bots-from', 'cloudflare', '--bots-days', '401'])).status, 2);
+    assert.equal((await run(['audit', `${origin}/`, '--bing-site', 'example.com'])).status, 2);
+  });
+
+  test('an owner source it cannot read is a warning, and the report records which sources were asked for', async () => {
+    const result = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--out', 'owner-out', '--quiet', '--bots-from', 'cloudflare', '--bing'],
+      work, { ALTIMETER_CLOUDFLARE_API_TOKEN: '', BING_WEBMASTER_API_KEY: '' });
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(await readFile(join(work, result.stdout.trim(), 'report.json'), 'utf8'));
+    assert.deepEqual([report.run.options.botActivity, report.run.options.bing], ['cloudflare', true]);
+    assert.ok(report.run.warnings.some((warning: string) => /^Crawler activity was not read: .*ALTIMETER_CLOUDFLARE_API_TOKEN/u.test(warning)), report.run.warnings.join('\n'));
+    assert.ok(report.run.warnings.some((warning: string) => warning.includes('BING_WEBMASTER_API_KEY is not set')), report.run.warnings.join('\n'));
+  });
 });
 
 describe('other commands', () => {
@@ -117,5 +139,36 @@ describe('other commands', () => {
     assert.match(explain.stdout, /Source: https:\/\//u);
     assert.equal((await run(['explain', 'no-such-rule'])).status, 2);
     assert.match((await run(['doctor'])).stdout, /^Node\.js \d+/u);
+  });
+
+  test('bots and ai-probe are commands with their own help', async () => {
+    const help = await run(['--help']);
+    assert.match(help.stdout, /altimeter bots /u);
+    assert.match(help.stdout, /altimeter ai-probe /u);
+    const bots = await run(['bots', '--help']);
+    assert.equal(bots.status, 0);
+    assert.match(bots.stdout, /--cloudflare-zone <domain>/u);
+    const probe = await run(['ai-probe', '--help']);
+    assert.equal(probe.status, 0);
+    assert.match(probe.stdout, /Without --yes it only/u);
+    const usage = await run(['bots']);
+    assert.equal(usage.status, 2);
+    assert.match(usage.stderr, /bots needs --cloudflare-zone or --logs/u);
+  });
+
+  test('cache clear removes model answers, probe runs and crawler IP lists', async () => {
+    // Every variable the user cache folder can come from points into the test folder, so no real cache is touched.
+    const cache = join(work, 'user-cache');
+    const env = { LOCALAPPDATA: cache, XDG_CACHE_HOME: cache, HOME: cache, USERPROFILE: cache };
+    const base = userCacheDirectory(env);
+    const entries = [join(base, 'ai-cache', 'ab', `${'ab'.repeat(32)}.json`), join(base, 'ai-probe', 'cd', `${'cd'.repeat(32)}.json`), join(base, 'bot-ip-ranges', 'googlebot.json')];
+    for (const path of entries) {
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(path, '{}');
+    }
+    const result = await run(['cache', 'clear'], work, env);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /^Removed 1 cached model answer\(s\), 1 cached probe run\(s\) and 1 crawler IP list\(s\)\.$/mu);
+    assert.deepEqual((await readdir(base)).sort(), [], 'the three cache folders are gone');
   });
 });

@@ -99,13 +99,17 @@ export async function writeCache(key: string, schema: Schema, answer: CachedAnsw
   await rename(temporary, path);
 }
 
-/** Removes every cached answer and returns how many there were. */
+/**
+ * Removes a cache folder (the model answers by default) and returns how many entries it held, counting the JSON files
+ * in it and in its subfolders.
+ */
 export async function clearCache(options: { readonly directory?: string; readonly env?: Environment } = {}): Promise<number> {
   const directory = options.directory ?? analysisCacheDirectory(options.env);
   let count = 0;
   try {
-    for (const folder of await readdir(directory, { withFileTypes: true })) {
-      if (folder.isDirectory()) count += (await readdir(join(directory, folder.name))).filter(name => name.endsWith('.json')).length;
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      if (entry.isDirectory()) count += (await readdir(join(directory, entry.name))).filter(name => name.endsWith('.json')).length;
+      else if (entry.name.endsWith('.json')) count += 1;
     }
   } catch {
     return 0;

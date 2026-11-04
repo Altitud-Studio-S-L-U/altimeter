@@ -11,6 +11,9 @@ import { HttpClient } from './fetch/http.ts';
 import { loadLogin } from './owner/credential-store.ts';
 import { refreshAccessToken, tokenFromEnvironment, tokenFromServiceAccount, type AccessToken } from './owner/google-auth.ts';
 import { fetchGscData } from './owner/gsc.ts';
+import { withBing, type BingRequest } from './owner/bing.ts';
+import { collectBotActivity, type CollectBotActivityOptions } from './owner/bots/collect.ts';
+import { botSiteInput } from './owner/bots/site.ts';
 
 export interface AuditOptions extends CollectOptions {
   readonly language?: Language;
@@ -21,6 +24,13 @@ export interface AuditOptions extends CollectOptions {
    * numbered labels instead of the queries.
    */
   readonly gsc?: { readonly property?: string; readonly redactQueries?: boolean };
+  /** Read the owner's Bing Webmaster Tools data, with the key in BING_WEBMASTER_API_KEY unless one is given. */
+  readonly bing?: BingRequest;
+  /**
+   * Read the crawler requests the site really received, from access logs or Cloudflare analytics, and compare them
+   * with the robots.txt and sitemaps the audit collected.
+   */
+  readonly bots?: Omit<CollectBotActivityOptions, 'site' | 'log'>;
   /** Options recorded in the report, already free of secrets. */
   readonly recordedOptions?: Readonly<Record<string, string | number | boolean>>;
 }
@@ -65,13 +75,27 @@ async function withSearchConsole(collected: CollectResult, options: AuditOptions
   }
 }
 
+async function withBots(collected: CollectResult, options: AuditOptions): Promise<CollectResult> {
+  if (!options.bots) return collected;
+  try {
+    const bots = await collectBotActivity({ ...options.bots, site: botSiteInput(collected.site), ...(options.log ? { log: options.log } : {}) });
+    return {
+      ...collected,
+      warnings: [...collected.warnings, ...bots.warnings.map(warning => `Crawler activity: ${warning}`)],
+      site: { ...collected.site, owner: { ...collected.site.owner, bots } },
+    };
+  } catch (error) {
+    return { ...collected, warnings: [...collected.warnings, `Crawler activity was not read: ${error instanceof Error ? error.message : 'unknown error'}`] };
+  }
+}
+
 /**
  * Runs a deterministic audit of one URL: collects the facts, adds the owner's data when authorised, evaluates every
  * implemented rule and builds the report. This programmatic API is experimental until 1.0.
  */
 export async function audit(options: AuditOptions): Promise<AuditResult> {
   const startedAt = new Date();
-  const collected = await withSearchConsole(markAuditability(await collect(options)), options);
+  const collected = await withBots(await withBing(await withSearchConsole(markAuditability(await collect(options)), options), options), options);
   const evidence = new EvidenceStore();
   const implementations = options.implementations ?? registered;
   const findings = runRules({ rules: catalogRules, implementations, site: collected.site, evidence });

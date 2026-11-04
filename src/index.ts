@@ -13,3 +13,7 @@ export { writeReport } from './report/write.ts';
 export { compareReports } from './report/compare.ts';
 export { verifyTasks, verifyExitCode } from './verify/index.ts';
 export { locateFixes } from './source/locate.ts';
+export { withBing, fetchBingData, type BingData, type BingRequest } from './owner/bing.ts';
+export { collectBotActivity, BotActivityError, type CollectBotActivityOptions } from './owner/bots/collect.ts';
+export type { BotActivity } from './owner/bots/activity.ts';
+export { botSiteInput } from './owner/bots/site.ts';

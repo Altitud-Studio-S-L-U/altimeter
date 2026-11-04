@@ -67,7 +67,8 @@ function parseJsonFields(value: string): JsonFields {
   return fields as JsonFields;
 }
 
-async function logFiles(paths: readonly string[]): Promise<string[]> {
+/** The files named by --logs: a folder means the files in it; a missing path is a usage error. */
+export async function logFiles(paths: readonly string[]): Promise<string[]> {
   const files: string[] = [];
   for (const path of paths) {
     const absolute = resolve(path);
