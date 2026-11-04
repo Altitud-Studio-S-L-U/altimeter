@@ -3,6 +3,7 @@
  * Nothing is written to disk and the CA key never leaves this module, so no key can end up in the repository.
  */
 import { createHash, generateKeyPairSync, randomBytes, sign, type KeyObject } from 'node:crypto';
+import { isIPv4 } from 'node:net';
 
 const day = 86_400_000;
 
@@ -58,6 +59,9 @@ const ecdsaWithSha256 = sequence(objectIdentifier('1.2.840.10045.4.3.2'));
 function extension(oid: string, critical: boolean, value: Buffer): Buffer {
   return sequence(objectIdentifier(oid), ...(critical ? [boolean(true)] : []), octetString(value));
 }
+
+/** A dNSName, or an iPAddress for an IPv4 literal. */
+const subjectAltName = (entry: string) => (isIPv4(entry) ? der(0x87, Buffer.from(entry.split('.').map(Number))) : der(0x82, Buffer.from(entry, 'ascii')));
 
 const spkiOf = (key: KeyObject) => key.export({ type: 'spki', format: 'der' });
 const keyIdentifier = (spki: Buffer) => createHash('sha1').update(spki).digest();
@@ -118,7 +122,7 @@ export interface TestCa {
   readonly cert: string;
   /** Base64 SHA-256 of the CA's SubjectPublicKeyInfo. */
   readonly spki: string;
-  /** Issues a server certificate for these DNS names (subjectAltName, serverAuth). */
+  /** Issues a server certificate for these DNS names or IPv4 addresses (subjectAltName, serverAuth). */
   issue(names: readonly string[], validity?: Validity): TestLeaf;
 }
 
@@ -144,7 +148,7 @@ export function createTestCa(commonName = 'Altimeter Test CA', validity: Validit
     cert: caCert,
     spki: spkiHash(spki),
     issue(names, leafValidity = defaultValidity()) {
-      if (names.length === 0) throw new Error('A leaf certificate needs at least one DNS name.');
+      if (names.length === 0) throw new Error('A leaf certificate needs at least one DNS name or address.');
       const leaf = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
       const leafSpki = spkiOf(leaf.publicKey);
       const cert = pem('CERTIFICATE', certificate({
@@ -158,7 +162,7 @@ export function createTestCa(commonName = 'Altimeter Test CA', validity: Validit
           // digitalSignature (bit 0) with the seven other bits unused.
           extension('2.5.29.15', true, bitString(Buffer.from([0x80]), 7)),
           extension('2.5.29.37', false, sequence(objectIdentifier('1.3.6.1.5.5.7.3.1'))),
-          extension('2.5.29.17', false, sequence(...names.map(entry => der(0x82, Buffer.from(entry, 'ascii'))))),
+          extension('2.5.29.17', false, sequence(...names.map(subjectAltName))),
           extension('2.5.29.14', false, octetString(keyIdentifier(leafSpki))),
           extension('2.5.29.35', false, sequence(der(0x80, caId))),
         ],

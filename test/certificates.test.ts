@@ -30,6 +30,12 @@ test('issues a CA and a server leaf with the extensions TLS clients check', () =
   assert.match(leaf.key, /^-----BEGIN PRIVATE KEY-----\n/u);
 });
 
+test('puts an IPv4 literal in the subjectAltName as an IP address', () => {
+  const server = new X509Certificate(createTestCertificates(['127.0.0.1', 'localhost']).leaf.cert);
+  assert.equal(server.subjectAltName, 'IP Address:127.0.0.1, DNS:localhost');
+  assert.equal(server.checkIP('127.0.0.1'), '127.0.0.1');
+});
+
 test('issues leaves with a chosen validity from the same CA', () => {
   const ca = createTestCa();
   const expired = new X509Certificate(ca.issue(['old.test'], { notBefore: new Date(Date.now() - 30 * day), notAfter: new Date(Date.now() - day) }).cert);

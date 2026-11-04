@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
+import { createServer as createHttpsServer } from 'node:https';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { userCacheDirectory } from '../src/ai/providers.ts';
+import { createTestCertificates } from './support/certificates.ts';
 
 const cli = fileURLToPath(new URL('../src/cli/main.ts', import.meta.url));
 let server: Server;
@@ -106,6 +108,38 @@ describe('altimeter audit', () => {
     assert.deepEqual([report.run.options.botActivity, report.run.options.bing], ['cloudflare', true]);
     assert.ok(report.run.warnings.some((warning: string) => /^Crawler activity was not read: .*ALTIMETER_CLOUDFLARE_API_TOKEN/u.test(warning)), report.run.warnings.join('\n'));
     assert.ok(report.run.warnings.some((warning: string) => warning.includes('BING_WEBMASTER_API_KEY is not set')), report.run.warnings.join('\n'));
+  });
+
+  test('--ca trusts a private CA for the page and the certificate check', async () => {
+    const { ca, leaf } = createTestCertificates(['127.0.0.1']);
+    const secure = createHttpsServer({ key: leaf.key, cert: leaf.chain }, (req, res) => {
+      if (req.url === '/robots.txt') return void res.writeHead(200, { 'content-type': 'text/plain' }).end('User-agent: *\nAllow: /\n');
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><html lang="en"><head><title>Staging</title></head><body><h1>Staging</h1></body></html>');
+    });
+    await new Promise<void>(resolve => secure.listen(0, '127.0.0.1', resolve));
+    try {
+      await writeFile(join(work, 'staging-ca.pem'), ca.cert);
+      const target = `https://127.0.0.1:${(secure.address() as AddressInfo).port}/`;
+      const result = await run(['audit', target, '--no-render', '--allow-private-network', '--ca', 'staging-ca.pem', '--out', 'ca-out', '--quiet']);
+      assert.equal(result.status, 0, result.stderr);
+      const report = JSON.parse(await readFile(join(work, result.stdout.trim(), 'report.json'), 'utf8'));
+      assert.equal(report.run.options.extraCa, true);
+      assert.equal(report.pages[0].status, 200);
+      assert.deepEqual(report.findings.filter((finding: { ruleId: string }) => finding.ruleId === 'tech-tls-certificate-valid').map((finding: { outcome: string }) => finding.outcome), ['pass']);
+    } finally {
+      secure.closeAllConnections();
+      await new Promise(resolve => secure.close(resolve));
+    }
+  });
+
+  test('rejects a --ca file that cannot be read or holds no certificate', async () => {
+    const missing = await run(['audit', `${origin}/`, '--ca', 'missing.pem']);
+    assert.equal(missing.status, 2);
+    assert.match(missing.stderr, /--ca: missing\.pem cannot be read/u);
+    await writeFile(join(work, 'empty.pem'), 'not a certificate\n');
+    const empty = await run(['audit', `${origin}/`, '--ca', 'empty.pem']);
+    assert.equal(empty.status, 2);
+    assert.match(empty.stderr, /--ca must be a PEM file with at least one certificate/u);
   });
 });
 
