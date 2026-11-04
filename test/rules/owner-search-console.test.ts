@@ -138,6 +138,16 @@ describe('Search Console performance rules', () => {
     assert.deepEqual([drop?.severity, drop?.params?.page, drop?.params?.before, drop?.params?.now], ['low', `${origin}/b`, 60, 4]);
   });
 
+  test('content-gsc-traffic-drop lists the five largest drops in clicks, largest first', () => {
+    const small = ['p1', 'p2', 'p3', 'p4', 'p5'].map(name => `${origin}/${name}`);
+    const data = gsc({
+      previousByPage: [row([`${origin}/big`], 5000, 90_000, 3), ...small.map(page => row([page], 30, 900, 5))],
+      byPage: [row([`${origin}/big`], 4700, 90_000, 3), ...small.map(page => row([page], 5, 900, 6))],
+    });
+    const drops = check('content-gsc-traffic-drop', data).findings;
+    assert.deepEqual(drops.map(finding => finding.params?.page), [`${origin}/big`, ...small.slice(0, 4)], 'a loss of 300 clicks comes before losses of 25 with a sharper z-score');
+  });
+
   test('write numbered labels instead of queries when the owner asks for a shareable report', () => {
     const facts = (id: string) => evaluate(rule(id), site({ pages: [page(url, { html: html() })], owner: { gsc: performance, redactQueries: true } }));
     const shared = facts('content-gsc-cannibalization');

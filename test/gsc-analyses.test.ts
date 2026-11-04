@@ -53,6 +53,11 @@ test('lists striking-distance queries and unusual page trends', () => {
   assert.deepEqual(pageTrends(data).map(trend => [trend.page, trend.z]), [['/a', 4.47]]);
 });
 
+test('orders page trends by the change in clicks, largest first', () => {
+  const trends = pageTrends({ ...data, previousByPage: [row(['/a'], 30, 900, 5), row(['/b'], 5000, 90_000, 3)], byPage: [row(['/a'], 5, 900, 6), row(['/b'], 4700, 90_000, 3)] });
+  assert.deepEqual(trends.map(trend => [trend.page, trend.z]), [['/b', -3.05], ['/a', -4.23]]);
+});
+
 test('turns URL Inspection results into insights', () => {
   const insights = inspectionInsights([
     { url: 'https://example.com/a', verdict: 'PASS', googleCanonical: 'https://example.com/b', userCanonical: 'https://example.com/a', lastCrawlTime: '2026-08-01T00:00:00Z', crawledAs: 'DESKTOP', sitemaps: [], referringUrls: [], richResults: [{ type: 'Breadcrumbs', issues: [{ severity: 'ERROR', message: 'Missing field "item"' }] }] },

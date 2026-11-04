@@ -143,6 +143,7 @@ export function strikingDistance(data: GscData, minImpressions = 50): StrikingDi
     .sort((a, b) => b.impressions - a.impressions);
 }
 
+/** Pages whose clicks changed by at least `minChange` with a Poisson z-score of at least `minZ`, largest change in clicks first. */
 export function pageTrends(data: GscData, minChange = 20, minZ = 2.5): PageTrend[] {
   const before = new Map(data.previousByPage.map(row => [row.keys[0]!, row.clicks]));
   const pages = new Set([...before.keys(), ...data.byPage.map(row => row.keys[0]!)]);
@@ -155,7 +156,8 @@ export function pageTrends(data: GscData, minChange = 20, minZ = 2.5): PageTrend
     const z = (b - a) / Math.sqrt(a + b);
     if (Math.abs(z) >= minZ) trends.push({ page, clicksBefore: a, clicksNow: b, z: Math.round(z * 100) / 100 });
   }
-  return trends.sort((x, y) => Math.abs(y.z) - Math.abs(x.z));
+  const change = (trend: PageTrend) => Math.abs(trend.clicksNow - trend.clicksBefore);
+  return trends.sort((x, y) => change(y) - change(x) || Math.abs(y.z) - Math.abs(x.z) || x.page.localeCompare(y.page));
 }
 
 function normalizeUrl(url: string): string {
