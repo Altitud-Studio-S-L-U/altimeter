@@ -1,8 +1,8 @@
+import { linkedSitemaps } from '../../collect/sitemaps.ts';
 import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { SiteFacts, SitemapFacts } from '../../core/facts.ts';
 import { decodeSitemapBody, type SitemapUrl } from '../../fetch/sitemap.ts';
 import type { RuleImplementation } from '../engine.ts';
-import { linksWithRel } from '../helpers.ts';
 import { normalizeUrl } from './annotations.ts';
 import { parseHreflang } from './codes.ts';
 import { fail, groupBy, list, maxEvidence, notApplicable, notEvaluated, pass } from './shared.ts';
@@ -41,7 +41,7 @@ function complete(site: SiteFacts): boolean {
   const fetched = new Set(sitemaps.map(sitemap => key(sitemap.url)));
   const declared = [
     ...(site.robots?.availability.kind === 'parsed' ? site.robots.availability.file.sitemaps.map(line => line.value) : []),
-    ...[...site.pages.values()].flatMap(page => linksWithRel(page.raw, 'sitemap').map(link => normalizeUrl(link.attrs.href, page.url) ?? '')),
+    ...[...site.pages.values()].flatMap(page => linkedSitemaps(page)),
   ].filter(Boolean);
   const listed = new Set(sitemaps.flatMap(sitemap => sitemap.document?.sitemaps.map(reference => reference.loc) ?? []));
   const parsed = new Set(sitemaps.filter(sitemap => sitemap.document).map(sitemap => sitemap.url));

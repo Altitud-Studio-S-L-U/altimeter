@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { decodeHtml, fetchPage, isHtmlResponse } from '../src/collect/page.ts';
+import { decodeHtml, fetchPage, isHtmlResponse, servedUrl } from '../src/collect/page.ts';
 import { hostCounterpart, notFoundProbeUrl, urlVariants } from '../src/collect/probes.ts';
 import type { HttpClient } from '../src/fetch/http.ts';
-import { response } from './support/facts.ts';
+import { page, response } from './support/facts.ts';
 
 test('recognizes HTML by content type, and by content when the type is missing', () => {
   assert.equal(isHtmlResponse({ 'content-type': ['text/html; charset=utf-8'] }, Buffer.from('x')), true);
@@ -24,6 +24,13 @@ test('takes a one-segment path for a locale root only when the page names that l
   const client = { fetch: async (url: string) => response(url, { body: '<!doctype html><html lang="en-US"><head><title>Example</title></head><body></body></html>' }) } as unknown as HttpClient;
   const types = await Promise.all(['/ai/', '/en/', '/us/'].map(async path => (await fetchPage(client, `https://example.com${path}`)).pageType));
   assert.deepEqual(types, ['other', 'home', 'home']);
+});
+
+test('takes the URL a page was served from, or the requested one when its redirects did not end on an http or https URL', () => {
+  const requested = 'https://example.com/about';
+  assert.equal(servedUrl(page(requested, { redirects: [[301, 'https://www.example.com/about/']] }), requested), 'https://www.example.com/about/');
+  assert.equal(servedUrl(page(requested, { redirects: [[301, 'ftp://files.example.com/about']] }), requested), requested);
+  assert.equal(servedUrl(undefined, requested), requested);
 });
 
 test('builds the URL variants that should consolidate to the audited URL', () => {

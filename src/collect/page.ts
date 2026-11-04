@@ -48,3 +48,19 @@ export async function fetchPage(client: HttpClient, url: string, options: { isHo
   });
   return { url, fetch, pageType: decision.type, pageTypeReason: decision.reason, ...(raw ? { raw } : {}) };
 }
+
+/**
+ * The URL a page was served from: where its redirects ended, or `requested` when there is no page or they did not end
+ * on an http or https URL. Data kept per URL, origin or site, such as Chrome UX Report records, Search Console
+ * properties and Bing sites, belongs to this URL rather than to the one requested.
+ */
+export function servedUrl(page: PageFacts | undefined, requested: string): string {
+  const final = page?.fetch.finalUrl;
+  if (final === undefined) return requested;
+  try {
+    const { protocol } = new URL(final);
+    return protocol === 'http:' || protocol === 'https:' ? final : requested;
+  } catch {
+    return requested;
+  }
+}

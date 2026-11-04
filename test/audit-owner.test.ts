@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import type { LookupAddress } from 'node:dns';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -72,6 +73,71 @@ describe('audit with crawler activity', () => {
     assert.ok(report.run.warnings.some(warning => warning.startsWith('Crawler activity was not read: ')), report.run.warnings.join('\n'));
     const evaluated = report.findings.filter(finding => finding.ruleId.includes('-bots-'));
     assert.deepEqual(evaluated, [], 'the crawler rules need the owner data and are skipped without it');
+  });
+});
+
+describe('audit with Search Console', () => {
+  const lookup = ((_host: string, _options: unknown, callback: (error: null, addresses: LookupAddress[]) => void) => {
+    callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  }) as never;
+  const sitePolicy = { allowPrivate: false, privateHosts: new Set(['site.test', 'www.site.test']) };
+  const inspected: string[] = [];
+  let pages: Server;
+  let searchConsole: Server;
+  let port: number;
+  let api: string;
+
+  before(async () => {
+    // The bare domain redirects every path to www, where the pages are served.
+    pages = createServer((req, res) => {
+      if (req.headers.host === `site.test:${port}`) return void res.writeHead(301, { location: `http://www.site.test:${port}${req.url}` }).end();
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><html lang="en"><head><title>Services</title></head><body><h1>Services</h1></body></html>');
+    });
+    // The account holds a URL-prefix property for the www host only.
+    searchConsole = createServer((req, res) => {
+      let body = '';
+      req.on('data', chunk => (body += chunk));
+      req.on('end', () => {
+        const json = (value: unknown) => res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(value));
+        const path = new URL(req.url ?? '/', 'http://127.0.0.1').pathname;
+        if (path === '/webmasters/v3/sites') return void json({ siteEntry: [{ siteUrl: `http://www.site.test:${port}/`, permissionLevel: 'siteOwner' }] });
+        if (path.endsWith('/searchAnalytics/query')) return void json({ rows: [] });
+        if (path === '/v1/urlInspection/index:inspect') {
+          const request = JSON.parse(body) as { inspectionUrl: string; siteUrl: string };
+          inspected.push(`${request.inspectionUrl} in ${request.siteUrl}`);
+          return void json({ inspectionResult: { indexStatusResult: { verdict: 'PASS', coverageState: 'Submitted and indexed' } } });
+        }
+        if (path.endsWith('/sitemaps')) return void json({ sitemap: [] });
+        res.writeHead(404, { 'content-type': 'application/json' }).end('{}');
+      });
+    });
+    await new Promise<void>(resolve => pages.listen(0, '127.0.0.1', resolve));
+    await new Promise<void>(resolve => searchConsole.listen(0, '127.0.0.1', resolve));
+    port = (pages.address() as AddressInfo).port;
+    api = `http://127.0.0.1:${(searchConsole.address() as AddressInfo).port}`;
+  });
+
+  after(async () => {
+    for (const entry of [pages, searchConsole]) {
+      entry.closeAllConnections();
+      await new Promise(resolve => entry.close(resolve));
+    }
+  });
+
+  test('chooses the property that covers the URL the audited page is served from, after its redirects', async () => {
+    const saved = process.env.ALTIMETER_GSC_ACCESS_TOKEN;
+    process.env.ALTIMETER_GSC_ACCESS_TOKEN = 'test-token';
+    try {
+      const { report, collected } = await audit({
+        url: `http://site.test:${port}/services/`, policy: sitePolicy, lookup, render: false, lighthouse: false,
+        gsc: { endpoints: { webmasters: `${api}/webmasters/v3`, inspection: `${api}/v1` }, policy: { allowPrivate: false, privateHosts: new Set(['127.0.0.1']) } },
+      });
+      assert.equal(collected.site.owner?.gsc?.property.siteUrl, `http://www.site.test:${port}/`, report.run.warnings.join('\n'));
+      assert.deepEqual(inspected, [`http://www.site.test:${port}/services/ in http://www.site.test:${port}/`, `http://www.site.test:${port}/ in http://www.site.test:${port}/`]);
+    } finally {
+      if (saved === undefined) delete process.env.ALTIMETER_GSC_ACCESS_TOKEN;
+      else process.env.ALTIMETER_GSC_ACCESS_TOKEN = saved;
+    }
   });
 });
 

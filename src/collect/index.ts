@@ -10,8 +10,8 @@ import { inspectTls, trustedRoots } from '../fetch/tls.ts';
 import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser, type RenderMode } from '../render/chrome.ts';
 import { runLighthouse } from '../render/lighthouse.ts';
 import { crawlSite } from './crawl.ts';
-import { collectSitemaps } from './sitemaps.ts';
-import { documentFacts, fetchPage, isHtmlResponse, decodeHtml } from './page.ts';
+import { collectSitemaps, linkedSitemaps } from './sitemaps.ts';
+import { documentFacts, fetchPage, isHtmlResponse, decodeHtml, servedUrl } from './page.ts';
 import { hostCounterpart, notFoundProbeUrl, urlVariants } from './probes.ts';
 
 /** Googlebot's product tokens, most specific first, for robots.txt decisions on subresources. */
@@ -190,9 +190,7 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     }
 
     const declared = robots.availability.kind === 'parsed' ? robots.availability.file.sitemaps.map(line => line.value) : [];
-    for (const link of [...pages.values()].flatMap(entry => entry.raw?.parsed.links ?? [])) {
-      if (link.rel.includes('sitemap') && link.attrs.href) declared.push(new URL(link.attrs.href, target).href);
-    }
+    for (const entry of pages.values()) declared.push(...linkedSitemaps(entry));
     log('Reading sitemaps');
     const { sitemaps, warnings: sitemapWarnings } = await collectSitemaps(client, target.origin, [...new Set(declared)]);
     warnings.push(...sitemapWarnings);
@@ -292,9 +290,10 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       const endpoint = options.cruxEndpoint ?? cruxEndpoint;
       const byUrl: Partial<Record<CruxFormFactor, CruxOutcome>> = {};
       const byOrigin: Partial<Record<CruxFormFactor, CruxOutcome>> = {};
+      const served = servedUrl(page, target.href);
       for (const form of forms) {
-        byUrl[form] = await queryCrux(client, options.cruxKey, { url: page.fetch.finalUrl }, form, endpoint);
-        byOrigin[form] = await queryCrux(client, options.cruxKey, { origin: target.origin }, form, endpoint);
+        byUrl[form] = await queryCrux(client, options.cruxKey, { url: served }, form, endpoint);
+        byOrigin[form] = await queryCrux(client, options.cruxKey, { origin: new URL(served).origin }, form, endpoint);
       }
       pages.set(page.url, { ...pages.get(page.url)!, crux: { url: byUrl, origin: byOrigin } });
     }

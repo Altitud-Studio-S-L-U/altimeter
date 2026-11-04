@@ -1,6 +1,7 @@
 import { notAuditableReason } from './analyze/auditability.ts';
 import { rules as catalogRules } from './catalog/index.ts';
 import { collect, type CollectOptions, type CollectResult } from './collect/index.ts';
+import { servedUrl } from './collect/page.ts';
 import { EvidenceStore } from './core/evidence.ts';
 import type { PageFacts } from './core/facts.ts';
 import type { Language } from './i18n/messages.ts';
@@ -8,9 +9,10 @@ import { runRules, type RuleImplementation } from './rules/engine.ts';
 import { implementations as registered } from './rules/registry.ts';
 import { buildReport, type Report } from './report/model.ts';
 import { HttpClient } from './fetch/http.ts';
+import type { NetworkPolicy } from './fetch/ip-guard.ts';
 import { loadLogin } from './owner/credential-store.ts';
 import { refreshAccessToken, tokenFromEnvironment, tokenFromServiceAccount, type AccessToken } from './owner/google-auth.ts';
-import { fetchGscData } from './owner/gsc.ts';
+import { fetchGscData, type searchConsoleApi } from './owner/gsc.ts';
 import { withBing, type BingRequest } from './owner/bing.ts';
 import { collectBotActivity, type CollectBotActivityOptions } from './owner/bots/collect.ts';
 import { botSiteInput } from './owner/bots/site.ts';
@@ -21,9 +23,13 @@ export interface AuditOptions extends CollectOptions {
   readonly implementations?: ReadonlyMap<string, RuleImplementation>;
   /**
    * Read the owner's Search Console data; `property` overrides the automatic choice, `redactQueries` writes
-   * numbered labels instead of the queries and `propertyOption` names the caller's option for `property` in errors.
+   * numbered labels instead of the queries, `propertyOption` names the caller's option for `property` in errors, and
+   * `endpoints` and `policy` point the calls at a local server in tests.
    */
-  readonly gsc?: { readonly property?: string; readonly redactQueries?: boolean; readonly propertyOption?: string };
+  readonly gsc?: {
+    readonly property?: string; readonly redactQueries?: boolean; readonly propertyOption?: string;
+    readonly endpoints?: typeof searchConsoleApi; readonly policy?: NetworkPolicy;
+  };
   /** Read the owner's Bing Webmaster Tools data, with the key in BING_WEBMASTER_API_KEY unless one is given. */
   readonly bing?: BingRequest;
   /**
@@ -61,14 +67,16 @@ export async function searchConsoleToken(client: HttpClient): Promise<AccessToke
 
 async function withSearchConsole(collected: CollectResult, options: AuditOptions): Promise<CollectResult> {
   if (!options.gsc) return collected;
-  const client = new HttpClient();
+  const client = new HttpClient(options.gsc.policy ? { policy: options.gsc.policy } : {});
   try {
     const token = await searchConsoleToken(client);
     if (!token) return { ...collected, warnings: [...collected.warnings, 'Search Console was requested but no credential was found. Run "altimeter gsc login --client <client_secret.json> --remember <dpapi|file>" or set ALTIMETER_GSC_ACCESS_TOKEN.'] };
     const inspectUrls = [...collected.site.pages.values()].filter(page => page.fetch.status === 200).map(page => page.fetch.finalUrl).slice(0, 10);
     const gsc = await fetchGscData(client, token, {
-      url: options.url, inspectUrls, ...(options.gsc.property ? { siteUrl: options.gsc.property } : {}),
+      url: servedUrl(collected.site.pages.values().next().value, options.url), inspectUrls,
+      ...(options.gsc.property ? { siteUrl: options.gsc.property } : {}),
       ...(options.gsc.propertyOption ? { propertyOption: options.gsc.propertyOption } : {}),
+      ...(options.gsc.endpoints ? { endpoints: options.gsc.endpoints } : {}),
     });
     return { ...collected, site: { ...collected.site, owner: { ...collected.site.owner, gsc, ...(options.gsc.redactQueries ? { redactQueries: true } : {}) } } };
   } catch (error) {

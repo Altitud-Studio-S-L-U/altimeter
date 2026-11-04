@@ -127,8 +127,8 @@ function summarize(result: LighthouseResult, runs: LighthouseResult[], validRuns
 }
 
 /**
- * Runs Lighthouse `runs` times, each in a fresh browser context, and keeps the median run as Lighthouse
- * defines it. Runs never execute in parallel: concurrent runs on one machine skew lab metrics.
+ * Runs Lighthouse `runs` times, each in a fresh browser context where downloads are denied, and keeps the median
+ * run as Lighthouse defines it. Runs never execute in parallel: concurrent runs on one machine skew lab metrics.
  */
 export async function runLighthouse(audit: AuditBrowser, url: string, options: { runs?: number; formFactor?: 'mobile' | 'desktop' } = {}): Promise<LighthouseOutcome> {
   const requested = Math.max(1, Math.min(options.runs ?? 3, 7));
@@ -136,7 +136,7 @@ export async function runLighthouse(audit: AuditBrowser, url: string, options: {
   const runs: LighthouseResult[] = [];
   let lastError = '';
   for (let index = 0; index < requested; index += 1) {
-    const context = await audit.browser.createBrowserContext();
+    const context = await audit.newContext();
     try {
       const page = await context.newPage();
       const outcome = await lighthouse(url, {
