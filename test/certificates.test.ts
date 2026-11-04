@@ -45,13 +45,13 @@ test('issues leaves with a chosen validity from the same CA', () => {
 });
 
 async function handshake(port: number, ca: string | undefined): Promise<{ authorized: boolean; error: string | undefined }> {
-  return new Promise((resolve, reject) => {
-    const socket: TLSSocket = connect({ host: '127.0.0.1', port, servername: 'site.test', rejectUnauthorized: false, ...(ca ? { ca } : {}) }, () => {
-      const error = socket.authorizationError as (Error & { code?: string }) | null;
-      resolve({ authorized: socket.authorized, error: error ? String(error.code ?? error) : undefined });
+  return new Promise(resolve => {
+    // Verification stays on: an untrusted chain ends the handshake with the verification error as its code.
+    const socket: TLSSocket = connect({ host: '127.0.0.1', port, servername: 'site.test', ...(ca ? { ca } : {}) }, () => {
+      resolve({ authorized: socket.authorized, error: undefined });
       socket.destroy();
     });
-    socket.on('error', reject);
+    socket.on('error', error => resolve({ authorized: false, error: String((error as NodeJS.ErrnoException).code ?? error.message) }));
   });
 }
 

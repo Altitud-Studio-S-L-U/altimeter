@@ -1,12 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import type { LookupAddress } from 'node:dns';
-import { X509Certificate } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { connect } from 'node:tls';
 import { fileURLToPath } from 'node:url';
 import { scenarios } from '../bench/scenarios/index.ts';
 import { checkScenario, fingerprint, type ScenarioRun } from '../bench/support/execute.ts';
@@ -14,7 +12,7 @@ import { defineScenario, route, loopbackLookup, loopbackPolicy } from '../bench/
 import { startVirtualHosts } from '../bench/support/server.ts';
 import { rules } from '../src/catalog/index.ts';
 import { HttpClient } from '../src/fetch/http.ts';
-import { trustedRoots } from '../src/fetch/tls.ts';
+import { inspectTls, trustedRoots } from '../src/fetch/tls.ts';
 import { implementations } from '../src/rules/registry.ts';
 import { createTestCa } from './support/certificates.ts';
 
@@ -110,14 +108,10 @@ test('one loopback port answers plain HTTP and HTTPS, routed by Host and with th
     assert.match(secure.body.toString(), /<title>Home<\/title>/u);
     const unknown = await client.fetch(`https://site.example:${server.port}/missing`);
     assert.equal(unknown.status, 404);
-    const certificate = await new Promise<string>((resolve, reject) => {
-      const socket = connect({ host: '127.0.0.1', port: server.port, servername: 'www.site.example', rejectUnauthorized: false }, () => {
-        resolve(new X509Certificate(socket.getPeerCertificate().raw).validTo);
-        socket.destroy();
-      });
-      socket.on('error', reject);
-    });
-    assert.ok(Date.parse(certificate) < Date.now(), 'www gets its own, expired certificate');
+    // The audit's own TLS probe reads the www certificate the way an audit does.
+    const www = await inspectTls('www.site.example', { port: server.port, policy: loopbackPolicy(hosts), lookup: loopbackLookup(hosts), ca: trustedRoots(ca.cert) });
+    assert.deepEqual([www.authorized, www.error], [false, 'CERT_HAS_EXPIRED']);
+    assert.ok(Date.parse(www.validTo ?? '') < Date.now(), 'www gets its own, expired certificate');
     assert.deepEqual(server.requests.map(request => [request.secure, request.host, request.path]),
       [[false, 'site.example', '/'], [true, 'site.example', '/'], [true, 'site.example', '/missing']]);
     assert.equal(server.requests[1]?.sni, 'site.example');
