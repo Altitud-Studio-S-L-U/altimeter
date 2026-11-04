@@ -41,6 +41,9 @@ function withRobots(facts: SiteFacts, spec: ResponseSpec & { body: Buffer | stri
   return { ...facts, robots: { url, fetch, availability: robotsAvailability(fetch.status, body, fetch.hops.length > 6) } };
 }
 
+/** robots.txt sent with the type Express gives res.send(string). */
+const servedAsHtml = (body: string) => withRobots(site({ pages: [home()], robots: '' }), { body, headers: { 'content-type': 'text/html; charset=utf-8' } });
+
 describe('crawl-robots-fetch-status', () => {
   const id = 'crawl-robots-fetch-status';
   test('passes on 200 and on 404', () => {
@@ -93,6 +96,17 @@ describe('crawl-robots-format', () => {
     assertFail(finding, 'medium', 'html-body');
     assert.match(excerpts()[0]!, /<!doctype html>/u);
   });
+  test('reads rules served as text/html, and notes the type as info', () => {
+    const { findings, excerpts } = run(id, servedAsHtml('User-agent: *\nDisallow: /admin/\nSitemap: https://example.com/sitemap.xml\n'));
+    assert.equal(findings.length, 1);
+    assertFail(findings[0]!, 'info', 'content-type');
+    assert.deepEqual(excerpts(), ['text/html; charset=utf-8']);
+  });
+  test('recognises an HTML page by its content, after a byte order mark or a comment', () => {
+    assertFail(run(id, { pages: [home()], robots: '\uFEFF\n<!-- app shell -->\n<!DOCTYPE html><html lang="en"><body><div id="app"></div></body></html>' }).finding, 'medium', 'html-body');
+    const { findings } = run(id, servedAsHtml('<html><head><title>App</title></head></html>'));
+    assert.deepEqual(findings.map(finding => finding.reason), ['html-body']);
+  });
   test('fails high when rules sit after the 500 KiB limit', () => {
     const body = `User-agent: *\n${'# filler line for the size limit\n'.repeat(17_000)}Disallow: /private/\n`;
     const { finding, excerpts } = run(id, { pages: [home()], robots: body });
@@ -129,6 +143,9 @@ describe('crawl-robots-parse-errors', () => {
     assertOutcome(run(id, { pages: [home()], robots: '<!doctype html><p>app</p>' }).finding, 'not_applicable', 'html-body');
     assertOutcome(run(id, { pages: [home()], robots: { status: 404 } }).finding, 'not_applicable', 'no-robots-file');
   });
+  test('still checks rules served as text/html', () => {
+    assertFail(run(id, servedAsHtml('User-agent: *\nDissallow: /private/\n')).finding, 'medium', 'misspelled-field');
+  });
 });
 
 describe('crawl-robots-unsupported-directives', () => {
@@ -143,6 +160,9 @@ describe('crawl-robots-unsupported-directives', () => {
   });
   test('reports crawl-delay as info', () => {
     assertFail(run(id, { pages: [home()], robots: 'User-agent: *\nCrawl-delay: 5' }).finding, 'info', 'ignored-fields');
+  });
+  test('still reports noindex lines served as text/html', () => {
+    assertFail(run(id, servedAsHtml('User-agent: *\nDisallow: /admin/\nNoindex: /old/\n')).finding, 'high', 'noindex');
   });
   test('does not apply without a parsed file', () => {
     assertOutcome(run(id, { pages: [home()], robots: { status: 410 } }).finding, 'not_applicable', 'no-robots-file');

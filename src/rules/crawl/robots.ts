@@ -2,7 +2,7 @@ import type { SiteFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
 import { isAllowed, robotsByteLimit, type RobotsFile, type RobotsGroup, type RobotsRule } from '../../fetch/robots.ts';
-import type { RuleImplementation } from '../engine.ts';
+import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { summarizeList } from '../helpers.ts';
 import {
   effectiveDirectives, failure, isHomePage, isStagingHost, namedByOtherPage, normalizeUrl, notApplicable, notEvaluated, passed,
@@ -13,12 +13,13 @@ function robotsUrl(site: SiteFacts): string {
   return site.robots!.url;
 }
 
-/** A robots.txt body that is really an HTML page, such as an application shell served for every path. */
+/**
+ * A robots.txt body that is really an HTML page, such as an application shell served for every path. Google reads the
+ * bytes whatever the Content-Type, so only the content decides; trimming also drops a byte order mark.
+ */
 export function robotsBodyIsHtml(site: SiteFacts): boolean {
-  const fetch = site.robots?.fetch;
-  if (!fetch) return false;
-  const type = (headerValue(fetch.headers, 'content-type') ?? '').toLowerCase();
-  return type.includes('text/html') || /^\s*(?:<!doctype html|<html|<head)/iu.test(fetch.body.subarray(0, 512).toString('latin1'));
+  const start = site.robots?.fetch.body.subarray(0, 1024).toString('utf8').trimStart() ?? '';
+  return start.startsWith('<') && /<(?:!doctype\s+html|html|head|body)[\s>]/iu.test(start);
 }
 
 function ruleLine(rule: RobotsRule, token: string): string {
@@ -100,20 +101,26 @@ const robotsFormat: RuleImplementation = {
         excerpt: `${headerValue(headers, 'content-type') ?? '(no content type)'} | ${body.subarray(0, 120).toString('utf8').trim()}` });
       return failure({ severity: 'medium', evidence: [id], reason: 'html-body', params: { url } });
     }
+    const results: RuleResult[] = [];
     const lost = rulesAfterLimit(body);
+    const invalid = lost.length > 0 ? [] : invalidUtf8RuleLines(body);
     if (lost.length > 0) {
       const ids = [
         evidence.add({ kind: 'robots', url, label: 'robots.txt uncompressed size in bytes', excerpt: String(body.length) }),
         ...lost.slice(0, 5).map(entry => evidence.add({ kind: 'robots', url, label: 'rule after the 500 KiB limit', excerpt: entry.text, line: entry.line })),
       ];
-      return failure({ severity: 'high', evidence: ids, reason: 'over-size-limit', params: { url, bytes: body.length, lost: lost.length } });
-    }
-    const invalid = invalidUtf8RuleLines(body);
-    if (invalid.length > 0) {
+      results.push(failure({ severity: 'high', evidence: ids, reason: 'over-size-limit', params: { url, bytes: body.length, lost: lost.length } }));
+    } else if (invalid.length > 0) {
       const ids = invalid.slice(0, 5).map(entry => evidence.add({ kind: 'robots', url, label: 'rule path with bytes that are not UTF-8', excerpt: entry.text, line: entry.line }));
-      return failure({ severity: 'medium', evidence: ids, reason: 'invalid-utf8', params: { url, count: invalid.length } });
+      results.push(failure({ severity: 'medium', evidence: ids, reason: 'invalid-utf8', params: { url, count: invalid.length } }));
     }
-    return passed([evidence.add({ kind: 'robots', url, label: 'robots.txt uncompressed size in bytes', excerpt: String(body.length) })]);
+    // RFC 9309 asks for text/plain, but Google reads the rules whatever the type.
+    const type = headerValue(headers, 'content-type');
+    if (type !== undefined && !/^\s*text\/plain\s*(?:;|$)/iu.test(type)) {
+      const id = evidence.add({ kind: 'robots', url, label: 'robots.txt Content-Type header', excerpt: type });
+      results.push(failure({ severity: 'info', evidence: [id], reason: 'content-type', params: { url, type } }));
+    }
+    return results.length > 0 ? results : passed([evidence.add({ kind: 'robots', url, label: 'robots.txt uncompressed size in bytes', excerpt: String(body.length) })]);
   },
 };
 

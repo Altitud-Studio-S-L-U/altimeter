@@ -18,7 +18,8 @@
       "fail": "{url} cannot be read as intended.",
       "fail:html-body": "{url} returns an HTML page instead of plain-text rules, so no rules and no Sitemap lines are read from it.",
       "fail:over-size-limit": "{url} is {bytes} bytes. Google reads only the first 500 KiB, so {lost} rule lines after that point are ignored.",
-      "fail:invalid-utf8": "{count} allow or disallow lines in {url} contain bytes that are not valid UTF-8."
+      "fail:invalid-utf8": "{count} allow or disallow lines in {url} contain bytes that are not valid UTF-8.",
+      "fail:content-type": "{url} is served as {type}. Google reads its rules whatever the type, but the robots.txt standard asks for text/plain."
     }
   },
   "crawl-robots-parse-errors": {

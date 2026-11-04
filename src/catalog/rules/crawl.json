@@ -86,7 +86,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Body >500 KiB (512,000 bytes) = fail high if any rule appears after the cut (it is ignored). An HTML body = fail medium (no rules apply, which equals having no robots.txt, and no Sitemap line is read). Non-UTF-8 bytes inside rule paths = medium. A leading BOM = pass (ignored).",
+    "thresholds": "Body >500 KiB (512,000 bytes) = fail high if any rule appears after the cut (it is ignored). An HTML body, told by its content whatever the Content-Type = fail medium (no rules apply, which equals having no robots.txt, and no Sitemap line is read). Non-UTF-8 bytes inside rule paths = medium. Rules served with a Content-Type other than text/plain = info (Google reads them whatever the type; RFC 9309 asks for text/plain). A leading BOM = pass (ignored).",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
