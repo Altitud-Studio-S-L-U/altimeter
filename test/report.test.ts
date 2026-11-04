@@ -90,7 +90,7 @@ describe('writing reports', () => {
     const directory = await mkdtemp(join(tmpdir(), 'altimeter-report-test-'));
     try {
       const written = await writeReport(directory, report, 'en');
-      assert.deepEqual(written.files.slice(0, 3), ['report.json', 'report.md', 'FIXES.md']);
+      assert.deepEqual(written.files.slice(0, 4), ['report.json', 'report.html', 'report.md', 'FIXES.md']);
       const json = JSON.parse(await readFile(join(directory, 'report.json'), 'utf8'));
       assert.equal(json.schemaVersion, 1);
       assert.equal(json.tasks.length, 1);

@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import type { Language } from '../i18n/messages.ts';
+import { renderHtml } from './html.ts';
 import { renderFixPlan, renderMarkdown, renderTaskFile } from './markdown.ts';
 import type { Report } from './model.ts';
 
@@ -36,6 +37,7 @@ export async function writeReport(directory: string, report: Report, language: L
   await mkdir(join(directory, 'tasks'), { recursive: true });
   const files: Array<[string, string]> = [
     ['report.json', `${JSON.stringify(report, null, 2)}\n`],
+    ['report.html', renderHtml(report, language)],
     ['report.md', renderMarkdown(report, language)],
     ['FIXES.md', renderFixPlan(report, language)],
     ...report.tasks.map(task => [join('tasks', `${task.id}.md`), renderTaskFile(report, task, language)] as [string, string]),
