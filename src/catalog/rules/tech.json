@@ -33,13 +33,13 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
     "notes": "Follow the redirect chain from the audited URL without HSTS (a plain HTTP client). Pass when the final URL's scheme is https: and the final status is 2xx. Fail when the final document is served over http:. Record the result as a site-level fact for the home page and for every crawled URL. Do not use a browser for this check, because browsers apply HSTS and internal 307 upgrades and would hide a server that still serves HTTP. Localhost and private IPs are out of scope. Per the page experience doc, HTTPS does not directly raise rankings beyond CWV. Report the impact as trust, canonicalization and Chrome warnings, not as a ranking boost.",
     "related": [
       "tech-http-to-https-redirect",
       "crawl-canonical-protocol-host"
-    ],
-    "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    ]
   },
   {
     "id": "tech-tls-certificate-valid",
@@ -70,9 +70,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Open a TLS connection to host:443 with SNI (Node tls.connect, rejectUnauthorized:false), then read socket.authorized, authorizationError, the peer certificate's valid_from and valid_to, subjectaltname and the chain. Fail on CERT_HAS_EXPIRED, an ERR_TLS_CERT_ALTNAME_INVALID-style hostname mismatch, DEPTH_ZERO_SELF_SIGNED_CERT, UNABLE_TO_VERIFY_LEAF_SIGNATURE or UNABLE_TO_GET_ISSUER_CERT_LOCALLY (incomplete chain). Warn when the certificate expires in less than 14 days. Run the check on both the apex and the www host. Google states that an invalid certificate makes it prefer HTTP very strongly as canonical, and browsers show a full-page interstitial. Node does not fetch missing intermediates over AIA while some browsers do, so name an 'incomplete chain' result as such and do not call it 'invalid in browsers'. Node's root store can differ from the OS store (the --use-system-ca flag changes it). A corporate MITM proxy causes false failures, so detect an issuer that is not a public CA and say so. Expiry within 14 days is a tool convention for a warning, not a Google number.",
     "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    "verifiableBy": "deployed",
+    "notes": "Open a TLS connection to host:443 with SNI (Node tls.connect, rejectUnauthorized:false), then read socket.authorized, authorizationError, the peer certificate's valid_from and valid_to, subjectaltname and the chain. Fail on CERT_HAS_EXPIRED, an ERR_TLS_CERT_ALTNAME_INVALID-style hostname mismatch, DEPTH_ZERO_SELF_SIGNED_CERT, UNABLE_TO_VERIFY_LEAF_SIGNATURE or UNABLE_TO_GET_ISSUER_CERT_LOCALLY (incomplete chain). Warn when the certificate expires in less than 14 days. Run the check on both the apex and the www host. Google states that an invalid certificate makes it prefer HTTP very strongly as canonical, and browsers show a full-page interstitial. Node does not fetch missing intermediates over AIA while some browsers do, so name an 'incomplete chain' result as such and do not call it 'invalid in browsers'. Node's root store can differ from the OS store (the --use-system-ca flag changes it). A corporate MITM proxy causes false failures, so detect an issuer that is not a public CA and say so. Expiry within 14 days is a tool convention for a warning, not a Google number."
   },
   {
     "id": "tech-http-to-https-redirect",
@@ -109,13 +109,13 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
     "notes": "Request http://<host><path> for the home page and a sample of crawled paths without following redirects. Pass: status 301 or 308, a Location on https:// with the same host (or the canonical host) and the same path and query, reaching a 2xx in at most 1 additional hop. Fail: 200 over HTTP (duplicate site), 302/303/307 (weak signal), a Location that drops the path (everything goes to home), or a chain of more than 2 hops before a 2xx. A 307 seen in a browser is usually an HSTS internal redirect, not a server response, so use a raw client. If port 80 is closed (connection refused), report info, not fail: there is no duplicate, but users who type http get an error. Bing's guidelines also recommend 301 for permanent moves. Host and path variants other than the http:// scheme are counted by crawl-host-variant-consolidation.",
     "related": [
       "crawl-host-variant-consolidation",
       "crawl-redirect-type"
-    ],
-    "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    ]
   },
   {
     "id": "tech-https-to-http-downgrade",
@@ -128,6 +128,9 @@
     "scope": "site",
     "inputs": [
       "redirects"
+    ],
+    "optionalInputs": [
+      "crawl"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -142,12 +145,9 @@
       }
     ],
     "status": "v1",
-    "notes": "In any redirect chain observed (audited URL, crawl targets, http→https probes), fail if a hop goes from an https: URL to an http: URL, even when a later hop returns to https. This is a common bug behind TLS-terminating proxies, where the app believes it is on http. Google says these redirects cause it to prefer HTTP very strongly. This rule owns the https-to-http redirect finding; crawl-canonical-protocol-host refers to it.",
-    "optionalInputs": [
-      "crawl"
-    ],
     "fixLocation": "platform-config",
     "verifiableBy": "deployed",
+    "notes": "In any redirect chain observed (audited URL, crawl targets, http→https probes), fail if a hop goes from an https: URL to an http: URL, even when a later hop returns to https. This is a common bug behind TLS-terminating proxies, where the app believes it is on http. Google says these redirects cause it to prefer HTTP very strongly. This rule owns the https-to-http redirect finding; crawl-canonical-protocol-host refers to it.",
     "related": [
       "crawl-canonical-protocol-host"
     ]
@@ -163,6 +163,10 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "lighthouse"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -185,13 +189,9 @@
       }
     ],
     "status": "v1",
-    "notes": "On an HTTPS page, take the headless Chrome network log and the DevTools Issues (mixedContentIssue). Fail if any subresource of type Script, Stylesheet, Document/iframe, XHR/Fetch, Font, WebSocket (ws:), EventSource or worker is requested over http: or ws:. Report each URL with the resolution Chrome gave it (Blocked / Allowed with warning). Also scan the raw HTML for http:// in script src, link rel=stylesheet href, iframe src, and form action, which covers resources that never loaded. Browsers block active mixed content, which can break rendering for users and for Google's renderer. Google also lists 'insecure dependencies (other than images)' as a reason it may prefer HTTP as canonical. Lighthouse's is-on-https fails on any insecure request, including ones that were upgraded, so keep its verdict separate from this rule's. Lighthouse 13.6 reports insecure requests as the best-practices audit is-on-https.",
-    "optionalInputs": [
-      "rendered-dom",
-      "lighthouse"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "On an HTTPS page, take the headless Chrome network log and the DevTools Issues (mixedContentIssue). Fail if any subresource of type Script, Stylesheet, Document/iframe, XHR/Fetch, Font, WebSocket (ws:), EventSource or worker is requested over http: or ws:. Report each URL with the resolution Chrome gave it (Blocked / Allowed with warning). Also scan the raw HTML for http:// in script src, link rel=stylesheet href, iframe src, and form action, which covers resources that never loaded. Browsers block active mixed content, which can break rendering for users and for Google's renderer. Google also lists 'insecure dependencies (other than images)' as a reason it may prefer HTTP as canonical. Lighthouse's is-on-https fails on any insecure request, including ones that were upgraded, so keep its verdict separate from this rule's. Lighthouse 13.6 reports insecure requests as the best-practices audit is-on-https."
   },
   {
     "id": "tech-mixed-content-passive",
@@ -204,6 +204,9 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -218,12 +221,9 @@
       }
     ],
     "status": "v1",
-    "notes": "On an HTTPS page, list img/audio/video/picture source requests that use http:. Classify each by the DevTools resolution (MixedContentAutomaticallyUpgraded vs failed or blocked). Warn for every such URL. Fail when the upgraded HTTPS request fails, because the asset is then missing. Chrome auto-upgrades passive mixed content and drops the asset if no HTTPS version exists. Google's canonical preference explicitly excludes images from 'insecure dependencies', so do not claim a canonical risk here.",
-    "optionalInputs": [
-      "rendered-dom"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "On an HTTPS page, list img/audio/video/picture source requests that use http:. Classify each by the DevTools resolution (MixedContentAutomaticallyUpgraded vs failed or blocked). Warn for every such URL. Fail when the upgraded HTTPS request fails, because the asset is then missing. Chrome auto-upgrades passive mixed content and drops the asset if no HTTPS version exists. Google's canonical preference explicitly excludes images from 'insecure dependencies', so do not claim a canonical risk here."
   },
   {
     "id": "tech-hsts-header",
@@ -254,9 +254,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Parse Strict-Transport-Security on the final HTTPS response of the home page and a sample of pages, and on the HTTPS redirect responses. Report the max-age, includeSubDomains and preload values. Mark as present and strong when max-age >= 31536000. Ignore the header if it arrives over plain HTTP (browsers ignore it there too). Google's duplicate-URL doc lists 'Implement HSTS' as a way to reinforce the HTTPS canonical preference, but Mueller (June 2023): 'No, the HSTS header does not affect Search.' Lighthouse has-hsts has weight 0. Never put this rule in the score.",
     "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    "verifiableBy": "deployed",
+    "notes": "Parse Strict-Transport-Security on the final HTTPS response of the home page and a sample of pages, and on the HTTPS redirect responses. Report the max-age, includeSubDomains and preload values. Mark as present and strong when max-age >= 31536000. Ignore the header if it arrives over plain HTTP (browsers ignore it there too). Google's duplicate-URL doc lists 'Implement HSTS' as a way to reinforce the HTTPS canonical preference, but Mueller (June 2023): 'No, the HSTS header does not affect Search.' Lighthouse has-hsts has weight 0. Never put this rule in the score."
   },
   {
     "id": "tech-hsts-preload-eligibility",
@@ -271,6 +271,9 @@
       "http",
       "variants"
     ],
+    "optionalInputs": [
+      "tls"
+    ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
@@ -284,12 +287,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Only when the header contains 'preload': check the hstspreload.org requirements. These are a valid certificate; HTTP redirects to HTTPS on the same host; www served over HTTPS if its DNS record exists; a base-domain HSTS header with max-age >= 31536000, includeSubDomains and preload; and the HSTS header present on any extra HTTPS redirect. Report the unmet requirements. hstspreload.org recommends HSTS but not preloading. Preloading is hard to undo, removal takes months, and it breaks HTTP-only internal subdomains. Never recommend preloading by default.",
-    "optionalInputs": [
-      "tls"
-    ],
     "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    "verifiableBy": "deployed",
+    "notes": "Only when the header contains 'preload': check the hstspreload.org requirements. These are a valid certificate; HTTP redirects to HTTPS on the same host; www served over HTTPS if its DNS record exists; a base-domain HSTS header with max-age >= 31536000, includeSubDomains and preload; and the HSTS header present on any extra HTTPS redirect. Report the unmet requirements. hstspreload.org recommends HSTS but not preloading. Preloading is hard to undo, removal takes months, and it breaks HTTP-only internal subdomains. Never recommend preloading by default."
   },
   {
     "id": "tech-security-headers-info",
@@ -323,9 +323,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Report the presence and value of Content-Security-Policy, X-Content-Type-Options (expect 'nosniff'), Referrer-Policy, Permissions-Policy and Cross-Origin-Opener-Policy on the HTML response. Flag clearly broken values, such as an unknown X-Content-Type-Options value, or a CSP that blocks the page's own scripts (visible as console CSP violations). Inventory of Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP, COEP and framing controls. Lighthouse 13.6 audits csp-xss, has-hsts, origin-isolation, clickjacking-mitigation and trusted-types-xss carry no weight in the best-practices score. A CSP that allows analytics hosts does not mean analytics fires before consent. Missing X-Robots-Tag, Content-Language or Link headers are normal and never reported here.",
     "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    "verifiableBy": "deployed",
+    "notes": "Report the presence and value of Content-Security-Policy, X-Content-Type-Options (expect 'nosniff'), Referrer-Policy, Permissions-Policy and Cross-Origin-Opener-Policy on the HTML response. Flag clearly broken values, such as an unknown X-Content-Type-Options value, or a CSP that blocks the page's own scripts (visible as console CSP violations). Inventory of Content-Security-Policy, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP, COEP and framing controls. Lighthouse 13.6 audits csp-xss, has-hsts, origin-isolation, clickjacking-mitigation and trusted-types-xss carry no weight in the best-practices score. A CSP that allows analytics hosts does not mean analytics fires before consent. Missing X-Robots-Tag, Content-Language or Link headers are normal and never reported here."
   },
   {
     "id": "tech-framing-protection",
@@ -358,9 +358,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Pass if the HTML response has X-Frame-Options DENY or SAMEORIGIN, or a CSP with a frame-ancestors directive that does not include '*'. Otherwise warn. Sites that offer embeddable widgets legitimately allow framing on those URLs, so do not flag pages built for embedding.",
     "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    "verifiableBy": "deployed",
+    "notes": "Pass if the HTML response has X-Frame-Options DENY or SAMEORIGIN, or a CSP with a frame-ancestors directive that does not include '*'. Otherwise warn. Sites that offer embeddable widgets legitimately allow framing on those URLs, so do not flag pages built for embedding."
   },
   {
     "id": "tech-safe-browsing-status",
@@ -445,6 +445,9 @@
       "redirects",
       "rendered-dom"
     ],
+    "optionalInputs": [
+      "raw-html"
+    ],
     "appliesTo": "all",
     "exemptWhen": [
       "The banner overlays content that is present in the DOM.",
@@ -465,16 +468,13 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
     "notes": "Render without any interaction (no consent given, the way Googlebot sees the page). Pass if the main content text (raw-HTML text, or the text present after accepting consent) is present in the rendered DOM before consent. Fail if the content only appears after the Accept click, or if the CMP redirects to a consent URL. Compare word counts before and after consent: a pre-consent count below 50% of the post-consent count is a fail. Content that is visually covered but present in the DOM is acceptable. Googlebot does not click consent buttons (the JS SEO doc says interaction-gated content isn't seen). Detect common CMPs by their containers: #onetrust-banner-sdk, #CybotCookiebotDialog, #didomi-host, #usercentrics-root, .cmplz-cookiebanner, #cookie-law-info-bar.",
     "related": [
       "perf-late-injected-banner",
       "perf-consent-lab-bias"
-    ],
-    "optionalInputs": [
-      "raw-html"
-    ],
-    "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    ]
   },
   {
     "id": "tech-consent-mode-ordering",
@@ -503,9 +503,9 @@
       }
     ],
     "status": "v1",
-    "notes": "If gtag.js or GTM is present, look in the raw and rendered HTML for gtag('consent','default',{...}) or a CMP's consent-mode integration, and check that it runs before the first gtag('config') or the GTM container. Report basic vs advanced mode (whether tags load before consent). Consent mode is not a Search signal. Never put it in the SEO score.",
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "If gtag.js or GTM is present, look in the raw and rendered HTML for gtag('consent','default',{...}) or a CMP's consent-mode integration, and check that it runs before the first gtag('config') or the GTM container. Report basic vs advanced mode (whether tags load before consent). Consent mode is not a Search signal. Never put it in the SEO score."
   },
   {
     "id": "tech-viewport-meta",
@@ -518,6 +518,10 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "lighthouse"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -544,13 +548,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Read the last meta name=viewport of the raw HTML, or of the rendered DOM when the raw HTML has none. Pass when the content has width=device-width or initial-scale >= 1, which is what Chrome treats as mobile-optimized (the Lighthouse viewport-insight reads that flag). width=device-width without initial-scale is valid. Fail when the tag is missing, uses a fixed pixel width, or scales down. Cross-check with the Lighthouse viewport insight when it ran. Without the tag, mobile browsers lay the page out at a desktop width (about 980 px). Since LH13 this is a performance insight (viewport-insight), not an SEO audit. Google's docs tie mobile display to page experience but do not make it a direct ranking factor.",
-    "optionalInputs": [
-      "rendered-dom",
-      "lighthouse"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Read the last meta name=viewport of the raw HTML, or of the rendered DOM when the raw HTML has none. Pass when the content has width=device-width or initial-scale >= 1, which is what Chrome treats as mobile-optimized (the Lighthouse viewport-insight reads that flag). width=device-width without initial-scale is valid. Fail when the tag is missing, uses a fixed pixel width, or scales down. Cross-check with the Lighthouse viewport insight when it ran. Without the tag, mobile browsers lay the page out at a desktop width (about 980 px). Since LH13 this is a performance insight (viewport-insight), not an SEO audit. Google's docs tie mobile display to page experience but do not make it a direct ranking factor."
   },
   {
     "id": "tech-viewport-zoom-allowed",
@@ -563,6 +563,9 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -577,12 +580,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Parse the viewport content. Fail if user-scalable=no (or 0), or if maximum-scale < 2 (axe meta-viewport, which feeds Lighthouse accessibility). Warn if maximum-scale < 5. This is an accessibility failure (meta-viewport has weight 10 in Lighthouse a11y), not a Search ranking signal.",
-    "optionalInputs": [
-      "rendered-dom"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Parse the viewport content. Fail if user-scalable=no (or 0), or if maximum-scale < 2 (axe meta-viewport, which feeds Lighthouse accessibility). Warn if maximum-scale < 5. This is an accessibility failure (meta-viewport has weight 10 in Lighthouse a11y), not a Search ranking signal."
   },
   {
     "id": "tech-content-fits-viewport",
@@ -615,9 +615,9 @@
       }
     ],
     "status": "v1",
-    "notes": "In the mobile emulation (412 px CSS width) after load, fail if document.scrollingElement.scrollWidth > window.innerWidth + 1. Identify the offending elements (bounding right edge > innerWidth) for the report. Elements hidden with overflow-x:hidden on html or body don't cause scroll but may clip content. Intentional horizontal carousels inside an overflow container are fine. Lighthouse no longer has a dedicated SEO audit for this, so the check is the tool's own.",
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "In the mobile emulation (412 px CSS width) after load, fail if document.scrollingElement.scrollWidth > window.innerWidth + 1. Identify the offending elements (bounding right edge > innerWidth) for the report. Elements hidden with overflow-x:hidden on html or body don't cause scroll but may clip content. Intentional horizontal carousels inside an overflow container are fine. Lighthouse no longer has a dedicated SEO audit for this, so the check is the tool's own."
   },
   {
     "id": "tech-legible-font-size",
@@ -630,6 +630,10 @@
     "scope": "page",
     "inputs": [
       "user-render"
+    ],
+    "optionalInputs": [
+      "raw-html",
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -648,19 +652,15 @@
       }
     ],
     "status": "v1",
-    "notes": "In the mobile emulation, compute the font-size of every visible text node, weighted by character count. Warn if more than 40% of the visible text is below 12 CSS px (the former Lighthouse font-size criterion: at least 60% of text >= 12 px). Lighthouse moved font-size out of SEO in v12 and removed it in v13 (Oct 2025). Search Console no longer reports on mobile usability. Report this as UX only and never as an SEO or indexing problem. Without the viewport meta every font looks small, so report the viewport issue first.",
-    "optionalInputs": [
-      "raw-html",
-      "rendered-dom"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "In the mobile emulation, compute the font-size of every visible text node, weighted by character count. Warn if more than 40% of the visible text is below 12 CSS px (the former Lighthouse font-size criterion: at least 60% of text >= 12 px). Lighthouse moved font-size out of SEO in v12 and removed it in v13 (Oct 2025). Search Console no longer reports on mobile usability. Report this as UX only and never as an SEO or indexing problem. Without the viewport meta every font looks small, so report the viewport issue first."
   },
   {
     "id": "tech-tap-target-size",
     "category": "tech",
     "title": "Touch targets meet the 24×24 CSS px minimum (WCAG 2.2 / Lighthouse target-size)",
-    "why": "WCAG 2.2 sets a 24 by 24 CSS pixel minimum target size, checked by the Lighthouse target-size accessibility audit, which replaced the old SEO tap-targets audit.",
+    "why": "WCAG 2.2 sets a 24 by 24 CSS pixel minimum target size, checked by the Lighthouse target-size accessibility audit, which in Lighthouse 12 replaced the SEO audit for tap targets.",
     "fix": "Enlarge the hit areas (padding) or space the controls apart.",
     "maxSeverity": "low",
     "method": "deterministic",
@@ -683,9 +683,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Read the Lighthouse accessibility audit target-size (axe). Fail items whose largest unobscured area is below 24×24 CSS px and whose 24 px-diameter circle intersects another target. The SEO audit tap-targets (48 px) was replaced by the a11y target-size audit in Lighthouse 12. Inline links inside sentences are a WCAG exception that axe may still flag, so the LLM should not escalate those.",
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Read the Lighthouse accessibility audit target-size (axe). Fail items whose largest unobscured area is below 24×24 CSS px and whose 24 px-diameter circle intersects another target. The SEO audit tap-targets (48 px) was replaced by the a11y target-size audit in Lighthouse 12. Inline links inside sentences are a WCAG exception that axe may still flag, so the LLM should not escalate those."
   },
   {
     "id": "tech-favicon-declared",
@@ -698,6 +698,10 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "resources"
     ],
     "appliesTo": [
       "home"
@@ -714,13 +718,9 @@
       }
     ],
     "status": "v1",
-    "notes": "In the home page raw HTML head (the canonical host root, after redirects), find link elements whose rel is one of icon, shortcut icon, apple-touch-icon or apple-touch-icon-precomposed. Fail if there are none. The /favicon.ico fallback is not documented by Google, so report it as info only. Also check that the home page is crawlable (not disallowed, not noindex). Google supports one favicon per hostname, read from the domain or subdomain home page. Subdirectory home pages are not supported. A link inside body may not be read.",
-    "optionalInputs": [
-      "rendered-dom",
-      "resources"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "In the home page raw HTML head (the canonical host root, after redirects), find link elements whose rel is one of icon, shortcut icon, apple-touch-icon or apple-touch-icon-precomposed. Fail if there are none. The /favicon.ico fallback is not documented by Google, so report it as info only. Also check that the home page is crawlable (not disallowed, not noindex). Google supports one favicon per hostname, read from the domain or subdomain home page. Subdirectory home pages are not supported. A link inside body may not be read."
   },
   {
     "id": "tech-favicon-file-valid",
@@ -733,6 +733,9 @@
     "scope": "site",
     "inputs": [
       "resources"
+    ],
+    "optionalInputs": [
+      "robots"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -754,12 +757,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Resolve each declared icon href and fetch it. Pass when the status is 200, the content type is an image, the format is in Google's list (BMP, GIF, ICO, PNG, JPEG, PPM, TIFF), the decoded dimensions are 1:1 and at least 8×8, robots.txt allows the URL for Googlebot-Image, and there is no X-Robots-Tag noindex or noimageindex. Warn if the largest size is <= 48×48, or if only SVG is provided. The requirement changed in Oct 2024. Do not demand 'multiple of 48 px'. The format list was added on 2026-08-28 and SVG is not on it, so keep an SVG plus a PNG or ICO fallback. ICO files hold several sizes, so take the largest. Since Feb 2023 the favicon may be hosted on a different domain (CDN). robots.txt is checked only for icons on the site's own origin; v1 does not fetch other hosts' robots.txt.",
-    "optionalInputs": [
-      "robots"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "deployed"
+    "verifiableBy": "deployed",
+    "notes": "Resolve each declared icon href and fetch it. Pass when the status is 200, the content type is an image, the format is in Google's list (BMP, GIF, ICO, PNG, JPEG, PPM, TIFF), the decoded dimensions are 1:1 and at least 8×8, robots.txt allows the URL for Googlebot-Image, and there is no X-Robots-Tag noindex or noimageindex. Warn if the largest size is <= 48×48, or if only SVG is provided. The requirement changed in Oct 2024. Do not demand 'multiple of 48 px'. The format list was added on 2026-08-28 and SVG is not on it, so keep an SVG plus a PNG or ICO fallback. ICO files hold several sizes, so take the largest. Since Feb 2023 the favicon may be hosted on a different domain (CDN). robots.txt is checked only for icons on the site's own origin; v1 does not fetch other hosts' robots.txt."
   },
   {
     "id": "tech-favicon-stable-url",
@@ -802,6 +802,9 @@
     "inputs": [
       "raw-html"
     ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
     "appliesTo": "all",
     "exemptWhen": [
       "Several og:image tags form an array; the first is preferred.",
@@ -830,16 +833,13 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Count and compare the values of meta description, meta viewport, og:title, og:description, og:url, og:type, twitter:card and the base href, separately in the raw HTML and the rendered DOM. Fail when one of them is declared more than once with different values. Multiple og:image tags are legal (an array), and the first is preferred. Identical duplicates are harmless. Conflicting canonicals and robots directives are counted once, by crawl-canonical-multiple and crawl-robots-directives-conflict, and meta charset conflicts by tech-charset-declared-early. Raw versus rendered differences of titles and descriptions are counted by the content rules.",
     "related": [
       "crawl-canonical-multiple",
       "crawl-robots-directives-conflict"
-    ],
-    "optionalInputs": [
-      "rendered-dom"
-    ],
-    "fixLocation": "repo",
-    "verifiableBy": "local"
+    ]
   },
   {
     "id": "tech-doctype-standards-mode",
@@ -870,9 +870,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Pass when document.compatMode === 'CSS1Compat', the doctype name is 'html', publicId and systemId are empty, and Chrome shows no limited-quirks issue (Lighthouse doctype audit). Also check that the doctype is the first token (no BOM-less garbage or comments before it that trigger quirks in some engines). Quirks mode changes layout (box model, line height), which can break mobile rendering. This is not an indexing issue in itself.",
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Pass when document.compatMode === 'CSS1Compat', the doctype name is 'html', publicId and systemId are empty, and Chrome shows no limited-quirks issue (Lighthouse doctype audit). Also check that the doctype is the first token (no BOM-less garbage or comments before it that trigger quirks in some engines). Quirks mode changes layout (box model, line height), which can break mobile rendering. This is not an indexing issue in itself."
   },
   {
     "id": "tech-charset-declared-early",
@@ -906,9 +906,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Pass if any of the following hold: a UTF-8 BOM; a Content-Type header charset=utf-8; or <meta charset=\"utf-8\"> (or http-equiv Content-Type) serialized completely within the first 1024 bytes of the raw response. Fail if there is none, if more than one meta charset exists, or if the declared encoding is not utf-8 (HTML requires UTF-8). Fail if the header and the meta disagree. Large inline scripts, styles or comments before the meta push it past byte 1024. Measure on the bytes as served, after decompression.",
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Pass if any of the following hold: a UTF-8 BOM; a Content-Type header charset=utf-8; or <meta charset=\"utf-8\"> (or http-equiv Content-Type) serialized completely within the first 1024 bytes of the raw response. Fail if there is none, if more than one meta charset exists, or if the declared encoding is not utf-8 (HTML requires UTF-8). Fail if the header and the meta disagree. Large inline scripts, styles or comments before the meta push it past byte 1024. Measure on the bytes as served, after decompression."
   },
   {
     "id": "tech-iframe-main-content",
@@ -921,6 +921,9 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -941,12 +944,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Code: list iframes with their src origin, size and the share of the viewport and page they cover, plus a title attribute (axe frame-title). LLM: decide whether the page's primary content (article, product details) lives inside a same- or cross-origin iframe rather than in the page DOM. Google may attribute embedded content to the embedding page in some cases, and the robots rule indexifembedded exists for that reason. Embedded maps, videos and widgets are normal and should not be flagged.",
-    "optionalInputs": [
-      "rendered-dom"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Code: list iframes with their src origin, size and the share of the viewport and page they cover, plus a title attribute (axe frame-title). LLM: decide whether the page's primary content (article, product details) lives inside a same- or cross-origin iframe rather than in the page DOM. Google may attribute embedded content to the embedding page in some cases, and the robots rule indexifembedded exists for that reason. Embedded maps, videos and widgets are normal and should not be flagged."
   },
   {
     "id": "tech-noscript-content",
@@ -959,6 +959,9 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -977,12 +980,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Extract the noscript contents in body. Report the word count and links. The LLM flags cases where noscript holds substantive content (keywords or links) that is absent from the rendered page, or where the only crawl-relevant content exists inside noscript. Google renders JS, so noscript content is not a reliable indexing path. Divergent hidden content could resemble hidden-text spam only if it is manipulative, so never allege spam without evidence.",
-    "optionalInputs": [
-      "rendered-dom"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Extract the noscript contents in body. Report the word count and links. The LLM flags cases where noscript holds substantive content (keywords or links) that is absent from the rendered page, or where the only crawl-relevant content exists inside noscript. Google renders JS, so noscript content is not a reliable indexing path. Divergent hidden content could resemble hidden-text spam only if it is manipulative, so never allege spam without evidence."
   },
   {
     "id": "tech-lighthouse-seo-category",
@@ -1009,6 +1009,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Run Lighthouse (mobile) and read categories.seo.auditRefs. Report each failing audit: is-crawlable (weight ≈4.04: fails only if every one of generic, Googlebot, bingbot, DuckDuckBot and archive.org_bot is blocked by noindex/none/past unavailable_after in meta or X-Robots-Tag, or by robots.txt), document-title, meta-description, http-status-code (fails on 400-599), link-text, crawlable-anchors, robots-txt (fails on 5xx/429 or a syntax error), image-alt, hreflang (invalid language subtag or relative href), canonical (invalid, relative, conflicting, points to another hreflang location, or points to root from a non-root page). structured-data is manual (weight 0). Map each one to the tool's own deeper rule and report it once. Report the category score and the failing audit ids as context only; never score them, because each failure is already counted by its catalog rule: is-crawlable (crawl-meta-robots-noindex), document-title (content-title-missing), meta-description (content-meta-description-missing), http-status-code (crawl-status-final), link-text (content-anchor-text-quality), crawlable-anchors (crawl-js-links-crawlable), robots-txt (crawl-robots-parse-errors), image-alt (content-img-alt-missing), hreflang (intl-hreflang-invalid-language-code), canonical (crawl-canonical-format). structured-data is a manual audit. The canonical audit does not flag cross-domain canonicals, and is-crawlable only warns when Googlebot alone is blocked.",
     "related": [
       "crawl-meta-robots-noindex",
@@ -1021,9 +1023,7 @@
       "content-img-alt-missing",
       "intl-hreflang-invalid-language-code",
       "crawl-canonical-format"
-    ],
-    "fixLocation": "repo",
-    "verifiableBy": "local"
+    ]
   },
   {
     "id": "tech-lighthouse-a11y-overlap",
@@ -1054,14 +1054,14 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "From Lighthouse accessibility, report the failures of: image-alt, input-image-alt, link-name, button-name, html-has-lang, html-lang-valid, valid-lang, document-title, frame-title, heading-order, color-contrast, target-size, meta-viewport, meta-refresh, label, empty-heading (manual, weight 0). Group them under 'affects Search understanding' (image-alt, link-name, document-title, html-has-lang) and 'UX/a11y only' (all others). Accessibility is not a documented Google ranking factor. heading-order and color-contrast have no Search effect, so never say they do. Each overlapping failure is counted by its own catalog rule. heading-order and color-contrast have no Search effect; never say they do.",
     "related": [
       "content-img-alt-missing",
       "intl-html-lang-missing-or-invalid",
       "tech-iframe-main-content"
-    ],
-    "fixLocation": "repo",
-    "verifiableBy": "local"
+    ]
   },
   {
     "id": "tech-maintenance-503",
@@ -1092,13 +1092,13 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
     "notes": "When an audited HTML URL returns 503, check for a Retry-After header (an HTTP-date or delay-seconds). When a page returns 200 but its title or main heading announces maintenance (English, Spanish, Catalan, French or German wording) and the body is short, report a soft-503 candidate for the analyst. Google recommends 503 for temporary outages; extended 503s prevent title, metadata and structured data refreshes. The exact interpretation of Retry-After is not documented by Google. A robots.txt 5xx pauses crawling of the whole site and is counted once, by crawl-robots-fetch-status; the 5xx rate over a crawl is counted by crawl-server-errors-rate.",
     "related": [
       "crawl-robots-fetch-status",
       "crawl-server-errors-rate"
-    ],
-    "fixLocation": "platform-config",
-    "verifiableBy": "deployed"
+    ]
   },
   {
     "id": "tech-broken-external-links",
@@ -1142,6 +1142,9 @@
     "inputs": [
       "http"
     ],
+    "optionalInputs": [
+      "crawl"
+    ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
@@ -1155,12 +1158,9 @@
       }
     ],
     "status": "v1",
-    "notes": "On HTTPS pages, list a href, link href and form action values that point to http:// URLs on the site's own hosts. HSTS hides this from browser users, but crawlers still pay the redirect, and the link sends a mixed canonical signal.",
-    "optionalInputs": [
-      "crawl"
-    ],
     "fixLocation": "repo",
     "verifiableBy": "local",
+    "notes": "On HTTPS pages, list a href, link href and form action values that point to http:// URLs on the site's own hosts. HSTS hides this from browser users, but crawlers still pay the redirect, and the link sends a mixed canonical signal.",
     "related": [
       "crawl-canonical-protocol-host",
       "intl-hreflang-mixed-protocol-or-host"
@@ -1177,6 +1177,9 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": [
       "home",
@@ -1204,12 +1207,9 @@
       }
     ],
     "status": "v1",
-    "notes": "In the raw HTML head (not JS-injected: social crawlers generally don't execute JS), require og:title, og:type, og:image and og:url (OGP required) plus og:description (required by WhatsApp and LinkedIn). Values must be non-empty, the URLs absolute, and og:type a valid OGP type (website, article, profile, book, music.*, video.*). The head with these tags must end within the first 300 KB of HTML (WhatsApp). Open Graph has no Google ranking effect, but Google may use og:title for title links and og:site_name for site names. Use property= (name= is commonly tolerated).",
-    "optionalInputs": [
-      "rendered-dom"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "In the raw HTML head (not JS-injected: social crawlers generally don't execute JS), require og:title, og:type, og:image and og:url (OGP required) plus og:description (required by WhatsApp and LinkedIn). Values must be non-empty, the URLs absolute, and og:type a valid OGP type (website, article, profile, book, music.*, video.*). The head with these tags must end within the first 300 KB of HTML (WhatsApp). Open Graph has no Google ranking effect, but Google may use og:title for title links and og:site_name for site names. Use property= (name= is commonly tolerated)."
   },
   {
     "id": "tech-social-og-image",
@@ -1247,9 +1247,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Fetch og:image (the first one) without cookies and without a Referer, and also with the facebookexternalhit, LinkedInBot and Slackbot-LinkExpanding UAs. Pass when: the URL is absolute https; the status is 200; the content type is image/jpeg, png, webp or gif (not SVG); the dimensions are >= 1200×630 (Facebook recommended; LinkedIn 1200×627 minimum); the aspect ratio is within 1.85-1.97 (1.91:1); and the file size is <= 600 KB (WhatsApp), with a hard fail above 5 MB (LinkedIn and X) or 8 MB (Facebook). Facebook below 600×315 shows a small preview. LinkedIn under 401 px wide shows a thumbnail. WhatsApp allows ratios up to 4:1. Hotlink protection or a WAF often 403s bot UAs, so test with each UA. v1 fetches og:image once with Altimeter's user agent; fetches with the preview bots' user agents are planned with tech-slack-unfurl-info.",
     "fixLocation": "repo",
-    "verifiableBy": "deployed"
+    "verifiableBy": "deployed",
+    "notes": "Fetch og:image (the first one) without cookies and without a Referer, and also with the facebookexternalhit, LinkedInBot and Slackbot-LinkExpanding UAs. Pass when: the URL is absolute https; the status is 200; the content type is image/jpeg, png, webp or gif (not SVG); the dimensions are >= 1200×630 (Facebook recommended; LinkedIn 1200×627 minimum); the aspect ratio is within 1.85-1.97 (1.91:1); and the file size is <= 600 KB (WhatsApp), with a hard fail above 5 MB (LinkedIn and X) or 8 MB (Facebook). Facebook below 600×315 shows a small preview. LinkedIn under 401 px wide shows a thumbnail. WhatsApp allows ratios up to 4:1. Hotlink protection or a WAF often 403s bot UAs, so test with each UA. v1 fetches og:image once with Altimeter's user agent; fetches with the preview bots' user agents are planned with tech-slack-unfurl-info."
   },
   {
     "id": "tech-social-og-image-meta",
@@ -1262,6 +1262,9 @@
     "scope": "page",
     "inputs": [
       "raw-html"
+    ],
+    "optionalInputs": [
+      "resources"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1282,12 +1285,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Warn when og:image:alt is missing (OGP: 'should specify'). Warn when og:image:width and height are missing, or don't match the decoded dimensions within 1 px. Structured properties apply to the most recent preceding og:image. Declared dimensions let Facebook render the image on the first share without downloading it first.",
-    "optionalInputs": [
-      "resources"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Warn when og:image:alt is missing (OGP: 'should specify'). Warn when og:image:width and height are missing, or don't match the decoded dimensions within 1 px. Structured properties apply to the most recent preceding og:image. Declared dimensions let Facebook render the image on the first share without downloading it first."
   },
   {
     "id": "tech-social-og-url-canonical",
@@ -1320,9 +1320,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Normalize the URLs (lowercase scheme and host, drop the default port, keep path case) and compare og:url with the rel=canonical href (or with the final URL when there is no canonical). Fail when they differ. Social platforms aggregate share counts and cache previews per og:url. A templated og:url that always points to the home page is a common bug.",
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Normalize the URLs (lowercase scheme and host, drop the default port, keep path case) and compare og:url with the rel=canonical href (or with the final URL when there is no canonical). Fail when they differ. Social platforms aggregate share counts and cache previews per og:url. A templated og:url that always points to the home page is a common bug."
   },
   {
     "id": "tech-social-twitter-card",
@@ -1426,6 +1426,10 @@
     "inputs": [
       "rendered-dom"
     ],
+    "optionalInputs": [
+      "raw-html",
+      "lighthouse"
+    ],
     "appliesTo": "all",
     "exemptWhen": [
       "The errors come from blocked third-party scripts and the content is intact.",
@@ -1446,13 +1450,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Capture the console (errors, uncaught exceptions, unhandled rejections) and the Lighthouse errors-in-console results during the mobile render. Correlate each error with its effect: high if the rendered DOM is missing main content, links or metadata that exist in the raw HTML or in the visible design (for example the rendered text length is below 50% of what the screenshot suggests, or a framework error boundary or blank root appears). Otherwise low. Headless Chrome errors can come from bot detection or a missing consent state, so verify with a normal UA. Errors from browser extensions don't apply in headless. Lighthouse 13.6 reports console errors as the best-practices audit errors-in-console.",
-    "optionalInputs": [
-      "raw-html",
-      "lighthouse"
-    ],
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Capture the console (errors, uncaught exceptions, unhandled rejections) and the Lighthouse errors-in-console results during the mobile render. Correlate each error with its effect: high if the rendered DOM is missing main content, links or metadata that exist in the raw HTML or in the visible design (for example the rendered text length is below 50% of what the screenshot suggests, or a framework error boundary or blank root appears). Otherwise low. Headless Chrome errors can come from bot detection or a missing consent state, so verify with a normal UA. Errors from browser extensions don't apply in headless. Lighthouse 13.6 reports console errors as the best-practices audit errors-in-console."
   },
   {
     "id": "tech-failed-render-requests",
@@ -1465,6 +1465,9 @@
     "scope": "page",
     "inputs": [
       "rendered-dom"
+    ],
+    "optionalInputs": [
+      "lighthouse"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1485,15 +1488,12 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "From the Googlebot-like render, list requests that failed with a network error (net::ERR_*, CORS, CSP), and from the Lighthouse network log those that answered 4xx or 5xx. Classify each by role: the element that references it (script, stylesheet, preload), the Lighthouse resource type, or the file extension. First-party stylesheets and scripts are rendering-critical. Analytics and ad endpoints that fail don't affect indexing, and aborted requests are cancellations, so both are ignored. Requests disallowed by robots.txt are not server failures and are counted by crawl-robots-blocks-render-resources.",
     "related": [
       "crawl-robots-blocks-render-resources"
-    ],
-    "optionalInputs": [
-      "lighthouse"
-    ],
-    "fixLocation": "repo",
-    "verifiableBy": "local"
+    ]
   },
   {
     "id": "tech-chrome-best-practices-trust",
@@ -1520,8 +1520,8 @@
       }
     ],
     "status": "v1",
-    "notes": "Report the results of is-on-https, redirects-http, deprecations, inspector-issues, third-party-cookies, doctype, charset, image-aspect-ratio and image-size-responsive from the Lighthouse best-practices category, and deduplicate them with the tool's own rules. The best-practices score is not a Google Search metric.",
     "fixLocation": "repo",
-    "verifiableBy": "local"
+    "verifiableBy": "local",
+    "notes": "Report the results of is-on-https, redirects-http, deprecations, inspector-issues, third-party-cookies, doctype, charset, image-aspect-ratio and image-size-responsive from the Lighthouse best-practices category, and deduplicate them with the tool's own rules. The best-practices score is not a Google Search metric."
   }
 ]

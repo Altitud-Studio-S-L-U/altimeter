@@ -138,9 +138,11 @@ function failedRequests(page: PageFacts): FailedRequest[] {
   const rendered = page.rendered!;
   const roles = referencedRoles(rendered, base);
   const found = new Map<string, FailedRequest>();
-  const add = (url: string, error: string, type: string, source: FailedRequest['source']) => {
+  const add = (url: string, error: string, type: string, source: FailedRequest['source'], status = 0) => {
     if (!/^https?:/u.test(url) || isMeasurementUrl(url) || found.has(url)) return;
     const role = roles.get(url) ?? roleFromType(type) ?? roleFromPath(url);
+    // An API that answers 401 or 403 to an anonymous visitor is working as designed.
+    if (role === 'fetch' && (status === 401 || status === 403)) return;
     found.set(url, { url, error, role, severity: severityFor(role, sameSite(url, base)), source });
   };
   for (const entry of rendered.result.failed) {
@@ -150,7 +152,7 @@ function failedRequests(page: PageFacts): FailedRequest[] {
   }
   for (const item of detailItems(lighthouseSummary(page)?.audits['network-requests'])) {
     const status = typeof item.statusCode === 'number' ? item.statusCode : 0;
-    if (typeof item.url === 'string' && status >= 400 && item.url !== base) add(item.url, `HTTP ${status}`, typeof item.resourceType === 'string' ? item.resourceType : '', 'lighthouse');
+    if (typeof item.url === 'string' && status >= 400 && item.url !== base) add(item.url, `HTTP ${status}`, typeof item.resourceType === 'string' ? item.resourceType : '', 'lighthouse', status);
   }
   return [...found.values()];
 }
