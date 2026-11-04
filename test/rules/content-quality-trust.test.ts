@@ -128,6 +128,24 @@ describe('content-byline-author', () => {
     assert.deepEqual(excerpts(at()), ['By Jane Roe']);
   });
 
+  test('passes a plain-text byline near the heading whatever the case of its keyword', () => {
+    const lines: Array<[string, string]> = [
+      ['By Jane Roe · 3 March 2025', 'By Jane'], ['Por María López', 'Por María'], ['Per Jordi Puig', 'Per Jordi'], ['Author: Jane Roe', 'Author: Jane'],
+      ['Written By Jane Roe', 'Written By Jane'], ['BY JANE ROE', 'BY JANE'], ['Posted by Jane Roe', 'by Jane'],
+    ];
+    for (const [line, excerpt] of lines) {
+      const html = doc(`<main><h1>Pruning roses</h1><p class="meta">${line}</p><p>Text</p></main>`, `<title>Pruning roses</title>${jsonLd({ '@type': 'BlogPosting', headline: 'Pruning roses' })}`);
+      const { at, excerpts } = run(bylineAuthor, [page(url, { html })]);
+      assert.equal(at()?.outcome, 'pass', line);
+      assert.deepEqual(excerpts(at()), [excerpt]);
+    }
+  });
+
+  test('does not take a sentence that starts with By for a byline', () => {
+    const html = doc('<main><h1>Pruning roses</h1><p>By pruning in March you get more roses.</p></main>', `<title>Pruning roses</title>${jsonLd({ '@type': 'BlogPosting', headline: 'Pruning roses' })}`);
+    assert.equal(run(bylineAuthor, [page(url, { html })]).at()?.reason, 'no-byline');
+  });
+
   test('passes content published under the organisation', () => {
     const html = doc('<main><h1>Pruning roses</h1></main>', `<title>Pruning roses</title>${marked({ '@type': 'Organization', name: 'Acme' })}`);
     assert.equal(run(bylineAuthor, [page(url, { html })]).at()?.outcome, 'pass');
