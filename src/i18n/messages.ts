@@ -64,3 +64,15 @@ export function findingMessage(language: Language, ruleId: string, outcome: stri
   }
   return undefined;
 }
+
+export interface RuleTexts {
+  readonly title: string;
+  readonly why: string;
+  readonly fix: string;
+}
+
+/** A rule's title, why and fix in `language`, falling back to the catalog's English text. */
+export function ruleTexts(language: Language, rule: { readonly id: string; readonly title: string; readonly why: string; readonly fix: string }): RuleTexts {
+  const entry = language === 'en' ? undefined : messagesFor(language)[rule.id];
+  return { title: entry?.title ?? rule.title, why: entry?.why ?? rule.why, fix: entry?.fix ?? rule.fix };
+}
