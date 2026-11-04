@@ -205,8 +205,9 @@ describe('crawl-server-errors-rate', () => {
     assertFail(finding, 'high', 'error-rate');
     assert.deepEqual(excerpts(), ['HTTP 503']);
   });
-  test('fails low on a rare 503 without Retry-After', () => {
-    assertFail(run(id, { pages: many(120, 1), crawled: true }).finding, 'low', 'no-retry-after');
+  test('fails low on a rare 429 without Retry-After and leaves a 503 to tech-maintenance-503', () => {
+    assertFail(run(id, { pages: many(120, 1, 429), crawled: true }).finding, 'low', 'no-retry-after');
+    assertOutcome(run(id, { pages: many(120, 1), crawled: true }).finding, 'pass');
   });
   test('is not evaluated without a crawl', () => {
     assertOutcome(run(id, { pages: many(3, 1) }).finding, 'not_evaluated', 'missing-input:crawl');
@@ -232,8 +233,15 @@ describe('crawl-host-variant-consolidation', () => {
     assert.deepEqual(excerpts(), ['HTTP 200, canonical (none)', 'HTTP 200']);
   });
   test('fails low on a temporary or multi-hop consolidation', () => {
-    assertFail(run(id, { pages: [base()], variants: [{ label: 'http', url: 'http://example.com/a/', redirects: [[302, preferred]] }] }).finding, 'low', 'temporary-redirect');
-    assertFail(run(id, { pages: [base()], variants: [{ label: 'http', url: 'http://example.com/a/', redirects: [[301, 'http://www.example.com/a/'], [301, preferred]] }] }).finding, 'low', 'multiple-hops');
+    assertFail(run(id, { pages: [base()], variants: [{ label: 'www', url: 'https://www.example.com/a/', redirects: [[302, preferred]] }] }).finding, 'low', 'temporary-redirect');
+    assertFail(run(id, { pages: [base()], variants: [{ label: 'www', url: 'https://www.example.com/a/', redirects: [[301, 'https://example.com/a'], [301, preferred]] }] }).finding, 'low', 'multiple-hops');
+  });
+  test('leaves the http variant to tech-http-to-https-redirect', () => {
+    const facts = { pages: [base()], variants: [
+      { label: 'http', url: 'http://example.com/a/', redirects: [[302, preferred]] as const },
+      { label: 'www', url: 'https://www.example.com/a/', redirects: [[301, preferred]] as const },
+    ] };
+    assertOutcome(run(id, facts).finding, 'pass');
   });
   test('passes when the audited root redirects by locale and its variants reach the locale page permanently', () => {
     const facts = { pages: [localeRoot()], variants: [
@@ -243,7 +251,7 @@ describe('crawl-host-variant-consolidation', () => {
     assertOutcome(run(id, facts).finding, 'pass');
   });
   test('does not apply to variants of other pages and needs variants', () => {
-    assertOutcome(run(id, { pages: [base()], variants: [{ label: 'http', url: 'http://example.com/zzz', redirects: [[302, '/']] }] }).finding, 'not_applicable', 'no-variants-of-audited-pages');
+    assertOutcome(run(id, { pages: [base()], variants: [{ label: 'www', url: 'https://www.example.com/zzz', redirects: [[302, '/']] }] }).finding, 'not_applicable', 'no-variants-of-audited-pages');
     assertOutcome(run(id, { pages: [base()] }).finding, 'not_evaluated', 'missing-input:variants');
   });
 });

@@ -228,7 +228,8 @@ const serverErrorsRate: RuleImplementation = {
     const share = failing.length / fetched.length;
     const ids = failing.slice(0, 5).map(page => evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: 'crawled URL answering a server error', excerpt: page.fetch.status === undefined ? page.fetch.error?.code ?? 'error' : `HTTP ${page.fetch.status}` }));
     if (share >= 0.01) return failure({ severity: 'high', evidence: ids, reason: 'error-rate', params: { count: failing.length, total: fetched.length, share: `${(share * 100).toFixed(1)}%` } });
-    const noRetry = fetched.filter(page => (page.fetch.status === 503 || page.fetch.status === 429) && headerValue(page.fetch.headers, 'retry-after') === undefined);
+    // A 503 without Retry-After is tech-maintenance-503's; rate limiting is reported here.
+    const noRetry = fetched.filter(page => page.fetch.status === 429 && headerValue(page.fetch.headers, 'retry-after') === undefined);
     if (noRetry.length > 0) {
       return failure({ severity: 'low', evidence: noRetry.slice(0, 5).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: 'Retry-After header', excerpt: '(absent)' })),
         reason: 'no-retry-after', params: { count: noRetry.length, total: fetched.length, share: `${(share * 100).toFixed(1)}%` } });
@@ -248,7 +249,8 @@ const hostVariantConsolidation: RuleImplementation = {
     const results: RuleResult[] = [];
     let checked = 0;
     for (const variant of site.variants) {
-      if (variant.label === 'tracking-parameter' || variant.fetch.status === undefined) continue;
+      // Tracking parameters belong to crawl-parameter-urls and the http variant to tech-http-to-https-redirect.
+      if (variant.label === 'tracking-parameter' || variant.label === 'http' || variant.fetch.status === undefined) continue;
       const base = variantBase(site, variant);
       if (!base) continue;
       checked += 1;

@@ -1242,7 +1242,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "A variant that answers 200 with the same content and no canonical to the preferred URL = high. A 302 or 307 used for permanent consolidation = low. More than one hop to the preferred URL = low. Tracking-parameter variants are owned by crawl-parameter-urls.",
+    "thresholds": "A variant that answers 200 with the same content and no canonical to the preferred URL = high. A 302 or 307 used for permanent consolidation = low. More than one hop to the preferred URL = low. Tracking-parameter variants are owned by crawl-parameter-urls and the http variant by tech-http-to-https-redirect.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -1690,7 +1690,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "≥1% 5xx/429 = high. Any persistent 5xx on the same URL across retries = high. 503/429 without Retry-After = low.",
+    "thresholds": "≥1% 5xx/429 = high. Any persistent 5xx on the same URL across retries = high. 429 without Retry-After = low; a 503 without it is reported by tech-maintenance-503.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
