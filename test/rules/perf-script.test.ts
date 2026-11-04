@@ -62,9 +62,9 @@ describe('perf-dom-size', () => {
     assertFail(check(domSize, page(url, { html: html(''), rendered: dom(900) })), 'info', 'warn');
   });
 
-  test('fails low when Lighthouse finds costly rendering on a smaller DOM', () => {
+  test('reports costly rendering on a smaller DOM as info, as Lighthouse does not fail it', () => {
     const lighthouse = lab({ 'dom-size-insight': { score: null, scoreDisplayMode: 'informative', numericValue: 700, numericUnit: 'element' } });
-    assertFail(check(domSize, page(url, { html: html(''), rendered: dom(500), lighthouse })), 'low', 'costly-rendering');
+    assertFail(check(domSize, page(url, { html: html(''), rendered: dom(500), lighthouse })), 'info', 'costly-rendering');
   });
 
   test('is not evaluated without the rendered page', () => {

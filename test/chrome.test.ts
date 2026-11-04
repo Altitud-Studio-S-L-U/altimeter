@@ -51,6 +51,11 @@ const overlayPage = `<!doctype html><html lang="en"><head><title>Overlays</title
   <section class="fade" id="stalled">Stalled reveal text</section>
   <p style="opacity:0">Plain hidden text</p>
   <div data-aos="fade-up" style="opacity:0"><p>Animated on scroll text</p></div>
+  <ul style="display:flex;overflow-x:auto;width:300px;padding:0;margin:0">
+    <li style="flex:0 0 300px">First slide text</li><li style="flex:0 0 300px">Second slide text</li><li style="flex:0 0 300px">Third slide text</li>
+    <li style="flex:0 0 300px">Fourth slide text</li><li style="flex:0 0 300px">Fifth slide text</li>
+  </ul>
+  <p style="position:absolute;left:-3000px">Pushed aside text</p>
 </main>
 <script>new IntersectionObserver(() => {}).observe(document.getElementById('stalled'));</script>
 </body></html>`;
@@ -141,6 +146,8 @@ describe('renderPage', { skip: chrome ? false : 'Chrome is not installed' }, () 
     assert.deepEqual([block('Stalled reveal text')?.hidden, block('Stalled reveal text')?.revealOnScroll], ['opacity-zero', true]);
     assert.deepEqual([block('Animated on scroll text')?.hidden, block('Animated on scroll text')?.revealOnScroll], ['opacity-zero', true]);
     assert.deepEqual([block('Plain hidden text')?.hidden, block('Plain hidden text')?.revealOnScroll], ['opacity-zero', undefined]);
+    assert.deepEqual([block('Fifth slide text')?.hidden, block('Fifth slide text')?.inScroller], ['offscreen', true]);
+    assert.deepEqual([block('Pushed aside text')?.hidden, block('Pushed aside text')?.inScroller], ['offscreen', undefined]);
     assert.equal(result.overlays, undefined, 'overlays are measured in the user render only');
   });
 

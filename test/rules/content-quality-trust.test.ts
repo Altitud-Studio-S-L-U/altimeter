@@ -52,18 +52,23 @@ describe('content-filler-before-mc', () => {
   const paragraph = 'This is the paragraph that answers the question the page title asks, with the details a reader came for and the steps to follow.';
 
   test('passes when the main content starts within two phone screens', () => {
-    assert.equal(run(fillerBeforeMc, [page(url, { html, userRender: { html, textBlocks: [block('main > p', paragraph, { top: 700 })] } })]).at()?.outcome, 'pass');
+    assert.equal(run(fillerBeforeMc, [page(url, { html, pageType: 'article', userRender: { html, textBlocks: [block('main > p', paragraph, { top: 700 })] } })]).at()?.outcome, 'pass');
   });
 
   test('hands content that starts far down to the analyst', () => {
-    const { at, excerpts } = run(fillerBeforeMc, [page(url, { html, userRender: { html, textBlocks: [block('main > p', paragraph, { top: 2100 })] } })]);
+    const { at, excerpts } = run(fillerBeforeMc, [page(url, { html, pageType: 'article', userRender: { html, textBlocks: [block('main > p', paragraph, { top: 2100 })] } })]);
     assert.deepEqual([at()?.severity, at()?.needsJudgment, at()?.params?.viewports], ['medium', true, 2.6]);
     assert.match(String(excerpts(at())[0]), /^This is the paragraph/u);
   });
 
   test('does not apply without paragraph text, and is not evaluated without the user render', () => {
-    assert.equal(run(fillerBeforeMc, [page(url, { html, userRender: { html, textBlocks: [block('main > p', 'Short')] } })]).at()?.reason, 'no-paragraph-text');
-    assert.equal(run(fillerBeforeMc, [page(url, { html })]).at()?.reason, 'missing-input:user-render');
+    assert.equal(run(fillerBeforeMc, [page(url, { html, pageType: 'article', userRender: { html, textBlocks: [block('main > p', 'Short')] } })]).at()?.reason, 'no-paragraph-text');
+    assert.equal(run(fillerBeforeMc, [page(url, { html, pageType: 'article' })]).at()?.reason, 'missing-input:user-render');
+  });
+
+  test('does not apply to a home page built from short sections', () => {
+    const home = page(`${origin}/`, { html, pageType: 'home', userRender: { html, textBlocks: [block('main > p', paragraph, { top: 6400 })] } });
+    assert.equal(run(fillerBeforeMc, [home]).at(`${origin}/`)?.reason, 'page-type:home');
   });
 });
 
@@ -223,6 +228,13 @@ describe('content-trust-pages', () => {
   test('fails medium without any contact route', () => {
     const { siteFindings } = run(trustPages, [page(home, { html: doc('<main><p>Studio</p></main><footer><a href="/sobre-nosotros">Sobre nosotros</a></footer>') })]);
     assert.deepEqual([siteFindings[0]?.severity, siteFindings[0]?.reason, siteFindings[0]?.needsJudgment], ['medium', 'no-contact', undefined]);
+  });
+
+  test('recognises an about page named after the brand', () => {
+    for (const link of ['<a href="/ca/sobre-altitud/">Sobre Altitud</a>', '<a href="/en/company-story/">About Acme</a>', '<a href="/es/x/">Acerca de Acme</a>']) {
+      const { siteFindings } = run(trustPages, [page(home, { html: doc(`<footer>${link}<a href="mailto:hi@example.com">hi@example.com</a></footer>`) })]);
+      assert.equal(siteFindings[0]?.outcome, 'pass', link);
+    }
   });
 
   test('hands a missing about page to the analyst when a mailto link gives contact', () => {

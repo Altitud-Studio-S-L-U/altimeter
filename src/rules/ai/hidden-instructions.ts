@@ -89,10 +89,13 @@ export function rawCandidates(doc: DocumentFacts): Candidate[] {
   return found;
 }
 
-/** Rendered text blocks that are hidden and instruction-like. Opacity alone is skipped: scroll-reveal sections start at 0. */
+/**
+ * Rendered text blocks that are hidden and instruction-like. Scroll-reveal sections waiting at opacity 0 and slides
+ * of a sideways scroller are skipped: readers reach both.
+ */
 export function renderedCandidates(blocks: readonly TextBlock[]): Candidate[] {
   return blocks
-    .filter(block => block.hidden !== undefined && block.hidden !== 'opacity-zero' && !/(?:^|[\s>])(?:pre|code)(?:[.#\s>]|$)/u.test(block.selector))
+    .filter(block => block.hidden !== undefined && !block.revealOnScroll && !block.inScroller && !/(?:^|[\s>])(?:pre|code)(?:[.#\s>]|$)/u.test(block.selector))
     .filter(block => isInstructionLike(block.text))
     .map(block => ({ where: 'rendered-hidden' as const, text: block.text, path: `${block.selector} (${block.hidden})` }));
 }

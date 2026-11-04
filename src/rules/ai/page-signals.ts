@@ -123,8 +123,11 @@ function mediaIn(root: HtmlElement, html: string): { candidates: MediaCandidate[
   let media = 0;
   walk(root, node => {
     if (!isElement(node)) return undefined;
+    // The author marks decoration this way: an aria-hidden subtree, or a canvas with a presentation role.
+    if (attribute(node, 'aria-hidden') === 'true') return false;
     const line = node.sourceCodeLocation?.startLine ?? 0;
     if (node.tagName === 'canvas') {
+      if (['presentation', 'none'].includes(attribute(node, 'role') ?? '')) return false;
       media++;
       const fallback = node.childNodes.some(child => child.nodeName === '#text' ? (child as { value: string }).value.trim() !== '' : isElement(child));
       if (!fallback && !attribute(node, 'aria-label') && !attribute(node, 'aria-labelledby')) candidates.push({ kind: 'canvas', excerpt: source(node, html), line });

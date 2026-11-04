@@ -55,10 +55,10 @@ export const domSize: RuleImplementation = {
     const insight = auditOf(summary, 'dom-size-insight');
     const costly = summary !== undefined && insight?.scoreDisplayMode === 'informative';
     const lab = costly ? [auditEvidence(evidence, page!, summary, 'dom-size-insight', 'Lighthouse DOM size insight')] : [];
-    if (count > domLimit || costly) {
-      return { outcome: 'fail', severity: 'low', ...(count > domLimit ? {} : { reason: 'costly-rendering' }), evidence: [cited, ...lab], params: { count } };
-    }
-    if (count > domWarn) return { outcome: 'fail', severity: 'info', reason: 'warn', evidence: [cited], params: { count } };
+    if (count > domLimit) return { outcome: 'fail', severity: 'low', evidence: [cited, ...lab], params: { count } };
+    if (count > domWarn) return { outcome: 'fail', severity: 'info', reason: 'warn', evidence: [cited, ...lab], params: { count } };
+    // Lighthouse shows an informative insight without failing it: one slow layout on a small DOM is context, not a defect.
+    if (costly) return { outcome: 'fail', severity: 'info', reason: 'costly-rendering', evidence: [cited, ...lab], params: { count } };
     return { outcome: 'pass', evidence: [cited] };
   },
 };

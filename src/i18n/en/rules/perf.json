@@ -255,7 +255,7 @@
   "perf-dom-size": {
     "messages": {
       "fail": "The rendered DOM has {count} elements, above 1400.",
-      "fail:costly-rendering": "Lighthouse found costly layout or style recalculation on a large DOM; the rendered DOM has {count} elements.",
+      "fail:costly-rendering": "Lighthouse recorded a costly layout or style recalculation in the lab trace; the rendered DOM has only {count} elements, so check the scripts and styles that triggered it rather than the DOM size.",
       "fail:warn": "The rendered DOM has {count} elements, above the legacy warning level of 800."
     }
   },

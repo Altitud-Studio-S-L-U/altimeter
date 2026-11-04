@@ -71,6 +71,13 @@ describe('content-hidden-text', () => {
     assert.equal(run(hiddenText, [page(url, { html, rendered })]).at()?.outcome, 'pass');
   });
 
+  test('ignores scroll reveals that never ran and slides of a sideways scroller', () => {
+    const waiting = block('div.film > p', spamText, { hidden: 'opacity-zero', revealOnScroll: true });
+    const slide = block('ul.board > li > p', spamText, { hidden: 'offscreen', inScroller: true });
+    const rendered = { html, textBlocks: [waiting, slide] };
+    assert.equal(run(hiddenText, [page(url, { html, rendered, userRender: rendered })]).at()?.outcome, 'pass');
+  });
+
   test('ignores accordions, menus and screen-reader text', () => {
     const rendered = { html, textBlocks: [
       block('div.accordion-body > p', sentence, { hidden: 'display-none' }),

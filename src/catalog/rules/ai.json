@@ -994,7 +994,8 @@
     ],
     "appliesTo": "all",
     "exemptWhen": [
-      "The image has alt=\"\" and is decorative (a logo next to the text name, an illustration, a divider); an empty alt is correct markup for decorative images."
+      "The image has alt=\"\" and is decorative (a logo next to the text name, an illustration, a divider); an empty alt is correct markup for decorative images.",
+      "The media or its container is marked as decoration: aria-hidden=\"true\", or a canvas with role=\"presentation\" or \"none\"."
     ],
     "fpRisk": "medium",
     "scored": true,

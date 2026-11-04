@@ -36,6 +36,11 @@ export interface TextBlock {
    * entrance animation that has not run, not text hidden from readers.
    */
   readonly revealOnScroll?: true;
+  /**
+   * Set on an off-screen block inside a container the reader scrolls sideways (overflow-x auto or scroll, wider than
+   * its box) or inside a marked carousel: the text is one swipe or slide control away, not hidden.
+   */
+  readonly inScroller?: true;
   readonly fontSize: number;
   readonly top: number;
   readonly inMain: boolean;
@@ -196,6 +201,15 @@ function collectTextBlocks(limit: number, storeKey: string): TextBlock[] {
     }
     return false;
   };
+  const carouselMarker = '[aria-roledescription*="carousel" i], [aria-roledescription*="slide" i], .swiper, .splide, .glide, .slick-slider, .flickity-enabled, .embla, .carousel';
+  const inScroller = (el: Element) => {
+    for (let current = el.parentElement; current && current !== document.body; current = current.parentElement) {
+      const overflow = getComputedStyle(current).overflowX;
+      if ((overflow === 'auto' || overflow === 'scroll') && current.scrollWidth > current.clientWidth + 1) return true;
+      if (current.matches(carouselMarker)) return true;
+    }
+    return false;
+  };
   const describe = (node: Element) => {
     const parts: string[] = [];
     for (let el: Element | null = node; el && parts.length < 4; el = el.parentElement) {
@@ -246,6 +260,7 @@ function collectTextBlocks(limit: number, storeKey: string): TextBlock[] {
       text: text.slice(0, 300),
       ...(hidden ? { hidden } : {}),
       ...((hidden === 'opacity-zero' || hidden === 'visibility-hidden') && revealsOnScroll(el) ? { revealOnScroll: true as const } : {}),
+      ...(hidden === 'offscreen' && inScroller(el) ? { inScroller: true as const } : {}),
       fontSize: Number.parseFloat(getComputedStyle(el).fontSize),
       top: Math.round(el.getBoundingClientRect().top + scrollY),
       inMain: el.closest('main, [role="main"], article') !== null,

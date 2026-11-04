@@ -866,7 +866,9 @@
       "rendered-dom",
       "ai"
     ],
-    "appliesTo": "all",
+    "appliesTo": [
+      "article"
+    ],
     "exemptWhen": [
       "The heading or text belongs to a cookie banner, consent dialog or other overlay outside <main>."
     ],
@@ -887,7 +889,7 @@
     "status": "v1",
     "fixLocation": "content",
     "verifiableBy": "local",
-    "notes": "The LLM reads the first screenful(s) of rendered main content. It flags pages where low-value filler (long preambles, life stories before a recipe, repeated generic intros) or distracting ads/interstitials push the content that fulfils the page's purpose far down. Deterministic support: character offset of the first paragraph that matches the h1 topic; ad/iframe count above the fold. QRG 5.2.2 'Filler as a Poor User Experience' and 5.3 'Distracting Ads/SC' (Low rating). Supporting content placed lower is acceptable.",
+    "notes": "The LLM reads the first screenful(s) of rendered main content. It flags pages where low-value filler (long preambles, life stories before a recipe, repeated generic intros) or distracting ads/interstitials push the content that fulfils the page's purpose far down. Deterministic support: character offset of the first paragraph that matches the h1 topic; ad/iframe count above the fold. QRG 5.2.2 'Filler as a Poor User Experience' and 5.3 'Distracting Ads/SC' (Low rating). Supporting content placed lower is acceptable. v1 applies the candidate to articles only: home, service and landing pages are built from short sections, so their first long paragraph comes late by design.",
     "related": [
       "tech-intrusive-interstitial"
     ]
@@ -1230,7 +1232,7 @@
     "appliesTo": "all",
     "exemptWhen": [
       "The content is present in the HTML and has opacity 0 only until an IntersectionObserver reveal (for example [data-reveal]) fires on scroll; Google renders with a tall viewport that triggers it.",
-      "The text is in tabs, accordions, sliders, tooltips, menus or screen-reader-only elements.",
+      "The text is in tabs, accordions, sliders or sideways scrollers, tooltips, menus or screen-reader-only elements.",
       "The heading or text belongs to a cookie banner, consent dialog or other overlay outside <main>."
     ],
     "fpRisk": "high",

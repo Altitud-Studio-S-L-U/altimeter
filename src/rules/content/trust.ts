@@ -227,8 +227,9 @@ export const bylineAuthor: RuleImplementation = {
   },
 };
 
-const aboutWords = /^(about|about-us|aboutus|about-me|who-we-are|our-story|company|team|nosotros|sobre-nosotros|quienes-somos|quien-soy|sobre-mi|sobre|empresa|equipo|el-estudio|qui-som|sobre-nosaltres|nosaltres|equip|a-propos|qui-sommes-nous|ueber-uns|uber-uns|chi-siamo)$/u;
-const aboutText = /^(about|about us|about me|who we are|our story|our company|the team|team|company|nosotros|sobre nosotros|quienes somos|quien soy|sobre mi|empresa|equipo|el estudio|qui som|sobre nosaltres|nosaltres|equip|a propos|uber uns|chi siamo)$/u;
+// "About <brand>" pages are common too: /about-acme/, /sobre-altitud/, "Acerca de Acme".
+const aboutWords = /^(?:about|aboutus|who-we-are|our-story|company|team|nosotros|quienes-somos|quien-soy|sobre|empresa|equipo|el-estudio|qui-som|nosaltres|equip|a-propos|qui-sommes-nous|ueber-uns|uber-uns|chi-siamo|(?:about|sobre|acerca-de|a-propos-de|ueber|uber)-[\p{L}\d-]+)$/u;
+const aboutText = /^(?:about|who we are|our story|our company|the team|team|company|nosotros|quienes somos|quien soy|empresa|equipo|el estudio|qui som|nosaltres|equip|a propos|qui sommes nous|uber uns|chi siamo|(?:about|sobre|acerca de|a propos de|uber) [\p{L}\d -]+)$/u;
 const contactWords = /^(contact|contact-us|contacto|contactanos|contacte|contacta|contactar|kontakt|contatti|get-in-touch)$/u;
 const contactText = /^(contact|contact us|contacto|contactanos|contacte|contacta|contactar|kontakt|contatti|get in touch|escribenos|escriu-nos)$/u;
 

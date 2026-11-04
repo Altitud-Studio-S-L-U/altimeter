@@ -1801,7 +1801,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "More than 1400 rendered elements, or dom-size-insight informative (costly layout or style recalculation) = low; 801-1400 elements = info (legacy Lighthouse warning)",
+    "thresholds": "More than 1400 rendered elements = low; 801-1400 elements = info (legacy Lighthouse warning); dom-size-insight informative (a costly layout or style recalculation in the lab trace) on a smaller DOM = info, since Lighthouse does not fail it.",
     "sources": [
       {
         "url": "https://web.dev/articles/dom-size-and-interactivity",

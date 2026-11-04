@@ -95,7 +95,9 @@ export const hiddenText: RuleImplementation = {
       if (!block.hidden || !concealing.has(block.hidden) || designHiddenSelector.test(block.selector) || interactiveTag.test(block.selector)) return false;
       if (words(block.text).length < 3) return false;
       // Reveal-on-scroll sections sit at opacity 0 until an observer fires; only the scrolled user render can tell.
-      if (block.hidden === 'opacity-zero' && !page.userRender) return false;
+      if (block.hidden === 'opacity-zero' && (!page.userRender || block.revealOnScroll)) return false;
+      // Google lists sliders among the patterns that are not hidden text: the other slides are a swipe away.
+      if (block.inScroller) return false;
       return !shownIn(page.userRender, block.text);
     });
     if (blocks.length === 0) return { outcome: 'pass' };
