@@ -1,5 +1,6 @@
 import type { ProbeFacts, SiteFacts } from '../../core/facts.ts';
 import type { FetchResult, Hop } from '../../fetch/http.ts';
+import type { TlsFacts } from '../../fetch/tls.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { sameSite } from '../helpers.ts';
 import { auditedPages, citer, fail, firstHeader, hostOf, isHttps, notApplicable, notEvaluated, pass, type Cite } from './shared.ts';
@@ -41,43 +42,53 @@ const criticalCodes: Readonly<Record<string, string>> = {
 };
 const chainCodes = new Set(['UNABLE_TO_GET_ISSUER_CERT_LOCALLY', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'UNABLE_TO_GET_ISSUER_CERT']);
 
+/** A connection that never completed a handshake says nothing about the certificate. */
+const unreachable = (tls: TlsFacts) => !tls.authorized && (unreachableCodes.has(tls.error ?? 'UNKNOWN') || tls.chainLength === 0);
+
 export const tlsCertificateValid: RuleImplementation = {
   id: 'tech-tls-certificate-valid',
   evaluate(context) {
-    const tls = context.site.tls!;
     const cite = citer(context);
-    const excerpt = [
-      `authorized=${tls.authorized}`,
-      ...(tls.error ? [`error=${tls.error}`] : []),
-      ...(tls.validFrom ? [`validFrom=${tls.validFrom}`] : []),
-      ...(tls.validTo ? [`validTo=${tls.validTo}`] : []),
-      ...(tls.issuer ? [`issuer=${tls.issuer}`] : []),
-      `subjectAltNames=${tls.subjectAltNames.join(' ') || '(none)'}`,
-      `chainLength=${tls.chainLength}`,
-    ].join('; ');
-    const evidence = [cite({ kind: 'probe', url: `https://${tls.host}:${tls.port}/`, label: 'TLS certificate presented to a client that sends SNI', excerpt })];
-    if (!tls.authorized) {
-      const code = tls.error ?? 'UNKNOWN';
-      if (unreachableCodes.has(code) || tls.chainLength === 0) return notEvaluated('tls-unreachable');
-      const params = { host: tls.host, code, issuer: tls.issuer ?? 'unknown' };
-      const critical = criticalCodes[code];
-      if (critical) return fail('critical', evidence, critical, params);
-      // Some browsers fetch missing intermediates themselves; Node does not, so the defect is named precisely.
-      if (chainCodes.has(code)) return fail('high', evidence, 'incomplete-chain', params);
-      // A private root is also what an intercepting proxy on the auditing network looks like.
-      if (code === 'SELF_SIGNED_CERT_IN_CHAIN') return fail('high', evidence, 'untrusted-root', params);
-      return fail('high', evidence, 'verification-failed', params);
-    }
-    if (tls.daysRemaining !== undefined && tls.validFrom && tls.validTo) {
-      const lifetimeDays = (Date.parse(tls.validTo) - Date.parse(tls.validFrom)) / 86_400_000;
-      // Short-lived certificates renew close to expiry by design, so only a late share of the lifetime is a warning.
-      if (tls.daysRemaining < 14 && tls.daysRemaining < lifetimeDays / 4) {
-        return fail('medium', evidence, 'expires-soon', { host: tls.host, days: tls.daysRemaining, validTo: tls.validTo });
-      }
-    }
-    return pass(evidence);
+    const results = [certificateResult(context.site.tls!, cite)];
+    // Many sites have no www or apex counterpart, so an unreachable one is left out rather than reported.
+    const counterpart = context.site.counterpartTls;
+    if (counterpart && !unreachable(counterpart)) results.push(certificateResult(counterpart, cite));
+    return results;
   },
 };
+
+function certificateResult(tls: TlsFacts, cite: Cite): RuleResult {
+  const excerpt = [
+    `authorized=${tls.authorized}`,
+    ...(tls.error ? [`error=${tls.error}`] : []),
+    ...(tls.validFrom ? [`validFrom=${tls.validFrom}`] : []),
+    ...(tls.validTo ? [`validTo=${tls.validTo}`] : []),
+    ...(tls.issuer ? [`issuer=${tls.issuer}`] : []),
+    `subjectAltNames=${tls.subjectAltNames.join(' ') || '(none)'}`,
+    `chainLength=${tls.chainLength}`,
+  ].join('; ');
+  const evidence = [cite({ kind: 'probe', url: `https://${tls.host}:${tls.port}/`, label: 'TLS certificate presented to a client that sends SNI', excerpt })];
+  if (unreachable(tls)) return notEvaluated('tls-unreachable');
+  if (!tls.authorized) {
+    const code = tls.error ?? 'UNKNOWN';
+    const params = { host: tls.host, code, issuer: tls.issuer ?? 'unknown' };
+    const critical = criticalCodes[code];
+    if (critical) return fail('critical', evidence, critical, params);
+    // Some browsers fetch missing intermediates themselves; Node does not, so the defect is named precisely.
+    if (chainCodes.has(code)) return fail('high', evidence, 'incomplete-chain', params);
+    // A private root is also what an intercepting proxy on the auditing network looks like.
+    if (code === 'SELF_SIGNED_CERT_IN_CHAIN') return fail('high', evidence, 'untrusted-root', params);
+    return fail('high', evidence, 'verification-failed', params);
+  }
+  if (tls.daysRemaining !== undefined && tls.validFrom && tls.validTo) {
+    const lifetimeDays = (Date.parse(tls.validTo) - Date.parse(tls.validFrom)) / 86_400_000;
+    // Short-lived certificates renew close to expiry by design, so only a late share of the lifetime is a warning.
+    if (tls.daysRemaining < 14 && tls.daysRemaining < lifetimeDays / 4) {
+      return fail('medium', evidence, 'expires-soon', { host: tls.host, days: tls.daysRemaining, validTo: tls.validTo });
+    }
+  }
+  return pass(evidence);
+}
 
 function pathAndQuery(url: string): string {
   const parsed = new URL(url);

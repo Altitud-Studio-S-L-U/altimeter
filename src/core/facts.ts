@@ -93,6 +93,8 @@ export interface SiteFacts {
   readonly homeUrl?: string;
   /** Certificate of the audited host, for https targets. */
   readonly tls?: TlsFacts;
+  /** Certificate of the www or apex counterpart of the audited host; its error says when that host is unreachable. */
+  readonly counterpartTls?: TlsFacts;
   /** The home page fetched with the user agent of each crawler that decides search and AI-answer visibility. */
   readonly agentProbes: readonly AgentProbe[];
   /** Data the site owner authorised: Search Console today, more sources later. */

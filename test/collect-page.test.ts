@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { decodeHtml, isHtmlResponse } from '../src/collect/page.ts';
-import { notFoundProbeUrl, urlVariants } from '../src/collect/probes.ts';
+import { hostCounterpart, notFoundProbeUrl, urlVariants } from '../src/collect/probes.ts';
 
 test('recognizes HTML by content type, and by content when the type is missing', () => {
   assert.equal(isHtmlResponse({ 'content-type': ['text/html; charset=utf-8'] }, Buffer.from('x')), true);
@@ -32,6 +32,10 @@ test('builds the URL variants that should consolidate to the audited URL', () =>
   assert.deepEqual(urlVariants('https://www.example.com/').map(variant => variant.label), ['index-file', 'tracking-parameter', 'http', 'www']);
   assert.equal(urlVariants('https://www.example.com/').find(variant => variant.label === 'www')?.url, 'https://example.com/');
   assert.equal(urlVariants('https://example.com/file.pdf').some(variant => variant.label === 'trailing-slash'), false);
+});
+
+test('pairs a host with its www or apex counterpart, except IP addresses and single labels', () => {
+  assert.deepEqual(['example.com', 'www.example.com', '192.0.2.1', 'localhost'].map(hostCounterpart), ['www.example.com', 'example.com', undefined, undefined]);
 });
 
 test('probes a random path on the same origin', () => {

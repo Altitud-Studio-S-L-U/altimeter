@@ -12,7 +12,7 @@ import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser, type Ren
 import { runLighthouse } from '../render/lighthouse.ts';
 import { crawlSite } from './crawl.ts';
 import { documentFacts, fetchPage, isHtmlResponse, decodeHtml } from './page.ts';
-import { notFoundProbeUrl, urlVariants } from './probes.ts';
+import { hostCounterpart, notFoundProbeUrl, urlVariants } from './probes.ts';
 
 /** Googlebot's product tokens, most specific first, for robots.txt decisions on subresources. */
 const googlebotTokens = ['googlebot'];
@@ -201,7 +201,11 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     const agentProbes = await Promise.all(probeAgents.map(agent => fetchAs(agent, homeUrl)));
     const uaProbes = page.raw ? await Promise.all([googlebotSmartphone, browserAgent].map(agent => fetchAs(agent, page.fetch.finalUrl))) : [];
     if (uaProbes.length > 0) pages.set(page.url, { ...pages.get(page.url)!, uaProbes });
-    const tls = target.protocol === 'https:' ? await inspectTls(target.hostname, { policy: options.policy ?? publicOnly, ...(target.port ? { port: Number(target.port) } : {}), ...(options.lookup ? { lookup: options.lookup } : {}) }) : undefined;
+    const tlsOptions = { policy: options.policy ?? publicOnly, ...(target.port ? { port: Number(target.port) } : {}), ...(options.lookup ? { lookup: options.lookup } : {}) };
+    const counterpart = hostCounterpart(target.hostname);
+    const [tls, counterpartTls] = target.protocol === 'https:'
+      ? await Promise.all([inspectTls(target.hostname, tlsOptions), counterpart ? inspectTls(counterpart, tlsOptions) : undefined])
+      : [undefined, undefined];
     log('Fetching referenced resources and language probes');
     const resources = await collectResources(client, target.origin, [...pages.values()]);
     const localeProbes: ProbeFacts[] = [];
@@ -297,6 +301,7 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       resources,
       localeProbes,
       ...(tls ? { tls } : {}),
+      ...(counterpartTls ? { counterpartTls } : {}),
     };
     return { site, versions, warnings, durationMs: performance.now() - started };
   } finally {

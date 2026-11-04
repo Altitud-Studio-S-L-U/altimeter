@@ -136,6 +136,7 @@ export interface SiteSpec {
   /** Probes such as { label: 'accept-language:es', url, redirects: [[302, '/es/']] }. */
   readonly localeProbes?: ReadonlyArray<{ readonly label: string; readonly url: string } & ResponseSpec>;
   readonly tls?: SiteFacts['tls'];
+  readonly counterpartTls?: SiteFacts['counterpartTls'];
 }
 
 export function site(spec: SiteSpec): SiteFacts {
@@ -179,6 +180,7 @@ export function site(spec: SiteSpec): SiteFacts {
     resources: (spec.resources ?? []).map(entry => ({ label: entry.purpose, url: entry.url, purpose: entry.purpose, ...(entry.referencedBy ? { referencedBy: entry.referencedBy } : {}), fetch: response(entry.url, entry) })),
     localeProbes: (spec.localeProbes ?? []).map(entry => ({ label: entry.label, url: entry.url, fetch: response(entry.url, entry) })),
     ...(spec.tls ? { tls: spec.tls } : {}),
+    ...(spec.counterpartTls ? { counterpartTls: spec.counterpartTls } : {}),
   };
 }
 

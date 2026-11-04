@@ -43,10 +43,19 @@ export function urlVariants(input: string): UrlVariant[] {
     insecure.protocol = 'http:';
     add('http', insecure);
   }
-  const host = new URL(url);
-  host.hostname = url.hostname.startsWith('www.') ? url.hostname.slice(4) : `www.${url.hostname}`;
-  if (!/^\d+\.\d+\.\d+\.\d+$/u.test(url.hostname) && url.hostname.includes('.')) add('www', host);
+  const counterpart = hostCounterpart(url.hostname);
+  if (counterpart) {
+    const host = new URL(url);
+    host.hostname = counterpart;
+    add('www', host);
+  }
   return variants;
+}
+
+/** The www host for an apex host and the apex for a www host; none for IP addresses and single-label names. */
+export function hostCounterpart(hostname: string): string | undefined {
+  if (/^\d+\.\d+\.\d+\.\d+$/u.test(hostname) || !hostname.includes('.')) return undefined;
+  return hostname.startsWith('www.') ? hostname.slice(4) : `www.${hostname}`;
 }
 
 /** A path that should not exist, to observe how the site answers unknown URLs. */

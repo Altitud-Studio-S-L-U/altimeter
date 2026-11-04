@@ -85,6 +85,15 @@ describe('tech-tls-certificate-valid', () => {
     assert.deepEqual([only(evaluate(tlsCertificateValid, withTls(timeout)).findings).reason], ['tls-unreachable']);
     assert.equal(only(evaluate(tlsCertificateValid, site({ pages: [page(home, { html: doc() })] })).findings).reason, 'missing-input:tls');
   });
+
+  test('checks the www counterpart when it answers and leaves it out when it does not exist', () => {
+    const mismatch: TlsFacts = { ...validTls, host: 'www.example.com', authorized: false, error: 'ERR_TLS_CERT_ALTNAME_INVALID', subjectAltNames: ['example.com'] };
+    const findings = evaluate(tlsCertificateValid, site({ pages: [page(home, { html: doc() })], tls: validTls, counterpartTls: mismatch })).findings;
+    assert.deepEqual(findings.map(finding => [finding.outcome, finding.reason, finding.params?.host]),
+      [['pass', undefined, undefined], ['fail', 'hostname-mismatch', 'www.example.com']]);
+    const missing: TlsFacts = { host: 'www.example.com', port: 443, authorized: false, error: 'ENOTFOUND', subjectAltNames: [], chainLength: 0 };
+    assert.equal(only(evaluate(tlsCertificateValid, site({ pages: [page(home, { html: doc() })], tls: validTls, counterpartTls: missing })).findings).outcome, 'pass');
+  });
 });
 
 describe('tech-http-to-https-redirect', () => {
