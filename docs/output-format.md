@@ -13,6 +13,10 @@ tasks/<id>.md   one file per task
 `altimeter render report.json --lang <en|es|ca>` writes the HTML, Markdown and task files again from `report.json`,
 in another language, without collecting anything.
 
+`render`, `compare` and `verify` check `report.json` first and stop with exit status 2 when a value does not have the
+shape described below, such as a task id that is not `T-` and 10 hexadecimal digits or a rule that this version's
+catalog does not have; a report from another version is rendered with the version that wrote it.
+
 The other commands that write files use the same parent folder: `altimeter bots` writes `bots.json` and `bots.md` to
 `<host>/<YYYYMMDD-HHMMSSZ>-bots/` (see [crawler activity](crawler-activity.md)), and `altimeter ai-probe --yes`
 writes `probe.json` and `probe.md` to `<host>/ai-probe-<YYYYMMDD-HHMMSSZ>/` (see [AI answer probe](ai-probe.md)).

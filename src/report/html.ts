@@ -158,11 +158,11 @@ export function renderHtml(report: Report, language: Language): string {
   const failures = listedFailures(report.findings);
   const scriptHash = createHash('sha256').update(script).digest('base64');
   const csp = `default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-${scriptHash}'; img-src data:; base-uri 'none'; form-action 'none'`;
-  const bars = report.score.categories.map(entry => `<div class="bar"><span>${escapeHtml(t.categories[entry.category])}</span><div class="track"><div class="fill ${scoreClass(entry.score)}" style="width:${entry.score ?? 0}%"></div></div><b>${entry.score ?? '–'}</b></div>`).join('');
+  const bars = report.score.categories.map(entry => `<div class="bar"><span>${escapeHtml(t.categories[entry.category])}</span><div class="track"><div class="fill ${scoreClass(entry.score)}" style="width:${escapeHtml(String(entry.score ?? 0))}%"></div></div><b>${escapeHtml(String(entry.score ?? '–'))}</b></div>`).join('');
   const tasks = report.tasks.slice(0, 10).map(task => {
     const rule = catalogRule(task.ruleId);
     const title = rule ? ruleTexts(language, rule).title : task.title;
-    return `<li><b class="sev-${escapeHtml(task.severity)}">${escapeHtml(t.severities[task.severity])}</b> ${escapeHtml(title)} <span class="where">· ${task.scopes.length} · ${escapeHtml(t.fixLocations[task.fixLocation])} · <code>${escapeHtml(task.id)}</code></span></li>`;
+    return `<li><b class="sev-${escapeHtml(task.severity)}">${escapeHtml(t.severities[task.severity])}</b> ${escapeHtml(title)} <span class="where">· ${escapeHtml(String(task.scopes.length))} ·${escapeHtml(t.fixLocations[task.fixLocation])} · <code>${escapeHtml(task.id)}</code></span></li>`;
   }).join('');
   const filterButtons = [
     `<button type="button" data-filter="category" data-value="all" aria-pressed="true">${escapeHtml(t.all)}</button>`,
@@ -177,7 +177,7 @@ export function renderHtml(report: Report, language: Language): string {
   const pending = report.findings.filter(finding => finding.needsJudgment && finding.judgment === undefined);
   const notEvaluated = new Map<string, number>();
   for (const finding of report.findings.filter(entry => entry.outcome === 'not_evaluated')) notEvaluated.set(finding.reason ?? 'unknown', (notEvaluated.get(finding.reason ?? 'unknown') ?? 0) + 1);
-  const pages = report.pages.map(page => `<tr><td>${escapeHtml(page.finalUrl)}</td><td>${page.status ?? '–'}</td><td>${escapeHtml(pageTypeText(page.pageType, language))}</td><td>${page.rendered ? escapeHtml(t.yes) : escapeHtml(t.no)}</td></tr>`).join('');
+  const pages = report.pages.map(page => `<tr><td>${escapeHtml(page.finalUrl)}</td><td>${escapeHtml(String(page.status ?? '–'))}</td><td>${escapeHtml(pageTypeText(page.pageType, language))}</td><td>${page.rendered ? escapeHtml(t.yes) : escapeHtml(t.no)}</td></tr>`).join('');
   return `<!doctype html>
 <html lang="${language}">
 <head>
@@ -194,7 +194,7 @@ export function renderHtml(report: Report, language: Language): string {
 <header><h1>${escapeHtml(format(t.reportTitle, { site: host }))}</h1>
 <p class="meta">${escapeHtml(t.audited)}: ${escapeHtml(report.target.url)} · ${escapeHtml(format(t.generated, { version: report.tool.version, date: report.run.startedAt.slice(0, 10) }))}</p></header>
 <h2>${escapeHtml(t.summary)}</h2>
-<div class="panel"><div class="summary"><div class="overall"><b>${report.score.overall ?? '–'}</b><span>${escapeHtml(t.overall)}</span></div><div class="bars">${bars}</div></div>
+<div class="panel"><div class="summary"><div class="overall"><b>${escapeHtml(String(report.score.overall ?? '–'))}</b><span>${escapeHtml(t.overall)}</span></div><div class="bars">${bars}</div></div>
 <p class="gate"><span class="pill">${escapeHtml(t.indexability)}</span> ${escapeHtml(t.indexabilityStates[report.score.indexability])}</p>
 <p class="where">${escapeHtml(format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable }))}</p>
 ${report.run.warnings.length > 0 ? `<p class="where">${report.run.warnings.map(warning => escapeHtml(localizeValue(language, 'warning', warning))).join('<br>')}</p>` : ''}</div>

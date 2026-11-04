@@ -237,9 +237,10 @@ function verifyHint(task: Task, language: Language): string {
 function taskBody(report: Report, task: Task, language: Language, evidenceBudget: number): string {
   const t = ui(language);
   const rule = catalogRule(task.ruleId);
-  const texts = rule ? ruleTexts(language, rule) : { title: task.title, why: '', fix: task.desired };
+  const texts = rule ? ruleTexts(language, rule) : undefined;
   const evidence = new Map(report.evidence.map(item => [item.id, item]));
-  const lines: string[] = [`## ${task.id} · [${t.severities[task.severity]}] ${cleanLine(texts.title)}`, ''];
+  // For a rule the catalog does not have, the title and desired state come from report.json, which anyone can edit.
+  const lines: string[] = [`## ${task.id} · [${t.severities[task.severity]}] ${texts ? cleanLine(texts.title) : untrustedInline(task.title, 160)}`, ''];
   lines.push(`- ${t.rule}: \`${task.ruleId}\` (${t.categories[task.category]})`);
   lines.push(`- ${t.page}: ${task.scopes.map(scope => untrustedInline(scopeLabel(scope), 160)).join(', ')}`);
   lines.push(`- ${t.whereToFix}: ${t.fixLocations[task.fixLocation]}`);
@@ -247,7 +248,7 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
   lines.push(`- ${t.verifyCommand}: \`${verifyHint(task, language)}\``, '');
   const problem = findingMessage(language, task.ruleId, 'fail', task.reason, task.params) ?? task.problem;
   lines.push(`### ${t.problem}`, '', untrustedBlock(problem, 1500), '');
-  if (texts.why) lines.push(cleanLine(texts.why, 700), '');
+  if (texts?.why) lines.push(cleanLine(texts.why, 700), '');
   lines.push(`### ${t.evidence}`, '');
   let used = 0;
   for (const id of task.evidence) {
@@ -263,7 +264,7 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
     used += entry.length;
     lines.push(entry);
   }
-  lines.push('', `### ${t.desiredState}`, '', cleanLine(texts.fix, 700), '');
+  lines.push('', `### ${t.desiredState}`, '', texts ? cleanLine(texts.fix, 700) : untrustedBlock(task.desired, 1500), '');
   if (task.files?.length || task.mustNotChange?.length) {
     lines.push(`### ${t.whereToLook}`, '');
     for (const file of task.files ?? []) lines.push(`- \`${cleanLine(file.path, 200)}\` · ${t.fileConfidence[file.confidence]} · ${cleanLine(fileReasonText(file.reason, language), 200)}`);

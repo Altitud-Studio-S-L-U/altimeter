@@ -6,7 +6,7 @@ import type { CollectResult } from '../src/collect/index.ts';
 import { evidenceLabel, EvidenceStore } from '../src/core/evidence.ts';
 import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
 import { renderHtml } from '../src/report/html.ts';
-import { buildReport } from '../src/report/model.ts';
+import { buildReport, type Report } from '../src/report/model.ts';
 import { page, site } from './support/facts.ts';
 
 const hostile = '<script>alert(1)</script><img src=x onerror=alert(2)>';
@@ -29,6 +29,20 @@ test('the HTML report escapes everything taken from the site', () => {
   assert.doesNotMatch(html, /<script>alert/u);
   assert.doesNotMatch(html, /<img src=x/u);
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/u);
+});
+
+test('the HTML report writes the numbers of an edited report.json as text', () => {
+  const audit = report();
+  const markup = '<meta http-equiv="refresh" content="0;url=https://evil.example/">';
+  const edited = {
+    ...audit,
+    pages: audit.pages.map(entry => ({ ...entry, status: markup })),
+    score: { ...audit.score, overall: markup, categories: audit.score.categories.map(entry => ({ ...entry, score: '0%"><em class="injected">' })) },
+    tasks: audit.tasks.map(task => ({ ...task, scopes: { length: markup } })),
+  } as unknown as Report;
+  const html = renderHtml(edited, 'en');
+  assert.doesNotMatch(html, /<meta http-equiv="refresh"/u);
+  assert.doesNotMatch(html, /<em class="injected">/u);
 });
 
 test('the HTML report allows only its own script through the CSP and loads nothing external', () => {

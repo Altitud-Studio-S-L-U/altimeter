@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
@@ -217,6 +217,18 @@ describe('writing reports', () => {
       assert.doesNotMatch(await readFile(join(directory, 'report.json'), 'utf8'), /[A-Za-z]:\\\\|\/home\/|\/Users\//u);
     } finally {
       await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test('refuses a task id that is not a task id before writing anything, so no task file lands outside tasks/', async () => {
+    const report = auditOf([page('https://example.com/b', { html: '<!doctype html><p>No title</p>' })]);
+    const base = await mkdtemp(join(tmpdir(), 'altimeter-report-test-'));
+    try {
+      const edited = { ...report, tasks: report.tasks.map(task => ({ ...task, id: '../../escaped' })) };
+      await assert.rejects(writeReport(join(base, 'run', 'a'), edited, 'en'), /is not a task id/u);
+      assert.deepEqual(await readdir(base), []);
+    } finally {
+      await rm(base, { recursive: true, force: true });
     }
   });
 

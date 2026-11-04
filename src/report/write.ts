@@ -4,6 +4,8 @@ import type { Language } from '../i18n/messages.ts';
 import { renderHtml } from './html.ts';
 import { renderFixPlan, renderMarkdown, renderTaskFile } from './markdown.ts';
 import type { Report } from './model.ts';
+import { cleanLine } from './sanitize.ts';
+import { taskIdPattern } from './tasks.ts';
 
 const reservedNames = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/iu;
 
@@ -32,9 +34,14 @@ export interface WrittenReport {
   readonly files: readonly string[];
 }
 
-/** Writes report.json, report.md, FIXES.md and one file per task. Paths in the files are never absolute. */
+/**
+ * Writes report.json, report.md, FIXES.md and one file per task. Paths in the files are never absolute. Each task id
+ * names a file in tasks/, so an id that is not a task id, which an edited report.json can hold, stops the write
+ * before any file is written.
+ */
 export async function writeReport(directory: string, report: Report, language: Language): Promise<WrittenReport> {
-  await mkdir(join(directory, 'tasks'), { recursive: true });
+  const misnamed = report.tasks.find(task => !taskIdPattern.test(task.id));
+  if (misnamed) throw new Error(`${cleanLine(String(misnamed.id), 60)} is not a task id, so it cannot name a file in tasks/.`);
   const files: Array<[string, string]> = [
     ['report.json', `${JSON.stringify(report, null, 2)}\n`],
     ['report.html', renderHtml(report, language)],
@@ -42,6 +49,7 @@ export async function writeReport(directory: string, report: Report, language: L
     ['FIXES.md', renderFixPlan(report, language)],
     ...report.tasks.map(task => [join('tasks', `${task.id}.md`), renderTaskFile(report, task, language)] as [string, string]),
   ];
+  await mkdir(join(directory, 'tasks'), { recursive: true });
   for (const [name, content] of files) await writeFile(join(directory, name), content, 'utf8');
   return { directory, files: files.map(([name]) => name) };
 }

@@ -10,6 +10,9 @@ export interface TaskCheck {
   readonly scope: FindingScope;
 }
 
+/** Every task id, which also names the task's file in tasks/. */
+export const taskIdPattern = /^T-[0-9a-f]{10}$/u;
+
 export interface Task {
   /** Stable across runs while the same rule fails for the same reason with evidence of the same shape: `T-<hash>`. */
   readonly id: string;
