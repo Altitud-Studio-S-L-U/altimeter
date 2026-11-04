@@ -39,6 +39,8 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm audit signatures
+      # Ubuntu 24.04 restricts the unprivileged user namespaces that Chrome's sandbox needs; Altimeter never disables that sandbox.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm run check
       - name: Check that the package version matches the tag
         env:
