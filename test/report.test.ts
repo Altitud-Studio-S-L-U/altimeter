@@ -8,6 +8,8 @@ import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
 import { EvidenceStore } from '../src/core/evidence.ts';
 import { runRules, type Finding, type RuleImplementation } from '../src/rules/engine.ts';
+import { implementations as registered } from '../src/rules/registry.ts';
+import { compareReports } from '../src/report/compare.ts';
 import { renderHtml } from '../src/report/html.ts';
 import { renderFixPlan, renderMarkdown, renderTaskFile, taskFileLimit } from '../src/report/markdown.ts';
 import { buildReport, mergeAnalysis } from '../src/report/model.ts';
@@ -102,6 +104,37 @@ describe('tasks', () => {
     assert.deepEqual(kept('crawl-meta-robots-noindex'), ['crawl-status-final']);
     assert.deepEqual(kept('perf-render-blocking'), ['perf-text-compression']);
     assert.deepEqual(kept('intl-hreflang-relative-url'), ['intl-hreflang-outside-head']);
+  });
+});
+
+describe('compareReports', () => {
+  const syntax = catalogRules.filter(rule => rule.id === 'schema-jsonld-syntax-error');
+  const reportOf = (html?: string) => {
+    const facts = site({ pages: [page('https://example.com/', html === undefined ? {} : { html })] });
+    const evidence = new EvidenceStore();
+    const findings = runRules({ rules: syntax, implementations: registered, site: facts, evidence });
+    const collected: CollectResult = { site: facts, versions: {}, warnings: [], durationMs: 1 };
+    return buildReport({ collected, findings, evidence, implemented: 1, language: 'en', startedAt: new Date('2026-11-04T10:00:00Z'), targetUrl: 'https://example.com/', options: {} });
+  };
+  const none = reportOf('<!doctype html><title>Home</title>');
+  const valid = reportOf('<!doctype html><title>Home</title><script type="application/ld+json">{"@type": "Organization"}</script>');
+  const broken = reportOf('<!doctype html><title>Home</title><script type="application/ld+json">{"@type": "Organization",</script>');
+  const unread = reportOf();
+  const counts = (comparison: ReturnType<typeof compareReports>) =>
+    [comparison.fixed.length, comparison.introduced.length, comparison.remaining.length, comparison.notComparable.length];
+
+  test('counts a failure as new when the check did not apply before', () => {
+    assert.deepEqual([none, broken].map(report => report.findings[0]?.outcome), ['not_applicable', 'fail']);
+    assert.deepEqual(counts(compareReports(none, broken)), [0, 1, 0, 0]);
+  });
+
+  test('compares failures with passes, and leaves a check evaluated in only one report out of fixed and new', () => {
+    assert.deepEqual(counts(compareReports(valid, broken)), [0, 1, 0, 0]);
+    assert.deepEqual(counts(compareReports(broken, valid)), [1, 0, 0, 0]);
+    assert.deepEqual(counts(compareReports(broken, broken)), [0, 0, 1, 0]);
+    assert.equal(unread.findings[0]?.outcome, 'not_evaluated');
+    assert.deepEqual(counts(compareReports(unread, broken)), [0, 0, 0, 1]);
+    assert.deepEqual(counts(compareReports(broken, none)), [0, 0, 0, 1]);
   });
 });
 
