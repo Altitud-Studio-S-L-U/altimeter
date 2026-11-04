@@ -1904,13 +1904,12 @@
     ],
     "appliesTo": "all",
     "exemptWhen": [
-      "The sitemap omits lastmod entirely; the field is optional.",
       "A small site rebuilt all its pages at once shares one date."
     ],
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Invalid format = medium. More than 90% of at least 20 URLs sharing one lastmod = medium: deterministic when the value is within 10 minutes of the sitemap response time (generation time), otherwise confirmed by the analyst. Future dates (more than one day after the response) = low.",
+    "thresholds": "Invalid format = medium. More than 90% of at least 20 URLs sharing one lastmod = medium: deterministic when the value is within 10 minutes of the sitemap response time (generation time), otherwise confirmed by the analyst. Future dates (more than one day after the response) = low. No lastmod on any listed URL = low: the field is optional, but Bing calls it a key signal for scheduling recrawls and Google uses it when it is consistently accurate.",
     "sources": [
       {
         "url": "https://developers.google.com/search/blog/2023/06/sitemaps-lastmod-ping",
@@ -1930,7 +1929,7 @@
       }
     ],
     "status": "v1",
-    "notes": "Validate lastmod as W3C Datetime (YYYY-MM-DD or full date-time with timezone). Detect: every URL sharing the same timestamp (generation time), dates in the future, dates older than the page's visible or structured dateModified by >7 days, lastmod changing on every fetch. A missing lastmod is fine (optional). Small sites that rebuild everything at once can legitimately share one date.",
+    "notes": "Validate lastmod as W3C Datetime (YYYY-MM-DD or full date-time with timezone). Detect: every URL sharing the same timestamp (generation time), dates in the future, dates older than the page's visible or structured dateModified by >7 days, lastmod changing on every fetch. A missing lastmod is optional for Google; when no URL has one it is reported as low, because Bing uses it to choose what to recrawl. Small sites that rebuild everything at once can legitimately share one date.",
     "related": [
       "content-date-consistency",
       "content-date-manipulation"

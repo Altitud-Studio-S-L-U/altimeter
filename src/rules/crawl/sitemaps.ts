@@ -175,8 +175,14 @@ const sitemapLastmod: RuleImplementation = {
   id: 'crawl-sitemap-lastmod',
   evaluate({ site, evidence }) {
     const documents = readable(site).filter(entry => entry.document?.kind === 'urlset');
+    const listed = documents.reduce((sum, entry) => sum + entry.document!.urls.length, 0);
+    if (listed === 0) return notApplicable('no-sitemap-urls');
     const dated = documents.flatMap(entry => entry.document!.urls.filter(url => url.lastmod !== undefined).map(url => ({ entry, url, lastmod: url.lastmod! })));
-    if (dated.length === 0) return notApplicable('no-lastmod');
+    if (dated.length === 0) {
+      // Optional for Google, which uses it only when accurate; Bing calls it a key signal for scheduling recrawls.
+      const id = evidence.add({ kind: 'sitemap', url: documents[0]!.url, label: 'URLs listed in the sitemaps, none with lastmod', excerpt: `${listed} URLs, none with lastmod` });
+      return failure({ severity: 'low', evidence: [id], reason: 'missing', params: { count: listed } });
+    }
     const invalid = dated.filter(item => !isW3cDatetime(item.lastmod));
     if (invalid.length > 0) {
       const ids = invalid.slice(0, 5).map(item => evidence.add({ kind: 'sitemap', url: item.entry.url, label: 'lastmod that is not a W3C Datetime', excerpt: item.lastmod, line: item.url.line }));

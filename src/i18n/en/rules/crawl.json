@@ -369,7 +369,8 @@
       "fail:invalid-format": "{count} lastmod values are not W3C Datetime dates, for example {value}.",
       "fail:generation-time": "{count} URLs share the lastmod {value}, the time the sitemap was generated, so Google stops trusting the field.",
       "fail:uniform": "{count} URLs share the lastmod {value}. Confirm that it reflects real content changes rather than a rebuild date.",
-      "fail:future-dates": "{count} lastmod values are in the future, for example {value}."
+      "fail:future-dates": "{count} lastmod values are in the future, for example {value}.",
+      "fail:missing": "None of the {count} URLs in the sitemaps has a lastmod date. Google uses lastmod when it is consistently accurate, and Bing calls it a key signal for scheduling recrawls."
     }
   },
   "crawl-sitemap-ignored-tags": {

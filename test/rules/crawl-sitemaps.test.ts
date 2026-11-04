@@ -157,8 +157,11 @@ describe('crawl-sitemap-lastmod', () => {
     const future = servedAt(site({ pages: [home()], sitemaps: [{ url: map, xml: dated(['2026-10-01', '2027-03-01']) }] }), 'Wed, 04 Nov 2026 10:00:00 GMT');
     assertFail(run(id, future).finding, 'low', 'future-dates');
   });
-  test('does not apply when lastmod is omitted', () => {
-    assertOutcome(run(id, { pages: [home()], sitemaps: [{ url: map, xml: locs(['/a']) }] }).finding, 'not_applicable', 'no-lastmod');
+  test('reports low when no URL has lastmod, and does not apply without listed URLs', () => {
+    const { finding, excerpts } = run(id, { pages: [home()], sitemaps: [{ url: map, xml: locs(['/a', '/b']) }] });
+    assertFail(finding, 'low', 'missing');
+    assert.deepEqual(excerpts(), ['2 URLs, none with lastmod']);
+    assertOutcome(run(id, { pages: [home()], sitemaps: [{ url: map, status: 404 }] }).finding, 'not_applicable', 'no-sitemap-urls');
   });
 });
 
