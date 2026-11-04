@@ -25,7 +25,8 @@ reverse DNS, and compares them with robots.txt and the sitemaps. Writes bots.jso
 Options:
   --cloudflare-zone <domain>  Read Cloudflare GraphQL Analytics for the zone (read-only token in ALTIMETER_CLOUDFLARE_API_TOKEN,
                               with Zone > Analytics > Read and Zone > Zone > Read). Counts are sampled estimates.
-  --logs <file|dir>           Access logs, plain or gzip; repeat it, or list more files after the options. A folder means its files.
+  --logs <file|dir>           Access logs, plain or gzip; repeat it, or list more files after the options. A folder means its files,
+                              skipping with a warning those that are empty or not access logs.
   --log-format <name>         combined, common, nginx-json, iis, cloudfront, alb, cloudflare, vercel or netlify (default: detected).
   --ip-source <source>        Client address in server logs: remote (default), xff-last (last X-Forwarded-For entry, right behind
                               one trusted proxy) or xff-first (first entry, forgeable by clients; only when every hop is trusted).
@@ -163,9 +164,10 @@ export async function botsCommand(args: string[], context: BotsCommandContext = 
   const client = context.client ?? new HttpClient(values['allow-private-network'] ? { policy: { allowPrivate: true } } : {});
   try {
     let site: SiteFacts | undefined;
+    let siteWarnings: readonly string[] = [];
     if (origin) {
       log?.(`Reading robots.txt and the sitemaps of ${cleanLine(origin, 200)}`);
-      site = await fetchSiteFacts(client, origin);
+      ({ site, warnings: siteWarnings } = await fetchSiteFacts(client, origin));
     } else {
       log?.('No --site given: robots.txt and sitemaps are not compared.');
     }
@@ -183,6 +185,8 @@ export async function botsCommand(args: string[], context: BotsCommandContext = 
       if (error instanceof BotActivityError) throw new BotsUsageError(error.message);
       throw error;
     }
+    // Sitemaps left unread limit the coverage figures, so their warnings go into bots.json and bots.md with the rest.
+    activity = { ...activity, warnings: [...siteWarnings, ...activity.warnings] };
     const report = buildBotsReport(activity, site);
     const base = resolve(values.out ?? 'altimeter-report');
     const directory = join(base, safeFolderName(origin ? new URL(origin).host : 'logs'), `${runFolderName(new Date(activity.fetchedAt))}-bots`);

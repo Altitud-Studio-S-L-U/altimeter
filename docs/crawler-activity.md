@@ -18,9 +18,10 @@ rules become findings of the report. Like all owner data, they never change the 
 
 - **Access logs.** Supported formats are Apache and nginx combined and common, nginx JSON (or any JSON lines with
   `--json-fields`), IIS W3C, CloudFront, Application Load Balancer, Cloudflare Logpush, and Vercel and Netlify log
-  drains. Files can be plain or gzip, and a folder stands for the files in it. The format is detected from the first
-  lines unless `--log-format` names it. Files are read as streams, twice (once to collect the addresses to check, once
-  to count), so memory stays bounded whatever their size.
+  drains. Files can be plain or gzip, and a folder stands for the files in it; files in a folder that are empty or in
+  no recognised format, such as an error log, are skipped with a warning, while a file named on its own must be an
+  access log. The format is detected from the first lines unless `--log-format` names it. Files are read as streams,
+  twice (once to collect the addresses to check, once to count), so memory stays bounded whatever their size.
 - **Cloudflare GraphQL Analytics.** Reads the `httpRequestsAdaptiveGroups` dataset with a read-only API token you
   create, passed in `ALTIMETER_CLOUDFLARE_API_TOKEN`. The token needs Zone > Analytics > Read, plus Zone > Zone > Read
   so the zone can be found by name; a 32-character zone ID works without the second permission. Altimeter first reads

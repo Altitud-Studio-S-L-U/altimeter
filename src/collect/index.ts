@@ -1,16 +1,16 @@
 import type { lookup as dnsLookup } from 'node:dns';
 import { performance } from 'node:perf_hooks';
-import type { AgentProbe, PageFacts, ProbeFacts, RenderFacts, ResourceFacts, ResourcePurpose, SiteFacts, SitemapFacts } from '../core/facts.ts';
+import type { AgentProbe, PageFacts, ProbeFacts, RenderFacts, ResourceFacts, ResourcePurpose, SiteFacts } from '../core/facts.ts';
 import { browserAgent, googlebotSmartphone, probeAgents, type ProbeAgent } from '../data/agents.ts';
 import { queryCrux, cruxEndpoint, type CruxFormFactor, type CruxOutcome } from '../data/crux.ts';
 import { HttpClient, defaultUserAgent } from '../fetch/http.ts';
 import { publicOnly, type NetworkPolicy } from '../fetch/ip-guard.ts';
 import { isAllowed, robotsAvailability, type RobotsAvailability } from '../fetch/robots.ts';
-import { parseSitemap } from '../fetch/sitemap.ts';
 import { inspectTls, trustedRoots } from '../fetch/tls.ts';
 import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser, type RenderMode } from '../render/chrome.ts';
 import { runLighthouse } from '../render/lighthouse.ts';
 import { crawlSite } from './crawl.ts';
+import { collectSitemaps } from './sitemaps.ts';
 import { documentFacts, fetchPage, isHtmlResponse, decodeHtml } from './page.ts';
 import { hostCounterpart, notFoundProbeUrl, urlVariants } from './probes.ts';
 
@@ -47,8 +47,6 @@ export interface CollectResult {
   readonly durationMs: number;
 }
 
-const maxDeclaredSitemaps = 5;
-const maxChildSitemaps = 10;
 
 async function fetchRobots(client: HttpClient, origin: string) {
   const url = new URL('/robots.txt', origin).href;
@@ -57,39 +55,6 @@ async function fetchRobots(client: HttpClient, origin: string) {
   const redirectLimit = fetch.error?.code === 'too-many-redirects' || fetch.error?.code === 'redirect-loop';
   const availability = robotsAvailability(fetch.error ? undefined : fetch.status, fetch.body, redirectLimit);
   return { url, fetch, availability };
-}
-
-/** The sitemaps read, with warnings when the caps on declared and child sitemaps leave some unread. */
-async function collectSitemaps(client: HttpClient, origin: string, declared: string[]): Promise<{ sitemaps: SitemapFacts[]; warnings: string[] }> {
-  const results: SitemapFacts[] = [];
-  const queue: Array<{ url: string; source: SitemapFacts['source'] }> = declared.length > 0
-    ? declared.slice(0, maxDeclaredSitemaps).map(url => ({ url, source: 'robots' as const }))
-    : [{ url: new URL('/sitemap.xml', origin).href, source: 'default' as const }];
-  const seen = new Set<string>();
-  const listed = new Set<string>();
-  let children = 0;
-  while (queue.length > 0) {
-    const next = queue.shift()!;
-    if (seen.has(next.url)) continue;
-    seen.add(next.url);
-    const fetch = await client.fetch(next.url, { maxBytes: 50 * 1024 * 1024 + 1, timeoutMs: 30_000 });
-    const document = fetch.status === 200 && !fetch.error ? parseSitemap(fetch.body) : undefined;
-    results.push({ url: next.url, source: next.source, fetch, ...(document ? { document } : {}) });
-    for (const child of document?.sitemaps ?? []) {
-      listed.add(child.loc);
-      if (children >= maxChildSitemaps) continue;
-      children += 1;
-      queue.push({ url: child.loc, source: 'index' });
-    }
-  }
-  // Rules that compare pages or owner data with sitemap URLs would otherwise take part of the list for all of it.
-  const warnings: string[] = [];
-  const partial = 'so checks that use sitemap URLs see only part of them';
-  if (declared.length > maxDeclaredSitemaps) warnings.push(`${declared.length} sitemaps are declared and only the first ${maxDeclaredSitemaps} were read, ${partial}.`);
-  const unread = [...listed].filter(url => !seen.has(url)).length;
-  const read = results.filter(entry => entry.source === 'index').length;
-  if (unread > 0) warnings.push(`The sitemap indexes list ${read + unread} child sitemaps and only ${read} were read, ${partial}.`);
-  return { sitemaps: results, warnings };
 }
 
 async function probe(client: HttpClient, label: string, url: string): Promise<ProbeFacts> {

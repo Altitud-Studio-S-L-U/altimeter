@@ -49,7 +49,7 @@ after(async () => {
 describe('site facts for the bots command', () => {
   test('reads robots.txt, its Last-Modified date and the sitemap URLs through an index', async () => {
     const client = loopbackClient();
-    const facts = await fetchSiteFacts(client, primaryOrigin);
+    const facts = (await fetchSiteFacts(client, primaryOrigin)).site;
     await client.close();
     assert.equal(facts.origin, primaryOrigin);
     assert.deepEqual(facts.sitemaps.map(entry => entry.source), ['robots', 'index']);
@@ -67,7 +67,7 @@ describe('site facts for the bots command', () => {
     const origin = `http://127.0.0.1:${(redirecting.address() as AddressInfo).port}`;
     const client = loopbackClient();
     try {
-      const facts = await fetchSiteFacts(client, origin);
+      const facts = (await fetchSiteFacts(client, origin)).site;
       assert.equal(facts.origin, movedOrigin);
       assert.deepEqual(botSiteInput(facts).sitemapUrls, [`${movedOrigin}/en/`]);
     } finally {
@@ -79,13 +79,34 @@ describe('site facts for the bots command', () => {
 
   test('treats a missing robots.txt as no rules and an unreachable one as unknown', async () => {
     const client = loopbackClient();
-    const fetched = await fetchSiteFacts(client, primaryOrigin);
+    const fetched = (await fetchSiteFacts(client, primaryOrigin)).site;
     await client.close();
     assert.ok(fetched.robots);
     const missing = { ...fetched, robots: { ...fetched.robots, availability: { kind: 'unrestricted' as const, status: 404 } } };
     assert.equal(isAllowed(botSiteInput(missing).robots!.file, ['gptbot'], '/anything').allowed, true);
     const unreachable = { ...fetched, robots: { ...fetched.robots, availability: { kind: 'unreachable' as const, status: 503 } } };
     assert.equal(botSiteInput(unreachable).robots, undefined);
+  });
+
+  test('warns, as an audit does, when robots.txt declares more sitemaps than are read', async () => {
+    const many = createServer((request, response) => {
+      const origin = `http://127.0.0.1:${(many.address() as AddressInfo).port}`;
+      if (request.url === '/robots.txt') {
+        return void response.writeHead(200, { 'content-type': 'text/plain' }).end(['User-agent: *', 'Allow: /', ...[1, 2, 3, 4, 5, 6, 7].map(n => `Sitemap: ${origin}/sitemap-${n}.xml`)].join('\n'));
+      }
+      response.writeHead(200, { 'content-type': 'application/xml' }).end(urlset(origin, [`${request.url}-page/`]));
+    });
+    await new Promise<void>(resolve => many.listen(0, '127.0.0.1', resolve));
+    const client = loopbackClient();
+    try {
+      const { site: facts, warnings } = await fetchSiteFacts(client, `http://127.0.0.1:${(many.address() as AddressInfo).port}`);
+      assert.equal(facts.sitemaps.length, 5);
+      assert.deepEqual(warnings, ['7 sitemaps are declared and only the first 5 were read, so checks that use sitemap URLs see only part of them.']);
+    } finally {
+      await client.close();
+      many.closeAllConnections();
+      await new Promise(resolve => many.close(resolve));
+    }
   });
 });
 

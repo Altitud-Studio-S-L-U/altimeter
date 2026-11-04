@@ -1,7 +1,7 @@
-import type { SiteFacts, SitemapFacts } from '../../core/facts.ts';
+import { collectSitemaps } from '../../collect/sitemaps.ts';
+import type { SiteFacts } from '../../core/facts.ts';
 import { headerValue, type HttpClient } from '../../fetch/http.ts';
 import { parseRobots, robotsAvailability, type RobotsFile } from '../../fetch/robots.ts';
-import { parseSitemap } from '../../fetch/sitemap.ts';
 
 /** What crawler activity is compared with: the site's robots.txt and sitemap URLs. */
 export interface BotSiteInput {
@@ -39,42 +39,24 @@ export function botSiteInput(site: SiteFacts): BotSiteInput {
   return { origin, ...(robotsInput ? { robots: robotsInput } : {}), sitemapUrls };
 }
 
-/** Sitemaps read per run, as the audit's collector reads them. */
-const maxDeclaredSitemaps = 5;
-const maxChildSitemaps = 10;
-
 /**
  * Fetches robots.txt and the sitemaps it declares (or /sitemap.xml), for the bots command, which runs without an
- * audit. The result has the shape of an audit's site facts, with no page collected. When robots.txt redirects to the
- * www or apex variant of the host, that variant is the site, since it serves the rules and the sitemap URLs.
+ * audit. The result has the shape of an audit's site facts, with no page collected, and the warnings an audit gives
+ * when the caps on sitemaps leave some unread. When robots.txt redirects to the www or apex variant of the host, that
+ * variant is the site, since it serves the rules and the sitemap URLs.
  */
-export async function fetchSiteFacts(client: HttpClient, requested: string): Promise<SiteFacts> {
+export async function fetchSiteFacts(client: HttpClient, requested: string): Promise<{ readonly site: SiteFacts; readonly warnings: readonly string[] }> {
   const robotsFetch = await client.fetch(new URL('/robots.txt', requested).href, { maxRedirects: 5, maxBytes: 1024 * 1024 });
   const origin = (robotsFetch.error ? undefined : movedWithinSite(robotsFetch.finalUrl, requested)) ?? requested;
   const robotsUrl = new URL('/robots.txt', origin).href;
-  const availability = robotsAvailability(robotsFetch.error ? undefined : robotsFetch.status, robotsFetch.body, robotsFetch.error?.code === 'too-many-redirects');
+  // As in an audit: Google stops after five redirects and reads the file as missing, which a redirect loop always comes to.
+  const redirectLimit = robotsFetch.error?.code === 'too-many-redirects' || robotsFetch.error?.code === 'redirect-loop';
+  const availability = robotsAvailability(robotsFetch.error ? undefined : robotsFetch.status, robotsFetch.body, redirectLimit);
   const declared = availability.kind === 'parsed' ? availability.file.sitemaps.map(line => line.value).filter(value => /^https?:\/\//iu.test(value)) : [];
-  const queue: Array<{ url: string; source: SitemapFacts['source'] }> = declared.length > 0
-    ? declared.slice(0, maxDeclaredSitemaps).map(url => ({ url, source: 'robots' as const }))
-    : [{ url: new URL('/sitemap.xml', origin).href, source: 'default' as const }];
-  const sitemaps: SitemapFacts[] = [];
-  const seen = new Set<string>();
-  let children = 0;
-  while (queue.length > 0) {
-    const next = queue.shift()!;
-    if (seen.has(next.url)) continue;
-    seen.add(next.url);
-    const fetch = await client.fetch(next.url, { maxBytes: 50 * 1024 * 1024 + 1, timeoutMs: 30_000 });
-    const document = fetch.status === 200 && !fetch.error ? parseSitemap(fetch.body) : undefined;
-    sitemaps.push({ url: next.url, source: next.source, fetch, ...(document ? { document } : {}) });
-    for (const child of document?.sitemaps ?? []) {
-      if (children >= maxChildSitemaps) break;
-      children += 1;
-      queue.push({ url: child.loc, source: 'index' });
-    }
-  }
-  return {
+  const { sitemaps, warnings } = await collectSitemaps(client, origin, [...new Set(declared)]);
+  const site: SiteFacts = {
     origin, robots: { url: robotsUrl, fetch: robotsFetch, availability }, sitemaps, variants: [], siblings: [], pages: new Map(), crawled: false,
     agentProbes: [], resources: [], localeProbes: [],
   };
+  return { site, warnings };
 }
