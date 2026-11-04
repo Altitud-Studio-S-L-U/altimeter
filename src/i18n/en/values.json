@@ -126,6 +126,11 @@
     "yes": "yes",
     "no": "no"
   },
+  "intl-hreflang-outside-head/cause": {
+    "<{tag}> element": "<{tag}> element",
+    "text content": "text content",
+    "not determined": "not determined"
+  },
   "issuer": {
     "unknown": "unknown"
   },

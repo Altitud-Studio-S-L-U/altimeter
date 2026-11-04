@@ -52,6 +52,14 @@ describe('translating the values of messages and labels', () => {
     assert.equal(localizeValue('es', 'problem', 'svg'), 'svg');
   });
 
+  test('names what ended the head early for the hreflang rule, and leaves the site text the head rule quotes alone', () => {
+    const message = (language: 'es' | 'ca', cause: string) => findingMessage(language, 'intl-hreflang-outside-head', 'fail', 'raw-body', { count: 2, line: 7, cause });
+    assert.match(message('es', '<div> element')!, /línea 7 \(elemento <div>\)/u);
+    assert.match(message('ca', 'text content')!, /línia 7 \(contingut de text\)/u);
+    assert.match(message('es', 'not determined')!, /\(sin determinar\)/u);
+    assert.equal(localizeValue('es', 'cause', 'text content', 'crawl-head-invalid-element'), 'text content');
+  });
+
   test('gives a translated message translated values and the English message the English ones', () => {
     const params = { formFactor: 'PHONE', scope: 'origin-level', value: '3200 ms', band: 'poor' };
     assert.match(findingMessage('es', 'perf-crux-lcp-p75', 'fail', undefined, params)!, /en móvil \(datos de CrUX: nivel de origen\), en el rango «deficiente»/u);
