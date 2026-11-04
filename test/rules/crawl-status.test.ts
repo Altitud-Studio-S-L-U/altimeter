@@ -12,7 +12,8 @@ function run(id: string, facts: SiteFacts | SiteSpec, url?: string) {
   assert.ok(implementation, `${id} is implemented`);
   const { findings, evidence } = evaluate(implementation, facts.pages instanceof Map ? facts as SiteFacts : site(facts as SiteSpec));
   const picked = url ? findings.filter(entry => entry.scope.kind === 'page' && entry.scope.url === url) : findings;
-  return { finding: picked[0]!, findings: picked, excerpts: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? '') };
+  return { finding: picked[0]!, findings: picked, excerpts: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? ''),
+    labels: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.label ?? '') };
 }
 
 function assertFail(finding: Finding, severity: Severity, reason?: string, needsJudgment = false) {
@@ -238,9 +239,10 @@ describe('crawl-host-variant-consolidation', () => {
     assertOutcome(run(id, facts).finding, 'pass');
   });
   test('fails high on a duplicate that answers 200 without a canonical', () => {
-    const { finding, excerpts } = run(id, { pages: [base()], variants: [{ label: 'trailing-slash', url: `${origin}/a`, body: doc('', body) }] });
+    const { finding, excerpts, labels } = run(id, { pages: [base()], variants: [{ label: 'trailing-slash', url: `${origin}/a`, body: doc('', body) }] });
     assertFail(finding, 'high', 'duplicate-200');
-    assert.deepEqual(excerpts(), ['HTTP 200, canonical (none)', 'HTTP 200']);
+    assert.deepEqual(excerpts(), ['', 'HTTP 200']);
+    assert.equal(labels()[0], 'URL variant (trailing-slash) that answers 200 with the same content and declares no canonical');
   });
   test('fails low on a temporary or multi-hop consolidation', () => {
     assertFail(run(id, { pages: [base()], variants: [{ label: 'www', url: 'https://www.example.com/a/', redirects: [[302, preferred]] }] }).finding, 'low', 'temporary-redirect');

@@ -6,7 +6,7 @@
     "messages": {
       "fail": "{url} ha respost {status}.",
       "fail:server-error": "{url} ha respost {status}. Google tracta un error del servidor al robots.txt com una prohibició total: deixa de rastrejar el lloc durant 12 hores i després fa servir l'última còpia que té a la memòria cau durant un màxim de 30 dies.",
-      "fail:network-error": "No s'ha pogut obtenir {url}: {status}. Google tracta un robots.txt inaccessible com un error del servidor i deixa de rastrejar el lloc.",
+      "fail:network-error": "No s'ha pogut obtenir {url} ({fetchError}). Google tracta un robots.txt inaccessible com un error del servidor i deixa de rastrejar el lloc.",
       "fail:access-denied": "{url} ha respost {status}. Google ho tracta com si no hi hagués robots.txt, de manera que no s'aplica cap restricció de rastreig."
     }
   },
@@ -17,7 +17,7 @@
     "messages": {
       "fail": "{url} redirigeix {hops} vegades. Google segueix com a màxim 5 redireccions del robots.txt i després tracta el fitxer com si no existís, de manera que no s'aplica cap regla.",
       "fail:too-many-hops": "{url} redirigeix {hops} vegades. Google segueix com a màxim 5 redireccions del robots.txt i després tracta el fitxer com si no existís, de manera que no s'aplica cap regla.",
-      "fail:loop": "{url} redirigeix en bucle i torna a una URL que ja havia visitat després de {hops} salts. Google segueix com a màxim 5 redireccions del robots.txt i després tracta el fitxer com si no existís, de manera que no s'aplica cap regla."
+      "fail:loop": "{url} redirigeix en bucle i torna a una URL que ja havia visitat després de {hops, plural, one {# salt} other {# salts}}. Google segueix com a màxim 5 redireccions del robots.txt i després tracta el fitxer com si no existís, de manera que no s'aplica cap regla."
     }
   },
   "crawl-robots-format": {
@@ -50,7 +50,7 @@
     "fix": "Fes servir noindex a la metaetiqueta robots o a X-Robots-Tag a les URL rastrejables en lloc de noindex al robots.txt. Google no té cap directiva de freqüència de rastreig: en una emergència, retorna temporalment 503/429.",
     "messages": {
       "fail": "{url} fa servir camps que Google no admet: {fields}.",
-      "fail:noindex": "{url} conté {count} línia(es) noindex. Google ignora noindex al robots.txt, de manera que aquestes URL no s'eliminen dels resultats. Camps no admesos trobats: {fields}.",
+      "fail:noindex": "{url} conté {count, plural, one {# línia noindex} other {# línies noindex}}. Google ignora noindex al robots.txt, de manera que aquestes URL no s'eliminen dels resultats. Camps no admesos trobats: {fields}.",
       "fail:ignored-fields": "{url} fa servir camps que Google ignora: {fields}. Pot ser que alguns altres cercadors els llegeixin igualment."
     }
   },
@@ -84,9 +84,9 @@
     "why": "Segons l'RFC 9309, un rastrejador només obeeix el grup més específic que coincideix amb el seu agent d'usuari. Per tant, un grup per a Googlebot o per a qualsevol identificador de rastrejador d'IA substitueix completament les regles de *, i les regles Disallow que només existeixen sota * deixen d'aplicar-se a aquest rastrejador.",
     "fix": "Repeteix les regles compartides dins de cada grup específic. El grup * no s'hereta.",
     "messages": {
-      "fail": "{count} regla(es) Disallow del grup * no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
-      "fail:crawl-trap": "{count} regla(es) Disallow del grup *, incloses les de trampes de rastreig, no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
-      "fail:missing-rules": "{count} regla(es) Disallow del grup * no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
+      "fail": "{count, plural, one {# regla Disallow del grup * no es repeteix} other {# regles Disallow del grup * no es repeteixen}} als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
+      "fail:crawl-trap": "{count, plural, one {# regla Disallow del grup *, que és una trampa de rastreig, no es repeteix} other {# regles Disallow del grup *, incloses les de trampes de rastreig, no es repeteixen}} als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
+      "fail:missing-rules": "{count, plural, one {# regla Disallow del grup * no es repeteix} other {# regles Disallow del grup * no es repeteixen}} als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
       "fail:intentional-allow": "El grup * prohibeix el rastreig de tot i el grup {token} el permet, cosa que funciona com una llista de permesos."
     }
   },
@@ -440,8 +440,8 @@
     "why": "Google redueix la freqüència de rastreig quan un lloc retorna respostes 5xx o 429, i les URL que continuen fallant acaben sortint de l'índex.",
     "fix": "Corregeix la capacitat. Fes servir 503/429 amb Retry-After només durant poc temps (d'un parell d'hores a 1-2 dies). Els errors durant diversos dies poden fer sortir URL de l'índex.",
     "messages": {
-      "fail": "{count} de {total} URL rastrejades ({share}) han respost amb un error del servidor, un 429 o un temps d'espera esgotat.",
-      "fail:error-rate": "{count} de {total} URL rastrejades ({share}) han respost amb un error del servidor, un 429 o un temps d'espera esgotat.",
+      "fail": "{count} de {total} URL rastrejades ({share, number, ::percent .0}) han respost amb un error del servidor, un 429 o un temps d'espera esgotat.",
+      "fail:error-rate": "{count} de {total} URL rastrejades ({share, number, ::percent .0}) han respost amb un error del servidor, un 429 o un temps d'espera esgotat.",
       "fail:no-retry-after": "URL rastrejades que han respost 503 o 429 sense capçalera Retry-After: {count}."
     }
   },
@@ -464,7 +464,7 @@
       "fail:unparseable": "El mapa del lloc {url} no es pot analitzar: {detail}.",
       "fail:wrong-namespace": "El mapa del lloc {url} fa servir l'espai de noms {detail} en lloc de l'espai de noms de sitemaps.org.",
       "fail:over-limit": "El mapa del lloc {url} supera els límits del protocol de 50.000 entrades o 50 MB sense comprimir ({detail}).",
-      "fail:invalid-urls": "El mapa del lloc {url} conté entrades que no són URL http(s) absolutes de menys de 2048 caràcters ({detail}).",
+      "fail:invalid-urls": "El mapa del lloc {url} té {count, plural, one {# entrada que no és una URL http(s) absoluta} other {# entrades que no són URL http(s) absolutes}} de menys de 2048 caràcters.",
       "fail:nested-index": "El mapa del lloc {url} és un índex de mapes del lloc inclòs dins d'un altre índex.",
       "fail:child-unreachable": "El mapa del lloc fill {url}, inclòs en un índex de mapes del lloc, no respon 200 ({detail})."
     }
@@ -484,8 +484,8 @@
     "why": "Google i Bing demanen mapes del lloc que només incloguin URL canòniques i indexables que responguin 200. Incloure-hi redireccions, errors, URL amb noindex o bloquejades envia senyals contradictoris i malbarata el rastreig.",
     "fix": "Inclou-hi només les URL canòniques i indexables que responen 200 i que vols als resultats. Genera el mapa del lloc a partir de la mateixa font de veritat que les canòniques.",
     "messages": {
-      "fail": "URL del mapa del lloc que no són pàgines canòniques indexables: {count} ({share} de les {classified} classificades).",
-      "fail:high-share": "{count} de les {classified} URL classificades del mapa del lloc ({share}) no són pàgines canòniques indexables.",
+      "fail": "URL del mapa del lloc que no són pàgines canòniques indexables: {count} ({share, number, percent} de les {classified} classificades).",
+      "fail:high-share": "{count} de les {classified} URL classificades del mapa del lloc ({share, number, percent}) no són pàgines canòniques indexables.",
       "fail:robots-blocked": "URL del mapa del lloc que no són pàgines canòniques indexables: {count}, incloses URL amb el rastreig prohibit al robots.txt.",
       "fail:noindex": "URL del mapa del lloc que no són pàgines canòniques indexables: {count}, incloses URL que tenen noindex.",
       "fail:error": "URL del mapa del lloc que no són pàgines canòniques indexables: {count}, incloses URL que responen amb un error.",
@@ -539,10 +539,10 @@
     "why": "Google renderitza JavaScript, però la renderització es pot endarrerir i falla quan els scripts donen error o estan bloquejats. Molts altres rastrejadors, inclosos la majoria dels rastrejadors d'IA, no executen JavaScript. Els títols, les canòniques, la metaetiqueta robots, hreflang i les dades estructurades que difereixen entre l'HTML en brut i el renderitzat donen als rastrejadors dues versions entre les quals triar.",
     "fix": "Fes servir la renderització al servidor, la renderització estàtica o la hidratació.",
     "messages": {
-      "fail": "{url} depèn de JavaScript per a un {share} del que mostra.",
-      "fail:content-after-js": "Un {share} del text renderitzat de {url} no és a l'HTML en brut. Google el renderitza, més tard; els rastrejadors que no executen JavaScript no el veuen.",
-      "fail:links-after-js": "Un {share} dels enllaços interns de {url} només existeix després que s'executi JavaScript.",
-      "fail:metadata-differs": "L'HTML en brut i el DOM renderitzat de {url} difereixen en: {share}."
+      "fail": "{url} depèn de JavaScript per a un {share, number, percent} del que mostra.",
+      "fail:content-after-js": "Un {share, number, percent} del text renderitzat de {url} no és a l'HTML en brut. Google el renderitza, més tard; els rastrejadors que no executen JavaScript no el veuen.",
+      "fail:links-after-js": "Un {share, number, percent} dels enllaços interns de {url} només existeix després que s'executi JavaScript.",
+      "fail:metadata-differs": "L'HTML en brut i el DOM renderitzat de {url} difereixen en: {fields}."
     }
   },
   "crawl-js-lazy-content": {
@@ -551,7 +551,7 @@
     "fix": "Carrega el contingut quan entri a l'àrea de visualització (loading=lazy natiu, IntersectionObserver). Dona URL úniques, enllaçades de manera seqüencial, als fragments del desplaçament infinit.",
     "messages": {
       "fail": "Una part de {url} només es carrega després de desplaçar-se ({count}).",
-      "fail:content-after-scroll": "Un {count} del text de {url} només apareix després de desplaçar-se. Confirma que no és el contingut principal.",
+      "fail:content-after-scroll": "Un {share, number, percent} del text de {url} només apareix després de desplaçar-se. Confirma que no és el contingut principal.",
       "fail:links-after-scroll": "Enllaços interns de {url} que només apareixen després de desplaçar-se: {count}. Confirma si són enllaços d'elements o de paginació.",
       "fail:images-without-src": "{count} imatge(s) de {url} no tenen src en una renderització sense desplaçament, de manera que no es carreguen per a la indexació."
     }

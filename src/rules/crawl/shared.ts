@@ -287,10 +287,6 @@ export function internalLinks(doc: DocumentFacts | undefined, pageUrl: string): 
   return [...result];
 }
 
-export function percent(value: number): string {
-  return `${Math.round(value * 100)}%`;
-}
-
 export function excerptOf(text: string, max = 300): string {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }

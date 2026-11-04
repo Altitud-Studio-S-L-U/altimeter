@@ -12,7 +12,8 @@ function run(id: string, facts: SiteFacts | SiteSpec, url?: string) {
   assert.ok(implementation, `${id} is implemented`);
   const { findings, evidence } = evaluate(implementation, facts.pages instanceof Map ? facts as SiteFacts : site(facts as SiteSpec));
   const picked = url ? findings.filter(entry => entry.scope.kind === 'page' && entry.scope.url === url) : findings;
-  return { finding: picked[0]!, findings: picked, excerpts: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? '') };
+  return { finding: picked[0]!, findings: picked, excerpts: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? ''),
+    labels: (finding: Finding = picked[0]!) => finding.evidence.map(ref => evidence.get(ref)?.label ?? '') };
 }
 
 function assertFail(finding: Finding, severity: Severity, reason?: string, needsJudgment = false) {
@@ -81,9 +82,10 @@ describe('crawl-noindex-raw-vs-rendered', () => {
     assertOutcome(run(id, one(url, { html: doc(''), rendered: doc('') })).finding, 'pass');
   });
   test('fails critical when JavaScript removes a raw noindex', () => {
-    const { finding, excerpts } = run(id, one(url, { html: doc('<meta name="robots" content="noindex">'), rendered: doc('') }));
+    const { finding, excerpts, labels } = run(id, one(url, { html: doc('<meta name="robots" content="noindex">'), rendered: doc('') }));
     assertFail(finding, 'critical', 'removed-by-js');
-    assert.deepEqual(excerpts(), ['noindex', '(none)']);
+    assert.deepEqual(excerpts(), ['noindex', '']);
+    assert.equal(labels()[1], 'no robots directives in the rendered DOM');
   });
   test('fails high when JavaScript adds noindex', () => {
     assertFail(run(id, one(url, { html: doc(''), rendered: doc('<meta name="robots" content="noindex">') })).finding, 'high', 'added-by-js');
@@ -262,9 +264,9 @@ describe('crawl-canonical-presence', () => {
     assertOutcome(run(id, one(url, { html: doc(`<link rel="canonical" href="${url}">`) })).finding, 'pass');
   });
   test('fails low without a canonical', () => {
-    const { finding, excerpts } = run(id, one(url, { html: doc('') }));
+    const { finding, labels } = run(id, one(url, { html: doc('') }));
     assertFail(finding, 'low', 'missing');
-    assert.deepEqual(excerpts(), ['(none)']);
+    assert.deepEqual(labels(), ['no canonical declaration in the raw HTML, the rendered DOM or a Link header']);
   });
   test('escalates to medium when a variant answers 200', () => {
     const { finding } = run(id, one(url, { html: doc('') }, { variants: [{ label: 'trailing-slash', url: `${origin}/a`, body: doc('') }] }));

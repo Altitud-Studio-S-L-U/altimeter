@@ -42,7 +42,9 @@ const sitemapValidity: RuleImplementation = {
     let checked = 0;
     for (const entry of site.sitemaps.filter(item => item.source === 'index' && item.fetch.status !== 200)) {
       checked += 1;
-      const id = evidence.add({ kind: 'sitemap', url: entry.url, label: evidenceLabel('child sitemap listed in a sitemap index'), excerpt: entry.fetch.status === undefined ? 'no response' : `HTTP ${entry.fetch.status}` });
+      const id = entry.fetch.status === undefined
+        ? evidence.add({ kind: 'sitemap', url: entry.url, label: evidenceLabel('child sitemap listed in a sitemap index, which got no response ({fetchError})', { fetchError: entry.fetch.error?.code ?? 'connection' }) })
+        : evidence.add({ kind: 'sitemap', url: entry.url, label: evidenceLabel('child sitemap listed in a sitemap index'), excerpt: `HTTP ${entry.fetch.status}` });
       results.push(failure({ severity: 'medium', evidence: [id], reason: 'child-unreachable', params: { url: entry.url, detail: `HTTP ${entry.fetch.status ?? 'error'}` } }));
     }
     for (const entry of readable(site)) {
@@ -52,32 +54,36 @@ const sitemapValidity: RuleImplementation = {
         const lines = entry.fetch.body.toString('utf8').split(/\r\n|\r|\n/u).map(line => line.trim()).filter(Boolean);
         const invalid = lines.map((line, index) => ({ line, number: index + 1 })).filter(item => !validLoc(item.line));
         if (lines.length > sitemapLimits.entries || entry.fetch.body.length > sitemapLimits.bytes) {
-          results.push(failure({ severity: 'high', evidence: [evidence.add({ kind: 'sitemap', url, label: evidenceLabel('URLs in the text sitemap'), excerpt: String(lines.length) })], reason: 'over-limit', params: { url, detail: `${lines.length} URLs` } }));
+          results.push(failure({ severity: 'high', evidence: [evidence.add({ kind: 'sitemap', url, label: evidenceLabel('URLs in the text sitemap: {count}', { count: lines.length }) })], reason: 'over-limit', params: { url, detail: `${lines.length} URLs` } }));
         } else if (invalid.length > 0) {
           const ids = invalid.slice(0, 5).map(item => evidence.add({ kind: 'sitemap', url, label: evidenceLabel('text sitemap line that is not an absolute URL'), excerpt: item.line, line: item.number }));
-          results.push(failure({ severity: 'medium', evidence: ids, reason: 'invalid-urls', params: { url, detail: `${invalid.length} lines` } }));
+          results.push(failure({ severity: 'medium', evidence: ids, reason: 'invalid-urls', params: { url, count: invalid.length } }));
         }
         continue;
       }
       const document = entry.document;
       if (!document || looksLikeHtml(entry) || document.kind === 'unknown' || document.errors.length > 0) {
         const error = document?.errors[0];
-        const id = evidence.add({ kind: 'sitemap', url, label: evidenceLabel('sitemap parse result'), excerpt: error ? error.message : looksLikeHtml(entry) ? 'HTML document instead of XML' : 'root element is not urlset or sitemapindex', ...(error?.line ? { line: error.line } : {}) });
+        const id = error
+          ? evidence.add({ kind: 'sitemap', url, label: evidenceLabel('sitemap parse result'), excerpt: error.message, ...(error.line ? { line: error.line } : {}) })
+          : evidence.add({ kind: 'sitemap', url, label: looksLikeHtml(entry) ? evidenceLabel('sitemap that is an HTML document instead of XML') : evidenceLabel('sitemap whose root element is not urlset or sitemapindex') });
         results.push(failure({ severity: 'high', evidence: [id], reason: 'unparseable', params: { url, detail: error?.message ?? 'not a sitemap' } }));
         continue;
       }
       if (document.namespace !== sitemapNamespace) {
-        const id = evidence.add({ kind: 'sitemap', url, label: evidenceLabel('namespace of the root element'), excerpt: document.namespace ?? '(none)' });
+        const id = document.namespace === undefined
+          ? evidence.add({ kind: 'sitemap', url, label: evidenceLabel('root element without a namespace') })
+          : evidence.add({ kind: 'sitemap', url, label: evidenceLabel('namespace of the root element'), excerpt: document.namespace });
         results.push(failure({ severity: 'high', evidence: [id], reason: 'wrong-namespace', params: { url, detail: document.namespace ?? '(none)' } }));
         continue;
       }
       if (document.overEntryLimit || document.overByteLimit) {
-        const id = evidence.add({ kind: 'sitemap', url, label: evidenceLabel('entries and uncompressed bytes'), excerpt: `${document.entries} entries, ${document.bytes} bytes` });
+        const id = evidence.add({ kind: 'sitemap', url, label: evidenceLabel('sitemap entries ({entries}) and uncompressed bytes ({bytes})', { entries: document.entries, bytes: document.bytes }) });
         results.push(failure({ severity: 'high', evidence: [id], reason: 'over-limit', params: { url, detail: `${document.entries} entries, ${document.bytes} bytes` } }));
         continue;
       }
       if (entry.source === 'index' && document.kind === 'sitemapindex') {
-        const id = evidence.add({ kind: 'sitemap', url, label: evidenceLabel('sitemap index listed inside another sitemap index'), excerpt: `${document.sitemaps.length} child sitemaps` });
+        const id = evidence.add({ kind: 'sitemap', url, label: evidenceLabel('sitemap index listed inside another sitemap index, with {count, plural, one {# child sitemap} other {# child sitemaps}}', { count: document.sitemaps.length }) });
         results.push(failure({ severity: 'medium', evidence: [id], reason: 'nested-index', params: { url, detail: 'index inside an index' } }));
       }
       const invalid: { line: number; label: EvidenceLabel; excerpt?: string }[] = [
@@ -87,7 +93,7 @@ const sitemapValidity: RuleImplementation = {
       ].sort((a, b) => a.line - b.line);
       if (invalid.length > 0) {
         const ids = invalid.slice(0, 5).map(item => evidence.add({ kind: 'sitemap', url, ...item }));
-        results.push(failure({ severity: 'medium', evidence: ids, reason: 'invalid-urls', params: { url, detail: `${invalid.length} entries` } }));
+        results.push(failure({ severity: 'medium', evidence: ids, reason: 'invalid-urls', params: { url, count: invalid.length } }));
       }
     }
     if (checked === 0) return notApplicable('no-sitemap-document');
@@ -170,7 +176,7 @@ const sitemapUrlQuality: RuleImplementation = {
         if (facts?.raw && effectiveDirectives(facts, facts.raw).has('noindex')) add('noindex', [...effectiveDirectives(facts, facts.raw)].join(', '), 'medium');
         else if (facts?.raw) {
           const canonical = declaredCanonical(facts);
-          if (canonical && canonical !== normalizeUrl(facts.fetch.finalUrl)) add('canonicalised', `canonical ${canonical}`, 'low');
+          if (canonical && canonical !== normalizeUrl(facts.fetch.finalUrl)) add('canonicalised', canonical, 'low');
         }
       }
     }
@@ -180,7 +186,7 @@ const sitemapUrlQuality: RuleImplementation = {
     if (classified >= 10 && ratio > 0.1) severity = 'high';
     const ids = problems.slice(0, 8).map(problem => evidence.add({ kind: 'sitemap', url: problem.sitemap, label: indexableLabels[problem.kind], excerpt: `${problem.loc} | ${problem.detail}`, line: problem.line }));
     const reason = severity === 'high' ? 'high-share' : problems.find(problem => problem.severity === severity)!.kind;
-    return failure({ severity, evidence: ids, reason, params: { count: problems.length, classified, share: `${Math.round(ratio * 100)}%` } });
+    return failure({ severity, evidence: ids, reason, params: { count: problems.length, classified, share: ratio } });
   },
 };
 
@@ -193,7 +199,7 @@ const sitemapLastmod: RuleImplementation = {
     const dated = documents.flatMap(entry => entry.document!.urls.filter(url => url.lastmod !== undefined).map(url => ({ entry, url, lastmod: url.lastmod! })));
     if (dated.length === 0) {
       // Optional for Google, which uses it only when accurate; Bing calls it a key signal for scheduling recrawls.
-      const id = evidence.add({ kind: 'sitemap', url: documents[0]!.url, label: evidenceLabel('URLs listed in the sitemaps, none with lastmod'), excerpt: `${listed} URLs, none with lastmod` });
+      const id = evidence.add({ kind: 'sitemap', url: documents[0]!.url, label: evidenceLabel('URLs listed in the sitemaps, none with lastmod: {count}', { count: listed }) });
       return failure({ severity: 'low', evidence: [id], reason: 'missing', params: { count: listed } });
     }
     const invalid = dated.filter(item => !isW3cDatetime(item.lastmod));
@@ -208,7 +214,7 @@ const sitemapLastmod: RuleImplementation = {
     const sample = dated.find(item => item.lastmod === common)!;
     const served = Date.parse(headerValue(sample.entry.fetch.headers, 'date') ?? '');
     if (dated.length >= 20 && commonCount / dated.length > 0.9) {
-      const ids = [evidence.add({ kind: 'sitemap', url: sample.entry.url, label: evidenceLabel('lastmod value shared by most URLs, with its count'), excerpt: `${common} (${commonCount} of ${dated.length})` })];
+      const ids = [evidence.add({ kind: 'sitemap', url: sample.entry.url, label: evidenceLabel('lastmod value shared by {count} of {total} dated URLs', { count: commonCount, total: dated.length }), excerpt: common })];
       const generated = common.includes('T') && !Number.isNaN(served) && Math.abs(Date.parse(common) - served) <= 10 * 60_000;
       if (generated) {
         ids.push(evidence.add({ kind: 'header', url: sample.entry.url, label: evidenceLabel('Date header of the sitemap response'), excerpt: headerValue(sample.entry.fetch.headers, 'date')! }));

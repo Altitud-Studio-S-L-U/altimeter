@@ -45,7 +45,7 @@
   "contentType": {
     "(none)": "(cap)"
   },
-  "crawl-js-content-dependency/share": {
+  "crawl-js-content-dependency/fields": {
     "title": "títol",
     "meta description": "metadescripció",
     "structured data types": "tipus de dades estructurades"
@@ -56,8 +56,6 @@
   "detail": {
     "HTTP error": "error HTTP",
     "{count} URLs": "{count} URL",
-    "{count} lines": "{count} línies",
-    "{count} entries": "{count} entrades",
     "{entries} entries, {bytes} bytes": "{entries} entrades, {bytes} bytes",
     "not a sitemap": "no és un mapa del lloc",
     "index inside an index": "índex dins d'un altre índex",
@@ -80,10 +78,24 @@
     "no answer": "sense resposta",
     "unknown error": "error desconegut"
   },
+  "fetchError": {
+    "invalid-url": "URL no vàlida",
+    "unsupported-protocol": "protocol no admès",
+    "blocked-address": "adreça no pública",
+    "dns": "error de DNS",
+    "connection": "error de connexió",
+    "tls": "error de TLS",
+    "timeout": "temps d'espera esgotat",
+    "redirect-loop": "bucle de redireccions",
+    "too-many-redirects": "massa redireccions",
+    "decode": "error de descodificació",
+    "aborted": "sol·licitud cancel·lada"
+  },
   "field": {
     "title": "títol",
     "meta description": "metadescripció",
-    "image alt texts": "textos alternatius de les imatges"
+    "image alt texts": "textos alternatius de les imatges",
+    "structured data types": "tipus de dades estructurades"
   },
   "fileReason": {
     "contains {token}": "conté {token}",
@@ -256,6 +268,12 @@
     "header": "capçalera HTTP Link",
     "sitemap": "mapa del lloc"
   },
+  "signal": {
+    "title": "títol",
+    "canonical": "canònica",
+    "robots": "directives robots",
+    "h1": "h1"
+  },
   "snippet": {
     "async-hide class": "classe async-hide",
     "Adobe Target pre-hiding snippet": "fragment d'ocultació prèvia d'Adobe Target",
@@ -314,6 +332,15 @@
   },
   "url": {
     "unknown": "URL desconeguda"
+  },
+  "variant": {
+    "trailing-slash": "«barra final»",
+    "index-file": "«index.html»",
+    "uppercase": "«majúscules»",
+    "tracking-parameter": "«paràmetre de seguiment»",
+    "double-slash": "«barra doble»",
+    "http": "«http»",
+    "www": "«www»"
   },
   "warning": {
     "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "S'han demanat dades de Search Console, però no s'ha trobat cap credencial. Executa «altimeter gsc login --client <client_secret.json> --remember <dpapi|file>» o defineix ALTIMETER_GSC_ACCESS_TOKEN.",

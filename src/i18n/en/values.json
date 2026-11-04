@@ -45,7 +45,7 @@
   "contentType": {
     "(none)": "(none)"
   },
-  "crawl-js-content-dependency/share": {
+  "crawl-js-content-dependency/fields": {
     "title": "title",
     "meta description": "meta description",
     "structured data types": "structured data types"
@@ -56,8 +56,6 @@
   "detail": {
     "HTTP error": "HTTP error",
     "{count} URLs": "{count} URLs",
-    "{count} lines": "{count} lines",
-    "{count} entries": "{count} entries",
     "{entries} entries, {bytes} bytes": "{entries} entries, {bytes} bytes",
     "not a sitemap": "not a sitemap",
     "index inside an index": "index inside an index",
@@ -80,10 +78,24 @@
     "no answer": "no answer",
     "unknown error": "unknown error"
   },
+  "fetchError": {
+    "invalid-url": "invalid-url",
+    "unsupported-protocol": "unsupported-protocol",
+    "blocked-address": "blocked-address",
+    "dns": "dns",
+    "connection": "connection",
+    "tls": "tls",
+    "timeout": "timeout",
+    "redirect-loop": "redirect-loop",
+    "too-many-redirects": "too-many-redirects",
+    "decode": "decode",
+    "aborted": "aborted"
+  },
   "field": {
     "title": "title",
     "meta description": "meta description",
-    "image alt texts": "image alt texts"
+    "image alt texts": "image alt texts",
+    "structured data types": "structured data types"
   },
   "fileReason": {
     "contains {token}": "contains {token}",
@@ -256,6 +268,12 @@
     "header": "header",
     "sitemap": "sitemap"
   },
+  "signal": {
+    "title": "title",
+    "canonical": "canonical",
+    "robots": "robots",
+    "h1": "h1"
+  },
   "snippet": {
     "async-hide class": "async-hide class",
     "Adobe Target pre-hiding snippet": "Adobe Target pre-hiding snippet",
@@ -314,6 +332,15 @@
   },
   "url": {
     "unknown": "unknown"
+  },
+  "variant": {
+    "trailing-slash": "trailing-slash",
+    "index-file": "index-file",
+    "uppercase": "uppercase",
+    "tracking-parameter": "tracking-parameter",
+    "double-slash": "double-slash",
+    "http": "http",
+    "www": "www"
   },
   "warning": {
     "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.",

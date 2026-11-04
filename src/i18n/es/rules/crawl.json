@@ -6,7 +6,7 @@
     "messages": {
       "fail": "{url} ha respondido {status}.",
       "fail:server-error": "{url} ha respondido {status}. Google trata un error del servidor en robots.txt como un bloqueo total: deja de rastrear el sitio durante 12 horas y después usa su última copia en caché durante un máximo de 30 días.",
-      "fail:network-error": "No se ha podido obtener {url}: {status}. Google trata un robots.txt inaccesible como un error del servidor y deja de rastrear el sitio.",
+      "fail:network-error": "No se ha podido obtener {url} ({fetchError}). Google trata un robots.txt inaccesible como un error del servidor y deja de rastrear el sitio.",
       "fail:access-denied": "{url} ha respondido {status}. Google lo trata como si no hubiera robots.txt, así que no se aplica ninguna restricción de rastreo."
     }
   },
@@ -17,7 +17,7 @@
     "messages": {
       "fail": "{url} redirige {hops} veces. Google sigue como máximo 5 redirecciones de robots.txt y después trata el archivo como inexistente, así que no se aplica ninguna regla.",
       "fail:too-many-hops": "{url} redirige {hops} veces. Google sigue como máximo 5 redirecciones de robots.txt y después trata el archivo como inexistente, así que no se aplica ninguna regla.",
-      "fail:loop": "{url} redirige en bucle y vuelve a una URL que ya había visitado tras {hops} saltos. Google sigue como máximo 5 redirecciones de robots.txt y después trata el archivo como inexistente, así que no se aplica ninguna regla."
+      "fail:loop": "{url} redirige en bucle y vuelve a una URL que ya había visitado tras {hops, plural, one {# salto} other {# saltos}}. Google sigue como máximo 5 redirecciones de robots.txt y después trata el archivo como inexistente, así que no se aplica ninguna regla."
     }
   },
   "crawl-robots-format": {
@@ -50,7 +50,7 @@
     "fix": "Usa noindex en la etiqueta meta robots o en X-Robots-Tag en URLs rastreables en lugar de noindex en robots.txt. Google no tiene ninguna directiva de frecuencia de rastreo: en caso de emergencia, devuelve temporalmente 503/429.",
     "messages": {
       "fail": "{url} usa campos que Google no admite: {fields}.",
-      "fail:noindex": "{url} contiene {count} línea(s) noindex. Google ignora noindex en robots.txt, así que esas URLs no se retiran de los resultados. Campos no admitidos encontrados: {fields}.",
+      "fail:noindex": "{url} contiene {count, plural, one {# línea noindex} other {# líneas noindex}}. Google ignora noindex en robots.txt, así que esas URLs no se retiran de los resultados. Campos no admitidos encontrados: {fields}.",
       "fail:ignored-fields": "{url} usa campos que Google ignora: {fields}. Es posible que otros buscadores sí los lean."
     }
   },
@@ -84,9 +84,9 @@
     "why": "Según el RFC 9309, un rastreador solo obedece el grupo más específico que coincide con su user-agent. Por tanto, un grupo para Googlebot o para cualquier token de rastreador de IA sustituye por completo las reglas de *, y las reglas disallow que solo existen en * dejan de aplicarse a ese rastreador.",
     "fix": "Repite las reglas comunes dentro de cada grupo específico. El grupo * no se hereda.",
     "messages": {
-      "fail": "{count} regla(s) disallow del grupo * no se repiten en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
-      "fail:crawl-trap": "{count} regla(s) disallow del grupo *, incluidas trampas de rastreo, no se repiten en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
-      "fail:missing-rules": "{count} regla(s) disallow del grupo * no se repiten en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
+      "fail": "{count, plural, one {# regla disallow del grupo * no se repite} other {# reglas disallow del grupo * no se repiten}} en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
+      "fail:crawl-trap": "{count, plural, one {# regla disallow del grupo *, que es una trampa de rastreo, no se repite} other {# reglas disallow del grupo *, incluidas trampas de rastreo, no se repiten}} en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
+      "fail:missing-rules": "{count, plural, one {# regla disallow del grupo * no se repite} other {# reglas disallow del grupo * no se repiten}} en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
       "fail:intentional-allow": "El grupo * bloquea todo y el grupo de {token} lo permite, lo que funciona como una lista de permitidos."
     }
   },
@@ -440,8 +440,8 @@
     "why": "Google reduce su frecuencia de rastreo cuando un sitio devuelve respuestas 5xx o 429, y las URLs que siguen fallando acaban retiradas del índice.",
     "fix": "Resuelve la falta de capacidad del servidor. Usa 503/429 con Retry-After solo durante poco tiempo (de un par de horas a 1-2 días). Los errores durante varios días pueden hacer que las URLs se retiren del índice.",
     "messages": {
-      "fail": "{count} de {total} URLs rastreadas ({share}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
-      "fail:error-rate": "{count} de {total} URLs rastreadas ({share}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
+      "fail": "{count} de {total} URLs rastreadas ({share, number, ::percent .0}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
+      "fail:error-rate": "{count} de {total} URLs rastreadas ({share, number, ::percent .0}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
       "fail:no-retry-after": "URLs rastreadas que han respondido 503 o 429 sin una cabecera Retry-After: {count}."
     }
   },
@@ -464,7 +464,7 @@
       "fail:unparseable": "El sitemap {url} no se puede analizar: {detail}.",
       "fail:wrong-namespace": "El sitemap {url} usa el espacio de nombres {detail} en lugar del espacio de nombres de sitemaps.org.",
       "fail:over-limit": "El sitemap {url} supera los límites del protocolo de 50.000 entradas o 50 MB sin comprimir ({detail}).",
-      "fail:invalid-urls": "El sitemap {url} contiene entradas que no son URLs http(s) absolutas de menos de 2048 caracteres ({detail}).",
+      "fail:invalid-urls": "El sitemap {url} tiene {count, plural, one {# entrada que no es una URL http(s) absoluta} other {# entradas que no son URLs http(s) absolutas}} de menos de 2048 caracteres.",
       "fail:nested-index": "El sitemap {url} es un índice de sitemaps incluido dentro de otro índice.",
       "fail:child-unreachable": "El sitemap secundario {url} incluido en un índice de sitemaps no responde 200 ({detail})."
     }
@@ -484,8 +484,8 @@
     "why": "Google y Bing piden sitemaps que incluyan solo URLs canónicas e indexables que respondan 200. Incluir redirecciones, errores o URLs con noindex o bloqueadas envía señales contradictorias y desperdicia rastreo.",
     "fix": "Incluye solo las URLs canónicas e indexables que responden 200 y que quieres en los resultados. Genera el sitemap a partir de la misma fuente de verdad que las URLs canónicas.",
     "messages": {
-      "fail": "{count} URL(s) del sitemap no son páginas canónicas indexables ({share} de las {classified} que se han podido clasificar).",
-      "fail:high-share": "{count} de las {classified} URLs del sitemap que se han podido clasificar ({share}) no son páginas canónicas indexables.",
+      "fail": "{count} URL(s) del sitemap no son páginas canónicas indexables ({share, number, percent} de las {classified} que se han podido clasificar).",
+      "fail:high-share": "{count} de las {classified} URLs del sitemap que se han podido clasificar ({share, number, percent}) no son páginas canónicas indexables.",
       "fail:robots-blocked": "{count} URL(s) del sitemap no son páginas canónicas indexables, incluidas URLs bloqueadas en robots.txt.",
       "fail:noindex": "{count} URL(s) del sitemap no son páginas canónicas indexables, incluidas URLs que llevan noindex.",
       "fail:error": "{count} URL(s) del sitemap no son páginas canónicas indexables, incluidas URLs que responden con un error.",
@@ -539,10 +539,10 @@
     "why": "Google renderiza JavaScript, pero el renderizado puede retrasarse y falla cuando los scripts dan error o están bloqueados. Muchos otros rastreadores, incluida la mayoría de los rastreadores de IA, no ejecutan JavaScript. Los títulos, las URLs canónicas, la etiqueta meta robots, hreflang y los datos estructurados que difieren entre el HTML original y el renderizado ofrecen a los rastreadores dos versiones entre las que elegir.",
     "fix": "Usa el renderizado del lado del servidor, el renderizado estático o la hidratación.",
     "messages": {
-      "fail": "{url} depende de JavaScript para el {share} de lo que muestra.",
-      "fail:content-after-js": "El {share} del texto renderizado de {url} no está en el HTML original. Google lo renderiza, más tarde; los rastreadores que no ejecutan JavaScript no lo ven.",
-      "fail:links-after-js": "El {share} de los enlaces internos de {url} solo existe después de que se ejecute JavaScript.",
-      "fail:metadata-differs": "Hay diferencias entre el HTML original y el DOM renderizado de {url}: {share}."
+      "fail": "{url} depende de JavaScript para el {share, number, percent} de lo que muestra.",
+      "fail:content-after-js": "El {share, number, percent} del texto renderizado de {url} no está en el HTML original. Google lo renderiza, más tarde; los rastreadores que no ejecutan JavaScript no lo ven.",
+      "fail:links-after-js": "El {share, number, percent} de los enlaces internos de {url} solo existe después de que se ejecute JavaScript.",
+      "fail:metadata-differs": "Hay diferencias entre el HTML original y el DOM renderizado de {url}: {fields}."
     }
   },
   "crawl-js-lazy-content": {
@@ -551,7 +551,7 @@
     "fix": "Carga el contenido cuando entre en el viewport (loading=lazy nativo, IntersectionObserver). Da URLs únicas, enlazadas de forma secuencial, a los bloques del desplazamiento infinito.",
     "messages": {
       "fail": "Parte de {url} solo se carga después de desplazarse por la página ({count}).",
-      "fail:content-after-scroll": "El {count} del texto de {url} solo aparece después de desplazarse por la página. Confirma que no es el contenido principal.",
+      "fail:content-after-scroll": "El {share, number, percent} del texto de {url} solo aparece después de desplazarse por la página. Confirma que no es el contenido principal.",
       "fail:links-after-scroll": "{count} enlace(s) interno(s) de {url} solo aparecen después de desplazarse por la página. Confirma si son enlaces a elementos o de paginación.",
       "fail:images-without-src": "{count} imagen(es) de {url} no tienen src en un renderizado sin desplazamiento, así que no se cargan para la indexación."
     }

@@ -1,5 +1,5 @@
 import { classifyPage } from '../../analyze/page-type.ts';
-import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels, type EvidenceLabel } from '../../core/evidence.ts';
 import type { SiteFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
@@ -24,8 +24,8 @@ export function robotsBodyIsHtml(site: SiteFacts): boolean {
   return start.startsWith('<') && /<(?:!doctype\s+html|html|head|body)[\s>]/iu.test(start);
 }
 
-function ruleLine(rule: RobotsRule, token: string): string {
-  return `${rule.type === 'allow' ? 'Allow' : 'Disallow'}: ${rule.pattern} (group ${token}, line ${rule.line})`;
+function ruleLine(rule: RobotsRule): string {
+  return `${rule.type === 'allow' ? 'Allow' : 'Disallow'}: ${rule.pattern}`;
 }
 
 const robotsFetchStatus: RuleImplementation = {
@@ -33,13 +33,17 @@ const robotsFetchStatus: RuleImplementation = {
   evaluate({ site, evidence }) {
     const robots = site.robots!;
     const status = robots.fetch.status;
-    const observed = status === undefined ? `no response (${robots.fetch.error?.code ?? 'network error'})` : `HTTP ${status}`;
-    const id = evidence.add({ kind: 'robots', url: robots.url, label: evidenceLabel('robots.txt fetch outcome'), excerpt: observed });
+    const fetchError = robots.fetch.error?.code ?? 'connection';
+    const id = status === undefined
+      ? evidence.add({ kind: 'robots', url: robots.url, label: evidenceLabel('robots.txt request that got no response ({fetchError})', { fetchError }) })
+      : evidence.add({ kind: 'robots', url: robots.url, label: evidenceLabel('robots.txt fetch outcome'), excerpt: `HTTP ${status}` });
     // Google gives up on a redirect loop after five hops and reads the file as missing; crawl-robots-redirects reports the loop.
     if (robots.availability.kind === 'unreachable' && robots.fetch.error?.code !== 'redirect-loop') {
-      return failure({ severity: 'critical', evidence: [id], reason: status === undefined ? 'network-error' : 'server-error', params: { url: robots.url, status: observed } });
+      return status === undefined
+        ? failure({ severity: 'critical', evidence: [id], reason: 'network-error', params: { url: robots.url, fetchError } })
+        : failure({ severity: 'critical', evidence: [id], reason: 'server-error', params: { url: robots.url, status: `HTTP ${status}` } });
     }
-    if (status === 401 || status === 403) return failure({ severity: 'info', evidence: [id], reason: 'access-denied', params: { url: robots.url, status: observed } });
+    if (status === 401 || status === 403) return failure({ severity: 'info', evidence: [id], reason: 'access-denied', params: { url: robots.url, status: `HTTP ${status}` } });
     return passed([id]);
   },
 };
@@ -101,8 +105,11 @@ const robotsFormat: RuleImplementation = {
     const { body, headers } = site.robots!.fetch;
     const url = robotsUrl(site);
     if (robotsBodyIsHtml(site)) {
-      const id = evidence.add({ kind: 'robots', url, label: evidenceLabel('robots.txt body start and content type'),
-        excerpt: `${headerValue(headers, 'content-type') ?? '(no content type)'} | ${body.subarray(0, 120).toString('utf8').trim()}` });
+      const type = headerValue(headers, 'content-type');
+      const id = evidence.add({
+        kind: 'robots', url, excerpt: body.subarray(0, 120).toString('utf8').trim(),
+        label: type === undefined ? evidenceLabel('start of the robots.txt body, served without a Content-Type header') : evidenceLabel('start of the robots.txt body, served as {type}', { type }),
+      });
       return failure({ severity: 'medium', evidence: [id], reason: 'html-body', params: { url } });
     }
     const results: RuleResult[] = [];
@@ -110,7 +117,7 @@ const robotsFormat: RuleImplementation = {
     const invalid = lost.length > 0 ? [] : invalidUtf8RuleLines(body);
     if (lost.length > 0) {
       const ids = [
-        evidence.add({ kind: 'robots', url, label: evidenceLabel('robots.txt uncompressed size in bytes'), excerpt: String(body.length) }),
+        evidence.add({ kind: 'robots', url, label: evidenceLabel('robots.txt uncompressed size: {bytes, plural, one {# byte} other {# bytes}}', { bytes: body.length }) }),
         ...lost.slice(0, 5).map(entry => evidence.add({ kind: 'robots', url, label: evidenceLabel('rule after the 500 KiB limit'), excerpt: entry.text, line: entry.line })),
       ];
       results.push(failure({ severity: 'high', evidence: ids, reason: 'over-size-limit', params: { url, bytes: body.length, lost: lost.length } }));
@@ -124,7 +131,7 @@ const robotsFormat: RuleImplementation = {
       const id = evidence.add({ kind: 'robots', url, label: evidenceLabel('robots.txt Content-Type header'), excerpt: type });
       results.push(failure({ severity: 'info', evidence: [id], reason: 'content-type', params: { url, type } }));
     }
-    return results.length > 0 ? results : passed([evidence.add({ kind: 'robots', url, label: evidenceLabel('robots.txt uncompressed size in bytes'), excerpt: String(body.length) })]);
+    return results.length > 0 ? results : passed([evidence.add({ kind: 'robots', url, label: evidenceLabel('robots.txt uncompressed size: {bytes, plural, one {# byte} other {# bytes}}', { bytes: body.length }) })]);
   },
 };
 
@@ -152,7 +159,7 @@ const robotsParseErrors: RuleImplementation = {
         }
       }
     }
-    if (issues.length === 0) return passed([evidence.add({ kind: 'robots', url, label: evidenceLabel('robots.txt groups parsed'), excerpt: String(file.groups.length) })]);
+    if (issues.length === 0) return passed([evidence.add({ kind: 'robots', url, label: evidenceLabel('robots.txt groups parsed: {count}', { count: file.groups.length }) })]);
     issues.sort((a, b) => a.line - b.line);
     const top = issues.reduce<Severity>((current, issue) => worst(current, issue.severity), 'info');
     const ids = issues.slice(0, 8).map(issue => evidence.add({ kind: 'robots', url, label: issue.label, excerpt: issue.text, line: issue.line }));
@@ -232,8 +239,8 @@ const robotsBlocksSite: RuleImplementation = {
     const google = blockedHome(['googlebot']);
     const bing = blockedHome(['bingbot']);
     const cite = (entry: NonNullable<typeof google>, crawler: string) => evidence.add({
-      kind: 'robots', url, label: evidenceLabel('rule that disallows {path} for {crawler}', { path: entry.path, crawler }),
-      excerpt: `${entry.decision!.rule!.type}: ${entry.decision!.rule!.pattern} (group ${entry.decision!.matchedToken})`, line: entry.decision!.rule!.line,
+      kind: 'robots', url, label: joinLabels(evidenceLabel('rule that disallows {path} for {crawler}', { path: entry.path, crawler }), evidenceLabel('(group {token})', { token: entry.decision!.matchedToken ?? '*' })),
+      excerpt: `${entry.decision!.rule!.type}: ${entry.decision!.rule!.pattern}`, line: entry.decision!.rule!.line,
     });
     if (google || bing) {
       const exempt = privateHost(site);
@@ -275,8 +282,8 @@ const robotsBlocksPage: RuleImplementation = {
     const hit = blocked ?? bingBlocked!;
     const decision = blocked ? hit.google! : hit.bing!;
     const crawler = blocked ? 'Googlebot' : 'Bingbot';
-    const ids = [evidence.add({ kind: 'robots', url: robotsUrl(site), label: evidenceLabel('rule that disallows the URL for {crawler}', { crawler }),
-      excerpt: `${decision.rule!.type}: ${decision.rule!.pattern} (group ${decision.matchedToken})`, line: decision.rule!.line })];
+    const ids = [evidence.add({ kind: 'robots', url: robotsUrl(site), label: joinLabels(evidenceLabel('rule that disallows the URL for {crawler}', { crawler }), evidenceLabel('(group {token})', { token: decision.matchedToken ?? '*' })),
+      excerpt: `${decision.rule!.type}: ${decision.rule!.pattern}`, line: decision.rule!.line })];
     if (!blocked) return failure({ severity: 'medium', evidence: ids, reason: 'bingbot-only', params: { url: hit.url, crawler } });
     const listed = sitemapEntryFor(site, hit.url);
     const named = namedByOtherPage(site, hit.url);
@@ -332,7 +339,7 @@ const robotsGroupOverride: RuleImplementation = {
     }
     if (findings.length === 0) return passed();
     findings.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'medium' ? -1 : 1));
-    const ids = findings.slice(0, 6).map(entry => evidence.add({ kind: 'robots', url, label: evidenceLabel('* disallow rule that the {token} group does not repeat', { token: entry.token }), excerpt: ruleLine(entry.rule, '*'), line: entry.rule.line }));
+    const ids = findings.slice(0, 6).map(entry => evidence.add({ kind: 'robots', url, label: evidenceLabel('* disallow rule that the {token} group does not repeat', { token: entry.token }), excerpt: ruleLine(entry.rule), line: entry.rule.line }));
     const top = findings[0]!.severity;
     return failure({ severity: top, evidence: ids, reason: top === 'medium' ? 'crawl-trap' : 'missing-rules',
       params: { tokens: summarizeList([...new Set(findings.map(entry => entry.token))]), count: findings.length } });
@@ -357,8 +364,9 @@ const robotsSitemapLines: RuleImplementation = {
       reason = 'relative-url';
     }
     if (failing.length > 0) {
-      ids.push(...failing.slice(0, 5).map(entry => evidence.add({ kind: 'sitemap', url: entry.url, label: evidenceLabel('declared sitemap fetch outcome'),
-        excerpt: entry.fetch.status === undefined ? `no response (${entry.fetch.error?.code ?? 'error'})` : `HTTP ${entry.fetch.status}` })));
+      ids.push(...failing.slice(0, 5).map(entry => (entry.fetch.status === undefined
+        ? evidence.add({ kind: 'sitemap', url: entry.url, label: evidenceLabel('declared sitemap that got no response ({fetchError})', { fetchError: entry.fetch.error?.code ?? 'connection' }) })
+        : evidence.add({ kind: 'sitemap', url: entry.url, label: evidenceLabel('declared sitemap fetch outcome'), excerpt: `HTTP ${entry.fetch.status}` }))));
       severity = 'medium';
       reason ||= 'declared-not-200';
     }
@@ -369,7 +377,9 @@ const robotsSitemapLines: RuleImplementation = {
     const fallback = site.sitemaps.find(entry => entry.source === 'default');
     if (fallback?.document && fallback.document.kind !== 'unknown') return passed([evidence.add({ kind: 'sitemap', url: fallback.url, label: evidenceLabel('sitemap at the default location'), excerpt: `HTTP ${fallback.fetch.status}` })]);
     if (!fallback) return notEvaluated('default-sitemap-not-fetched');
-    const id = evidence.add({ kind: 'sitemap', url: fallback.url, label: evidenceLabel('default sitemap location fetch outcome'), excerpt: fallback.fetch.status === undefined ? 'no response' : `HTTP ${fallback.fetch.status}` });
+    const id = fallback.fetch.status === undefined
+      ? evidence.add({ kind: 'sitemap', url: fallback.url, label: evidenceLabel('default sitemap location, which got no response ({fetchError})', { fetchError: fallback.fetch.error?.code ?? 'connection' }) })
+      : evidence.add({ kind: 'sitemap', url: fallback.url, label: evidenceLabel('default sitemap location fetch outcome'), excerpt: `HTTP ${fallback.fetch.status}` });
     return failure({ severity: 'low', evidence: [id], reason: 'no-sitemap', params: { count: 0 } });
   },
 };
@@ -386,7 +396,7 @@ const noindexBlockedByRobots: RuleImplementation = {
     if (!decision) return notEvaluated('other-origin');
     if (decision.allowed) return passed();
     const ids = [
-      evidence.add({ kind: 'robots', url: robotsUrl(site), label: evidenceLabel('rule that disallows the noindex page for Googlebot'), excerpt: `${decision.rule!.type}: ${decision.rule!.pattern} (group ${decision.matchedToken})`, line: decision.rule!.line }),
+      evidence.add({ kind: 'robots', url: robotsUrl(site), label: joinLabels(evidenceLabel('rule that disallows the noindex page for Googlebot'), evidenceLabel('(group {token})', { token: decision.matchedToken ?? '*' })), excerpt: `${decision.rule!.type}: ${decision.rule!.pattern}`, line: decision.rule!.line }),
       evidence.add({ kind: 'html', url: target.fetch.finalUrl, label: evidenceLabel('robots directives that Googlebot cannot read'), excerpt: [...effectiveDirectives(target, sources[0])].join(', ') || 'noindex' }),
     ];
     return failure({ severity: 'high', evidence: ids, params: { url: target.fetch.finalUrl, rule: `${decision.rule!.type}: ${decision.rule!.pattern}` } });
@@ -411,7 +421,7 @@ const bingCrawlDelay: RuleImplementation = {
     const id = evidence.add({ kind: 'robots', url: robotsUrl(site), label: evidenceLabel('crawl-delay in the group Bingbot follows ({token})', { token: bingToken }), excerpt: `crawl-delay: ${delays[0]!.entry.value}`, line: delays[0]!.entry.line });
     const urls = new Set(sitemapLocs(site).map(entry => normalizeUrl(entry.loc))).size;
     if (Number.isFinite(value) && value >= 10 && urls > 1000) {
-      const count = evidence.add({ kind: 'sitemap', url: site.sitemaps[0]?.url ?? site.origin, label: evidenceLabel('distinct URLs listed in the sitemaps'), excerpt: String(urls) });
+      const count = evidence.add({ kind: 'sitemap', url: site.sitemaps[0]?.url ?? site.origin, label: evidenceLabel('distinct URLs listed in the sitemaps: {count}', { count: urls }) });
       return failure({ severity: 'low', evidence: [id, count], reason: 'slow-for-size', params: { delay: delays[0]!.entry.value, urls } });
     }
     return failure({ severity: 'info', evidence: [id], reason: 'present', params: { delay: delays[0]!.entry.value, urls } });

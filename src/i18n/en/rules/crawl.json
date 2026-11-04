@@ -3,7 +3,7 @@
     "messages": {
       "fail": "{url} answered {status}.",
       "fail:server-error": "{url} answered {status}. Google treats a robots.txt server error as a full disallow: it stops crawling the site for 12 hours and then uses its last cached copy for up to 30 days.",
-      "fail:network-error": "{url} could not be fetched: {status}. Google treats an unreachable robots.txt like a server error and stops crawling the site.",
+      "fail:network-error": "{url} could not be fetched ({fetchError}). Google treats an unreachable robots.txt like a server error and stops crawling the site.",
       "fail:access-denied": "{url} answered {status}. Google treats this as having no robots.txt, so no crawl restrictions apply."
     }
   },
@@ -11,7 +11,7 @@
     "messages": {
       "fail": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply.",
       "fail:too-many-hops": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply.",
-      "fail:loop": "{url} redirects in a loop, back to a URL it already visited after {hops} hops. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply."
+      "fail:loop": "{url} redirects in a loop, back to a URL it already visited after {hops, plural, one {# hop} other {# hops}}. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply."
     }
   },
   "crawl-robots-format": {
@@ -35,7 +35,7 @@
   "crawl-robots-unsupported-directives": {
     "messages": {
       "fail": "{url} uses fields Google does not support: {fields}.",
-      "fail:noindex": "{url} contains {count} noindex lines. Google ignores noindex in robots.txt, so those URLs are not removed from results. Unsupported fields found: {fields}.",
+      "fail:noindex": "{url} contains {count, plural, one {# noindex line} other {# noindex lines}}. Google ignores noindex in robots.txt, so those URLs are not removed from results. Unsupported fields found: {fields}.",
       "fail:ignored-fields": "{url} uses fields Google ignores: {fields}. Some other engines may still read them."
     }
   },
@@ -60,17 +60,17 @@
   },
   "crawl-robots-group-override": {
     "messages": {
-      "fail": "{count} disallow rules of the * group are not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
-      "fail:crawl-trap": "{count} disallow rules of the * group, including crawl traps, are not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
-      "fail:missing-rules": "{count} disallow rules of the * group are not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
+      "fail": "{count, plural, one {# disallow rule of the * group is} other {# disallow rules of the * group are}} not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
+      "fail:crawl-trap": "{count, plural, one {# disallow rule of the * group, a crawl trap, is} other {# disallow rules of the * group, including crawl traps, are}} not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
+      "fail:missing-rules": "{count, plural, one {# disallow rule of the * group is} other {# disallow rules of the * group are}} not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
       "fail:intentional-allow": "The * group disallows everything and the {token} group allows it, which works as an allow list."
     }
   },
   "crawl-robots-sitemap-lines": {
     "messages": {
-      "fail": "{count} declared sitemaps cannot be used.",
-      "fail:relative-url": "{count} declared sitemaps cannot be used; a Sitemap line must hold an absolute URL.",
-      "fail:declared-not-200": "{count} declared sitemaps do not answer 200.",
+      "fail": "{count, plural, one {# declared sitemap cannot} other {# declared sitemaps cannot}} be used.",
+      "fail:relative-url": "{count, plural, one {# declared sitemap cannot} other {# declared sitemaps cannot}} be used; a Sitemap line must hold an absolute URL.",
+      "fail:declared-not-200": "{count, plural, one {# declared sitemap does} other {# declared sitemaps do}} not answer 200.",
       "fail:no-sitemap": "No sitemap is declared in robots.txt or a link element, and /sitemap.xml does not answer with a sitemap. It may still be submitted in Search Console, which this audit cannot see."
     }
   },
@@ -302,8 +302,8 @@
   },
   "crawl-server-errors-rate": {
     "messages": {
-      "fail": "{count} of {total} crawled URLs ({share}) answered a server error, a 429 or a timeout.",
-      "fail:error-rate": "{count} of {total} crawled URLs ({share}) answered a server error, a 429 or a timeout.",
+      "fail": "{count} of {total} crawled URLs ({share, number, ::percent .0}) answered a server error, a 429 or a timeout.",
+      "fail:error-rate": "{count} of {total} crawled URLs ({share, number, ::percent .0}) answered a server error, a 429 or a timeout.",
       "fail:no-retry-after": "{count} crawled URLs answered 503 or 429 without a Retry-After header."
     }
   },
@@ -342,7 +342,7 @@
       "fail:unparseable": "The sitemap {url} cannot be parsed: {detail}.",
       "fail:wrong-namespace": "The sitemap {url} uses the namespace {detail} instead of the sitemaps.org namespace.",
       "fail:over-limit": "The sitemap {url} exceeds the protocol limits of 50,000 entries or 50 MB uncompressed ({detail}).",
-      "fail:invalid-urls": "The sitemap {url} contains entries that are not absolute http(s) URLs under 2,048 characters ({detail}).",
+      "fail:invalid-urls": "The sitemap {url} has {count, plural, one {# entry that is not an absolute http(s) URL} other {# entries that are not absolute http(s) URLs}} under 2,048 characters.",
       "fail:nested-index": "The sitemap {url} is a sitemap index listed inside another index.",
       "fail:child-unreachable": "The child sitemap {url} listed in a sitemap index does not answer 200 ({detail})."
     }
@@ -356,8 +356,8 @@
   },
   "crawl-sitemap-url-quality": {
     "messages": {
-      "fail": "{count} sitemap URLs are not indexable canonical pages ({share} of {classified} classified).",
-      "fail:high-share": "{count} of {classified} classified sitemap URLs ({share}) are not indexable canonical pages.",
+      "fail": "{count} sitemap URLs are not indexable canonical pages ({share, number, percent} of {classified} classified).",
+      "fail:high-share": "{count} of {classified} classified sitemap URLs ({share, number, percent}) are not indexable canonical pages.",
       "fail:robots-blocked": "{count} sitemap URLs are not indexable canonical pages, including URLs disallowed in robots.txt.",
       "fail:noindex": "{count} sitemap URLs are not indexable canonical pages, including URLs that carry noindex.",
       "fail:error": "{count} sitemap URLs are not indexable canonical pages, including URLs that answer an error.",
@@ -406,16 +406,16 @@
   },
   "crawl-js-content-dependency": {
     "messages": {
-      "fail": "{url} depends on JavaScript for {share} of what it shows.",
-      "fail:content-after-js": "{share} of the rendered text of {url} is absent from the raw HTML. Google renders it, later; crawlers that do not run JavaScript do not see it.",
-      "fail:links-after-js": "{share} of the internal links of {url} exist only after JavaScript runs.",
-      "fail:metadata-differs": "The raw HTML and the rendered DOM of {url} differ in: {share}."
+      "fail": "{url} depends on JavaScript for {share, number, percent} of what it shows.",
+      "fail:content-after-js": "{share, number, percent} of the rendered text of {url} is absent from the raw HTML. Google renders it, later; crawlers that do not run JavaScript do not see it.",
+      "fail:links-after-js": "{share, number, percent} of the internal links of {url} exist only after JavaScript runs.",
+      "fail:metadata-differs": "The raw HTML and the rendered DOM of {url} differ in: {fields}."
     }
   },
   "crawl-js-lazy-content": {
     "messages": {
       "fail": "Part of {url} loads only after scrolling ({count}).",
-      "fail:content-after-scroll": "{count} of the text of {url} appears only after scrolling. Confirm that it is not the main content.",
+      "fail:content-after-scroll": "{share, number, percent} of the text of {url} appears only after scrolling. Confirm that it is not the main content.",
       "fail:links-after-scroll": "{count} internal links of {url} appear only after scrolling. Confirm whether they are item or pagination links.",
       "fail:images-without-src": "{count} images on {url} have no src in a render without scrolling, so they are not loaded for indexing."
     }

@@ -5,9 +5,14 @@ import { contentText } from '../content/common.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { absoluteUrl, linksWithRel, metaNamed, pageDocument, sameSite, summarizeList } from '../helpers.ts';
 import {
-  documentBase, effectiveDirectives, failure, internalLinks, missingShare, normalizeUrl, notApplicable, notEvaluated, passed, percent,
-  sitemapLocs, words,
+  documentBase, effectiveDirectives, failure, internalLinks, missingShare, normalizeUrl, notApplicable, notEvaluated, passed, sitemapLocs, words,
 } from './shared.ts';
+
+/** A value seen in two documents, cited once: both values when both have one, or the one that has it. */
+function comparedValue(first: string, second: string, labels: { readonly both: EvidenceLabel; readonly onlyFirst: EvidenceLabel; readonly onlySecond: EvidenceLabel }): { label: EvidenceLabel; excerpt: string } {
+  if (first && second) return { label: labels.both, excerpt: `${first} | ${second}` };
+  return first ? { label: labels.onlyFirst, excerpt: first } : { label: labels.onlySecond, excerpt: second };
+}
 
 function inTemplateRegion(html: string, offset: number): boolean {
   if (offset < 0) return false;
@@ -47,7 +52,14 @@ const robotsBlocksRenderResources: RuleImplementation = {
     const changed = (Object.keys(before) as (keyof typeof before)[]).filter(key => before[key] !== after[key]);
     const params = { url, count: blocked.length, resources: summarizeList(blocked, 2) };
     if (changed.length > 0) {
-      const ids = changed.map(key => evidence.add({ kind: 'render', url, label: evidenceLabel('{signal} with and without the blocked requests', { signal: key }), excerpt: `${after[key] || '(none)'} | ${before[key] || '(none)'}` }));
+      const ids = changed.map(key => evidence.add({
+        kind: 'render', url,
+        ...comparedValue(after[key], before[key], {
+          both: evidenceLabel('{signal} without the blocked requests and with them', { signal: key }),
+          onlyFirst: evidenceLabel('{signal}: only without the blocked requests', { signal: key }),
+          onlySecond: evidenceLabel('{signal}: only when the blocked requests load', { signal: key }),
+        }),
+      }));
       return failure({ severity: 'high', evidence: [...blockedIds, ...ids], reason: 'metadata-changed', params });
     }
     const fullText = contentText(unblocked);
@@ -56,20 +68,20 @@ const robotsBlocksRenderResources: RuleImplementation = {
     const kept = new Set(internalLinks(rendered, url));
     const lostLinks = fullLinks.filter(link => !kept.has(link));
     if (words(fullText).length >= 30 && textLoss >= 0.2) {
-      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('share of the main text that renders only when the blocked requests load'), excerpt: percent(textLoss) });
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('share of the main text that renders only when the blocked requests load: {share, number, percent}', { share: textLoss }) });
       return failure({ severity: 'high', evidence: [...blockedIds, id], reason: 'content-missing', params });
     }
     if (lostLinks.length >= 3 && lostLinks.length / fullLinks.length >= 0.2) {
-      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('internal links that render only when the blocked requests load'), excerpt: summarizeList(lostLinks, 5) });
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('internal links that render only when the blocked requests load: {count}', { count: lostLinks.length }), excerpt: lostLinks.slice(0, 5).join('\n') });
       return failure({ severity: 'high', evidence: [...blockedIds, id], reason: 'links-missing', params });
     }
     const broke = rendered.result.scrollWidth > rendered.result.innerWidth && unblocked.result.scrollWidth <= unblocked.result.innerWidth;
     if (broke) {
-      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('page width and viewport width without the blocked requests'), excerpt: `${rendered.result.scrollWidth} > ${rendered.result.innerWidth}` });
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('page width without the blocked requests: {width} px, wider than the {viewport} px viewport', { width: rendered.result.scrollWidth, viewport: rendered.result.innerWidth }) });
       return failure({ severity: 'high', evidence: [...blockedIds, id], reason: 'layout-break', params });
     }
     if (textLoss >= 0.05) {
-      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('share of the main text that renders only when the blocked requests load'), excerpt: percent(textLoss) });
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('share of the main text that renders only when the blocked requests load: {share, number, percent}', { share: textLoss }) });
       return failure({ severity: 'medium', evidence: [...blockedIds, id], reason: 'minor-differences', params, needsJudgment: true });
     }
     return passed(blockedIds);
@@ -148,15 +160,15 @@ const jsContentDependency: RuleImplementation = {
     if (words(renderedMain).length < 30) return notApplicable('little-rendered-text');
     const share = missingShare(renderedMain, raw.parsed.bodyText);
     if (share > 0.5) {
-      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('share of the rendered main text that the raw HTML lacks'), excerpt: percent(share) });
-      return failure({ severity: 'medium', evidence: [id], reason: 'content-after-js', params: { url, share: percent(share) } });
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('share of the rendered main text that the raw HTML lacks: {share, number, percent}', { share }) });
+      return failure({ severity: 'medium', evidence: [id], reason: 'content-after-js', params: { url, share } });
     }
     const renderedLinks = internalLinks(rendered, url);
     const rawLinks = new Set(internalLinks(raw, url));
     const added = renderedLinks.filter(link => !rawLinks.has(link));
     if (renderedLinks.length >= 5 && added.length / renderedLinks.length > 0.5) {
-      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('internal links present only in the rendered DOM'), excerpt: summarizeList(added, 5) });
-      return failure({ severity: 'medium', evidence: [id], reason: 'links-after-js', params: { url, share: percent(added.length / renderedLinks.length) } });
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('internal links present only in the rendered DOM: {count}', { count: added.length }), excerpt: added.slice(0, 5).join('\n') });
+      return failure({ severity: 'medium', evidence: [id], reason: 'links-after-js', params: { url, share: added.length / renderedLinks.length } });
     }
     const pairs: [string, EvidenceLabel, string, string][] = [
       ['title', evidenceLabel('title in the raw HTML and in the rendered DOM'), raw.parsed.titles[0]?.text.trim() ?? '', rendered.parsed.titles[0]?.text.trim() ?? ''],
@@ -165,8 +177,11 @@ const jsContentDependency: RuleImplementation = {
     ];
     const differing = pairs.filter(([, , before, after]) => before !== after);
     if (differing.length > 0) {
-      const ids = differing.map(([, label, before, after]) => evidence.add({ kind: 'render', url, label, excerpt: `${before || '(none)'} | ${after || '(none)'}` }));
-      return failure({ severity: 'medium', evidence: ids, reason: 'metadata-differs', params: { url, share: differing.map(([name]) => name).join(', ') } });
+      const ids = differing.map(([field, label, before, after]) => evidence.add({
+        kind: 'render', url,
+        ...comparedValue(before, after, { both: label, onlyFirst: evidenceLabel('{field} only in the raw HTML', { field }), onlySecond: evidenceLabel('{field} only in the rendered DOM', { field }) }),
+      }));
+      return failure({ severity: 'medium', evidence: ids, reason: 'metadata-differs', params: { url, fields: differing.map(([name]) => name).join(', ') } });
     }
     return passed();
   },
@@ -184,13 +199,13 @@ const jsLazyContent: RuleImplementation = {
     const results: RuleResult[] = [];
     const share = missingShare(scrolled.parsed.bodyText, rendered.parsed.bodyText);
     if (words(scrolled.parsed.bodyText).length >= 50 && share >= 0.2) {
-      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('share of the text that appears only after scrolling'), excerpt: percent(share) });
-      results.push(failure({ severity: 'medium', evidence: [id], reason: 'content-after-scroll', params: { url, count: percent(share) }, needsJudgment: true }));
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('share of the text that appears only after scrolling: {share, number, percent}', { share }) });
+      results.push(failure({ severity: 'medium', evidence: [id], reason: 'content-after-scroll', params: { url, share }, needsJudgment: true }));
     } else {
       const seen = new Set(internalLinks(rendered, url));
       const later = internalLinks(scrolled, url).filter(link => !seen.has(link));
       if (later.length >= 5 && later.length / Math.max(1, internalLinks(scrolled, url).length) >= 0.2) {
-        const id = evidence.add({ kind: 'render', url, label: evidenceLabel('internal links that appear only after scrolling'), excerpt: summarizeList(later, 5) });
+        const id = evidence.add({ kind: 'render', url, label: evidenceLabel('internal links that appear only after scrolling: {count}', { count: later.length }), excerpt: later.slice(0, 5).join('\n') });
         results.push(failure({ severity: 'medium', evidence: [id], reason: 'links-after-scroll', params: { url, count: later.length }, needsJudgment: true }));
       }
     }
@@ -221,8 +236,8 @@ const dynamicRendering: RuleImplementation = {
     const browserMissing = missingShare(botText, browserText);
     if (botMissing < 0.1 && browserMissing < 0.1) return passed();
     const ids = [
-      evidence.add({ kind: 'probe', url: bot.url, label: evidenceLabel('words in the HTML served to {bot} and to {browser}', { bot: bot.agent.name, browser: browser.agent.name }), excerpt: `${words(botText).length} | ${words(browserText).length}` }),
-      evidence.add({ kind: 'probe', url: bot.url, label: evidenceLabel('share of the {bot} text missing for {browser}, and the reverse', { bot: bot.agent.name, browser: browser.agent.name }), excerpt: `${percent(browserMissing)} | ${percent(botMissing)}` }),
+      evidence.add({ kind: 'probe', url: bot.url, label: evidenceLabel('words in the HTML served to {bot} and to {browser}: {botWords} and {browserWords}', { bot: bot.agent.name, botWords: words(botText).length, browser: browser.agent.name, browserWords: words(browserText).length }) }),
+      evidence.add({ kind: 'probe', url: bot.url, label: evidenceLabel('share of the {bot} text missing for {browser}, and the reverse: {missing, number, percent} and {reverse, number, percent}', { bot: bot.agent.name, browser: browser.agent.name, missing: browserMissing, reverse: botMissing }) }),
     ];
     if (botMissing < 0.1 && browserMissing > 0.5) return failure({ severity: 'low', evidence: ids, reason: 'prerendered-for-bots', params: { url: bot.url } });
     return failure({ severity: 'low', evidence: ids, reason: 'different-content', params: { url: bot.url }, needsJudgment: true });
@@ -262,7 +277,9 @@ const parameterUrls: RuleImplementation = {
       for (const key of [...clean.searchParams.keys()]) if (trackingKey.test(key)) clean.searchParams.delete(key);
       const canonical = normalizeUrl(absoluteUrl(parseHtml(variant.fetch.body.toString('utf8')).links.find(link => link.rel.includes('canonical'))?.attrs.href, variant.url));
       if (canonical !== normalizeUrl(clean.href)) {
-        const id = evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('URL with a tracking parameter answering 200, and its canonical'), excerpt: `HTTP 200, canonical ${canonical ?? '(none)'}` });
+        const id = canonical
+          ? evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('canonical of the URL with a tracking parameter, which answers 200'), excerpt: canonical })
+          : evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('URL with a tracking parameter that answers 200 and declares no canonical') });
         return failure({ severity: 'medium', evidence: [id], reason: 'parameter-duplicate', params: { count: 1 } });
       }
     }
@@ -320,8 +337,12 @@ const duplicateClusters: RuleImplementation = {
     for (const members of duplicated) {
       const targets = new Set(members.map(member => canonicalOf(pageDocument(member)!, member.fetch.finalUrl) ?? normalizeUrl(member.fetch.finalUrl)));
       if (targets.size === 1) continue;
-      const ids = members.slice(0, 5).map(member => evidence.add({ kind: 'crawl', url: member.fetch.finalUrl, label: evidenceLabel('page with the same main text as others, and its canonical'),
-        excerpt: canonicalOf(pageDocument(member)!, member.fetch.finalUrl) ?? '(no canonical)' }));
+      const ids = members.slice(0, 5).map(member => {
+        const canonical = canonicalOf(pageDocument(member)!, member.fetch.finalUrl);
+        return canonical
+          ? evidence.add({ kind: 'crawl', url: member.fetch.finalUrl, label: evidenceLabel('page with the same main text as others, and its canonical'), excerpt: canonical })
+          : evidence.add({ kind: 'crawl', url: member.fetch.finalUrl, label: evidenceLabel('page with the same main text as others, without a canonical') });
+      });
       results.push(failure({ severity: 'medium', evidence: ids, reason: 'not-consolidated', params: { count: members.length, urls: summarizeList(members.map(member => member.fetch.finalUrl)) }, needsJudgment: true }));
     }
     return results.length > 0 ? results : passed();
