@@ -8,8 +8,8 @@ import { findChrome } from '../src/render/chrome.ts';
 let server: Server;
 let origin: string;
 
-const layout = (title: string, body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title></head>
+const layout = (title: string, body: string, head = '') => `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title>${head}</head>
 <body><nav><a href="/en/">Home</a> <a href="/en/about/">About</a> <a href="/en/services/">Services</a> <a href="/en/legal/">Legal</a></nav>
 <main>${body}</main><script src="/private/tracker.js"></script></body></html>`;
 
@@ -24,7 +24,9 @@ before(async () => {
       .end(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${['/en/', '/en/about/', '/en/services/'].map(p => `<url><loc>${origin}${p}</loc></url>`).join('')}</urlset>`);
     if (path === '/') return void res.writeHead(302, { location: '/en/' }).end();
     if (path === '/en/') return void html(200, layout('Example studio', '<h1>Example studio</h1><p>Home page.</p>'));
-    if (path === '/en/about/') return void html(200, layout('About the studio', '<h1>About</h1><p>Who we are.</p>'));
+    if (path === '/en/about/') return void html(200, layout('About the studio', '<h1>About</h1><p>Who we are.</p>',
+      '<link rel="alternate" hreflang="en" href="/en/about/"><link rel="alternate" hreflang="ca" href="/ca/sobre/">'));
+    if (path === '/ca/sobre/') return void html(200, layout("Sobre l'estudi", '<h1>Sobre nosaltres</h1>'));
     if (path === '/en/services/') return void html(200, layout('Services', '<h1>Services</h1>'));
     if (path === '/en/legal/') return void html(200, layout('Legal notice', '<h1>Legal notice</h1>'));
     if (path === '/en/about') return void res.writeHead(301, { location: '/en/about/' }).end();
@@ -67,6 +69,7 @@ describe('collect', () => {
     assert.deepEqual(site.localeProbes.filter(probe => probe.url === `${origin}/`).map(probe => probe.label),
       ['accept-language:none', 'accept-language:en', 'accept-language:es', 'accept-language:ca', 'accept-language:fr', 'accept-language:de']);
     assert.equal(site.agentProbes.length, 11);
+    assert.deepEqual(site.alternates?.map(alternate => [new URL(alternate.url).pathname, alternate.fetch.status]), [['/ca/sobre/', 200]]);
     assert.equal(site.tls, undefined);
     assert.deepEqual(target?.uaProbes?.map(probe => probe.agent.name), ['Googlebot Smartphone', 'Chrome (mobile)']);
   });

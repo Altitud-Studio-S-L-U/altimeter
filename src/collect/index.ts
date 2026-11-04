@@ -90,6 +90,29 @@ function sameSite(a: string, b: string): boolean {
   }
 }
 
+/** How many hreflang alternates of the audited page are fetched when no crawl runs. */
+const maxAlternates = 10;
+
+/** The hreflang alternates the page declares in its HTML, resolved against its base URL. */
+function hreflangTargets(page: PageFacts): string[] {
+  const parsed = page.raw?.parsed;
+  if (!parsed) return [];
+  let base = page.fetch.finalUrl;
+  try {
+    if (parsed.bases[0]?.attrs.href) base = new URL(parsed.bases[0].attrs.href, page.fetch.finalUrl).href;
+  } catch {}
+  const targets: string[] = [];
+  for (const link of parsed.links) {
+    if (!link.rel.includes('alternate') || link.attrs.hreflang === undefined || !link.attrs.href) continue;
+    try {
+      const url = new URL(link.attrs.href, base);
+      url.hash = '';
+      if (/^https?:$/u.test(url.protocol) && !targets.includes(url.href)) targets.push(url.href);
+    } catch {}
+  }
+  return targets;
+}
+
 function pickSiblings(page: PageFacts, exclude: Set<string>): string[] {
   const picks: string[] = [];
   for (const anchor of page.raw?.parsed.anchors ?? []) {
@@ -217,6 +240,11 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     }
     const siblingUrls = pickSiblings(page, new Set([page.url, page.fetch.finalUrl, homeUrl, homeFinal]));
     const siblings = await Promise.all(siblingUrls.map(url => fetchPage(client, url)));
+    const fetched = new Set([...pages.values(), ...siblings].flatMap(entry => [entry.url, entry.fetch.finalUrl]));
+    const alternateUrls = hreflangTargets(page).filter(url => !fetched.has(url)).slice(0, maxAlternates);
+    if (alternateUrls.length > 0) log('Fetching the hreflang alternates of the page');
+    const alternates: PageFacts[] = [];
+    for (const url of alternateUrls) alternates.push(await fetchPage(client, url));
 
     let crawlBlocked: string[] = [];
     let crawlSkipped = 0;
@@ -293,6 +321,7 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       variants,
       notFound,
       siblings,
+      ...(alternates.length > 0 ? { alternates } : {}),
       pages,
       crawled: options.crawl === true,
       ...(options.crawl ? { crawlBlocked, crawlSkipped } : {}),

@@ -12,8 +12,8 @@ const memo = <K extends object, V>(compute: (key: K) => V) => {
   };
 };
 
-/** Every page whose HTML Altimeter fetched: audited pages and the sibling pages fetched for comparison. */
-export const fetchedPages = memo((site: SiteFacts): readonly PageFacts[] => [...new Set([...site.pages.values(), ...site.siblings])]);
+/** Every page whose HTML Altimeter fetched: audited pages, the siblings fetched for comparison and the hreflang alternates. */
+export const fetchedPages = memo((site: SiteFacts): readonly PageFacts[] => [...new Set([...site.pages.values(), ...site.siblings, ...(site.alternates ?? [])])]);
 
 const byFinalUrl = memo((site: SiteFacts) => {
   const index = new Map<string, PageFacts>();

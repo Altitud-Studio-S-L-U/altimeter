@@ -83,6 +83,11 @@ export interface SiteFacts {
   readonly notFound?: ProbeFacts & { readonly parsed?: ParsedHtml };
   /** Pages fetched only to tell template text from page content. */
   readonly siblings: readonly PageFacts[];
+  /**
+   * The audited page's hreflang alternates that no other step fetched, fetched raw without Accept-Language or
+   * cookies (at most ten), so reciprocity and target checks work without a crawl.
+   */
+  readonly alternates?: readonly PageFacts[];
   readonly pages: ReadonlyMap<string, PageFacts>;
   /** True when a crawl ran, so site-scope graph rules can be evaluated. */
   readonly crawled: boolean;

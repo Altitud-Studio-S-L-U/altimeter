@@ -90,6 +90,11 @@ describe('intl-hreflang-missing-return-link', () => {
     assertOutcome(only(evaluate(missingReturnLink, site({ pages: [member(en, 'en', cluster(versions))] })).findings), 'not_evaluated', 'targets-not-fetched');
   });
 
+  test('checks the alternates fetched for a single-page audit', () => {
+    const alternates = [member(ca, 'ca', cluster(versions)), member(es, 'es', links([['es', es], ['ca', ca]]))];
+    assertFail(only(evaluate(missingReturnLink, site({ pages: [member(en, 'en', cluster(versions))], alternates })).findings), 'high');
+  });
+
   test('is not applicable without hreflang', () => {
     assertOutcome(only(evaluate(missingReturnLink, monolingual).findings), 'not_applicable', 'no-hreflang');
   });

@@ -133,6 +133,7 @@ export interface SiteSpec {
   readonly variants?: ReadonlyArray<{ readonly label: string; readonly url: string } & ResponseSpec>;
   readonly notFound?: ResponseSpec & { readonly html?: string };
   readonly siblings?: readonly PageFacts[];
+  readonly alternates?: readonly PageFacts[];
   readonly crawled?: boolean;
   readonly homeUrl?: string;
   readonly agentProbes?: SiteFacts['agentProbes'];
@@ -177,6 +178,7 @@ export function site(spec: SiteSpec): SiteFacts {
     variants,
     ...(notFound ? { notFound } : {}),
     siblings: spec.siblings ?? [],
+    ...(spec.alternates ? { alternates: spec.alternates } : {}),
     pages: new Map(spec.pages.map(entry => [entry.url, entry])),
     crawled: spec.crawled ?? false,
     ...(spec.homeUrl ? { homeUrl: spec.homeUrl } : {}),
