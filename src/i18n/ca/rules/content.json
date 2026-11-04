@@ -538,17 +538,17 @@
     }
   },
   "content-bing-low-ctr": {
-    "title": "Pàgines el CTR de les quals a Bing és molt inferior a l'habitual del lloc",
-    "why": "Una pàgina que Bing mostra sovint però en què pocs usuaris fan clic sol tenir un títol o un fragment que no coincideix amb el que busquen. La comparació fa servir el CTR de les altres pàgines del lloc en una posició semblant a Bing, no una corba del sector.",
-    "fix": "Reescriu el títol i la metadescripció per a les consultes indicades, sense deixar de descriure la pàgina amb exactitud. Comprova a Bing si un resultat més complet o una altra pàgina del lloc s'emporta els clics.",
+    "title": "Pàgines amb un percentatge de clics a Bing molt per sota de la norma del lloc",
+    "why": "Una pàgina que Bing mostra sovint però a la qual els usuaris rarament fan clic sol tenir un títol o un fragment que no coincideix amb el que busquen. La comparació fa servir el CTR de les altres pàgines del lloc en una posició semblant a Bing, no una corba del sector.",
+    "fix": "Reescriu el títol i la metadescripció per a les consultes de la llista, de manera que continuïn sent fidels a la pàgina. Comprova a Bing si un resultat més complet o una altra pàgina del lloc s'emporta els clics.",
     "messages": {
-      "fail": "{page} ha obtingut {impressions} impressions a Bing a la posició {position} amb un CTR del {ctr}, enfront del {expected} de les altres pàgines del lloc en aquesta posició, del {start} al {end}."
+      "fail": "{page} ha obtingut {impressions} impressions a Bing a la posició {position} amb un CTR de {ctr}, enfront de {expected} de les altres pàgines del lloc en aquesta posició, del {start} al {end}."
     }
   },
   "content-bing-ai-performance": {
     "title": "Les citacions a Copilot només són a Bing Webmaster Tools",
-    "why": "L'informe AI Performance de Bing Webmaster Tools mostra amb quina freqüència Microsoft Copilot, els resums generats amb IA de Bing i algunes integracions de socis citen les pàgines del lloc, i per a quines consultes de fonamentació. L'API de Bing Webmaster no té cap mètode per a aquest informe, de manera que una auditoria no el pot incloure.",
-    "fix": "Obre l'informe AI Performance del lloc a Bing Webmaster Tools per veure el total de citacions, les pàgines citades i les consultes de fonamentació. Bing indica que les consultes de fonamentació són una mostra de l'activitat de citacions.",
+    "why": "L'informe AI Performance de Bing Webmaster Tools mostra amb quina freqüència Microsoft Copilot, els resums generats amb IA de Bing i determinades integracions de socis citen les pàgines del lloc, i per a quines consultes de fonamentació. L'API de Bing Webmaster no té cap mètode per a aquest informe, de manera que una auditoria no el pot incloure.",
+    "fix": "Obre l'informe AI Performance del lloc a Bing Webmaster Tools per veure el total de citacions, les pàgines citades i les consultes de fonamentació. Bing indica que les consultes de fonamentació són una mostra de l'activitat de citació.",
     "messages": {
       "fail": "Les citacions de {site} a Microsoft Copilot i als resums generats amb IA de Bing només són a l'informe AI Performance de Bing Webmaster Tools (https://www.bing.com/webmasters); l'API de Bing Webmaster no té cap mètode per a aquest informe, de manera que aquesta auditoria no les inclou."
     }
