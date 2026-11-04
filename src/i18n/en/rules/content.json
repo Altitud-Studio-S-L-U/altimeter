@@ -334,5 +334,15 @@
     "messages": {
       "fail": "{page} fell from {before} to {now} clicks against the previous 28 days."
     }
+  },
+  "content-bing-low-ctr": {
+    "messages": {
+      "fail": "{page} got {impressions} Bing impressions at position {position} with a {ctr} CTR, against {expected} for the site's other pages at that position, from {start} to {end}."
+    }
+  },
+  "content-bing-ai-performance": {
+    "messages": {
+      "fail": "Citations of {site} in Microsoft Copilot and Bing's AI-generated summaries are only in the AI Performance report of Bing Webmaster Tools (https://www.bing.com/webmasters); the Bing Webmaster API has no method for it, so this audit does not include them."
+    }
   }
 }

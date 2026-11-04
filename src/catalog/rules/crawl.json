@@ -2761,5 +2761,95 @@
     ],
     "fixLocation": "content",
     "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-bing-crawl-issues",
+    "category": "crawl",
+    "title": "Crawl issues Bing reports for the site",
+    "why": "Bing Webmaster Tools lists the URLs Bingbot had trouble with: server and client errors, DNS failures, timeouts, robots.txt blocks, redirects and malware. Bing cannot index the current content of a URL it cannot fetch, and it warns searchers before they visit a page it flags for malware.",
+    "fix": "Work from the most severe type: remove the malware and close the hole that let it in, then request a malware re-evaluation in Bing Webmaster Tools; fix server errors, DNS failures and timeouts for Bingbot; restore or redirect 4xx URLs that other pages link to; point links at the final URL instead of a redirect. Bing notes that a fixed issue can take a few days to leave its list.",
+    "maxSeverity": "critical",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bing"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "robots.txt blocks the URLs on purpose, such as admin, cart or internal search paths.",
+      "A 4xx URL was removed on purpose and nothing links to it any more."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-other-engine",
+    "thresholds": "One finding per issue type Bing lists. Critical: ContainsMalware. High: Code5xx or DnsErrors. Medium: TimeOutErrors, ImportantUrlBlockedByRobotsTxt, and Code4xx when at least one of the URLs has inbound links. Low: Code4xx without inbound links. Info: BlockedByRobotsTxt, Code301 and Code302. The grading is a tool convention: Bing documents the issue types, not their weight. Up to 20 URLs per type are cited, most linked first.",
+    "sources": [
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.iwebmasterapi.getcrawlissues?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.urlwithcrawlissues.crawlissues?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://blogs.bing.com/webmaster/April-2013/Announcing-Malware-Re-Evaluation-and-Geo-Targeting",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Reads GetCrawlIssues for the verified site: Url, HttpCode, InLinks and the Issues flags (1 Code301, 2 Code302, 4 Code4xx, 8 Code5xx, 16 BlockedByRobotsTxt, 32 ContainsMalware, 64 ImportantUrlBlockedByRobotsTxt, 128 DnsErrors, 256 TimeOutErrors). A URL with several flags counts under each type. URLs on other hosts are ignored. crawl-bing-page-issues compares the audited pages with what this audit fetched. The malware re-evaluation request is described in Bing's 2013 announcement, the only primary source found for it.",
+    "related": [
+      "crawl-bing-page-issues"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-bing-page-issues",
+    "category": "crawl",
+    "title": "Bing reports no crawl problems for audited pages",
+    "why": "Bing's crawl issue list and its index details say what Bingbot got for each URL. An audited page meant for search that Bingbot could not fetch, or that robots.txt blocks for it, can be missing or out of date in Bing even when it works in a browser.",
+    "fix": "Fix what Bingbot hit: look for Bingbot's requests to the page in the server and CDN logs (errors, timeouts, firewall blocks), and check the robots.txt rules that apply to Bingbot. Then submit the URL in Bing Webmaster Tools so Bing crawls it again.",
+    "maxSeverity": "critical",
+    "method": "owner-data",
+    "scope": "page",
+    "inputs": [
+      "bing"
+    ],
+    "optionalInputs": [
+      "robots"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The page is kept out of the index on purpose: noindex for robots or bingbot, or a canonical to another URL. Malware is reported anyway.",
+      "A utility page, such as a login, cart or internal search page, that robots.txt blocks on purpose."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-other-engine",
+    "thresholds": "Critical: Bing flags the page with ContainsMalware. High: Code5xx or DnsErrors, or an HTTP 5xx in its index details. Medium: TimeOutErrors, Code4xx or an HTTP 4xx in the index details, BlockedByRobotsTxt or ImportantUrlBlockedByRobotsTxt; also medium, not high, when this audit got 200 for the URL Bing reports an HTTP problem for. Low: a robots.txt block that the robots.txt this audit read no longer has. Info: Code301 or Code302. Pass: the crawl issue list does not name the page and its index details have a crawl date and no error status. The grading is a tool convention.",
+    "sources": [
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.iwebmasterapi.getcrawlissues?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.iwebmasterapi.geturlinfo?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.bing.webmaster.api.interfaces.urlwithcrawlissues.crawlissues?view=bing-webmaster-dotnet",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Matches the GetCrawlIssues entries and the GetUrlInfo details (HttpStatus, LastCrawledDate, DiscoveryDate) of the page's URL and final URL, without fragments. Index details are read for at most ten audited pages; a page without them, or whose details have no crawl date, is not applicable. A problem this audit cannot reproduce may be fixed already, intermittent or served only to Bingbot; the server logs tell which. Bing notes that a fixed issue can take a few days to leave the crawl issue list.",
+    "related": [
+      "crawl-bing-crawl-issues",
+      "crawl-robots-blocks-page"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "owner-data"
   }
 ]
