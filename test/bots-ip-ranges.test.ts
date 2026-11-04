@@ -29,6 +29,8 @@ describe('published address lists', () => {
     const parsed = parseIpList(JSON.stringify({ prefixes: [{ ipv4Prefix: '10.0.0.0/33' }, { ipv4Prefix: 'example' }, { ipv6Prefix: '2001:db8::/48' }] }));
     assert.deepEqual([parsed.prefixes, parsed.invalid], [['2001:db8::/48'], 2]);
     assert.deepEqual(parseIpList('<html><body>Moved to a new page</body></html>').prefixes, []);
+    const escaped = parseIpList(JSON.stringify({ creationTime: `2026-11-04${String.fromCharCode(27)}[31m${String.fromCodePoint(0x202e)}`, prefixes: [] }));
+    assert.equal(escaped.creationTime, '2026-11-04', 'the list\'s own text is cleaned before it is stored');
   });
 
   test('matches IPv4 and IPv6 addresses against prefixes, including blocks written with host bits', () => {

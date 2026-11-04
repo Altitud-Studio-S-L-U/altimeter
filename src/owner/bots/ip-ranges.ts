@@ -4,6 +4,7 @@ import { BlockList, isIP } from 'node:net';
 import { join } from 'node:path';
 import { userCacheDirectory } from '../../ai/providers.ts';
 import type { HttpClient } from '../../fetch/http.ts';
+import { cleanLine } from '../../report/sanitize.ts';
 import type { IpListStatus } from './activity.ts';
 import { ipListDefinitions, type IpListId } from './operators.ts';
 
@@ -82,11 +83,12 @@ export function parseIpList(body: string): ParsedIpList {
     const values = entries.map(entry => (typeof entry === 'string' ? entry : entry !== null && typeof entry === 'object'
       ? prefixKeys.map(key => (entry as Record<string, unknown>)[key]).find(value => value !== undefined) : entry));
     const { prefixes, invalid } = collect(values);
-    const creationTime = typeof record.creationTime === 'string' ? record.creationTime.slice(0, 64) : undefined;
+    const creationTime = typeof record.creationTime === 'string' ? cleanLine(record.creationTime, 64) : undefined;
     return { ...(creationTime ? { creationTime } : {}), prefixes, invalid };
   }
   const decoded = body.replace(/&quot;|&#34;|&#x22;/giu, '"');
-  const creationTime = /"creationTime"\s*:\s*"([^"]{1,64})"/u.exec(decoded)?.[1];
+  const found = /"creationTime"\s*:\s*"([^"]{1,64})"/u.exec(decoded)?.[1];
+  const creationTime = found === undefined ? undefined : cleanLine(found, 64);
   const keyed = [...decoded.matchAll(/"(?:ipv4Prefix|ipv6Prefix|ip_prefix|ipv6_prefix)"\s*:\s*"([^"]{1,64})"/gu)].map(match => match[1]!);
   const { prefixes, invalid } = collect(keyed.length > 0 ? keyed : decoded.split(/\s+/u).filter(token => token.includes('/') && /^[0-9A-Fa-f:.]+\/\d+$/u.test(token)));
   return { ...(creationTime ? { creationTime } : {}), prefixes, invalid };

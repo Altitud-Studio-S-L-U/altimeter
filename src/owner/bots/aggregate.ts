@@ -125,9 +125,9 @@ class ComplianceBuilder {
   disallowed(observation: Observation, key: string, decision: RobotsDecision): void {
     if (observation.time < this.effectiveFrom || !decision.rule) return;
     if (observation.time >= this.effectiveFrom + this.windowMs) {
-      this.record(key, observation.count, observation.time, decision.rule.pattern, decision.rule.line);
+      this.record(key, observation.count, observation.time, cleanLine(decision.rule.pattern, 300), decision.rule.line);
     } else if (this.pending.length < aggregateLimits.pendingEvents) {
-      this.pending.push({ start: observation.time, key, hits: observation.count, rule: decision.rule.pattern, line: decision.rule.line });
+      this.pending.push({ start: observation.time, key, hits: observation.count, rule: cleanLine(decision.rule.pattern, 300), line: decision.rule.line });
     } else {
       this.incomplete = true;
     }
