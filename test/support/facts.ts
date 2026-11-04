@@ -55,6 +55,8 @@ export interface RenderSpec {
   readonly innerWidth?: number;
   readonly error?: RenderResult['error'];
   readonly mode?: RenderResult['mode'];
+  readonly overlays?: RenderResult['overlays'];
+  readonly scrollLocked?: boolean;
 }
 
 export function render(url: string, spec: RenderSpec): RenderFacts {
@@ -76,6 +78,8 @@ export function render(url: string, spec: RenderSpec): RenderFacts {
     textBlocks: spec.textBlocks ?? [],
     durationMs: 100,
     ...(spec.error ? { error: spec.error } : {}),
+    ...(spec.overlays ? { overlays: spec.overlays } : {}),
+    ...(spec.scrollLocked === undefined ? {} : { scrollLocked: spec.scrollLocked }),
   };
   return { result, ...documentFacts(spec.html) };
 }

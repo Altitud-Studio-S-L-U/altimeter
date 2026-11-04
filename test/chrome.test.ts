@@ -32,6 +32,29 @@ const page = `<!doctype html><html lang="en"><head><title>Render test</title>
 <script src="/blocked.js"></script>
 </body></html>`;
 
+const overlayPage = `<!doctype html><html lang="en"><head><title>Overlays</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { overflow: hidden; margin: 0; }
+  header { position: sticky; top: 0; height: 60px; }
+  #promo { position: fixed; inset: 0; z-index: 1000; background: white; }
+  #cookies { position: fixed; bottom: 0; left: 0; right: 0; height: 120px; z-index: 2000; }
+  #later { position: fixed; top: 0; display: none; }
+  .fade { opacity: 0; }
+</style></head>
+<body>
+<header>Site header</header>
+<div id="promo" role="dialog" aria-modal="true"><p>Subscribe to our newsletter</p></div>
+<div id="cookies">We use cookies <button>Accept</button></div>
+<div id="later">Never shown</div>
+<main>
+  <section class="fade" id="stalled">Stalled reveal text</section>
+  <p style="opacity:0">Plain hidden text</p>
+  <div data-aos="fade-up" style="opacity:0"><p>Animated on scroll text</p></div>
+</main>
+<script>new IntersectionObserver(() => {}).observe(document.getElementById('stalled'));</script>
+</body></html>`;
+
 let server: Server;
 let base: string;
 let audit: AuditBrowser | undefined;
@@ -40,6 +63,7 @@ before(async () => {
   server = createServer((req, res) => {
     if (req.url === '/no-viewport') return void res.writeHead(200, { 'content-type': 'text/html' })
       .end('<!doctype html><title>Desktop layout</title><div style="height:5000px">Tall desktop page</div><p>End</p>');
+    if (req.url === '/overlays') return void res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(overlayPage);
     if (req.url === '/blocked.js') return void res.writeHead(200, { 'content-type': 'text/javascript' })
       .end("document.querySelector('main').insertAdjacentHTML('beforeend', '<p id=\"from-blocked\">From blocked script</p>');");
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(page);
@@ -96,6 +120,28 @@ describe('renderPage', { skip: chrome ? false : 'Chrome is not installed' }, () 
     assert.equal(result.viewport.height, 823);
     assert.equal(result.textBlocks.find(block => block.text === 'Revealed section text')?.hidden, undefined);
     assert.ok(result.layoutShifts.some(shift => shift.value > 0), 'the late banner shifted the layout');
+  });
+
+  test('the user render lists what covers the first screen at load and whether scrolling is locked', async () => {
+    const result = await renderPage(audit!, `${base}/overlays`, { mode: 'user', userAgent });
+    assert.equal(result.scrollLocked, true);
+    assert.deepEqual(result.overlays?.map(overlay => [overlay.selector, overlay.position, overlay.zIndex, overlay.dialog]), [
+      ['html > body > header', 'sticky', undefined, false],
+      ['div#promo', 'fixed', 1000, true],
+      ['div#cookies', 'fixed', 2000, false],
+    ]);
+    const promo = result.overlays!.find(overlay => overlay.selector === 'div#promo')!;
+    assert.deepEqual([promo.coverage, promo.box.width, promo.text], [1, 412, 'Subscribe to our newsletter']);
+    assert.ok(result.overlays!.find(overlay => overlay.selector === 'div#cookies')!.coverage < 0.2);
+  });
+
+  test('marks hidden text that waits for a scroll reveal, and only that', async () => {
+    const result = await renderPage(audit!, `${base}/overlays`, { mode: 'googlebot', userAgent });
+    const block = (text: string) => result.textBlocks.find(entry => entry.text === text);
+    assert.deepEqual([block('Stalled reveal text')?.hidden, block('Stalled reveal text')?.revealOnScroll], ['opacity-zero', true]);
+    assert.deepEqual([block('Animated on scroll text')?.hidden, block('Animated on scroll text')?.revealOnScroll], ['opacity-zero', true]);
+    assert.deepEqual([block('Plain hidden text')?.hidden, block('Plain hidden text')?.revealOnScroll], ['opacity-zero', undefined]);
+    assert.equal(result.overlays, undefined, 'overlays are measured in the user render only');
   });
 
   test('pages cannot reach blocked addresses through the browser', async () => {

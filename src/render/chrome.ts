@@ -30,9 +30,31 @@ export interface TextBlock {
   readonly text: string;
   /** Why the text is not visible, or undefined when it is. */
   readonly hidden?: 'display-none' | 'visibility-hidden' | 'opacity-zero' | 'zero-size' | 'offscreen' | 'visually-hidden' | 'tiny-font' | 'same-color';
+  /**
+   * Set on a block hidden by opacity or visibility whose element or an ancestor waits for scrolling to appear: it is
+   * watched by an IntersectionObserver or carries a scroll-reveal attribute or class. Such a block is usually an
+   * entrance animation that has not run, not text hidden from readers.
+   */
+  readonly revealOnScroll?: true;
   readonly fontSize: number;
   readonly top: number;
   readonly inMain: boolean;
+}
+
+/** A fixed or sticky element over the first screen of the user render, measured right after load. */
+export interface Overlay {
+  readonly selector: string;
+  readonly position: 'fixed' | 'sticky';
+  /** Bounding box in CSS pixels, relative to the viewport. */
+  readonly box: { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
+  /** The computed z-index; absent for auto. */
+  readonly zIndex?: number;
+  /** Share of the viewport the element covers, from 0 to 1. */
+  readonly coverage: number;
+  /** Its visible text, shortened, so rules can tell a consent banner from a promotion. */
+  readonly text: string;
+  /** An open dialog element, role dialog or alertdialog, or aria-modal="true". */
+  readonly dialog: boolean;
 }
 
 export interface RenderResult {
@@ -52,6 +74,10 @@ export interface RenderResult {
   readonly layoutShifts: readonly { readonly value: number; readonly time: number; readonly sources: readonly string[] }[];
   readonly lcp: { readonly time: number; readonly size: number; readonly selector?: string; readonly url?: string; readonly tag?: string } | undefined;
   readonly textBlocks: readonly TextBlock[];
+  /** Fixed and sticky elements over the first screen right after load, before scrolling; user render only. */
+  readonly overlays?: readonly Overlay[];
+  /** Whether html or body stopped the page from scrolling right after load (overflow hidden or clip); user render only. */
+  readonly scrollLocked?: boolean;
   readonly durationMs: number;
   readonly error?: { readonly code: 'timeout' | 'navigation'; readonly message: string };
 }
@@ -118,8 +144,16 @@ export async function launchAuditBrowser(options: { policy: NetworkPolicy; execu
 
 function observerScript(key: string): string {
   return `(() => {
-  const store = { shifts: [], lcp: null };
+  const store = { shifts: [], lcp: null, observed: new WeakSet() };
   Object.defineProperty(window, ${JSON.stringify(key)}, { value: store, configurable: false, enumerable: false, writable: false });
+  try {
+    // Remember what the page watches for intersection, which is how most scroll-reveal effects start.
+    const observe = IntersectionObserver.prototype.observe;
+    IntersectionObserver.prototype.observe = function (target) {
+      if (target && target.nodeType === 1) store.observed.add(target);
+      return observe.apply(this, arguments);
+    };
+  } catch {}
   const describe = (node) => {
     const parts = [];
     for (let el = node; el && el.nodeType === 1 && parts.length < 4; el = el.parentElement) {
@@ -153,7 +187,15 @@ function observerScript(key: string): string {
 }
 
 /** Runs in the page: every element that directly holds text, with the reason it is not visible. */
-function collectTextBlocks(limit: number): TextBlock[] {
+function collectTextBlocks(limit: number, storeKey: string): TextBlock[] {
+  const observed = (window as unknown as Record<string, { observed?: WeakSet<Element> } | undefined>)[storeKey]?.observed;
+  const revealMarker = '[data-reveal], [data-aos], [data-sal], [data-scroll], [data-scroll-reveal], [data-animate], .wow, .reveal';
+  const revealsOnScroll = (el: Element) => {
+    for (let current: Element | null = el; current; current = current.parentElement) {
+      if (observed?.has(current) || current.matches(revealMarker)) return true;
+    }
+    return false;
+  };
   const describe = (node: Element) => {
     const parts: string[] = [];
     for (let el: Element | null = node; el && parts.length < 4; el = el.parentElement) {
@@ -203,12 +245,60 @@ function collectTextBlocks(limit: number): TextBlock[] {
       selector: describe(el),
       text: text.slice(0, 300),
       ...(hidden ? { hidden } : {}),
+      ...((hidden === 'opacity-zero' || hidden === 'visibility-hidden') && revealsOnScroll(el) ? { revealOnScroll: true as const } : {}),
       fontSize: Number.parseFloat(getComputedStyle(el).fontSize),
       top: Math.round(el.getBoundingClientRect().top + scrollY),
       inMain: el.closest('main, [role="main"], article') !== null,
     });
   }
   return blocks;
+}
+
+/** Runs in the page: fixed and sticky elements that cover part of the viewport, and whether scrolling is locked. */
+function collectOverlays(limit: number): { overlays: Overlay[]; scrollLocked: boolean } {
+  const describe = (node: Element) => {
+    const parts: string[] = [];
+    for (let el: Element | null = node; el && parts.length < 4; el = el.parentElement) {
+      let part = el.tagName.toLowerCase();
+      if (el.id) { parts.unshift(`${part}#${el.id}`); break; }
+      const classes = [...el.classList].slice(0, 2);
+      if (classes.length) part += `.${classes.join('.')}`;
+      parts.unshift(part);
+    }
+    return parts.join(' > ');
+  };
+  const transparentAncestor = (el: Element) => {
+    for (let current = el.parentElement; current; current = current.parentElement) if (Number(getComputedStyle(current).opacity) === 0) return true;
+    return false;
+  };
+  const area = innerWidth * innerHeight;
+  const outer: Element[] = [];
+  const overlays: Overlay[] = [];
+  const elements = document.querySelectorAll('body *');
+  for (let index = 0; index < Math.min(elements.length, 20_000) && overlays.length < limit; index += 1) {
+    const el = elements[index]!;
+    const style = getComputedStyle(el);
+    if (style.position !== 'fixed' && style.position !== 'sticky') continue;
+    if (outer.some(parent => parent.contains(el))) continue;
+    if (style.display === 'none' || style.visibility !== 'visible' || Number(style.opacity) === 0 || transparentAncestor(el)) continue;
+    const rect = el.getBoundingClientRect();
+    const width = Math.max(0, Math.min(rect.right, innerWidth) - Math.max(rect.left, 0));
+    const height = Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0));
+    if (width * height === 0) continue;
+    outer.push(el);
+    const zIndex = Number.parseInt(style.zIndex, 10);
+    overlays.push({
+      selector: describe(el),
+      position: style.position,
+      box: { x: Math.round(rect.left), y: Math.round(rect.top), width: Math.round(rect.width), height: Math.round(rect.height) },
+      ...(Number.isNaN(zIndex) ? {} : { zIndex }),
+      coverage: area > 0 ? Math.round((width * height / area) * 1000) / 1000 : 0,
+      text: ((el as HTMLElement).innerText ?? '').replace(/\s+/gu, ' ').trim().slice(0, 200),
+      dialog: (el instanceof HTMLDialogElement && el.open) || ['dialog', 'alertdialog'].includes(el.getAttribute('role') ?? '') || el.getAttribute('aria-modal') === 'true',
+    });
+  }
+  const locked = (el: Element | null) => el !== null && ['hidden', 'clip'].includes(getComputedStyle(el).overflowY);
+  return { overlays, scrollLocked: locked(document.documentElement) || locked(document.body) };
 }
 
 async function settle(page: Page, idleMs = 500, timeoutMs = 5000): Promise<void> {
@@ -285,7 +375,9 @@ export async function renderPage(audit: AuditBrowser, url: string, options: Rend
       return finish({ error: { code: /timeout/iu.test(message) ? 'timeout' : 'navigation', message } });
     }
     await settle(page);
+    let atLoad: { overlays: Overlay[]; scrollLocked: boolean } | undefined;
     if (options.mode === 'user') {
+      atLoad = await page.evaluate(collectOverlays, 50).catch(() => undefined);
       // Scroll like a person, one viewport at a time, so scroll-triggered content loads.
       for (let step = 0; step < 30; step += 1) {
         const atBottom = await page.evaluate(() => {
@@ -320,7 +412,7 @@ export async function renderPage(audit: AuditBrowser, url: string, options: Rend
           lcp: store?.lcp ?? null,
         };
       }, key),
-      page.evaluate(collectTextBlocks, options.textBlockLimit ?? 2000),
+      page.evaluate(collectTextBlocks, options.textBlockLimit ?? 2000, key),
     ]);
     return finish({
       status: response?.status(),
@@ -331,6 +423,7 @@ export async function renderPage(audit: AuditBrowser, url: string, options: Rend
       layoutShifts: options.mode === 'user' ? metrics.shifts as RenderResult['layoutShifts'] : [],
       lcp: (metrics.lcp ?? undefined) as RenderResult['lcp'],
       textBlocks,
+      ...(atLoad ?? {}),
     });
   } finally {
     await context.close().catch(() => {});
