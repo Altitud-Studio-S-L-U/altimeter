@@ -45,7 +45,7 @@ Usage:
   altimeter doctor [--probe]                       Check Node.js, Chrome and the Claude Code and Codex CLIs; --probe
                                                    sends each CLI one tiny request (a little of your plan's quota).
   altimeter cache clear                            Delete cached model answers, probe runs and crawler IP lists.
-  altimeter gsc login --client <client_secret.json> [--remember <dpapi|file>]
+  altimeter gsc login --client <client_secret.json> --remember <dpapi|file>
   altimeter gsc logout | gsc status                Manage read-only Search Console access.
   altimeter bots [--cloudflare-zone <domain>] [--logs <file>]...
                                                    Show which crawlers really fetch the site, each verified by its
@@ -368,20 +368,18 @@ export async function gscCommand(args: string[], context: GscCommandContext = {}
   if (action !== 'login') throw new UsageError('Use "altimeter gsc login", "gsc logout" or "gsc status".');
   const { values } = parseArgs({ args: rest, strict: true, allowPositionals: false, options: { client: { type: 'string' }, remember: { type: 'string' } } });
   if (!values.client) throw new UsageError('gsc login needs --client with the Desktop OAuth client JSON from your Google Cloud project.');
-  if (values.remember !== undefined && values.remember !== 'dpapi' && values.remember !== 'file') throw new UsageError('--remember must be dpapi (Windows) or file.');
+  // Audits read only a stored login, and the token is never printed, so a login that is not stored would be lost.
+  if (values.remember === undefined) throw new UsageError('gsc login needs --remember dpapi (Windows) or --remember file, so that audits can use the login.');
+  if (values.remember !== 'dpapi' && values.remember !== 'file') throw new UsageError('--remember must be dpapi (Windows) or file.');
   const oauth = await readOAuthClient(resolve(values.client));
   const client = new HttpClient();
   try {
     const login = await startLoopbackLogin(client, oauth);
     process.stderr.write(`Open this address in your browser and allow read-only access to Search Console:\n\n${login.authorizationUrl}\n\n`);
     const token = await login.token;
-    if (values.remember) {
-      if (!token.refreshToken) throw new UsageError('Google did not return a refresh token, so the login cannot be stored.');
-      const path = await saveLogin({ clientId: oauth.clientId, clientSecret: oauth.clientSecret, refreshToken: token.refreshToken, createdAt: new Date().toISOString() }, values.remember);
-      write(`Signed in. The login is stored in ${path}. If your OAuth consent screen is in Testing mode, Google expires it after 7 days.\n`);
-    } else {
-      write('Signed in for this session only. Pass the token to an audit with ALTIMETER_GSC_ACCESS_TOKEN, or log in again with --remember.\n');
-    }
+    if (!token.refreshToken) throw new UsageError('Google did not return a refresh token, so the login cannot be stored.');
+    const path = await saveLogin({ clientId: oauth.clientId, clientSecret: oauth.clientSecret, refreshToken: token.refreshToken, createdAt: new Date().toISOString() }, values.remember);
+    write(`Signed in. The login is stored in ${path}. If your OAuth consent screen is in Testing mode, Google expires it after 7 days.\n`);
     return 0;
   } finally {
     await client.close();

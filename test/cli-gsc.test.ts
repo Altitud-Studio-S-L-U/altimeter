@@ -141,3 +141,15 @@ describe('altimeter gsc logout', () => {
     assert.doesNotMatch(result.stderr, /secret/u);
   });
 });
+
+describe('altimeter gsc login', () => {
+  test('needs --remember before the sign-in starts, because audits can only use a stored login', async () => {
+    const clientFile = join(work, 'client_secret.json');
+    await writeFile(clientFile, JSON.stringify({ installed: { client_id: 'cid.apps.googleusercontent.com', client_secret: 'client-secret' } }));
+    // Without the check the command would wait for the browser; the timeout ends it.
+    const result = spawnSync(process.execPath, [cli, 'gsc', 'login', '--client', clientFile], { encoding: 'utf8', windowsHide: true, timeout: 60_000, env: { ...process.env, LOCALAPPDATA: work, XDG_STATE_HOME: work, HOME: work } });
+    assert.equal(result.status, 2, result.stderr);
+    assert.equal(result.stderr, 'gsc login needs --remember dpapi (Windows) or --remember file, so that audits can use the login.\n');
+    assert.equal(result.stdout, '');
+  });
+});
