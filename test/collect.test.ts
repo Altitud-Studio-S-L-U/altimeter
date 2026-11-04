@@ -10,7 +10,7 @@ let origin: string;
 
 const layout = (title: string, body: string, head = '') => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title>${head}</head>
-<body><nav><a href="/en/">Home</a> <a href="/en/about/">About</a> <a href="/en/services/">Services</a> <a href="/en/legal/">Legal</a></nav>
+<body><nav><a href="/en/">Home</a> <a href="/en/about/">About</a> <a href="/cdn-cgi/l/email-protection#0a6f676b6366">Email</a> <a href="/en/services/">Services</a> <a href="/en/legal/">Legal</a></nav>
 <main>${body}</main><script src="/private/tracker.js"></script></body></html>`;
 
 before(async () => {
