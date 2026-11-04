@@ -106,7 +106,7 @@ describe('altimeter bots', () => {
       assert.ok(!text.includes(escape) && !text.includes(override), 'no terminal escape or bidi override survives');
       assert.ok(!text.includes('\\u001b') && !text.includes('\\u202e'), 'not even escaped in JSON');
     }
-    assert.match(markdown, /```untrusted\n {4}\/en\/about\/\]\(javascript:alert\(1\)\) \(1 requests, last 2026-10-23\)/u, 'the escape sequence is removed and the rest stays inside an untrusted block');
+    assert.match(markdown, /```untrusted\n {4}\/en\/about\/\]\(javascript:alert\(1\)\) \(1, 2026-10-23\)/u, 'the escape sequence is removed and the rest stays inside an untrusted block');
     assert.ok(!raw.includes(work), 'no local folder appears in bots.json');
     assert.match(raw, /"file": "hostile\.log"/u);
   });

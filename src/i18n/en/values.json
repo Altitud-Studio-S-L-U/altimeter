@@ -222,6 +222,11 @@
     "invalid key \"{key}\"": "invalid key \"{key}\"",
     "{key} needs y or n": "{key} needs y or n"
   },
+  "purpose": {
+    "search": "search",
+    "training": "training",
+    "user-triggered": "user-triggered"
+  },
   "query": {
     "query {number}": "query {number}"
   },

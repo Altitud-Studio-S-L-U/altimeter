@@ -686,9 +686,9 @@
     "why": "Google trata los códigos 401 y 403 como una página inexistente y elimina esas URLs de su índice, y reduce el rastreo cuando recibe 429 o errores del servidor. Las solicitudes verificadas como Googlebot o Bingbot que reciben estas respuestas muestran que una regla del CDN, del cortafuegos o del servidor bloquea al rastreador real, algo que un sondeo desde fuera no puede demostrar.",
     "fix": "Busca la regla que responde al rastreador (WAF, protección contra bots, limitación de frecuencia, bloqueo geográfico) y exime a los rastreadores verificados por su DNS inverso o por los rangos de IP que publican. No uses 401 ni 403 para limitar la frecuencia de rastreo, y corrige los errores del servidor que recibe el rastreador.",
     "messages": {
-      "fail": "Solicitudes verificadas de {agent} con errores o rechazos: {count} de {total} ({share}; {statuses}).",
-      "fail:refused": "Las solicitudes verificadas de {agent} se han rechazado {count} de {total} veces ({share}; {statuses}), así que el rastreador no ha podido leer esas páginas.",
-      "fail:server-errors": "Las solicitudes verificadas de {agent} han recibido un error del servidor {count} de {total} veces ({share}; {statuses})."
+      "fail": "Solicitudes verificadas de {agent} con errores o rechazos: {count} de {total} ({share, number, percent}; {statuses}).",
+      "fail:refused": "Las solicitudes verificadas de {agent} se han rechazado {count} de {total} veces ({share, number, percent}; {statuses}), así que el rastreador no ha podido leer esas páginas.",
+      "fail:server-errors": "Las solicitudes verificadas de {agent} han recibido un error del servidor {count} de {total} veces ({share, number, percent}; {statuses})."
     }
   },
   "crawl-bots-robots-compliance": {
@@ -706,10 +706,10 @@
     "why": "Un sitemap indica a Google qué páginas considera importantes el sitio y le ayuda a rastrearlas, aunque no garantiza el rastreo. Las URLs del sitemap que Googlebot verificado no ha obtenido correctamente durante la ventana no se han actualizado en el índice de Google en ese tiempo, y puede que las nuevas aún no estén indexadas.",
     "fix": "Inspecciona en Search Console las URLs que faltan. Enlázalas desde páginas que Googlebot rastrea, mantén su lastmod exacto y asegúrate de que responden 200 rápidamente. Los registros de un origen detrás de un CDN no incluyen las solicitudes que el CDN ha servido desde la caché, así que usa los registros del CDN cuando sea posible.",
     "messages": {
-      "fail": "Googlebot verificado ha obtenido {fetched} de {urls} URLs del sitemap ({share}) en {days} días de datos.",
+      "fail": "Googlebot verificado ha obtenido {fetched} de {urls} URLs del sitemap ({share, number, percent}) en {days} días de datos.",
       "fail:not-seen": "No aparece ninguna solicitud de Googlebot verificado en {days} días de datos, así que no se ha obtenido ninguna de las URLs del sitemap ({urls}).",
-      "fail:low-coverage": "Googlebot verificado solo ha obtenido {fetched} de {urls} URLs del sitemap ({share}) en {days} días de datos.",
-      "fail:partial-coverage": "Googlebot verificado ha obtenido {fetched} de {urls} URLs del sitemap ({share}) en {days} días de datos."
+      "fail:low-coverage": "Googlebot verificado solo ha obtenido {fetched} de {urls} URLs del sitemap ({share, number, percent}) en {days} días de datos.",
+      "fail:partial-coverage": "Googlebot verificado ha obtenido {fetched} de {urls} URLs del sitemap ({share, number, percent}) en {days} días de datos."
     }
   },
   "crawl-bots-spoofed-crawlers": {
@@ -717,10 +717,10 @@
     "why": "Cualquiera puede enviar el user-agent de Googlebot o de GPTBot, y Google y Common Crawl advierten de que los suyos se suplantan. Las solicitudes que dicen ser de un rastreador pero no superan la comprobación de la lista de IP o del DNS inverso que publica su operador son impostores, a menudo bots que extraen contenido, y un cortafuegos que confía en los user-agents las sirve mientras puede rechazar al rastreador real.",
     "fix": "Verifica los rastreadores en el perímetro por su DNS inverso o por las listas de IP que publican los operadores (los CDN ofrecen reglas de bots verificados) en lugar de permitir o bloquear user-agents, y rechaza las solicitudes que no superen la verificación.",
     "messages": {
-      "fail": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share}; {agents}).",
-      "fail:served": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share}; {agents}), y {served} de ellas se han servido, así que el perímetro confía en los user-agents.",
-      "fail:refused": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share}; {agents}); el perímetro ha rechazado la mayoría.",
-      "fail:present": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share}; {agents})."
+      "fail": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share, number, percent}; {agents}).",
+      "fail:served": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share, number, percent}; {agents}), y {served} de ellas se han servido, así que el perímetro confía en los user-agents.",
+      "fail:refused": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share, number, percent}; {agents}); el perímetro ha rechazado la mayoría.",
+      "fail:present": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share, number, percent}; {agents})."
     }
   },
   "crawl-bing-crawl-issues": {

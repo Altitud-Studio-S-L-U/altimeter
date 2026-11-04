@@ -343,10 +343,10 @@
     "why": "Google inclou entre els requisits bàsics de les funcions d'IA que el rastreig estigui permès pel robots.txt i per qualsevol infraestructura de CDN o d'allotjament, i OpenAI diu que els llocs que exclouen el seu rastrejador de cerca no es mostren a les respostes de la cerca de ChatGPT. Les sol·licituds verificades d'aquests rastrejadors que reben 401, 402, 403, 429 o un desafiament mostren que la vora de la xarxa bloqueja el rastrejador real, cosa que una prova amb un agent d'usuari manllevat no pot demostrar.",
     "fix": "Busca la regla del CDN, del tallafoc o de limitació de freqüència que respon al rastrejador i permet-lo, per exemple a AI Crawl Control de Cloudflare o amb una regla del WAF que ometi els bots verificats. Si el 402 ve del pay per crawl, eximeix-ne els rastrejadors de cerca i de respostes. Continua rebutjant les sol·licituds que no superin la verificació.",
     "messages": {
-      "fail": "Sol·licituds identificades com a {agent} que s'han rebutjat tot i que el robots.txt el permet: {blocked} de {total} ({share}; {statuses}).",
-      "fail:refused": "Sol·licituds verificades com a {agent} que s'han rebutjat tot i que el robots.txt permet el rastrejador: {blocked} de {total} ({share}; {statuses}). El rastrejador no pot llegir aquestes pàgines.",
-      "fail:payment-required": "Sol·licituds verificades com a {agent} que han rebut HTTP 402 Payment Required o un altre rebuig: {blocked} de {total} ({share}; {statuses}). La vora de la xarxa cobra o bloqueja un rastrejador que el robots.txt permet.",
-      "fail:unverified-claims": "Sol·licituds que s'identifiquen com a {agent} i que s'han rebutjat: {blocked} de {total} ({share}; {statuses}). No s'han pogut verificar, de manera que pot ser que la vora de la xarxa estigui rebutjant suplantacions."
+      "fail": "Sol·licituds identificades com a {agent} que s'han rebutjat tot i que el robots.txt el permet: {blocked} de {total} ({share, number, percent}; {statuses}).",
+      "fail:refused": "Sol·licituds verificades com a {agent} que s'han rebutjat tot i que el robots.txt permet el rastrejador: {blocked} de {total} ({share, number, percent}; {statuses}). El rastrejador no pot llegir aquestes pàgines.",
+      "fail:payment-required": "Sol·licituds verificades com a {agent} que han rebut HTTP 402 Payment Required o un altre rebuig: {blocked} de {total} ({share, number, percent}; {statuses}). La vora de la xarxa cobra o bloqueja un rastrejador que el robots.txt permet.",
+      "fail:unverified-claims": "Sol·licituds que s'identifiquen com a {agent} i que s'han rebutjat: {blocked} de {total} ({share, number, percent}; {statuses}). No s'han pogut verificar, de manera que pot ser que la vora de la xarxa estigui rebutjant suplantacions."
     }
   },
   "ai-bots-search-not-seen": {

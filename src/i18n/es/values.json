@@ -222,6 +222,11 @@
     "invalid key \"{key}\"": "clave «{key}» no válida",
     "{key} needs y or n": "{key} necesita «y» o «n»"
   },
+  "purpose": {
+    "search": "búsqueda",
+    "training": "entrenamiento",
+    "user-triggered": "a petición del usuario"
+  },
   "query": {
     "query {number}": "consulta {number}"
   },

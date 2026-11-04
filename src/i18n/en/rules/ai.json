@@ -215,10 +215,10 @@
   },
   "ai-bots-blocked-at-edge": {
     "messages": {
-      "fail": "{agent} was refused {blocked} of {total} times ({share}; {statuses}) although robots.txt allows it.",
-      "fail:refused": "Verified {agent} requests were refused {blocked} of {total} times ({share}; {statuses}) although robots.txt allows the crawler, so it cannot read those pages.",
-      "fail:payment-required": "Verified {agent} requests got HTTP 402 Payment Required or another refusal {blocked} of {total} times ({share}; {statuses}): the edge charges or blocks a crawler that robots.txt allows.",
-      "fail:unverified-claims": "Requests claiming to be {agent} were refused {blocked} of {total} times ({share}; {statuses}); they could not be verified, so the edge may be refusing impostors."
+      "fail": "{agent} was refused {blocked} of {total} times ({share, number, percent}; {statuses}) although robots.txt allows it.",
+      "fail:refused": "Verified {agent} requests were refused {blocked} of {total} times ({share, number, percent}; {statuses}) although robots.txt allows the crawler, so it cannot read those pages.",
+      "fail:payment-required": "Verified {agent} requests got HTTP 402 Payment Required or another refusal {blocked} of {total} times ({share, number, percent}; {statuses}): the edge charges or blocks a crawler that robots.txt allows.",
+      "fail:unverified-claims": "Requests claiming to be {agent} were refused {blocked} of {total} times ({share, number, percent}; {statuses}); they could not be verified, so the edge may be refusing impostors."
     }
   },
   "ai-bots-search-not-seen": {

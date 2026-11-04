@@ -222,6 +222,11 @@
     "invalid key \"{key}\"": "clau «{key}» no vàlida",
     "{key} needs y or n": "{key} necessita y o n"
   },
+  "purpose": {
+    "search": "cerca",
+    "training": "entrenament",
+    "user-triggered": "a petició de l'usuari"
+  },
   "query": {
     "query {number}": "consulta {number}"
   },

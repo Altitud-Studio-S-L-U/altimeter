@@ -497,9 +497,9 @@
   },
   "crawl-bots-blocked-at-edge": {
     "messages": {
-      "fail": "Verified {agent} requests got {count} errors or refusals out of {total} ({share}; {statuses}).",
-      "fail:refused": "Verified {agent} requests were refused {count} of {total} times ({share}; {statuses}), so the crawler could not read those pages.",
-      "fail:server-errors": "Verified {agent} requests got a server error {count} of {total} times ({share}; {statuses})."
+      "fail": "Verified {agent} requests got {count} errors or refusals out of {total} ({share, number, percent}; {statuses}).",
+      "fail:refused": "Verified {agent} requests were refused {count} of {total} times ({share, number, percent}; {statuses}), so the crawler could not read those pages.",
+      "fail:server-errors": "Verified {agent} requests got a server error {count} of {total} times ({share, number, percent}; {statuses})."
     }
   },
   "crawl-bots-robots-compliance": {
@@ -511,18 +511,18 @@
   },
   "crawl-bots-googlebot-sitemap-coverage": {
     "messages": {
-      "fail": "Verified Googlebot fetched {fetched} of {urls} sitemap URLs ({share}) in {days} days of data.",
+      "fail": "Verified Googlebot fetched {fetched} of {urls} sitemap URLs ({share, number, percent}) in {days} days of data.",
       "fail:not-seen": "No verified Googlebot request appears in {days} days of data, so none of the {urls} sitemap URLs was fetched.",
-      "fail:low-coverage": "Verified Googlebot fetched only {fetched} of {urls} sitemap URLs ({share}) in {days} days of data.",
-      "fail:partial-coverage": "Verified Googlebot fetched {fetched} of {urls} sitemap URLs ({share}) in {days} days of data."
+      "fail:low-coverage": "Verified Googlebot fetched only {fetched} of {urls} sitemap URLs ({share, number, percent}) in {days} days of data.",
+      "fail:partial-coverage": "Verified Googlebot fetched {fetched} of {urls} sitemap URLs ({share, number, percent}) in {days} days of data."
     }
   },
   "crawl-bots-spoofed-crawlers": {
     "messages": {
-      "fail": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents}).",
-      "fail:served": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents}), and {served} of them were served, so the edge trusts user agents.",
-      "fail:refused": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents}); the edge refused most of them.",
-      "fail:present": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share}; {agents})."
+      "fail": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share, number, percent}; {agents}).",
+      "fail:served": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share, number, percent}; {agents}), and {served} of them were served, so the edge trusts user agents.",
+      "fail:refused": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share, number, percent}; {agents}); the edge refused most of them.",
+      "fail:present": "{spoofed} of {checked} checked crawler requests failed their operators' checks ({share, number, percent}; {agents})."
     }
   },
   "crawl-bing-crawl-issues": {
