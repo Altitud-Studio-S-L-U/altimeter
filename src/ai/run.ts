@@ -49,6 +49,7 @@ export interface AnalysisOptions {
   readonly dryRunDir?: string;
   /** The owner's target keywords; intent is judged only against one. */
   readonly keyword?: readonly string[];
+  /** Replaces the catalog's myth filter (mythMatches from src/rules/myth-filter.ts), for tests. */
   readonly mythMatches?: MythMatcher;
   /** Reuse answers from the cache folder (default true). */
   readonly cache?: boolean;
@@ -358,7 +359,7 @@ export async function runAnalysis(options: AnalysisOptions): Promise<AnalysisRes
   const warnings: string[] = [];
   if ((options.provider ?? 'auto') === 'none') return emptyAnalysis(warnings);
   const keyword = (options.keyword ?? []).map(entry => cleanDisplay(entry, 100)).filter(entry => entry !== '').slice(0, 5);
-  const mythMatches = options.mythMatches ?? defaultMythMatcher();
+  const mythMatches = options.mythMatches ?? defaultMythMatcher;
   const { report } = options;
   const site = options.collected.site;
   const facts = selectPages(site, Math.max(1, Math.floor(options.aiPages ?? defaults.aiPages)));

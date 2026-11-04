@@ -1,7 +1,8 @@
-import { myths as catalogMyths, rule as catalogRule } from '../catalog/index.ts';
+import { rule as catalogRule } from '../catalog/index.ts';
 import { severities, type Myth, type RuleMeta, type Severity } from '../core/types.ts';
 import type { Report, ReportFinding } from '../report/model.ts';
 import type { FindingScope } from '../rules/engine.ts';
+import { mythMatches } from '../rules/myth-filter.ts';
 import type { EvidencePack } from './pack.ts';
 import { judgmentCap, languageRules, type PassPlan } from './passes.ts';
 import { validateSchema, type Schema } from './schema.ts';
@@ -13,15 +14,11 @@ import type {
 
 export type MythMatcher = (text: string) => readonly Myth[];
 
-/** Lowercase substring match of each myth's patterns after whitespace normalisation. */
-export function defaultMythMatcher(myths: readonly Myth[] = catalogMyths): MythMatcher {
-  const normalize = (text: string) => text.toLowerCase().replace(/\s+/gu, ' ').trim();
-  const entries = myths.map(myth => ({ myth, patterns: myth.patterns.map(normalize).filter(pattern => pattern !== '') }));
-  return text => {
-    const haystack = normalize(text);
-    return entries.filter(entry => entry.patterns.some(pattern => haystack.includes(pattern))).map(entry => entry.myth);
-  };
-}
+/**
+ * The catalog's myth filter: phrase matching per clause that ignores case and punctuation and lets a nearby
+ * negation ("do not add rel=next") stand as a refutation. A myth match drops the claim; it is not sent back.
+ */
+export const defaultMythMatcher: MythMatcher = mythMatches;
 
 /** A finding that passed validation, before verification and before it becomes a report finding. */
 export interface DraftFinding {

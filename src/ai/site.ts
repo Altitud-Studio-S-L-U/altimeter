@@ -279,6 +279,22 @@ function pageInfo(page: PageFacts, label: string, role: PageRole): PageInfo {
 }
 
 /**
+ * Every page the collector fetched: the audited pages, the siblings and the audited page's hreflang alternates.
+ * All of them count for title uniqueness and known links, and the alternates a page lists can be compared with it.
+ * Owner data (site.owner) is deliberately never read by the analysis.
+ */
+export function fetchedPages(site: SiteFacts): PageFacts[] {
+  const seen = new Set<string>();
+  const result: PageFacts[] = [];
+  for (const page of [...site.pages.values(), ...site.siblings, ...(site.alternates ?? [])]) {
+    if (seen.has(page.url)) continue;
+    seen.add(page.url);
+    result.push(page);
+  }
+  return result;
+}
+
+/**
  * Copies every site string the analysis may show a model into one registry: metadata, headings, block text,
  * hidden text, image alt text, links, structured data, hreflang annotations and language headers for the
  * analysed pages, and the metadata of every other collected page for uniqueness checks.
@@ -306,8 +322,7 @@ export function collectSiteStrings(site: SiteFacts, analysed: readonly PageFacts
     registry.addSlice(info, 'hreflang', hreflang);
     registry.addSlice(info, 'http', httpSpecs(page));
   });
-  // Siblings were fetched too, so their titles count for uniqueness and they can be the alternates a page lists.
-  for (const page of [...site.pages.values(), ...site.siblings]) {
+  for (const page of fetchedPages(site)) {
     if (analysed.includes(page) || !page.raw || pages.some(entry => entry.key === page.url)) continue;
     const info = pageInfo(page, `P${pages.length + 1}`, 'context');
     pages.push(info);
@@ -437,8 +452,10 @@ function detectBrand(site: SiteFacts, strings: SiteStrings): string | undefined 
 /** What proposals are checked against: each page's visible text, every referenced URL and the brand. */
 export function buildCorpus(site: SiteFacts, strings: SiteStrings): FactCorpus {
   const pages = new Map<string, PageCorpus>();
+  const fetched = fetchedPages(site);
+  const byUrl = new Map(fetched.map(page => [page.url, page]));
   for (const info of strings.pages) {
-    const facts = site.pages.get(info.key) ?? site.siblings.find(entry => entry.url === info.key);
+    const facts = byUrl.get(info.key);
     const rendered = facts?.rendered && facts.rendered.result.error === undefined ? facts.rendered.result.textBlocks : [];
     const metadata = itemsOf(strings, info.key, 'metadata');
     const title = metadata.find(item => item.label === 'title element')?.text;
@@ -456,7 +473,7 @@ export function buildCorpus(site: SiteFacts, strings: SiteStrings): FactCorpus {
     });
   }
   const links = new Set<string>();
-  for (const page of [...site.pages.values(), ...site.siblings]) {
+  for (const page of fetched) {
     for (const url of referencedUrls(page)) {
       const normalized = normalizeUrl(url);
       if (normalized) links.add(normalized);

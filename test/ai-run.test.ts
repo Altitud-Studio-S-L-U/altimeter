@@ -7,7 +7,7 @@ import { runAnalysis, type AnalysisOptions } from '../src/ai/run.ts';
 import { systemPrompt } from '../src/ai/system-prompt.ts';
 import type { ReportAnalysis } from '../src/ai/types.ts';
 import { mergeAnalysis } from '../src/report/model.ts';
-import { hotelAudit, hotelScenario, roomsUrl, verifierVerdicts } from './support/analysis.ts';
+import { hotelAudit, hotelScenario, outOfSchemaRules, ownerSecret, roomsUrl, verifierVerdicts } from './support/analysis.ts';
 import { providerDouble, sandbox, testEnv } from './support/providers.ts';
 
 async function setup(t: TestContext, scenario: object = hotelScenario, audit = hotelAudit()) {
@@ -51,20 +51,38 @@ describe('runAnalysis with a synthetic Claude Code', () => {
     ]);
     assert.deepEqual(dropped, [
       ['assessment', '', 'unknown-evidence'],
+      ['finding', 'content-headings-descriptive', 'contradicts-deterministic'],
+      ['finding', 'content-headings-descriptive', 'scope-not-audited'],
       ['finding', 'content-headings-descriptive', 'unknown-evidence'],
-      ['finding', 'content-hidden-links', 'scope-not-audited'],
+      ['finding', 'content-hidden-links', 'rule-out-of-scope'],
       ['finding', 'content-imaginary-rule', 'rule-not-in-catalog'],
-      ['finding', 'content-spelling-grammar', 'verification-unsupported'],
-      ['finding', 'content-stale-content', 'myth'],
-      ['finding', 'content-title-h1-mismatch', 'contradicts-deterministic'],
+      ['finding', 'content-intent-match', 'myth'],
       ['finding', 'content-title-sensational', 'quote-other-evidence'],
+      ['finding', 'content-ymyl-classification', 'verification-unsupported'],
       ['finding', 'crawl-soft-404', 'rule-out-of-scope'],
       ['proposal', '', 'brand-missing'],
       ['proposal', '', 'new-fact'],
       ['proposal', '', 'new-fact'],
       ['proposal', '', 'retired-feature'],
     ]);
-    assert.deepEqual(confirmations, [['content-title-obsolete-year', 'dismissed'], ['schema-localbusiness', 'confirmed']]);
+    assert.deepEqual(confirmations, [
+      ['content-img-alt-quality', 'dismissed'],
+      ['content-keyword-stuffing', 'confirmed'],
+      ['content-title-obsolete-year', 'dismissed'],
+      ['schema-localbusiness', 'confirmed'],
+      ['schema-visible-content-parity', 'dismissed'],
+    ]);
+  });
+
+  test('gives code-decided hybrid rules to the analyst only as candidates', async t => {
+    const { claude, options } = await setup(t);
+    await runAnalysis(options());
+    const content = (await claude.calls()).find(call => call.stdin.includes('Content quality and E-E-A-T: analyst request for P1'));
+    const scope = content!.stdin.slice(content!.stdin.indexOf('## Rules in scope'), content!.stdin.indexOf('## Myths'));
+    const listed = [...scope.matchAll(/"id":"([a-z0-9-]+)","title"/gu)].map(match => match[1]);
+    for (const id of ['content-img-alt-quality', 'content-keyword-stuffing', 'content-title-obsolete-year']) assert.match(scope, new RegExp(`"id":"${id}"[^\\n]*"candidate":true`, 'u'));
+    for (const id of ['content-subtopic-coverage', 'content-headings-descriptive', 'content-title-sensational', 'content-intent-match']) assert.ok(listed.includes(id), `${id} is the analyst's own rule`);
+    for (const id of ['content-hidden-links', 'content-stale-content', 'content-title-h1-mismatch']) assert.equal(listed.includes(id), false, `${id} is decided by code and has no candidate`);
   });
 
   test('caps judged severity at medium and lowers confidence for likely verdicts and partial verification', async t => {
@@ -82,8 +100,8 @@ describe('runAnalysis with a synthetic Claude Code', () => {
   test('accepts quotes written with other apostrophes and checks proposals in code', async t => {
     const { options } = await setup(t, { responses: hotelScenario.responses.map(entry => ('verdicts' in entry ? { ...entry, verdicts: { '*': 'supported' } } : entry)) });
     const result = await runAnalysis(options());
-    const spelling = result.findings.find(finding => finding.ruleId === 'content-spelling-grammar');
-    assert.equal(spelling?.quotes[0]?.text, "We don't rent rooms by the hour", 'the page writes the apostrophe as U+2019');
+    const ymyl = result.findings.find(finding => finding.ruleId === 'content-ymyl-classification');
+    assert.equal(ymyl?.quotes[0]?.text, "We don't rent rooms by the hour", 'the page writes the apostrophe as U+2019');
     const kinds = result.proposals.map(proposal => [proposal.kind, proposal.placeholders]);
     assert.deepEqual(kinds, [['title', 0], ['meta-description', 0], ['json-ld', 1]]);
     const markup = JSON.parse((result.proposals.find(proposal => proposal.kind === 'json-ld') as { jsonLd: string }).jsonLd) as { sameAs: string[] };
@@ -117,6 +135,25 @@ describe('runAnalysis with a synthetic Claude Code', () => {
       ['ai-hidden-llm-instructions', 'img alt text', 'ignore-instructions', false],
       ['ai-hidden-llm-instructions', 'JSON-LD block', 'ignore-instructions', false],
     ]);
+  });
+
+  test('owner data never enters a request, while the report keeps it', async t => {
+    const audit = hotelAudit({ owner: true });
+    const owned = audit.report.evidence.filter(item => item.kind === 'owner-data').map(item => item.id);
+    assert.ok(owned.length >= 2, 'the fixture has owner evidence');
+    assert.ok(audit.report.findings.some(finding => finding.origin === 'owner-data' && finding.ruleId === 'content-gsc-low-ctr'));
+    assert.ok(audit.report.findings.some(finding => finding.origin === 'deterministic' && finding.evidence.some(id => owned.includes(id))));
+    const { claude, env, home, options } = await setup(t, hotelScenario, audit);
+    const result = await runAnalysis(options());
+    const calls = await claude.calls();
+    assert.ok(calls.some(call => call.stdin.includes('Verification of')), 'verification requests are checked too');
+    for (const call of calls) {
+      assert.equal(call.stdin.includes(ownerSecret), false, 'no Search Console query');
+      assert.equal(call.stdin.includes('content-gsc-low-ctr'), false, 'no owner-data rule');
+      for (const id of owned) assert.equal(call.stdin.includes(`"${id}"`), false, `no owner evidence ${id}`);
+    }
+    const withoutOwner = await runAnalysis({ ...hotelAudit(), env, cacheDir: join(home, 'cache-without-owner') });
+    assert.deepEqual(outcomes(result).findings, outcomes(withoutOwner).findings, 'owner data changes nothing the analysis concludes');
   });
 
   test('sends site text only inside nonce delimiters, after the trusted part', async t => {
@@ -156,12 +193,21 @@ describe('verification outcomes', () => {
     assert.equal(result.findings.some(finding => finding.ruleId === 'content-img-alt-quality'), false);
   });
 
-  test('a partial verdict on a low-confidence finding drops it', async t => {
-    const scenario = { responses: [{ when: 'Verification of', verdicts: { 'content-subtopic-coverage': 'partial', 'content-keyword-stuffing': 'partial', '*': 'supported' } }, ...hotelScenario.responses.slice(1)] };
+  test('a partial verdict lowers confidence one level and drops a finding that is already low', async t => {
+    const lowAlt = (entry: (typeof hotelScenario.responses)[number]) => {
+      if (!('answer' in entry) || !('findings' in entry.answer)) return entry;
+      const findings = (entry.answer.findings as ReadonlyArray<Record<string, unknown>>).map(item => (item.ruleId === 'content-img-alt-quality' ? { ...item, confidence: 'low' } : item));
+      return { ...entry, answer: { ...entry.answer, findings } };
+    };
+    const verdicts = { 'content-subtopic-coverage': 'partial', 'content-img-alt-quality': 'partial', '*': 'supported' };
+    const scenario = { responses: [{ when: 'Verification of', verdicts }, ...hotelScenario.responses.slice(1).map(lowAlt)] };
     const { options } = await setup(t, scenario);
     const result = await runAnalysis(options());
     const coverage = result.findings.find(finding => finding.ruleId === 'content-subtopic-coverage');
     assert.equal(coverage?.confidence, 'low', 'medium after the likely cap, low after partial verification');
+    assert.equal(coverage?.verification, 'partial');
+    assert.equal(result.findings.some(finding => finding.ruleId === 'content-img-alt-quality'), false);
+    assert.ok(result.dropped.some(entry => entry.ruleId === 'content-img-alt-quality' && entry.reason === 'verification-partial-low' && entry.role === 'verifier'));
   });
 
   test('verifier none leaves every finding unverified; verifier other uses the other CLI', async t => {
@@ -213,7 +259,7 @@ describe('planning, budget and providers', () => {
   });
 
   test('a second run is served from the cache; a different keyword asks again; clearCache empties it', async t => {
-    const outOfSchema = new Set(['crawl-soft-404', 'content-imaginary-rule']);
+    const outOfSchema = new Set(outOfSchemaRules);
     const responses = hotelScenario.responses.map(entry => {
       if (!('answer' in entry) || !('findings' in entry.answer)) return entry;
       return { ...entry, answer: { ...entry.answer, findings: (entry.answer.findings as Array<{ ruleId: string }>).filter(item => !outOfSchema.has(item.ruleId)) } };

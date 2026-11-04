@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { buildPack, scrubVolatile, type PackSection } from '../src/ai/pack.ts';
-import { planPasses } from '../src/ai/passes.ts';
-import { collectSiteStrings, injectionCandidates, itemsOf, selectPages } from '../src/ai/site.ts';
+import { packSections, planPasses } from '../src/ai/passes.ts';
+import { buildCorpus, collectSiteStrings, injectionCandidates, itemsOf, selectPages } from '../src/ai/site.ts';
 import { page, site } from './support/facts.ts';
 import { hotelAudit, roomsUrl } from './support/analysis.ts';
 
@@ -113,20 +113,30 @@ describe('site strings', () => {
   });
 
   test('plans the international pass only with alternates or several languages, and sends the alternates\' metadata', () => {
-    const english = '<!doctype html><html lang="en"><head><title>Rooms | Hotel</title><link rel="alternate" hreflang="ca" href="https://hotel.example/ca/habitacions/"></head><body><p>Our rooms look over the valley.</p></body></html>';
-    const catalan = '<!doctype html><html lang="ca"><head><title>Habitacions | Hotel</title></head><body><p>Les habitacions donen a la vall.</p></body></html>';
+    const english = '<!doctype html><html lang="en"><head><title>Rooms | Hotel</title><link rel="alternate" hreflang="ca" href="https://hotel.example/ca/habitacions/"><link rel="alternate" hreflang="es" href="https://hotel.example/es/habitaciones/"></head><body><p>Our rooms look over the valley.</p></body></html>';
+    const catalan = '<!doctype html><html lang="ca"><head><title>Habitacions | Hotel</title></head><body><p>Les habitacions donen a la vall.</p><a href="https://social.example/hotel-ca">Xarxes</a></body></html>';
+    const spanish = '<!doctype html><html lang="es"><head><title>Habitaciones | Hotel</title></head><body><p>Las habitaciones dan al valle.</p></body></html>';
     const audited = page('https://hotel.example/rooms/', { html: english, rendered: english, pageType: 'other' });
-    const alternate = page('https://hotel.example/ca/habitacions/', { html: catalan });
-    const facts = site({ pages: [audited], siblings: [alternate, page('https://hotel.example/contact/', { html: catalan })] });
+    // The collector fetches hreflang targets as alternates; a sibling can be one too.
+    const facts = site({
+      pages: [audited],
+      alternates: [page('https://hotel.example/ca/habitacions/', { html: catalan })],
+      siblings: [page('https://hotel.example/es/habitaciones/', { html: spanish }), page('https://hotel.example/contact/', { html: catalan })],
+    });
     const strings = collectSiteStrings(facts, selectPages(facts, 3));
     const pages = strings.pages.filter(entry => entry.role !== 'context');
     const { report } = hotelAudit();
     const { plans, skipped } = planPasses({ report: { ...report, findings: [] }, site: facts, strings, pages });
     const intl = plans.find(plan => plan.pass === 'intl');
     assert.ok(intl, JSON.stringify(skipped));
-    assert.deepEqual(intl.contextPages.map(entry => entry.url), ['https://hotel.example/ca/habitacions/']);
-    assert.ok(intl.rules.some(rule => rule.id === 'intl-mixed-language-page'));
-    const monolingual = site({ pages: [page('https://hotel.example/rooms/', { html: english.replace(/<link[^>]+>/u, ''), rendered: english.replace(/<link[^>]+>/u, ''), pageType: 'other' })] });
+    assert.deepEqual(intl.contextPages.map(entry => entry.url).sort(), ['https://hotel.example/ca/habitacions/', 'https://hotel.example/es/habitaciones/']);
+    assert.ok(intl.rules.some(rule => rule.id === 'intl-locale-formats'), 'the analyst judges its own international rules');
+    assert.equal(intl.rules.some(rule => rule.id === 'intl-mixed-language-page'), false, 'a code-decided rule without a candidate is not the analyst\'s');
+    const sections = packSections(intl, strings, report);
+    assert.ok(sections.some(entry => entry.name === 'metadata' && entry.page?.url === 'https://hotel.example/ca/habitacions/'));
+    assert.ok(buildCorpus(facts, strings).links.has('https://social.example/hotel-ca'), 'links on fetched alternates count as known links');
+    const englishOnly = english.replace(/<link[^>]+>/gu, '');
+    const monolingual = site({ pages: [page('https://hotel.example/rooms/', { html: englishOnly, rendered: englishOnly, pageType: 'other' })] });
     const single = collectSiteStrings(monolingual, selectPages(monolingual, 3));
     const none = planPasses({ report: { ...report, findings: [] }, site: monolingual, strings: single, pages: single.pages.filter(entry => entry.role !== 'context') });
     assert.equal(none.plans.some(plan => plan.pass === 'intl'), false);

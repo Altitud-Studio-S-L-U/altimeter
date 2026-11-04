@@ -52,7 +52,8 @@ function evidenceEntries(finding: DraftFinding, strings: SiteStrings, report: Re
       continue;
     }
     const fact = deterministic.get(id);
-    if (fact) entries.push({ id, label: cleanText(fact.label, 300), text: cleanText(fact.excerpt ?? '', 2000), complete: fact.complete });
+    // Owner data never enters a request, not even when a claim names its id.
+    if (fact && fact.kind !== 'owner-data') entries.push({ id, label: cleanText(fact.label, 300), text: cleanText(fact.excerpt ?? '', 2000), complete: fact.complete });
   }
   return entries;
 }

@@ -6,6 +6,7 @@ import { packSections, passSchema, planPasses, type PassPlan } from '../src/ai/p
 import { buildCorpus, collectSiteStrings, selectPages, sliceOf } from '../src/ai/site.ts';
 import type { Proposal } from '../src/ai/types.ts';
 import { defaultMythMatcher, distinctProposals, recommendsNewMarket, validateAnswer, type MythMatcher, type ValidationContext } from '../src/ai/validate.ts';
+import { mythMatches } from '../src/rules/myth-filter.ts';
 import { homeUrl, hotelAudit, roomsTitle, roomsUrl } from './support/analysis.ts';
 
 const audit = hotelAudit();
@@ -30,7 +31,7 @@ function context(plan: PassPlan, options: { incomplete?: string; mythMatches?: M
     strings,
     corpus,
     keyword: options.keyword ?? [],
-    mythMatches: options.mythMatches ?? defaultMythMatcher(),
+    mythMatches: options.mythMatches ?? defaultMythMatcher,
   };
 }
 
@@ -59,21 +60,36 @@ function content(findings: readonly Record<string, unknown>[], options: Paramete
 const reasons = (result: ReturnType<typeof validateAnswer>) => result.dropped.map(entry => entry.reason);
 
 describe('validating findings', () => {
-  test('keeps a well-founded finding and caps its severity', () => {
-    const result = content([finding({ ruleId: 'content-keyword-stuffing', severity: 'critical', ...quote('Our 45 rooms', 'Our 45 rooms look over the valley') })]);
+  test('keeps well-founded claims and caps judged severity, for the analyst\'s own rules and for candidates', () => {
+    const result = content([
+      finding({ ruleId: 'content-title-sensational', severity: 'critical', ...quote('Our 45 rooms', 'Our 45 rooms look over the valley') }),
+      finding({ ruleId: 'content-keyword-stuffing', severity: 'high', ...quote('Our 45 rooms', 'Our 45 rooms look over the valley') }),
+    ]);
     assert.deepEqual(reasons(result), []);
-    assert.equal(result.findings[0]?.severity, 'medium');
-    assert.deepEqual(result.findings[0]?.adjustments, ['severity-capped:critical->medium']);
+    assert.deepEqual(result.findings.map(entry => [entry.rule.id, entry.severity, entry.adjustments, entry.candidate !== undefined]), [
+      ['content-title-sensational', 'medium', ['severity-capped:critical->medium'], false],
+      ['content-keyword-stuffing', 'medium', ['severity-capped:high->medium'], true],
+    ]);
+  });
+
+  test('takes direct claims only on ai-judgment rules; code-decided hybrid rules need a candidate', () => {
+    const result = content([
+      finding({ ruleId: 'content-hidden-links', ...quote('Our 45 rooms', 'Our 45 rooms look over the valley') }),
+      finding({ ruleId: 'content-stale-content', verdict: 'likely', ...quote('Breakfast is served', 'Breakfast is served from 7:00 to 11:00') }),
+      finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', ...quote('Double room', 'Double room with a balcony') }),
+    ]);
+    assert.deepEqual(reasons(result), ['rule-out-of-scope', 'rule-out-of-scope']);
+    assert.equal(result.findings[0]?.candidate?.ruleId, 'content-img-alt-quality');
   });
 
   test('requires evidence and a quote that sits in the item it cites', () => {
     const result = content([
-      finding({ ruleId: 'content-keyword-stuffing' }),
-      finding({ ruleId: 'content-title-stuffing', evidenceIds: [id('Our 45 rooms')] }),
-      finding({ ruleId: 'content-hidden-links', evidenceIds: [id('Our 45 rooms')], quotes: [{ evidenceId: id('Breakfast'), text: 'Breakfast is served from 7:00' }] }),
-      finding({ ruleId: 'content-ugc-link-qualifiers', ...quote('Our 45 rooms', 'the valley') }),
-      finding({ ruleId: 'content-spelling-grammar', ...quote('Our 45 rooms', 'Our 46 rooms look over the valley') }),
-      finding({ ruleId: 'content-img-alt-quality', ...quote('Our 45 rooms', 'Breakfast is served from 7:00 to 11:00') }),
+      finding({ ruleId: 'content-title-sensational' }),
+      finding({ ruleId: 'content-headings-descriptive', evidenceIds: [id('Our 45 rooms')] }),
+      finding({ ruleId: 'content-subtopic-coverage', evidenceIds: [id('Our 45 rooms')], quotes: [{ evidenceId: id('Breakfast'), text: 'Breakfast is served from 7:00' }] }),
+      finding({ ruleId: 'content-intent-match', ...quote('Our 45 rooms', 'the valley') }),
+      finding({ ruleId: 'content-ymyl-classification', ...quote('Our 45 rooms', 'Our 46 rooms look over the valley') }),
+      finding({ ruleId: 'content-title-sensational', ...quote('Our 45 rooms', 'Breakfast is served from 7:00 to 11:00') }),
     ]);
     assert.deepEqual(reasons(result), ['missing-evidence', 'missing-quote', 'quote-uncited-evidence', 'quote-too-short', 'quote-not-found', 'quote-other-evidence']);
   });
@@ -88,18 +104,21 @@ describe('validating findings', () => {
 
   test('refuses scopes that are not this call\'s audited page', () => {
     const result = content([
-      finding({ ruleId: 'content-keyword-stuffing', scope: 'https://other.example/', ...quote('Our 45 rooms', 'Our 45 rooms look over') }),
-      finding({ ruleId: 'content-title-stuffing', scope: homeUrl, ...quote('Our 45 rooms', 'Our 45 rooms look over') }),
+      finding({ ruleId: 'content-title-sensational', scope: 'https://other.example/', ...quote('Our 45 rooms', 'Our 45 rooms look over') }),
+      finding({ ruleId: 'content-headings-descriptive', scope: homeUrl, ...quote('Our 45 rooms', 'Our 45 rooms look over') }),
     ]);
     assert.deepEqual(reasons(result), ['scope-not-audited', 'scope-outside-call']);
   });
 
-  test('drops notes that repeat a myth or recommend new markets, with any myth filter', () => {
-    const mythical = finding({ ruleId: 'content-keyword-stuffing', ...quote('Our 45 rooms', 'Our 45 rooms look over'), notes: { ...notes, en: 'Raise the keyword  DENSITY of the page.' } });
-    const markets = finding({ ruleId: 'content-title-stuffing', ...quote('Our 45 rooms', 'Our 45 rooms look over'), notes: { ...notes, es: 'Conviene anadir nuevos idiomas para llegar a otros paises.' } });
-    assert.deepEqual(reasons(content([mythical, markets])), ['myth', 'new-market']);
+  test('drops notes that repeat a myth or recommend new markets, with the catalog filter or any other', () => {
+    const mythical = finding({ ruleId: 'content-title-sensational', ...quote('Our 45 rooms', 'Our 45 rooms look over'), notes: { ...notes, en: 'Raise the keyword  DENSITY of the page.' } });
+    const markets = finding({ ruleId: 'content-headings-descriptive', ...quote('Our 45 rooms', 'Our 45 rooms look over'), notes: { ...notes, es: 'Conviene anadir nuevos idiomas para llegar a otros paises.' } });
+    const refuted = finding({ ruleId: 'content-subtopic-coverage', ...quote('Our 45 rooms', 'Our 45 rooms look over'), notes: { ...notes, en: 'There is no need to target keyword density here.' } });
+    const result = content([mythical, markets, refuted]);
+    assert.deepEqual(reasons(result), ['myth', 'new-market'], 'a refuted myth is not a recommendation');
+    assert.deepEqual(result.dropped[0]?.detail, 'keyword-density');
     const strict: MythMatcher = text => (text.includes('Observed') ? [myths[0]!] : []);
-    assert.deepEqual(reasons(content([finding({ ruleId: 'content-hidden-links', ...quote('Our 45 rooms', 'Our 45 rooms look over') })], { mythMatches: strict })), ['myth']);
+    assert.deepEqual(reasons(content([finding({ ruleId: 'content-intent-match', ...quote('Our 45 rooms', 'Our 45 rooms look over') })], { mythMatches: strict })), ['myth']);
     assert.equal(recommendsNewMarket('Consider launching in new markets such as France.'), true);
     assert.equal(recommendsNewMarket('The page mixes English with other languages.'), false);
   });
@@ -195,6 +214,7 @@ describe('validating proposals', () => {
 });
 
 describe('validating language claims', () => {
+  // A mixed-language rule reaches the analyst only as a candidate from code; confirming it is still a language claim.
   const plan: PassPlan = { pass: 'intl', page: rooms, sitePage: true, rules: [rule('intl-mixed-language-page')!], candidates: [], facts: [], contextPages: [] };
   const claim = (words: readonly string[], extra: Record<string, unknown> = {}) => finding({
     ruleId: 'intl-mixed-language-page', reasonCode: 'catalan-paragraph', severity: 'medium', language: 'en', discriminatingWords: words,
@@ -214,9 +234,10 @@ describe('validating language claims', () => {
 });
 
 describe('default myth filter', () => {
-  test('matches each myth pattern as a lowercase substring after whitespace normalisation', () => {
-    const matcher = defaultMythMatcher();
-    assert.deepEqual(matcher('Aim for a  Keyword\nDensity of 2%').map(entry => entry.id), ['keyword-density']);
-    assert.deepEqual(matcher('The title reads naturally.'), []);
+  test('is the catalog filter: phrase matches per clause, refutations excluded', () => {
+    assert.equal(defaultMythMatcher, mythMatches);
+    assert.deepEqual(defaultMythMatcher('Aim for a  Keyword DENSITY of 2%').map(entry => entry.id), ['keyword-density']);
+    assert.deepEqual(defaultMythMatcher('Do not chase keyword density.'), []);
+    assert.deepEqual(defaultMythMatcher('The title reads naturally.'), []);
   });
 });

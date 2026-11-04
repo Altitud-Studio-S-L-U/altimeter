@@ -70,7 +70,16 @@ function onScope(finding: ReportFinding, rule: Pick<RuleMeta, 'scope'>, page: Pa
   return rule.scope === 'site' ? finding.scope.kind === 'site' : finding.scope.kind === 'page' && finding.scope.url === page.key;
 }
 
-function scopeRules(definition: PassDefinition, page: PageInfo, sitePage: boolean, report: Report, site: SiteFacts): { rules: RuleMeta[]; candidates: ReportFinding[] } {
+/**
+ * The findings a model may see. Owner data, such as Search Console, never enters a request: neither findings
+ * with origin owner-data nor findings that cite owner-data evidence, whatever rule produced them.
+ */
+export function shareableFindings(report: Report): ReportFinding[] {
+  const owned = new Set(report.evidence.filter(item => item.kind === 'owner-data').map(item => item.id));
+  return report.findings.filter(finding => finding.origin !== 'owner-data' && !finding.evidence.some(id => owned.has(id)));
+}
+
+function scopeRules(definition: PassDefinition, page: PageInfo, sitePage: boolean, findings: readonly ReportFinding[], site: SiteFacts): { rules: RuleMeta[]; candidates: ReportFinding[] } {
   const rules: RuleMeta[] = [];
   const candidates: ReportFinding[] = [];
   if (definition.id === 'serp') return { rules, candidates };
@@ -81,7 +90,7 @@ function scopeRules(definition: PassDefinition, page: PageInfo, sitePage: boolea
     if (rule.scope === 'page' && rule.appliesTo !== 'all' && !rule.appliesTo.includes(page.pageType)) continue;
     // Site-scope rules are judged from the site page, so page inputs are checked on it.
     if (rule.inputs.some(input => input !== 'ai' && !inputAvailable(input, site, facts))) continue;
-    const existing = report.findings.filter(finding => finding.ruleId === rule.id && onScope(finding, rule, page));
+    const existing = findings.filter(finding => finding.ruleId === rule.id && onScope(finding, rule, page));
     const pending = existing.filter(finding => finding.outcome === 'fail' && finding.needsJudgment === true);
     if (pending.length > 0) {
       rules.push(rule);
@@ -90,7 +99,8 @@ function scopeRules(definition: PassDefinition, page: PageInfo, sitePage: boolea
     }
     const decided = existing.some(finding => finding.outcome === 'pass' || finding.outcome === 'fail' || finding.outcome === 'not_applicable');
     if (decided) continue;
-    // A hybrid rule without a candidate is the analyst's only when code could not run it for lack of the analyst.
+    // Direct claims are for ai-judgment rules and for hybrid rules that list the analyst as an input; any other
+    // hybrid rule is decided by code and reaches the analyst only as a candidate to confirm or dismiss.
     if (rule.method === 'ai-judgment' || rule.inputs.includes('ai')) rules.push(rule);
   }
   return { rules, candidates };
@@ -104,9 +114,9 @@ function touchesPage(finding: ReportFinding, page: PageInfo, evidence: ReadonlyM
   });
 }
 
-function factsFor(definition: PassDefinition, page: PageInfo, report: Report, evidence: ReadonlyMap<string, EvidenceItem>): ReportFinding[] {
+function factsFor(definition: PassDefinition, page: PageInfo, findings: readonly ReportFinding[], evidence: ReadonlyMap<string, EvidenceItem>): ReportFinding[] {
   // A site-wide title problem, such as duplicates, only asks for a rewrite on the pages its evidence names.
-  const relevant = report.findings.filter(finding => (finding.outcome === 'pass' || finding.outcome === 'fail') && finding.needsJudgment !== true
+  const relevant = findings.filter(finding => (finding.outcome === 'pass' || finding.outcome === 'fail') && finding.needsJudgment !== true
     && (definition.id === 'serp' ? serpRules.includes(finding.ruleId) && touchesPage(finding, page, evidence) : finding.category === definition.category && (finding.scope.kind === 'site' || touchesPage(finding, page, evidence))));
   return relevant.sort((a, b) => (a.outcome === b.outcome ? 0 : a.outcome === 'fail' ? -1 : 1)).slice(0, 60);
 }
@@ -133,13 +143,14 @@ export function planPasses(input: PlanInput): { plans: PassPlan[]; skipped: Skip
   const plans: PassPlan[] = [];
   const skipped: SkippedPass[] = [];
   const evidence = new Map(input.report.evidence.map(item => [item.id, item]));
+  const findings = shareableFindings(input.report);
   const sitePage = input.pages.find(page => page.role === 'home') ?? input.pages[0];
   const languages = new Set(input.pages.map(page => page.language?.split('-')[0]?.toLowerCase()).filter(Boolean));
   for (const definition of passDefinitions) {
     for (const page of input.pages) {
       const isSitePage = page === sitePage;
-      const { rules, candidates } = scopeRules(definition, page, isSitePage, input.report, input.site);
-      const facts = factsFor(definition, page, input.report, evidence);
+      const { rules, candidates } = scopeRules(definition, page, isSitePage, findings, input.site);
+      const facts = factsFor(definition, page, findings, evidence);
       const skip = (reason: string) => skipped.push({ pass: definition.id, page: page.key, reason });
       if (definition.id === 'serp') {
         const metadata = itemsOf(input.strings, page.key, 'metadata');
@@ -184,7 +195,7 @@ export function packSections(plan: PassPlan, strings: SiteStrings, report: Repor
   const evidence = new Map(report.evidence.map(item => [item.id, item]));
   const sections: PackSection[] = [];
   const cited = [...new Set([...plan.candidates.flatMap(finding => finding.evidence), ...plan.facts.filter(finding => finding.outcome === 'fail').flatMap(finding => finding.evidence)])];
-  const entries = cited.map(id => evidence.get(id)).filter((item): item is EvidenceItem => item !== undefined).map(item => ({
+  const entries = cited.map(id => evidence.get(id)).filter((item): item is EvidenceItem => item !== undefined && item.kind !== 'owner-data').map(item => ({
     id: item.id,
     label: cleanText(item.label, 300),
     text: cleanText(item.excerpt ?? '', 2000),
