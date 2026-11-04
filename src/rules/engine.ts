@@ -101,9 +101,11 @@ export function inputAvailable(input: InputId, site: SiteFacts, page: PageFacts 
     case 'gsc':
       return site.owner?.gsc !== undefined;
     case 'bing':
+      return site.owner?.bing !== undefined;
     case 'bot-activity':
+      return site.owner?.bots !== undefined;
     case 'ai':
-      // Collected by later stages; until they report facts, rules that need them are not evaluated.
+      // The model analysis judges these rules itself; code never evaluates them.
       return false;
   }
 }
