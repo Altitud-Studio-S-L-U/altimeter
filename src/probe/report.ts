@@ -39,10 +39,11 @@ export function planNoteText(t: ProbeStrings, note: PlanNote): string {
   }
 }
 
-export function siteNoticeText(t: ProbeStrings, notice: SiteNotice, domain: string): string {
+/** A notice about the site; `url` writes the URL the home page redirects to, which the probed site chose. */
+export function siteNoticeText(t: ProbeStrings, notice: SiteNotice, domain: string, url: (value: string) => string = value => cleanLine(value, 200)): string {
   return notice.code === 'home-unreadable'
     ? format(t.homeUnreadable, { reason: cleanLine(notice.reason, 100) })
-    : format(t.homeRedirects, { to: cleanLine(notice.to, 200), domain });
+    : format(t.homeRedirects, { to: url(notice.to), domain });
 }
 
 function engineNoticeText(t: ProbeStrings, notice: EngineNotice, section: EngineSection): string {
@@ -176,7 +177,7 @@ export function renderProbeMarkdown(report: ProbeReport, language: Language): st
     ...report.queries.map(query => `| ${query.id} | ${untrustedInline(query.text, 200)} | ${t.classes[query.class]} | ${originText(t, query)} |`),
     '',
   ];
-  const notes = [...report.notes.map(note => planNoteText(t, note)), ...report.siteNotices.map(notice => siteNoticeText(t, notice, report.site.domain))];
+  const notes = [...report.notes.map(note => planNoteText(t, note)), ...report.siteNotices.map(notice => siteNoticeText(t, notice, report.site.domain, url => untrustedInline(url, 200)))];
   if (notes.length > 0) lines.push(`### ${t.notesTitle}`, '', ...notes.map(note => `- ${note}`), '');
   for (const section of report.engines) lines.push(...engineBlock(t, report, section));
   return `${lines.join('\n').replace(/\n{3,}/gu, '\n\n').trimEnd()}\n`;
