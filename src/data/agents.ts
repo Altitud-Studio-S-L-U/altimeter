@@ -47,5 +47,9 @@ export const probeAgents: readonly ProbeAgent[] = [
     userAgent: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)' },
   { name: 'Applebot', token: 'applebot', operator: 'Apple', purpose: 'search',
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15 (Applebot/0.1; +http://www.apple.com/go/applebot)' },
+  { name: 'Amzn-SearchBot', token: 'amzn-searchbot', operator: 'Amazon', purpose: 'search',
+    userAgent: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amzn-SearchBot/0.1) Chrome/141.0.0.0 Safari/537.36' },
+  { name: 'DuckAssistBot', token: 'duckassistbot', operator: 'DuckDuckGo', purpose: 'search',
+    userAgent: 'DuckAssistBot/1.2; (+http://duckduckgo.com/duckassistbot.html)' },
   browserAgent,
 ];

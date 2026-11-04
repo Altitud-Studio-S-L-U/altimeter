@@ -66,7 +66,7 @@ describe('collect', () => {
     assert.equal(site.localeProbes.length, 12);
     assert.deepEqual(site.localeProbes.filter(probe => probe.url === `${origin}/`).map(probe => probe.label),
       ['accept-language:none', 'accept-language:en', 'accept-language:es', 'accept-language:ca', 'accept-language:fr', 'accept-language:de']);
-    assert.equal(site.agentProbes.length, 9);
+    assert.equal(site.agentProbes.length, 11);
     assert.equal(site.tls, undefined);
     assert.deepEqual(target?.uaProbes?.map(probe => probe.agent.name), ['Googlebot Smartphone', 'Chrome (mobile)']);
   });
