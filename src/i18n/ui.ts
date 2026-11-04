@@ -438,7 +438,7 @@ const ca: UiStrings = {
     injection: 'Text del lloc adreçat a sistemes d\'IA',
     injectionIntro: 'Text del lloc que s\'adreça a sistemes d\'IA. Altimeter no l\'obeeix mai; la regla ai-hidden-llm-instructions jutja si està amagat per als lectors.',
     unverified: 'Sense verificar',
-    unverifiedIntro: 'El verificador no ha pogut comprovar aquestes afirmacions, així que només s\'hi llisten i no compten per a res.',
+    unverifiedIntro: 'El verificador no ha pogut comprovar aquestes afirmacions, de manera que només s\'hi llisten i no compten per a res.',
     dropped: 'Afirmacions descartades en la validació',
     skipped: 'Passades de l\'anàlisi que no s\'han executat',
     calls: 'Crides',
