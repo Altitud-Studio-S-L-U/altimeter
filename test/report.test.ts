@@ -7,10 +7,11 @@ import type { ReportAnalysis } from '../src/ai/types.ts';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
 import { EvidenceStore } from '../src/core/evidence.ts';
-import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
+import { runRules, type Finding, type RuleImplementation } from '../src/rules/engine.ts';
 import { renderHtml } from '../src/report/html.ts';
 import { renderFixPlan, renderMarkdown, renderTaskFile, taskFileLimit } from '../src/report/markdown.ts';
 import { buildReport, mergeAnalysis } from '../src/report/model.ts';
+import { buildTasks } from '../src/report/tasks.ts';
 import { isInside, runFolderName, safeFolderName, writeReport } from '../src/report/write.ts';
 import { page, site } from './support/facts.ts';
 
@@ -76,6 +77,31 @@ describe('buildReport', () => {
   test('keeps task ids stable across runs', () => {
     const pages = () => [page('https://example.com/b', { html: '<!doctype html><p>No title</p>' })];
     assert.equal(auditOf(pages()).tasks[0]!.id, auditOf(pages()).tasks[0]!.id);
+  });
+});
+
+describe('tasks', () => {
+  const rulesById = new Map(catalogRules.map(rule => [rule.id, rule]));
+
+  test('lists as checks that must keep passing only those verify can run again', () => {
+    const scope = { kind: 'page' as const, url: 'https://example.com/a' };
+    const finding = (ruleId: string, outcome: 'pass' | 'fail'): Finding => ({
+      ruleId, scope, outcome, ...(outcome === 'fail' ? { severity: 'low' as const } : {}), evidence: [], evidenceSignature: ruleId, confidence: 'high', origin: 'deterministic',
+    });
+    const tasks = buildTasks([
+      finding('content-title-missing', 'fail'), finding('content-meta-description-missing', 'pass'), finding('content-title-raw-rendered-mismatch', 'pass'), finding('content-originality', 'pass'),
+      finding('tech-viewport-meta', 'fail'), finding('tech-viewport-zoom-allowed', 'pass'), finding('tech-tap-target-size', 'pass'),
+      finding('crawl-meta-robots-noindex', 'fail'), finding('crawl-status-final', 'pass'), finding('crawl-gsc-index-status', 'pass'),
+      finding('perf-render-blocking', 'fail'), finding('perf-crux-lcp-p75', 'pass'), finding('perf-lab-lcp', 'pass'), finding('perf-text-compression', 'pass'),
+      finding('intl-hreflang-relative-url', 'fail'), finding('intl-hreflang-outside-head', 'pass'), finding('intl-mixed-language-page', 'pass'),
+    ], rulesById, new EvidenceStore());
+    const kept = (ruleId: string) => tasks.find(task => task.ruleId === ruleId)?.mustRemainPassing.map(check => check.ruleId);
+    // Rendered checks need verify --render and deployment checks an origin; crawl, Lighthouse, field, owner and manual checks never run there.
+    assert.deepEqual(kept('content-title-missing'), ['content-meta-description-missing', 'content-title-raw-rendered-mismatch']);
+    assert.deepEqual(kept('tech-viewport-meta'), ['tech-viewport-zoom-allowed']);
+    assert.deepEqual(kept('crawl-meta-robots-noindex'), ['crawl-status-final']);
+    assert.deepEqual(kept('perf-render-blocking'), ['perf-text-compression']);
+    assert.deepEqual(kept('intl-hreflang-relative-url'), ['intl-hreflang-outside-head']);
   });
 });
 

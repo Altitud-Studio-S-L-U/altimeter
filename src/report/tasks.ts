@@ -35,7 +35,10 @@ export interface Task {
   readonly agentReady: boolean;
   /** Checks that must pass once the task is done. */
   readonly acceptance: readonly TaskCheck[];
-  /** Checks that pass today on the same scope and must keep passing, so the fix does not trade one problem for another. */
+  /**
+   * Checks that pass today on the same scope and must keep passing, so the fix does not trade one problem for another;
+   * only those `altimeter verify` can run again.
+   */
   readonly mustRemainPassing: readonly TaskCheck[];
   readonly sources: readonly RuleSource[];
   /** Files of the site's repository, given with --source, that most likely hold the fix; repository-relative paths. */
@@ -60,6 +63,15 @@ export function defaultVerification(rule: RuleMeta): Verification {
   if (rule.inputs.some(input => input === 'gsc' || input === 'bing' || input === 'bot-activity')) return 'owner-data';
   if (rule.inputs.some(input => serverInputs.includes(input))) return 'deployed';
   return 'local';
+}
+
+/** Inputs `altimeter verify` never collects: it crawls nothing and runs no Lighthouse, field data, owner data or model analysis. */
+const inputsVerifyLacks: readonly InputId[] = ['crawl', 'lighthouse', 'crux', 'gsc', 'bing', 'bot-activity', 'ai'];
+
+/** Whether `altimeter verify` can run a check again: it confirms local and deployed checks whose inputs it collects. */
+function recheckable(rule: RuleMeta): boolean {
+  const verification = defaultVerification(rule);
+  return (verification === 'local' || verification === 'deployed') && !rule.inputs.some(input => inputsVerifyLacks.includes(input));
 }
 
 /** Where task building reads evidence: the audit's store, or the evidence list of a saved report. */
@@ -121,7 +133,10 @@ export function buildTasks(findings: readonly Finding[], rulesById: ReadonlyMap<
       agentReady: fixLocation === 'repo' || fixLocation === 'platform-config' || fixLocation === 'content',
       acceptance: scopes.map(scope => ({ ruleId: rule.id, scope })),
       mustRemainPassing: passing
-        .filter(pass => rulesById.get(pass.ruleId)?.category === rule.category && scopeKeys.has(scopeKey(pass.scope)))
+        .filter(pass => {
+          const meta = rulesById.get(pass.ruleId);
+          return meta?.category === rule.category && recheckable(meta) && scopeKeys.has(scopeKey(pass.scope));
+        })
         .slice(0, 12)
         .map(pass => ({ ruleId: pass.ruleId, scope: pass.scope })),
       sources: rule.sources,
