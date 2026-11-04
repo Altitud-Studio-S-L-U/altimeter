@@ -146,6 +146,19 @@ describe('altimeter gsc logout', () => {
     await assert.rejects(stat(file), { code: 'ENOENT' });
   });
 
+  test('gsc status tells a damaged login file apart from no login', async () => {
+    const file = join(stateDirectory(), 'search-console-login.json');
+    await mkdir(stateDirectory(), { recursive: true });
+    await writeFile(file, '{"mode":"file","createdAt":"2026-11-04');
+    const damaged = context();
+    assert.equal(await gscCommand(['status'], damaged), 0);
+    assert.equal(damaged.output(), 'A Search Console login file is stored but cannot be read. Run "altimeter gsc logout" to delete it.\n');
+    await rm(file, { force: true });
+    const none = context();
+    assert.equal(await gscCommand(['status'], none), 0);
+    assert.equal(none.output(), 'No Search Console login is stored.\n');
+  });
+
   test('exits with status 2 and says why when the login was not revoked', async () => {
     await storeDamagedLogin();
     const result = spawnSync(process.execPath, [cli, 'gsc', 'logout'], { encoding: 'utf8', windowsHide: true, env: { ...process.env, LOCALAPPDATA: work, XDG_STATE_HOME: work, HOME: work } });

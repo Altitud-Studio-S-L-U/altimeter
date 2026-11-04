@@ -228,7 +228,7 @@ async function auditCommand(args: string[]): Promise<number> {
     labRuns,
     crawl: values.crawl === true,
     maxPages,
-    ...(useGsc ? { gsc: { ...(values['gsc-property'] ? { property: values['gsc-property'] } : {}), redactQueries } } : {}),
+    ...(useGsc ? { gsc: { ...(values['gsc-property'] ? { property: values['gsc-property'] } : {}), redactQueries, propertyOption: '--gsc-property' } } : {}),
     ...(useBing ? { bing: { ...(values['bing-site'] ? { site: values['bing-site'] } : {}), redactQueries } } : {}),
     ...(botActivity === 'none' ? {} : {
       bots: {
@@ -295,7 +295,7 @@ async function compareCommand(args: string[]): Promise<number> {
   list('Fixed', comparison.fixed);
   list('New', comparison.introduced);
   list('Remaining', comparison.remaining);
-  if (comparison.notComparable.length > 0) list('Not comparable (evaluated in only one report)', comparison.notComparable);
+  if (comparison.notComparable.length > 0) list('Not comparable (evaluated in only one report, or the check no longer applies)', comparison.notComparable);
   return comparison.introduced.length > 0 ? 1 : 0;
 }
 
@@ -326,6 +326,8 @@ async function verifyCommand(args: string[]): Promise<number> {
     }
     // Checks this run could not evaluate leave the verdict alone; --render or a deployment can still confirm them.
     for (const entry of result.notRechecked) process.stdout.write(`  ${entry.check.ruleId} not re-checked (${cleanLine(entry.reason ?? entry.outcome)}) · ${where(entry)}\n`);
+    // A check that stops applying can mean the change removed what it checks instead of fixing it.
+    for (const entry of result.noLongerApplies) process.stdout.write(`  ${entry.check.ruleId} no longer applies${entry.reason ? ` (${cleanLine(entry.reason)})` : ''} · ${where(entry)}\n`);
   }
   return verifyExitCode(results);
 }
@@ -343,7 +345,8 @@ export async function gscCommand(args: string[], context: GscCommandContext = {}
   const [action, ...rest] = args;
   if (action === 'status') {
     const status = await loginStatus();
-    write(status.stored ? `A Search Console login is stored (${status.mode}, since ${status.createdAt}).\n` : 'No Search Console login is stored.\n');
+    if (status.damaged) write('A Search Console login file is stored but cannot be read. Run "altimeter gsc logout" to delete it.\n');
+    else write(status.stored ? `A Search Console login is stored (${status.mode}, since ${status.createdAt ?? 'an unknown date'}).\n` : 'No Search Console login is stored.\n');
     return 0;
   }
   if (action === 'logout') {

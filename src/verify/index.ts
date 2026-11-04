@@ -30,6 +30,11 @@ export interface TaskVerification {
   readonly regressions: readonly CheckResult[];
   /** Checks that passed in the audit and that this run could not evaluate again; they leave the verdict unchanged. */
   readonly notRechecked: readonly CheckResult[];
+  /**
+   * Checks that passed in the audit and no longer apply, for example because the fix removed what they check. They
+   * leave the verdict unchanged, but a fix that deletes a feature instead of correcting it shows up here.
+   */
+  readonly noLongerApplies: readonly CheckResult[];
 }
 
 function swapOrigin(url: string, from: string, to: string): string {
@@ -143,7 +148,7 @@ export async function verifyTasks(options: VerifyOptions): Promise<TaskVerificat
     };
     for (const task of tasks) {
       if (!confirms(task.verifiableBy, local !== undefined)) {
-        results.push({ taskId: task.id, verdict: 'not-verifiable', reason: `needs ${task.verifiableBy} verification`, acceptance: [], regressions: [], notRechecked: [] });
+        results.push({ taskId: task.id, verdict: 'not-verifiable', reason: `needs ${task.verifiableBy} verification`, acceptance: [], regressions: [], notRechecked: [], noLongerApplies: [] });
         continue;
       }
       const findings = new Map<string, Finding>();
@@ -170,11 +175,12 @@ export async function verifyTasks(options: VerifyOptions): Promise<TaskVerificat
       const kept = task.mustRemainPassing.map(resolve);
       const regressions = kept.filter(result => result.outcome === 'fail');
       const notRechecked = kept.filter(result => result.outcome === 'not_evaluated' || result.outcome === 'missing');
+      const noLongerApplies = kept.filter(result => result.outcome === 'not_applicable');
       const passed = acceptance.every(result => result.outcome === 'pass' || result.outcome === 'not_applicable') && regressions.length === 0;
       const unknown = acceptance.some(result => result.outcome === 'missing' || result.outcome === 'not_evaluated');
       results.push({
         taskId: task.id, verdict: unknown ? 'not-verifiable' : passed ? 'pass' : 'fail', ...(unknown ? { reason: 'a check could not be evaluated' } : {}),
-        acceptance, regressions, notRechecked,
+        acceptance, regressions, notRechecked, noLongerApplies,
       });
     }
   } finally {

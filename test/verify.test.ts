@@ -131,6 +131,15 @@ describe('verify', () => {
     assert.equal(verifyExitCode([result!]), 0);
   });
 
+  test('lists a check that must keep passing and no longer applies, without failing the fix', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title><h1>Home</h1>');
+    const alt = registered.get('content-img-alt-quality')!;
+    const [result] = await verifyTasks({ report: keeping(alt.id), staticDir: build, implementations: withRules(alt), rules });
+    assert.equal(result?.verdict, 'pass');
+    assert.deepEqual(result?.noLongerApplies.map(entry => [entry.check.ruleId, entry.outcome, entry.reason]), [[alt.id, 'not_applicable', 'no-alt-text']]);
+    assert.deepEqual(result?.notRechecked, []);
+  });
+
   test('fails a fix that breaks a check that passed before', async () => {
     await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
     const description = registered.get('content-meta-description-missing')!;

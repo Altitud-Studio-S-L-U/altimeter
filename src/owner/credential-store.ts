@@ -85,14 +85,17 @@ export async function loadLogin(): Promise<StoredLogin | undefined> {
   return login as unknown as StoredLogin;
 }
 
-/** Whether a login is stored, without reading its secret. */
-export async function loginStatus(): Promise<{ readonly stored: boolean; readonly mode?: string; readonly createdAt?: string }> {
+/** Whether a login is stored, without reading its secret; a file that cannot be read or parsed is `damaged`. */
+export async function loginStatus(): Promise<{ readonly stored: boolean; readonly damaged?: true; readonly mode?: string; readonly createdAt?: string }> {
+  let text: string;
   try {
-    const stored = JSON.parse(await readFile(loginFile(), 'utf8')) as StoredFile;
-    return { stored: true, mode: stored.mode, createdAt: stored.createdAt };
-  } catch {
-    return { stored: false };
+    text = await readFile(loginFile(), 'utf8');
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'ENOENT' ? { stored: false } : { stored: true, damaged: true };
   }
+  const stored = objectFrom(text);
+  if (typeof stored?.payload !== 'string' || (stored.mode !== 'dpapi' && stored.mode !== 'file')) return { stored: true, damaged: true };
+  return { stored: true, mode: stored.mode, ...(typeof stored.createdAt === 'string' ? { createdAt: stored.createdAt } : {}) };
 }
 
 export async function deleteLogin(): Promise<void> {

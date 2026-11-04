@@ -73,7 +73,7 @@ altimeter compare before/report.json after/report.json
 ```
 
 - `--source` reads the site's repository (never writes to it, and never sends it anywhere) to point each task at the code that emits the markup or the configuration that answers the request, and to name data files that only hold the observed text and should not change.
-- `verify` serves a local build (or uses a local origin), maps the production URLs onto it and runs the task's acceptance checks, and the checks that must keep passing. Rendered checks run only with `--render`, and checks that only a deployment can show never run against a served build. It exits `0` when they pass, `1` when one fails and `3` when the task cannot be verified locally, such as a certificate or a CDN setting. A check that must keep passing but cannot run that way is listed as not re-checked and leaves the exit status unchanged.
+- `verify` serves a local build (or uses a local origin), maps the production URLs onto it and runs the task's acceptance checks, and the checks that must keep passing. Rendered checks run only with `--render`, and checks that only a deployment can show never run against a served build. It exits `0` when they pass, `1` when one fails and `3` when the task cannot be verified locally, such as a certificate or a CDN setting. A check that must keep passing but cannot run that way is listed as not re-checked, and one that no longer applies (for example because the change removed what it checks) is listed as such; neither changes the exit status.
 - `compare` lists fixed, new and remaining problems, and refuses reports produced with different rule catalogs.
 
 ## Model analysis

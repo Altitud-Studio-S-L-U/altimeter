@@ -20,10 +20,10 @@ export interface AuditOptions extends CollectOptions {
   /** Rule implementations to run; defaults to every registered implementation. */
   readonly implementations?: ReadonlyMap<string, RuleImplementation>;
   /**
-   * Read the owner's Search Console data; `property` overrides the automatic choice and `redactQueries` writes
-   * numbered labels instead of the queries.
+   * Read the owner's Search Console data; `property` overrides the automatic choice, `redactQueries` writes
+   * numbered labels instead of the queries and `propertyOption` names the caller's option for `property` in errors.
    */
-  readonly gsc?: { readonly property?: string; readonly redactQueries?: boolean };
+  readonly gsc?: { readonly property?: string; readonly redactQueries?: boolean; readonly propertyOption?: string };
   /** Read the owner's Bing Webmaster Tools data, with the key in BING_WEBMASTER_API_KEY unless one is given. */
   readonly bing?: BingRequest;
   /**
@@ -66,7 +66,10 @@ async function withSearchConsole(collected: CollectResult, options: AuditOptions
     const token = await searchConsoleToken(client);
     if (!token) return { ...collected, warnings: [...collected.warnings, 'Search Console was requested but no credential was found. Run "altimeter gsc login --client <client_secret.json> --remember <dpapi|file>" or set ALTIMETER_GSC_ACCESS_TOKEN.'] };
     const inspectUrls = [...collected.site.pages.values()].filter(page => page.fetch.status === 200).map(page => page.fetch.finalUrl).slice(0, 10);
-    const gsc = await fetchGscData(client, token, { url: options.url, inspectUrls, ...(options.gsc.property ? { siteUrl: options.gsc.property } : {}) });
+    const gsc = await fetchGscData(client, token, {
+      url: options.url, inspectUrls, ...(options.gsc.property ? { siteUrl: options.gsc.property } : {}),
+      ...(options.gsc.propertyOption ? { propertyOption: options.gsc.propertyOption } : {}),
+    });
     return { ...collected, site: { ...collected.site, owner: { ...collected.site.owner, gsc, ...(options.gsc.redactQueries ? { redactQueries: true } : {}) } } };
   } catch (error) {
     return { ...collected, warnings: [...collected.warnings, `Search Console data was not used: ${error instanceof Error ? error.message : 'unknown error'}`] };
