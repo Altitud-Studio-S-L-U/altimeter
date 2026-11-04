@@ -138,6 +138,17 @@ describe('Search Console performance rules', () => {
     assert.deepEqual([drop?.severity, drop?.params?.page, drop?.params?.before, drop?.params?.now], ['low', `${origin}/b`, 60, 4]);
   });
 
+  test('content-gsc-cannibalization leaves out queries that name the site\'s own organization', () => {
+    const rows = (query: string) => [row([`${origin}/a/`, query], 10, 300, 4), row([`${origin}/b/`, query], 9, 250, 5)];
+    const data = gsc({ byPageQuery: [...rows('barcelona cooking school menu'), ...rows('cooking class for kids')] });
+    const organization = (fields: Record<string, unknown>) => `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'Organization', ...fields })}</script>`;
+    const queries = (head: string) => check('content-gsc-cannibalization', data, {}, head).findings.map(finding => finding.params?.query);
+    assert.deepEqual(queries(organization({ name: 'Barcelona Cooking School', url: `${origin}/` })), ['cooking class for kids']);
+    assert.deepEqual(queries(organization({ name: 'BCS', alternateName: 'Barcelona Cooking School', url: `${origin}/` })), ['cooking class for kids'], 'an alternate name counts too');
+    assert.deepEqual(queries(organization({ name: 'Barcelona Cooking School', url: 'https://partner.example/' })), ['barcelona cooking school menu', 'cooking class for kids'],
+      'an organization of another site is not the brand');
+  });
+
   test('content-gsc-traffic-drop lists the five largest drops in clicks, largest first', () => {
     const small = ['p1', 'p2', 'p3', 'p4', 'p5'].map(name => `${origin}/${name}`);
     const data = gsc({
