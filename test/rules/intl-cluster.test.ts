@@ -266,6 +266,18 @@ describe('intl-hreflang-sitemap-format', () => {
     assertFail(only(evaluate(sitemapFormat, site({ pages: [], origin, sitemaps: [{ url: map, xml }] })).findings), 'medium', 'alternate-not-listed');
   });
 
+  test('looks for missing entries only once every declared sitemap was read', () => {
+    const languages = ['en', 'es', 'ca', 'fr', 'de', 'it'];
+    const set = languages.map(language => [language, url(`/${language}/`)] as const);
+    const maps = languages.map(language => ({ url: url(`/sitemap-${language}.xml`), xml: sitemap([{ loc: url(`/${language}/`), alternates: set }]) }));
+    const robots = (count: number) => maps.slice(0, count).map(entry => `Sitemap: ${entry.url}`).join('\n');
+    const fetched = maps.slice(0, 5);
+    assertOutcome(only(evaluate(sitemapFormat, site({ pages: [], origin, robots: robots(6), sitemaps: fetched })).findings), 'pass');
+    const declaring = page(url('/'), { html: html({ head: '<link rel="sitemap" type="application/xml" href="/sitemap-it.xml">' }) });
+    assertOutcome(only(evaluate(sitemapFormat, site({ pages: [declaring], origin, robots: robots(5), sitemaps: fetched })).findings), 'pass');
+    assertFail(only(evaluate(sitemapFormat, site({ pages: [], origin, robots: robots(5), sitemaps: fetched })).findings), 'medium', 'alternate-not-listed');
+  });
+
   test('accepts alternates on other domains', () => {
     const xml = sitemap([{ loc: en, alternates: [['en', en], ['de', 'https://example.de/']] }]);
     assertOutcome(only(evaluate(sitemapFormat, site({ pages: [], origin, sitemaps: [{ url: map, xml }] })).findings), 'pass');
