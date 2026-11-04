@@ -92,7 +92,7 @@
       "fail": "La posició de la marca al títol es podria millorar.",
       "fail:brand-absent": "El títol no esmenta el lloc («{brand}»); Google pot mostrar el nom del lloc a part, de manera que això és informatiu.",
       "fail:repeated": "El títol esmenta «{brand}» {count} vegades.",
-      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadament un {share} % de l'amplada del títol.",
+      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadament un {share, number, percent} de l'amplada del títol.",
       "fail:mid-title": "La marca «{brand}» és al mig del títol en lloc del principi o el final."
     }
   },
@@ -140,7 +140,7 @@
       "fail": "data-nosnippet es fa servir d'una manera que Google no respecta tal com es pretén.",
       "fail:unsupported-element": "{count} atribut(s) data-nosnippet són en elements que Google no respecta ({tags}); només s'admeten span, div i section.",
       "fail:added-by-javascript": "JavaScript afegeix {count} atribut(s) data-nosnippet a elements que existeixen a l'HTML del servidor sense aquest atribut.",
-      "fail:covers-main-content": "Els elements amb data-nosnippet contenen aproximadament un {share} % del contingut principal, de manera que aquest text queda fora dels fragments i de l'entrada de les AI Overviews."
+      "fail:covers-main-content": "Els elements amb data-nosnippet contenen aproximadament un {share, number, percent} del contingut principal, de manera que aquest text queda fora dels fragments i de l'entrada de les AI Overviews."
     }
   },
   "content-image-preview-large": {
@@ -200,7 +200,7 @@
     "why": "Google rebutja els nombres de paraules preferits, però pregunta si una pàgina aporta un valor substancial. Les pàgines en què el text de plantilla eclipsa el contingut únic sovint tenen poc valor, però molts tipus de pàgina són complets amb poques paraules.",
     "fix": "Assegura't que cada pàgina indexable tingui contingut substancial específic del seu propòsit, o consolida les variants amb poc contingut o aplica-hi noindex.",
     "messages": {
-      "fail": "{url} té {uniqueWords} paraules de text específic de la pàgina i un {share} % de text de plantilla; l'analista hauria de jutjar si el contingut compleix el propòsit de la pàgina."
+      "fail": "{url} té {uniqueWords, plural, one {# paraula} other {# paraules}} de text específic de la pàgina i un {share, number, percent} de text de plantilla; l'analista hauria de jutjar si el contingut compleix el propòsit de la pàgina."
     }
   },
   "content-filler-before-mc": {
@@ -222,7 +222,7 @@
     "why": "Les polítiques de Google contra el contingut brossa i les directrius per als avaluadors consideren de baixa qualitat el contingut principal copiat o lleugerament parafrasejat sense valor afegit. El contingut amb llicència i el contingut sindicat no són còpia.",
     "fix": "Afegeix anàlisi, dades, elements multimèdia o experiència originals. Canonicalitza o atribueix les còpies sindicades. Elimina les pàgines extretes automàticament d'altres llocs.",
     "messages": {
-      "fail": "Un {overlap} % del text principal d'aquesta pàgina també apareix a {other}; l'analista hauria de jutjar si és copiat o compartit legítimament."
+      "fail": "Un {overlap, number, percent} del text principal d'aquesta pàgina també apareix a {other}; l'analista hauria de jutjar si és copiat o compartit legítimament."
     }
   },
   "content-scaled-doorway": {

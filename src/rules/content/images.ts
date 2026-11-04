@@ -200,7 +200,12 @@ export const imgFormat: RuleImplementation = {
       const actual = sniffImage(resource.fetch.body);
       const declared = formatFromContentType(headerValue(resource.fetch.headers, 'content-type'));
       const format = actual === 'unknown' ? declared : actual;
-      const evidence = [cite(context, 'http', resource.purpose === 'logo' ? evidenceLabel('logo response') : evidenceLabel('og-image response'), { url: resource.url, excerpt: `content-type: ${headerValue(resource.fetch.headers, 'content-type') ?? '(none)'}; bytes: ${actual}` })];
+      const type = headerValue(resource.fetch.headers, 'content-type');
+      const logo = resource.purpose === 'logo';
+      const label = type === undefined
+        ? (logo ? evidenceLabel('logo response without a Content-Type header, whose bytes read as {format}', { format: actual }) : evidenceLabel('og-image response without a Content-Type header, whose bytes read as {format}', { format: actual }))
+        : (logo ? evidenceLabel('logo response, whose bytes read as {format}', { format: actual }) : evidenceLabel('og-image response, whose bytes read as {format}', { format: actual }));
+      const evidence = [cite(context, 'http', label, { url: resource.url, ...(type === undefined ? {} : { excerpt: `content-type: ${type}` }) })];
       if (format !== undefined && format !== 'unknown' && !indexableFormats.has(format)) {
         results.push({ outcome: 'fail', severity: 'medium', reason: 'unsupported-format', params: { count: 1, url: resource.url }, evidence });
         continue;
@@ -270,7 +275,9 @@ export const preferredImage: RuleImplementation = {
     const resource = context.site.resources.find(entry => (entry.purpose === 'og-image' || entry.purpose === 'logo') && sameAsset(entry.url, url));
     if (resource && (resource.fetch.error || resource.fetch.status !== 200)) {
       results.push({ outcome: 'fail', severity: 'low', reason: 'unreachable', params: { url, status: resource.fetch.status ?? resource.fetch.error?.code ?? 'error' },
-        evidence: [...evidence, cite(context, 'http', evidenceLabel('preferred image response'), { url: resource.url, excerpt: `HTTP ${resource.fetch.status ?? resource.fetch.error?.code ?? 'error'}` })] });
+        evidence: [...evidence, resource.fetch.status === undefined
+          ? cite(context, 'http', evidenceLabel('preferred image request that got no response ({fetchError})', { fetchError: resource.fetch.error?.code ?? 'connection' }), { url: resource.url })
+          : cite(context, 'http', evidenceLabel('preferred image response'), { url: resource.url, excerpt: `HTTP ${resource.fetch.status}` })] });
     } else if (resource && page.pageType === 'article') {
       if (sniffImage(resource.fetch.body) === 'svg') return results.length > 0 ? results : notEvaluated('svg-size-not-measurable');
       const size = imageSize(resource.fetch.body);

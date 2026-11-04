@@ -25,8 +25,8 @@ export const boilerplateRatio: RuleImplementation = {
       const uniqueWords = unique.reduce((sum, block) => sum + words(block).length, 0);
       const share = total === 0 ? 1 : 1 - uniqueWords / total;
       if (uniqueWords >= 100 && share <= 0.8) return;
-      results.push({ outcome: 'fail', severity: 'medium', needsJudgment: true, params: { url: entry.page.fetch.finalUrl, uniqueWords, share: Math.round(share * 100) },
-        evidence: [cite(context, 'crawl', evidenceLabel('{words} words of page-specific text; {share}% of the text repeats on at least half of the pages', { words: uniqueWords, share: Math.round(share * 100) }),
+      results.push({ outcome: 'fail', severity: 'medium', needsJudgment: true, params: { url: entry.page.fetch.finalUrl, uniqueWords, share },
+        evidence: [cite(context, 'crawl', evidenceLabel('{words, plural, one {# word} other {# words}} of page-specific text; {share, number, percent} of the text repeats on at least half of the pages', { words: uniqueWords, share }),
           { url: entry.page.fetch.finalUrl, excerpt: clip(unique.join(' ') || '(no page-specific text)', 200) })] });
     });
     return results.length > 0 ? results : { outcome: 'pass' };
@@ -80,9 +80,9 @@ export const originality: RuleImplementation = {
     }
     if (!best) return notApplicable('no-other-indexable-pages');
     if (best.overlap < 0.8) return { outcome: 'pass' };
-    return { outcome: 'fail', severity: 'medium', needsJudgment: true, params: { other: best.url, overlap: Math.round(best.overlap * 100) },
+    return { outcome: 'fail', severity: 'medium', needsJudgment: true, params: { other: best.url, overlap: best.overlap },
       evidence: [
-        cite(context, 'crawl', evidenceLabel("{overlap}% of this page's five-word sequences also appear on another crawled page", { overlap: Math.round(best.overlap * 100) }), { excerpt: best.url }),
+        cite(context, 'crawl', evidenceLabel("{overlap, number, percent} of this page's five-word sequences also appear on another crawled page", { overlap: best.overlap }), { excerpt: best.url }),
         cite(context, 'text', evidenceLabel('opening of the main content'), { excerpt: clip(contentText(self.doc), 200) }),
       ] };
   },

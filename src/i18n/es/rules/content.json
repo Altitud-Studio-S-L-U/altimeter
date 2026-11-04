@@ -92,7 +92,7 @@
       "fail": "La posición de la marca en el título se podría mejorar.",
       "fail:brand-absent": "El título no menciona el sitio («{brand}»); Google puede mostrar el nombre del sitio por separado, así que esto es informativo.",
       "fail:repeated": "El título menciona «{brand}» {count} veces.",
-      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadamente el {share} % del ancho del título.",
+      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadamente el {share, number, percent} del ancho del título.",
       "fail:mid-title": "La marca «{brand}» está en mitad del título en lugar de al principio o al final."
     }
   },
@@ -140,7 +140,7 @@
       "fail": "data-nosnippet se usa de una forma que Google no respeta como se pretende.",
       "fail:unsupported-element": "{count} atributo(s) data-nosnippet están en elementos en los que Google no los respeta ({tags}); solo se admiten span, div y section.",
       "fail:added-by-javascript": "JavaScript añade {count} atributo(s) data-nosnippet a elementos que existen sin ese atributo en el HTML del servidor.",
-      "fail:covers-main-content": "Los elementos con data-nosnippet contienen aproximadamente el {share} % del contenido principal, así que ese texto queda fuera de los fragmentos y de la entrada de las Vistas creadas con IA."
+      "fail:covers-main-content": "Los elementos con data-nosnippet contienen aproximadamente el {share, number, percent} del contenido principal, así que ese texto queda fuera de los fragmentos y de la entrada de las Vistas creadas con IA."
     }
   },
   "content-image-preview-large": {
@@ -200,7 +200,7 @@
     "why": "Google rechaza la idea de un número de palabras preferido, pero pregunta si una página aporta un valor sustancial. Las páginas en las que el texto de plantilla eclipsa el contenido único suelen tener poco valor, pero muchos tipos de página están completos con pocas palabras.",
     "fix": "Asegúrate de que cada página indexable tenga contenido sustancial específico para su propósito, o consolida las variantes con poco contenido o aplícales noindex.",
     "messages": {
-      "fail": "{url} tiene {uniqueWords} palabras de texto específico de la página y un {share} % de texto de plantilla; el analista debería juzgar si el contenido cumple el propósito de la página."
+      "fail": "{url} tiene {uniqueWords, plural, one {# palabra} other {# palabras}} de texto específico de la página y un {share, number, percent} de texto de plantilla; el analista debería juzgar si el contenido cumple el propósito de la página."
     }
   },
   "content-filler-before-mc": {
@@ -222,7 +222,7 @@
     "why": "Las políticas de spam de Google y las directrices para evaluadores consideran de baja calidad el contenido principal copiado o ligeramente parafraseado sin valor añadido. El contenido con licencia y el sindicado no son copias.",
     "fix": "Añade análisis, datos, contenido multimedia o experiencia originales. Canonicaliza o atribuye las copias sindicadas. Elimina las páginas de contenido extraído.",
     "messages": {
-      "fail": "El {overlap} % del texto principal de esta página también aparece en {other}; el analista debería juzgar si está copiado o compartido de forma legítima."
+      "fail": "El {overlap, number, percent} del texto principal de esta página también aparece en {other}; el analista debería juzgar si está copiado o compartido de forma legítima."
     }
   },
   "content-scaled-doorway": {

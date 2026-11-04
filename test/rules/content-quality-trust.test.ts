@@ -83,7 +83,7 @@ describe('content-originality', () => {
   test('hands a near copy of another indexable page to the analyst', () => {
     const pages = [article('/blog/a', prose('same', 80)), article('/blog/b', `${prose('same', 80)} extra`)];
     const { at, excerpts } = run(originality, pages, crawled);
-    assert.deepEqual([at(`${origin}/blog/a`)?.severity, at(`${origin}/blog/a`)?.needsJudgment, at(`${origin}/blog/a`)?.params?.overlap], ['medium', true, 100]);
+    assert.deepEqual([at(`${origin}/blog/a`)?.severity, at(`${origin}/blog/a`)?.needsJudgment, at(`${origin}/blog/a`)?.params?.overlap], ['medium', true, 1]);
     assert.equal(excerpts(at(`${origin}/blog/a`))[0], `${origin}/blog/b`);
   });
 

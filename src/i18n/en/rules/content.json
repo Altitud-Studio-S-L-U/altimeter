@@ -62,7 +62,7 @@
       "fail": "The brand placement in the title could be improved.",
       "fail:brand-absent": "The title does not name the site (\"{brand}\"); Google may show the site name separately, so this is informational.",
       "fail:repeated": "The title names \"{brand}\" {count} times.",
-      "fail:brand-dominant": "The brand \"{brand}\" takes about {share}% of the title's width.",
+      "fail:brand-dominant": "The brand \"{brand}\" takes about {share, number, percent} of the title's width.",
       "fail:mid-title": "The brand \"{brand}\" sits in the middle of the title rather than at its start or end."
     }
   },
@@ -92,7 +92,7 @@
       "fail": "data-nosnippet is used in a way Google does not honour as intended.",
       "fail:unsupported-element": "{count} data-nosnippet attributes sit on elements Google does not honour ({tags}); only span, div and section are supported.",
       "fail:added-by-javascript": "{count} data-nosnippet attributes are added by JavaScript to elements that exist in the server HTML without them.",
-      "fail:covers-main-content": "data-nosnippet elements hold about {share}% of the main content, so that text is kept out of snippets and AI Overviews input."
+      "fail:covers-main-content": "data-nosnippet elements hold about {share, number, percent} of the main content, so that text is kept out of snippets and AI Overviews input."
     }
   },
   "content-image-preview-large": {
@@ -128,7 +128,7 @@
   },
   "content-boilerplate-ratio": {
     "messages": {
-      "fail": "{url} has {uniqueWords} words of page-specific text and {share}% template text; the analyst should judge whether the content meets the page's purpose."
+      "fail": "{url} has {uniqueWords, plural, one {# word} other {# words}} of page-specific text and {share, number, percent} template text; the analyst should judge whether the content meets the page's purpose."
     }
   },
   "content-filler-before-mc": {
@@ -138,7 +138,7 @@
   },
   "content-originality": {
     "messages": {
-      "fail": "{overlap}% of this page's main text also appears on {other}; the analyst should judge whether it is copied or legitimately shared."
+      "fail": "{overlap, number, percent} of this page's main text also appears on {other}; the analyst should judge whether it is copied or legitimately shared."
     }
   },
   "content-scaled-doorway": {

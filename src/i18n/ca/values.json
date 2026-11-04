@@ -122,6 +122,9 @@
     "PHONE": "telèfon",
     "DESKTOP": "ordinador"
   },
+  "format": {
+    "unknown": "desconegut"
+  },
   "includeSubDomains": {
     "yes": "sí",
     "no": "no"
@@ -313,7 +316,19 @@
   },
   "status": {
     "none": "sense resposta",
-    "unknown": "desconegut"
+    "unknown": "desconegut",
+    "invalid-url": "URL no vàlida",
+    "unsupported-protocol": "protocol no admès",
+    "blocked-address": "adreça no pública",
+    "dns": "error de DNS",
+    "connection": "error de connexió",
+    "tls": "error de TLS",
+    "timeout": "temps d'espera esgotat",
+    "redirect-loop": "bucle de redireccions",
+    "too-many-redirects": "massa redireccions",
+    "decode": "error de descodificació",
+    "aborted": "sol·licitud cancel·lada",
+    "error": "error"
   },
   "subparts": {
     "time to first byte {share}": "temps fins al primer byte {share}",

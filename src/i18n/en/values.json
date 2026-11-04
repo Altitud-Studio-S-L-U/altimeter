@@ -122,6 +122,9 @@
     "PHONE": "PHONE",
     "DESKTOP": "DESKTOP"
   },
+  "format": {
+    "unknown": "unknown"
+  },
   "includeSubDomains": {
     "yes": "yes",
     "no": "no"
@@ -313,7 +316,19 @@
   },
   "status": {
     "none": "none",
-    "unknown": "unknown"
+    "unknown": "unknown",
+    "invalid-url": "invalid-url",
+    "unsupported-protocol": "unsupported-protocol",
+    "blocked-address": "blocked-address",
+    "dns": "dns",
+    "connection": "connection",
+    "tls": "tls",
+    "timeout": "timeout",
+    "redirect-loop": "redirect-loop",
+    "too-many-redirects": "too-many-redirects",
+    "decode": "decode",
+    "aborted": "aborted",
+    "error": "error"
   },
   "subparts": {
     "time to first byte {share}": "time to first byte {share}",

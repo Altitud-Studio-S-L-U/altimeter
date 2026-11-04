@@ -105,7 +105,9 @@ export const dateConsistency: RuleImplementation = {
     const main = structured[0]!;
     const structuredCalendar = [main.published, main.modified].filter((value): value is string => value !== undefined).map(value => ({ value, date: calendar(value) }))
       .filter((entry): entry is { value: string; date: string } => entry.date !== undefined);
-    const markup = cite(context, 'structured-data', evidenceLabel('datePublished and dateModified'), { excerpt: `datePublished: ${main.published ?? '(none)'}; dateModified: ${main.modified ?? '(none)'}`, path: main.node.path });
+    const dates = [main.published === undefined ? '' : `datePublished: ${main.published}`, main.modified === undefined ? '' : `dateModified: ${main.modified}`].filter(Boolean).join('; ');
+    const datesLabel = main.published === undefined ? evidenceLabel('dateModified, without datePublished') : main.modified === undefined ? evidenceLabel('datePublished, without dateModified') : evidenceLabel('datePublished and dateModified');
+    const markup = cite(context, 'structured-data', datesLabel, { excerpt: dates, path: main.node.path });
     const results: RuleResult[] = [];
     const served = servedAt(page);
     const future = served ? structuredCalendar.find(entry => Date.parse(`${entry.date}T00:00:00Z`) > served.getTime() + 86_400_000) : undefined;
