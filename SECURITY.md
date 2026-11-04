@@ -15,7 +15,17 @@ Do not put tokens, Search Console or analytics exports, private reports or explo
 | Latest 0.x release | Yes |
 | Older releases | No: upgrade to the latest release |
 
-The threat model, covering untrusted pages, network destinations, model output and the tokens you supply, is documented as each boundary is implemented.
+## Audited sites and the network
+
+- **Destinations.** Altimeter fetches only `http` and `https` URLs. Every connection, including each redirect hop, checks the addresses the host name resolves to and refuses loopback, private (RFC 1918), link-local, carrier-grade NAT, unique local IPv6, documentation, reserved and unspecified addresses, as well as IPv4-mapped, NAT64 and 6to4 addresses that embed a refused IPv4 address. IP literals in decimal, octal or hexadecimal are normalised by the URL parser first, so they are checked like any other address. `--allow-private-network` lifts this for staging and local sites; `verify` allows loopback only for the local build it serves.
+- **Chrome.** Pages render in Chrome started over a pipe (no debugging port), with its sandbox on. All of its traffic goes through a local proxy that applies the same address checks, so a page cannot reach your network through DNS rebinding. Each render uses a fresh profile without cookies or service workers; downloads are denied and dialogs and pop-ups closed.
+- **What is kept.** Responses are size-limited before parsing. Text copied from a site is untrusted everywhere: the reports escape it, terminal output strips control and escape sequences, and task files fence it in `untrusted` blocks that tell coding agents never to follow instructions found inside.
+
+## Tokens and owner data
+
+- **Where they come from.** Search Console access comes from your own OAuth client (`altimeter gsc login`, scope `webmasters.readonly`, PKCE on a loopback address), a short-lived token in `ALTIMETER_GSC_ACCESS_TOKEN` or a service account key file named by `ALTIMETER_GSC_SA_KEY`. The Chrome UX Report key comes from `ALTIMETER_GOOGLE_API_KEY` and travels in a request header. Altimeter never reads the credentials of other tools, such as gcloud, wrangler, browsers or the provider CLIs.
+- **Where they go.** Tokens are sent only to the API they belong to and never appear in reports, logs, prompts or error messages. A stored Search Console login is protected with Windows DPAPI for your user, or written to a file only you can read when you choose `--remember file`; `altimeter gsc logout` revokes and deletes it.
+- **Owner data.** Search Console data stays on your machine and never reaches a model. Queries can identify people: `--redact-queries` writes numbered labels instead of them.
 
 ## Model analysis
 
