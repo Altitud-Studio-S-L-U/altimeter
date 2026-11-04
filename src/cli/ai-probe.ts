@@ -86,7 +86,7 @@ async function readSearchConsole(origin: string): Promise<GscData> {
   const client = new HttpClient();
   try {
     const token = await searchConsoleToken(client);
-    if (!token) throw new Error('no Search Console credential was found. Run "altimeter gsc login" or set ALTIMETER_GSC_ACCESS_TOKEN.');
+    if (!token) throw new Error('no Search Console credential was found. Run "altimeter gsc login --client <client_secret.json> --remember <dpapi|file>" or set ALTIMETER_GSC_ACCESS_TOKEN.');
     return await fetchGscData(client, token, { url: `${origin}/` });
   } finally {
     await client.close();

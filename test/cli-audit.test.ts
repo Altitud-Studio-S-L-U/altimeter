@@ -56,6 +56,15 @@ describe('altimeter audit', () => {
     assert.deepEqual([report.run.options.provider, report.ai], ['none', undefined]);
   });
 
+  test('says how to sign in when Search Console is requested and no credential is stored', async () => {
+    const empty = join(work, 'no-login');
+    const result = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--gsc', '--out', 'gsc-out', '--quiet'], work,
+      { LOCALAPPDATA: empty, XDG_STATE_HOME: empty, HOME: empty, ALTIMETER_GSC_ACCESS_TOKEN: '', ALTIMETER_GSC_SA_KEY: '' });
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(await readFile(join(work, result.stdout.trim(), 'report.json'), 'utf8'));
+    assert.ok(report.run.warnings.includes('Search Console was requested but no credential was found. Run "altimeter gsc login --client <client_secret.json> --remember <dpapi|file>" or set ALTIMETER_GSC_ACCESS_TOKEN.'), report.run.warnings.join('\n'));
+  });
+
   test('never writes the report or a dry run inside the --source repository', async () => {
     const repo = join(work, 'site-repo');
     await mkdir(repo, { recursive: true });
