@@ -49,6 +49,14 @@ async function codexSetup(t: import('node:test').TestContext, scenario: object) 
 }
 
 describe('Claude Code adapter', () => {
+  test('reports the model that answered, not the small one Claude Code uses for housekeeping', () => {
+    const stdout = JSON.stringify({
+      type: 'result', subtype: 'success', is_error: false, structured_output: { ok: true }, total_cost_usd: 0.0224,
+      modelUsage: { 'claude-haiku-4-5-20251001': { costUSD: 0.0013 }, 'claude-opus-4-5-20251101': { costUSD: 0.0211 } },
+    });
+    assert.equal(claude.decodeClaude(stdout).model, 'claude-opus-4-5-20251101');
+  });
+
   test('sends the prompt on stdin with tools, MCP, settings and hooks disabled, in the stable working directory', async t => {
     const { double, env, home, provider } = await claudeSetup(t, { default: { answer } });
     const result = await claude.call({ prompt, schema, timeoutMs: 20_000, provider, env, model: 'sonnet' });
@@ -137,6 +145,15 @@ describe('Claude Code adapter', () => {
     const { double, env, provider } = await claudeSetup(t, { default: { answer } });
     await assert.rejects(claude.call({ prompt, schema, timeoutMs: 20_000, provider, env, model: 'sonnet; rm -rf /' }), isProviderError('invalid-input'));
     assert.deepEqual(await double.calls(), []);
+  });
+});
+
+describe('Codex adapter arguments', () => {
+  test('switch off the tool features build 0.166.0-alpha.6 enables, but leave the code mode host alone', () => {
+    const args = codex.codexArguments({ schemaFile: 's.json', answerFile: 'a.json', capabilities: capabilitiesFor('codex', '0.166.0-alpha.6') });
+    for (const feature of ['browser_use', 'computer_use', 'multi_agent', 'skill_search', 'hooks']) assert.ok(args.includes(`features.${feature}=false`), feature);
+    assert.ok(!args.some(arg => arg.includes('code_mode')));
+    assert.ok(!codex.codexArguments({ schemaFile: 's.json', answerFile: 'a.json', capabilities: capabilitiesFor('codex', '0.165.0') }).some(arg => arg.includes('browser_use')));
   });
 });
 

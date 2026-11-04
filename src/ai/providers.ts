@@ -25,7 +25,7 @@ export interface ProviderCommand {
   readonly source: 'env' | 'path' | 'app';
 }
 
-export type CapabilityFlag = 'system-prompt' | 'ignore-rules' | 'feature-overrides';
+export type CapabilityFlag = 'system-prompt' | 'ignore-rules' | 'feature-overrides' | 'tool-feature-overrides';
 
 export interface Capabilities {
   /** True when this exact CLI version was verified with the flags below. */
@@ -48,14 +48,28 @@ export interface ResolvedProvider {
  */
 const verifiedVersions: Readonly<Record<ProviderName, Readonly<Record<string, readonly CapabilityFlag[]>>>> = {
   claude: { '2.0.59': ['system-prompt'] },
-  codex: { '0.166.0-alpha.5.1': ['ignore-rules', 'feature-overrides'] },
+  codex: {
+    '0.166.0-alpha.5.1': ['ignore-rules', 'feature-overrides'],
+    '0.166.0-alpha.6': ['ignore-rules', 'feature-overrides', 'tool-feature-overrides'],
+  },
+};
+
+/**
+ * Codex updates itself and ships alpha builds often. A later build of a release line whose latest build was verified
+ * keeps that build's flags, still with a warning; anything outside the line falls back to the minimal set.
+ */
+const releaseLines: Readonly<Record<ProviderName, ReadonlyArray<{ readonly from: string; readonly before: string }>>> = {
+  claude: [],
+  codex: [{ from: '0.166.0-alpha.6', before: '0.167.0-0' }],
 };
 
 const displayNames: Readonly<Record<ProviderName, string>> = { claude: 'Claude Code', codex: 'Codex CLI' };
 
 export function capabilitiesFor(name: ProviderName, version: string): Capabilities {
   const flags = verifiedVersions[name][version];
-  return { verified: flags !== undefined, extras: new Set(flags ?? []) };
+  if (flags) return { verified: true, extras: new Set(flags) };
+  const line = releaseLines[name].find(entry => compareVersions(version, entry.from) >= 0 && compareVersions(version, entry.before) < 0);
+  return { verified: false, extras: new Set(line ? verifiedVersions[name][line.from] : []) };
 }
 
 /** Reads a variable the way the platform does: case-insensitively on Windows. */
@@ -247,7 +261,8 @@ export async function resolveProvider(name: ProviderName, options: DiscoveryOpti
   const version = await (options.probeVersion ?? (entry => readVersion(entry, options.env ?? process.env)))(command);
   if (!version) throw new ProviderError('unavailable', `${displayNames[name]} at ${command.path} did not report a version.`, name);
   const capabilities = capabilitiesFor(name, version);
-  const warnings = capabilities.verified ? [] : [`${displayNames[name]} ${version} is not a verified version; it runs with the minimal flag set.`];
+  const flagSet = capabilities.extras.size > 0 ? 'the flags verified for its release line' : 'the minimal flag set';
+  const warnings = capabilities.verified ? [] : [`${displayNames[name]} ${version} is not a verified version; it runs with ${flagSet}.`];
   return { command, version, capabilities, warnings };
 }
 

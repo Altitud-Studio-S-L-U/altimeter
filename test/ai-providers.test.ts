@@ -17,13 +17,19 @@ describe('version handling', () => {
     assert.equal(versionFrom('no version here'), undefined);
   });
 
-  test('gates extra flags on exactly verified versions', () => {
+  test('gates extra flags on verified versions and on later builds of a verified Codex line', () => {
     assert.deepEqual([...capabilitiesFor('claude', '2.0.59').extras], ['system-prompt']);
     assert.deepEqual([...capabilitiesFor('codex', '0.166.0-alpha.5.1').extras].sort(), ['feature-overrides', 'ignore-rules']);
-    for (const [name, version] of [['claude', '2.0.60'], ['codex', '0.166.0']] as const) {
+    assert.deepEqual([capabilitiesFor('codex', '0.166.0-alpha.6').verified, capabilitiesFor('codex', '0.166.0-alpha.6').extras.size], [true, 3]);
+    // A later build of the 0.166 line keeps its flags but is not called verified.
+    for (const version of ['0.166.0-alpha.7', '0.166.0', '0.166.2']) {
+      const capabilities = capabilitiesFor('codex', version);
+      assert.deepEqual([capabilities.verified, capabilities.extras.has('tool-feature-overrides')], [false, true], version);
+    }
+    for (const [name, version] of [['claude', '2.0.60'], ['codex', '0.167.0'], ['codex', '0.166.0-alpha.5']] as const) {
       const capabilities = capabilitiesFor(name, version);
       assert.equal(capabilities.verified, false);
-      assert.equal(capabilities.extras.size, 0);
+      assert.equal(capabilities.extras.size, 0, `${name} ${version}`);
     }
   });
 });

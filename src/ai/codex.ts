@@ -9,6 +9,12 @@ import { ProviderError, type CallResult, type Usage } from './types.ts';
 const maxAnswerBytes = 512 * 1024;
 const maxStreamBytes = 8 * 1024 * 1024;
 
+/** Tool features that build 0.166.0-alpha.6 enables by default; each was checked to be accepted without an error. */
+const toolFeatures = [
+  'browser_use', 'browser_use_external', 'computer_use', 'in_app_browser', 'image_generation', 'multi_agent', 'skill_search', 'hooks', 'view_image',
+  'tool_suggest', 'sleep_tool', 'goals',
+] as const;
+
 export function codexArguments(options: { readonly schemaFile: string; readonly answerFile: string; readonly model?: string; readonly capabilities: Capabilities }): string[] {
   const verified = options.capabilities.extras;
   return [
@@ -26,6 +32,8 @@ export function codexArguments(options: { readonly schemaFile: string; readonly 
     ...(verified.has('feature-overrides')
       ? ['-c', 'features.unified_exec=false', '-c', 'features.apps=false', '-c', 'plugins._default.enabled=false', '-c', 'web_search="disabled"']
       : []),
+    // Code mode is left alone: switching its host off emits an error item that would fail every call.
+    ...(verified.has('tool-feature-overrides') ? toolFeatures.flatMap(feature => ['-c', `features.${feature}=false`]) : []),
     '--json',
     '--color', 'never',
     '--output-schema', options.schemaFile,

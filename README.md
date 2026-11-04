@@ -108,7 +108,7 @@ Only deterministic checks count. For each category the score is 100 × (1 − fa
 - Altimeter observes a site from the outside. It cannot reproduce Google's ranking, Google's location or verify itself as Googlebot by IP: probes with crawler user agents show only how the site answers that string.
 - Lab data is not field data. Without a Chrome UX Report key, Core Web Vitals come from Lighthouse only, and the report says so.
 - The analysis is a judgment made by a model, checked against the evidence. It is listed separately and never presented as a measurement.
-- Tested on Windows 11 and Linux. The model analysis was verified with Claude Code 2.0.59 and Codex CLI 0.166.0-alpha.5.1; other versions run with a smaller flag set and the report says so.
+- Tested on Windows 11 and Linux. The model analysis was verified with Claude Code 2.0.59 and Codex CLI 0.166.0-alpha.5.1 and alpha.6; other versions run with a smaller flag set and the report says so. Codex always reads its global `AGENTS.md`; see [SECURITY.md](SECURITY.md#model-analysis).
 
 ## Documentation
 

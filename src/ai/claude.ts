@@ -66,10 +66,13 @@ export function decodeClaude(stdout: string): Omit<CallResult, 'cliVersion'> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new ProviderError('missing-output', 'Claude did not return structured output.', 'claude');
   const costUsd = finiteNumber(record.total_cost_usd);
   const usage = usageOf(record.usage);
-  const models = record.modelUsage && typeof record.modelUsage === 'object' ? Object.keys(record.modelUsage) : [];
+  // Claude Code also runs a small model for housekeeping; the answer comes from the model that cost the most.
+  const models = record.modelUsage && typeof record.modelUsage === 'object' ? Object.entries(record.modelUsage as Record<string, unknown>) : [];
+  const costOf = (entry: unknown) => finiteNumber(entry && typeof entry === 'object' ? (entry as Record<string, unknown>).costUSD : undefined) ?? 0;
+  const model = [...models].sort((a, b) => costOf(b[1]) - costOf(a[1]))[0]?.[0];
   return {
     value,
-    ...(models[0] ? { model: models[0] } : {}),
+    ...(model ? { model } : {}),
     ...(costUsd === undefined ? {} : { costUsd }),
     ...(usage ? { usage } : {}),
   };
