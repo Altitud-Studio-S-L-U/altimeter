@@ -34,8 +34,10 @@ export function providerLabel(summary: ProviderSummary | undefined, nobody: stri
 export function analysisSummary(analysis: ReportAnalysis, language: Language): string {
   const calls = analysis.calls.filter(call => call.status !== 'skipped');
   return format(ui(language).analysis.summaryLine, {
-    findings: analysis.findings.filter(finding => finding.outcome === 'fail').length, proposals: analysis.proposals.length, calls: calls.length,
-    cached: calls.filter(call => call.status === 'cached').length, cost: analysis.costUsd.toFixed(2),
+    findings: analysis.findings.filter(finding => finding.outcome === 'fail').length, proposals: analysis.proposals.length,
+    judgments: analysis.findings.length + analysis.confirmations.length, calls: calls.length,
+    cached: calls.filter(call => call.status === 'cached').length,
+    cost: new Intl.NumberFormat(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(analysis.costUsd),
   });
 }
 
