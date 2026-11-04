@@ -1,1 +1,2322 @@
-[]
+[
+  {
+    "id": "crawl-delay-google",
+    "claim": "crawl-delay in robots.txt slows Googlebot down.",
+    "reality": "Google ignores crawl-delay. Its supported fields are user-agent, allow, disallow and sitemap. Bing does honour crawl-delay.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "crawl-delay to slow googlebot",
+      "crawl-delay for googlebot",
+      "crawl-delay for google"
+    ]
+  },
+  {
+    "id": "robots-txt-noindex",
+    "claim": "A 'Noindex:' line in robots.txt removes pages from Google.",
+    "reality": "Google does not support noindex in robots.txt. Use meta robots or X-Robots-Tag on a crawlable URL.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/block-indexing",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "noindex in robots.txt",
+      "noindex: line",
+      "noindex directive to robots.txt",
+      "robots.txt noindex"
+    ]
+  },
+  {
+    "id": "disallow-removes-from-index",
+    "claim": "Disallowing a URL in robots.txt keeps it out of Google's index.",
+    "reality": "robots.txt controls crawling, not indexing. A blocked URL can still be indexed without content if it is linked, and the block also hides any noindex.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/robots/intro",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/block-indexing",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "disallow it in robots.txt to remove",
+      "block in robots.txt to deindex",
+      "robots.txt to remove it from google",
+      "robots.txt to keep it out of the index"
+    ]
+  },
+  {
+    "id": "noindex-saves-crawl-budget",
+    "claim": "noindex saves crawl budget.",
+    "reality": "Google still has to fetch the page to see noindex. Only robots.txt prevents the fetch. Crawl budget matters mainly for very large or fast-changing sites.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/crawling/docs/crawl-budget",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "noindex to save crawl budget",
+      "noindex saves crawl budget",
+      "noindex to preserve crawl budget"
+    ]
+  },
+  {
+    "id": "sitemap-changefreq-priority",
+    "claim": "changefreq and priority in sitemaps influence crawling or ranking.",
+    "reality": "Google ignores both, and so does Bing. Only an accurate lastmod is used, and Google uses it only when it is consistently accurate.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2023/06/sitemaps-lastmod-ping",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://blogs.bing.com/webmaster/2025/7/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "set changefreq",
+      "add changefreq",
+      "set priority in the sitemap",
+      "sitemap priority values",
+      "adjust sitemap priority"
+    ]
+  },
+  {
+    "id": "sitemap-ping",
+    "claim": "Ping google.com/ping?sitemap= after updating the sitemap.",
+    "reality": "The endpoint was deprecated in June 2023 and now returns 404. Use robots.txt Sitemap lines or Search Console.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/blog/2023/06/sitemaps-lastmod-ping",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "ping google",
+      "google.com/ping",
+      "ping?sitemap=",
+      "sitemap ping"
+    ]
+  },
+  {
+    "id": "rel-next-prev",
+    "claim": "You need rel=next/prev for pagination.",
+    "reality": "Google no longer uses them. Use unique URLs, self canonicals and sequential <a href> links.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/ecommerce/pagination-and-incremental-page-loading",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "rel=prev",
+      "rel=next",
+      "rel=\"next\"",
+      "rel=\"prev\"",
+      "add rel next"
+    ]
+  },
+  {
+    "id": "paginate-canonical-to-first",
+    "claim": "Paginated pages should canonicalise to page 1.",
+    "reality": "Google says not to use the first page as the canonical for the series.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/ecommerce/pagination-and-incremental-page-loading",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "canonicalize paginated pages to page 1",
+      "canonical to the first page",
+      "point pagination canonicals to page 1"
+    ]
+  },
+  {
+    "id": "canonical-is-directive",
+    "claim": "rel=canonical is a directive Google must obey.",
+    "reality": "It is a strong hint. Google may choose another canonical based on redirects, HTTPS, sitemaps, content and other signals.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/canonicalization",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "canonical is a directive",
+      "google must obey the canonical",
+      "canonical forces google"
+    ]
+  },
+  {
+    "id": "google-cannot-index-js",
+    "claim": "Google cannot index JavaScript-rendered content.",
+    "reality": "Google renders every 200 page with an evergreen Chromium. The risks are rendering being skipped on noindex or non-200 pages, blocked resources, interaction-dependent content and non-<a> links, not JavaScript itself.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "google cannot index javascript",
+      "google can't index javascript",
+      "invisible to google because it is rendered with javascript",
+      "googlebot does not run javascript"
+    ]
+  },
+  {
+    "id": "dynamic-rendering-recommended",
+    "claim": "Dynamic rendering is Google's recommended solution for JS sites.",
+    "reality": "Google labels it a workaround, not a long-term solution, and recommends SSR, static rendering or hydration.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/dynamic-rendering",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "implement dynamic rendering",
+      "use dynamic rendering",
+      "dynamic rendering is recommended"
+    ]
+  },
+  {
+    "id": "googlebot-15mb",
+    "claim": "Googlebot indexes the first 15 MB of every HTML page.",
+    "reality": "15 MB is the general crawler default. Googlebot for Search documents 2 MB of uncompressed HTML or text (each CSS/JS file is fetched separately with the same limit) and 64 MB for PDFs.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/googlebot",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/crawling/docs/crawlers-fetchers/overview-google-crawlers",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "first 15 mb",
+      "15 mb limit for googlebot",
+      "googlebot reads 15 mb"
+    ]
+  },
+  {
+    "id": "404-hurts-rankings",
+    "claim": "404 errors hurt your site's rankings.",
+    "reality": "Google says 404s don't harm the site's indexing or ranking. 404/410 is the correct answer for content that no longer exists.",
+    "sources": [
+      {
+        "url": "https://support.google.com/webmasters/answer/2445990?hl=en",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "404 errors hurt rankings",
+      "404s hurt your rankings",
+      "404 errors damage seo",
+      "404s are penalized"
+    ]
+  },
+  {
+    "id": "410-much-faster",
+    "claim": "410 removes URLs much faster than 404.",
+    "reality": "Google currently treats 410 the same as 404, and the HTTP status documentation handles 404 and 410 identically.",
+    "sources": [
+      {
+        "url": "https://support.google.com/webmasters/answer/2445990?hl=en",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "410 removes urls faster",
+      "use 410 instead of 404 to deindex faster",
+      "410 is much faster"
+    ]
+  },
+  {
+    "id": "redirect-deleted-to-home",
+    "claim": "Redirect all deleted pages to the homepage to keep link equity.",
+    "reality": "Google treats this as a soft-404 pattern. Redirect to a close equivalent, otherwise return 404/410.",
+    "sources": [
+      {
+        "url": "https://support.google.com/webmasters/answer/2445990?hl=en",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "redirect deleted pages to the homepage",
+      "redirect all 404s to the homepage",
+      "redirect removed pages to the home page"
+    ]
+  },
+  {
+    "id": "403-to-slow-googlebot",
+    "claim": "Return 403 or 401 to slow Googlebot down.",
+    "reality": "4xx codes other than 429 do not affect crawl rate and lead to the URLs being removed. Use 503/429 briefly, optionally with Retry-After.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/crawling/docs/crawlers-fetchers/reduce-crawl-rate",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "return 403 to slow googlebot",
+      "return 401 to slow googlebot",
+      "403 to reduce crawl rate"
+    ]
+  },
+  {
+    "id": "noarchive-google",
+    "claim": "Add noarchive to stop Google showing a cached copy.",
+    "reality": "Google removed the cache feature and no longer uses noarchive (nor nocache). Bing still uses both for Copilot.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://blogs.bing.com/webmaster/september-2023/Announcing-new-options-for-webmasters-to-control-usage-of-their-content-in-Bing-Chat",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "noarchive to stop google",
+      "noarchive to remove the cached",
+      "google cached copy",
+      "noarchive for google",
+      "nocache for google"
+    ]
+  },
+  {
+    "id": "indexnow-for-google",
+    "claim": "Submit URLs through IndexNow or the Indexing API to get any page into Google faster.",
+    "reality": "Google does not take part in IndexNow, and its Indexing API is limited to JobPosting and livestream BroadcastEvent pages.",
+    "sources": [
+      {
+        "url": "https://www.indexnow.org/faq",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/apis/indexing-api/v3/quickstart",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "indexnow to get indexed by google",
+      "indexnow for google",
+      "indexing api for any page",
+      "submit to the indexing api"
+    ]
+  },
+  {
+    "id": "http2-ranking-boost",
+    "claim": "HTTP/2 gives a ranking boost.",
+    "reality": "Google says HTTP/2 saves crawl resources but brings no ranking benefit.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/crawling/docs/crawlers-fetchers/overview-google-crawlers",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "http/2 ranking boost",
+      "http/2 improves rankings",
+      "http/3 ranking"
+    ]
+  },
+  {
+    "id": "robots-meta-only-in-head",
+    "claim": "robots meta tags only work inside <head>.",
+    "reality": "Google processes robots meta tags outside head (documented March 2026). Canonical and hreflang, by contrast, must be in a valid head.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/valid-page-metadata",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "robots meta only works in the head",
+      "noindex outside head is ignored"
+    ]
+  },
+  {
+    "id": "fragments-crawled-separately",
+    "claim": "Fragment URLs (#section, #!/page) are crawled as separate pages.",
+    "reality": "Google generally ignores fragments for crawling and indexing. Use History API paths for distinct content.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/crawling/docs/faceted-navigation",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "hashbang urls are crawled",
+      "fragment urls are indexed separately",
+      "use #! urls",
+      "escaped_fragment"
+    ]
+  },
+  {
+    "id": "title-description-length-limits",
+    "claim": "Google truncates or penalises titles over 60 characters / meta descriptions over 155–160 characters; there is an official limit.",
+    "reality": "Google documents no length limit for either. Both are truncated as needed to fit the device width. Character counts are a rough proxy for pixel width and only predict truncation and rewrite likelihood, not rankings.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/title-link",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/snippet",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "60 characters",
+      "60-character",
+      "155 characters",
+      "160 characters",
+      "155-160 characters",
+      "title length limit",
+      "meta description length limit"
+    ]
+  },
+  {
+    "id": "titles-shown-as-written",
+    "claim": "Google always shows your <title> and meta description as written.",
+    "reality": "Title links are generated from several sources (title, main heading, h1, og:title, prominent text, anchors, WebSite data). Snippets are primarily built from page content and vary by query.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/title-link",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/snippet",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "google always shows your title",
+      "google will always use your meta description",
+      "guarantees your snippet"
+    ]
+  },
+  {
+    "id": "one-h1-heading-order",
+    "claim": "Use exactly one h1 and never skip heading levels, or rankings suffer.",
+    "reality": "Google says the number and order of headings don't matter for ranking. Multiple h1s are fine. Heading hierarchy matters for accessibility.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "only one h1 for seo",
+      "multiple h1 tags hurt",
+      "multiple h1s hurt",
+      "skipping heading levels hurts rankings",
+      "heading order affects rankings"
+    ]
+  },
+  {
+    "id": "minimum-word-count",
+    "claim": "Pages need a minimum word count (300/1,000/2,000 words) to rank.",
+    "reality": "Google: 'The length of the content alone doesn't matter for ranking purposes.' Writing to a word count is listed as a search-engine-first warning sign ('No, we don't' have a preferred word count).",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "minimum word count",
+      "at least 300 words",
+      "at least 1000 words",
+      "at least 1,000 words",
+      "at least 2000 words",
+      "word count to rank",
+      "thin content because it has fewer than"
+    ]
+  },
+  {
+    "id": "keyword-density",
+    "claim": "Hit a target keyword density (e.g. 1–3%).",
+    "reality": "Google has no density target. Excessive repetition is keyword stuffing, a spam policy violation, and its systems understand synonyms.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/essentials/spam-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "keyword density",
+      "keyword frequency target",
+      "use the keyword 3%"
+    ]
+  },
+  {
+    "id": "meta-keywords",
+    "claim": "The meta keywords tag helps Google rankings.",
+    "reality": "Google Search doesn't use the keywords meta tag.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "meta keywords",
+      "keywords meta tag",
+      "meta name=\"keywords\""
+    ]
+  },
+  {
+    "id": "eeat-ranking-score",
+    "claim": "E-E-A-T is a ranking factor or score that a tool can measure.",
+    "reality": "Google: E-E-A-T itself isn't a specific ranking factor. It is a framework raters use. Trust is the most important part.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "e-e-a-t score",
+      "eeat score",
+      "e-e-a-t is a ranking factor",
+      "improve your e-e-a-t score"
+    ]
+  },
+  {
+    "id": "raters-demote-sites",
+    "claim": "Quality raters can demote your site.",
+    "reality": "Raters have no control over how pages rank, and rater data is not used directly in ranking algorithms. It is used to evaluate systems.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/using-gen-ai-content",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "quality raters demote",
+      "raters can penalize",
+      "rater penalty"
+    ]
+  },
+  {
+    "id": "ai-content-penalised",
+    "claim": "Google penalises AI-generated content.",
+    "reality": "The method of creation does not determine quality. Using automation mainly to manipulate rankings, or generating many pages without value (scaled content abuse), is the violation, however the content was made.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/using-gen-ai-content",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/essentials/spam-policies",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "google penalizes ai content",
+      "google penalises ai content",
+      "ai-generated content is penalized",
+      "ai content penalty"
+    ]
+  },
+  {
+    "id": "duplicate-content-penalty",
+    "claim": "There is a duplicate content penalty.",
+    "reality": "Google: content accessible under multiple URLs is fine; 'don't fret about it'. Deduplication picks one version. Only deceptive scraping or scaled duplication is spam.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/ranking-systems-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "duplicate content penalty",
+      "penalized for duplicate content",
+      "penalised for duplicate content"
+    ]
+  },
+  {
+    "id": "keywords-in-domain-url",
+    "claim": "Keywords in the domain name or URL are a strong ranking factor.",
+    "reality": "Keywords in the domain or URL path alone have 'hardly any effect beyond appearing in breadcrumbs'.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "exact-match domain",
+      "keywords in the domain",
+      "keyword in the url boosts",
+      "keyword-rich url to rank"
+    ]
+  },
+  {
+    "id": "update-dates-for-freshness",
+    "claim": "Updating the publish date regularly makes content fresh and boosts rankings.",
+    "reality": "Changing dates without substantial content change is listed as a search-engine-first warning sign. Freshness matters only for queries that deserve it.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/ranking-systems-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "update the publish date",
+      "refresh the date to",
+      "change the date to look fresh",
+      "bump the dates"
+    ]
+  },
+  {
+    "id": "readability-score-ranking",
+    "claim": "Readability scores (Flesch, Yoast green light) are a Google ranking factor.",
+    "reality": "Google has said it doesn't use basic reading-level algorithms. Readability is a UX concern matched to the audience.",
+    "sources": [
+      {
+        "url": "https://www.searchenginejournal.com/ranking-factors/reading-level/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "flesch score for seo",
+      "readability score affects ranking",
+      "yoast readability",
+      "improve readability score to rank"
+    ]
+  },
+  {
+    "id": "nofollow-external-links",
+    "claim": "Nofollow all external links to avoid 'leaking PageRank'.",
+    "reality": "Google: linking to other sites can build trust (citing sources). Use nofollow only when you don't trust the source; don't apply it to every external link.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/links-crawlable",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "nofollow all external links",
+      "pagerank leak",
+      "leaking pagerank",
+      "leak link juice"
+    ]
+  },
+  {
+    "id": "tabs-hidden-text",
+    "claim": "Content hidden in tabs or accordions counts as hidden text spam.",
+    "reality": "Google's spam policy lists accordion/tabbed content, sliders, tooltips and screen-reader-only text as not hidden-text abuse.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/essentials/spam-policies",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "content in tabs is hidden text",
+      "accordions are hidden text",
+      "tabbed content is ignored",
+      "accordion content is not indexed"
+    ]
+  },
+  {
+    "id": "llms-txt-for-ai-search",
+    "claim": "You need llms.txt, content chunking or special schema to appear in AI Overviews/AI Mode.",
+    "reality": "Google Search does not use llms.txt; it 'will neither harm nor help'. No chunking or special schema is needed. Core SEO and people-first content apply.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/ai-features",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "llms.txt to rank",
+      "add llms.txt",
+      "create an llms.txt",
+      "llms.txt for ai overviews",
+      "llms.txt is required",
+      "llms-full.txt",
+      "markdown copies for ai"
+    ]
+  },
+  {
+    "id": "helpful-content-update-recovery",
+    "claim": "A site can recover from the 'helpful content update' classifier by waiting for the next HCU.",
+    "reality": "The helpful content system became part of core ranking systems in March 2024 and is listed as retired; there are no separate HCU refreshes.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/ranking-systems-guide",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2024/03/core-update-spam-policies",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "helpful content update",
+      "hcu recovery",
+      "hit by the helpful content",
+      "helpful content classifier"
+    ]
+  },
+  {
+    "id": "alt-text-125-limit",
+    "claim": "Google sets a 125-character maximum for alt text.",
+    "reality": "Google documents no alt length limit. It asks for useful, information-rich, non-stuffed alt text in context. The 125-character figure is screen-reader folklore, not a Google rule.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/google-images",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "125 characters for alt",
+      "125-character alt",
+      "alt text limit of 125"
+    ]
+  },
+  {
+    "id": "css-background-images-indexed",
+    "claim": "Google indexes images set as CSS background-image.",
+    "reality": "Google doesn't index CSS background images; images are extracted only from the img src attribute (including inside <picture>).",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/google-images",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "css background images are indexed",
+      "background-image is indexed by google"
+    ]
+  },
+  {
+    "id": "title-separators-ranking",
+    "claim": "Pipes vs dashes in titles change rankings.",
+    "reality": "Evidence only shows a different rewrite frequency (Zyppy 2022: pipes 41% vs dashes 19.7% rewritten or removed), not ranking differences. Google only asks for a delimiter between the site name and the rest.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/title-link",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "pipes instead of dashes",
+      "dashes instead of pipes",
+      "separator affects ranking"
+    ]
+  },
+  {
+    "id": "lighthouse-score-ranking",
+    "claim": "The Lighthouse / PageSpeed Insights performance score (0-100) is a Google ranking factor.",
+    "reality": "Google's ranking systems use Core Web Vitals. The CWV report, PSI's assessment and Search Console are built on CrUX field data from real Chrome users. The Lighthouse score is a weighted lab composite (FCP, SI, LCP, TBT, CLS) for diagnostics.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/page-experience",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://support.google.com/webmasters/answer/9205520",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developer.chrome.com/docs/lighthouse/performance/performance-scoring",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "pagespeed score ranking factor",
+      "lighthouse score affects ranking",
+      "pagespeed insights score of 100 to rank",
+      "improve your pagespeed score to rank"
+    ]
+  },
+  {
+    "id": "page-experience-single-signal",
+    "claim": "Page experience is a single ranking signal / a separate ranking system.",
+    "reality": "Google: 'There is no single signal'; page experience was not a separate ranking system. Core Web Vitals are used by the ranking systems, and other page-experience aspects do not directly help ranking.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/page-experience",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2023/04/page-experience-in-search",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "page experience ranking signal",
+      "page experience score",
+      "page experience update",
+      "page experience boost"
+    ]
+  },
+  {
+    "id": "cwv-outranks-relevance",
+    "claim": "Passing Core Web Vitals will make a page outrank more relevant content / failing them causes heavy penalties.",
+    "reality": "Google says it always seeks to show the most relevant content even if page experience is sub-par, and that good CWV scores don't guarantee good rankings. No weight is published.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/page-experience",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2023/04/page-experience-in-search",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "core web vitals penalty",
+      "failing core web vitals penalizes",
+      "core web vitals will outrank",
+      "cwv penalty"
+    ]
+  },
+  {
+    "id": "fid-core-web-vital",
+    "claim": "FID is a Core Web Vital.",
+    "reality": "INP replaced FID on March 12, 2024. FID was removed from CrUX (including the API) in September 2024.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/blog/2023/05/introducing-inp",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developer.chrome.com/docs/crux/release-notes/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "improve fid",
+      "reduce first input delay",
+      "first input delay score",
+      "fid is a core web vital"
+    ]
+  },
+  {
+    "id": "ttfb-fcp-core-web-vital",
+    "claim": "TTFB (or FCP) is a Core Web Vital that must be 'good'.",
+    "reality": "TTFB and FCP are supporting or diagnostic metrics. web.dev says TTFB is not a Core Web Vital and meeting its good threshold isn't strictly required.",
+    "sources": [
+      {
+        "url": "https://web.dev/articles/ttfb",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/vitals",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "ttfb is a core web vital",
+      "fcp is a core web vital",
+      "first contentful paint core web vital"
+    ]
+  },
+  {
+    "id": "lighthouse-measures-inp",
+    "claim": "Lighthouse measures INP, so a good lab run means good responsiveness.",
+    "reality": "A standard (navigation) Lighthouse run has no user interactions. INP needs interactions (headless bots record none), and Lighthouse's interaction-to-next-paint audit has weight 0 and needs timespan mode. TBT is only a proxy.",
+    "sources": [
+      {
+        "url": "https://web.dev/articles/inp",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/config/default-config.js",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "lighthouse measures inp",
+      "lab inp shows",
+      "inp from lighthouse"
+    ]
+  },
+  {
+    "id": "lab-cls-proves-good",
+    "claim": "A low lab CLS proves the page has no CLS problem.",
+    "reality": "Lab tools only measure shifts during load. Field CLS covers the whole page lifetime and is often higher.",
+    "sources": [
+      {
+        "url": "https://web.dev/articles/cls",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/optimize-cls",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "lab cls proves",
+      "cls is fine because lighthouse"
+    ]
+  },
+  {
+    "id": "lazy-load-everything",
+    "claim": "Lazy-load every image, including the hero, to speed up the page.",
+    "reality": "Never lazy-load the LCP or above-the-fold images. It delays LCP; use loading=lazy only outside the first viewport.",
+    "sources": [
+      {
+        "url": "https://web.dev/articles/optimize-lcp",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/browser-level-image-lazy-loading",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "lazy-load all images",
+      "lazy load every image",
+      "lazy-load the hero",
+      "lazy load the hero",
+      "loading=\"lazy\" on the lcp"
+    ]
+  },
+  {
+    "id": "no-store-blocks-bfcache",
+    "claim": "Cache-Control: no-store always prevents the bfcache.",
+    "reality": "Since a Mar-Apr 2025 rollout, Chrome admits most no-store pages to bfcache, with a 3-minute timeout and eviction on cookie changes. Other browsers may still block them, and minimising no-store remains best practice.",
+    "sources": [
+      {
+        "url": "https://developer.chrome.com/docs/web-platform/bfcache-ccns",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/bfcache",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "no-store always prevents the bfcache",
+      "no-store blocks bfcache"
+    ]
+  },
+  {
+    "id": "unload-handlers-reliable",
+    "claim": "unload handlers reliably run, or are harmless.",
+    "reality": "Chrome deprecated unload and finished rolling it out across all page loads in 2026: it no longer fires by default. It still blocks bfcache in Firefox. Use pagehide/visibilitychange.",
+    "sources": [
+      {
+        "url": "https://developer.chrome.com/docs/web-platform/deprecating-unload",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/bfcache",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "use the unload event",
+      "unload handler to send analytics"
+    ]
+  },
+  {
+    "id": "isinputpending",
+    "claim": "Use navigator.isInputPending() to decide when to yield.",
+    "reality": "web.dev no longer recommends isInputPending. Yield regardless, using scheduler.yield() (Chrome 129+, Firefox 142+) with a setTimeout fallback.",
+    "sources": [
+      {
+        "url": "https://web.dev/articles/optimize-long-tasks",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "isinputpending"
+    ]
+  },
+  {
+    "id": "preload-everything",
+    "claim": "Preloading/preconnecting many resources always helps.",
+    "reality": "Preconnect only to the most critical origins; unused connections close after 10 s and extra hints contend for bandwidth. Font preloads ignore unicode-range and take bandwidth from other resources. fetchpriority=high belongs on one or two images.",
+    "sources": [
+      {
+        "url": "https://web.dev/articles/preconnect-and-dns-prefetch",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/font-best-practices",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/optimize-lcp",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "preload all fonts",
+      "preconnect to every",
+      "preload every",
+      "add preconnect for all"
+    ]
+  },
+  {
+    "id": "removed-lighthouse-audits",
+    "claim": "Lighthouse audits like render-blocking-resources, uses-long-cache-ttl, offscreen-images, third-party-facades, uses-rel-preload and first-meaningful-paint are current.",
+    "reality": "Lighthouse 13 (Oct 2025) removed them or replaced them with insight audits (render-blocking-insight, cache-insight, lcp-discovery-insight, etc.). offscreen-images, third-party-facades, uses-rel-preload and no-document-write were removed outright.",
+    "sources": [
+      {
+        "url": "https://developer.chrome.com/blog/moving-lighthouse-to-insights",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://github.com/GoogleChrome/lighthouse/releases/tag/v13.0.0",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developer.chrome.com/docs/lighthouse/performance/third-party-facades",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "render-blocking-resources audit",
+      "uses-long-cache-ttl",
+      "offscreen-images audit",
+      "third-party-facades audit",
+      "uses-rel-preload",
+      "first-meaningful-paint"
+    ]
+  },
+  {
+    "id": "single-lighthouse-run",
+    "claim": "A single PSI/Lighthouse run is a reliable measurement.",
+    "reality": "Scores vary between runs. Lighthouse docs: the median of 5 runs is twice as stable as 1 run. Don't run several instances in parallel on one machine.",
+    "sources": [
+      {
+        "url": "https://github.com/GoogleChrome/lighthouse/blob/main/docs/variability.md",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "a single lighthouse run shows",
+      "one pagespeed run"
+    ]
+  },
+  {
+    "id": "no-crux-means-problem",
+    "claim": "No CrUX data means the site has a performance problem or is penalised.",
+    "reality": "CrUX includes only public, indexable (200, no noindex), sufficiently popular pages and origins. Missing data reflects eligibility or traffic. PSI simply cannot assess CWV without LCP and CLS data.",
+    "sources": [
+      {
+        "url": "https://developer.chrome.com/docs/crux/methodology",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/speed/docs/insights/v5/about",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "no crux data means",
+      "missing crux data is a problem",
+      "not enough field data is a penalty"
+    ]
+  },
+  {
+    "id": "cwv-averaged-across-devices",
+    "claim": "CWV are measured as an average across all devices.",
+    "reality": "They are assessed at the 75th percentile of page loads, segmented by mobile and desktop.",
+    "sources": [
+      {
+        "url": "https://web.dev/articles/vitals",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://support.google.com/webmasters/answer/9205520",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "average of mobile and desktop",
+      "averaged across devices"
+    ]
+  },
+  {
+    "id": "schema-boosts-rankings",
+    "claim": "Adding schema markup boosts rankings.",
+    "reality": "Google documents structured data as the way to become eligible for search features, with no ranking boost. Even a structured-data manual action only removes rich-result eligibility: 'it doesn't affect how the page ranks'. Google representatives have repeatedly said there is no generic ranking boost. Treat any ranking claim as false.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "schema boosts rankings",
+      "structured data is a ranking factor",
+      "schema markup improves rankings",
+      "add schema to rank higher"
+    ]
+  },
+  {
+    "id": "faqpage-rich-results",
+    "claim": "Add FAQPage markup to get FAQ dropdowns in Google.",
+    "reality": "FAQ rich results were limited to authoritative government and health sites in Aug–Sep 2023. They stopped appearing in Google Search on 2026-05-07, and Google removed the documentation on 2026-06-15.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "add faq schema",
+      "add faqpage",
+      "faq rich results",
+      "faq rich snippet",
+      "faq dropdowns",
+      "faqpage markup to get"
+    ]
+  },
+  {
+    "id": "howto-rich-results",
+    "claim": "HowTo markup produces step-by-step rich results.",
+    "reality": "HowTo rich results were removed from mobile and then desktop. Since 2023-09-13 they no longer appear, and the docs were removed.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "add howto schema",
+      "howto rich results",
+      "howto markup to get",
+      "how-to rich result"
+    ]
+  },
+  {
+    "id": "sitelinks-search-box",
+    "claim": "Add WebSite SearchAction to get a sitelinks search box.",
+    "reality": "Google removed the sitelinks search box globally from 2024-11-21. Existing markup can stay and causes no errors. WebSite markup is still used for site names.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/blog/2024/10/sitelinks-search-box",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "sitelinks search box",
+      "add searchaction",
+      "add a searchaction",
+      "missing searchaction",
+      "potentialaction searchaction"
+    ]
+  },
+  {
+    "id": "jsonld-must-be-in-head",
+    "claim": "JSON-LD must go in the <head>.",
+    "reality": "Google says JSON-LD can be placed in a script in the head or the body.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "json-ld must be in the head",
+      "move json-ld to the head",
+      "structured data must be in the head"
+    ]
+  },
+  {
+    "id": "js-structured-data-invisible",
+    "claim": "Google can't see structured data injected with JavaScript or Google Tag Manager.",
+    "reality": "Google processes structured data present in the rendered DOM. The documented caveat is narrower: JS-generated Product markup can make Shopping crawls less frequent and less reliable.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/generate-structured-data-with-javascript",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "google cannot see structured data injected",
+      "gtm structured data is not seen",
+      "javascript-injected schema is ignored"
+    ]
+  },
+  {
+    "id": "microdata-worse-than-jsonld",
+    "claim": "Microdata or RDFa is worse than JSON-LD for Google.",
+    "reality": "Google recommends JSON-LD for maintainability, but all three formats work equally when valid (clarified Feb 2023). The discussion forum docs even prefer Microdata/RDFa.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/discussion-forum",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "microdata is worse",
+      "convert microdata to json-ld for rankings",
+      "rdfa is not supported by google"
+    ]
+  },
+  {
+    "id": "rich-results-test-guarantees",
+    "claim": "Valid markup that passes the Rich Results Test guarantees a rich result.",
+    "reality": "Google does not guarantee display. Structured data 'enables a feature to be present, it does not guarantee that it will be present.'",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "guarantees a rich result",
+      "guaranteed rich results",
+      "will show rich results once valid"
+    ]
+  },
+  {
+    "id": "special-schema-for-ai",
+    "claim": "You need special schema to appear in AI Overviews or AI Mode.",
+    "reality": "Google states there is no special schema.org structured data needed for its AI features; markup should simply match visible content. Claims that schema increases LLM citations rest on secondhand statements (Bing's Fabrice Canel, SMX Munich, Mar 2025) and conflicting third-party tests; they are speculative.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/ai-features",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "schema for ai overviews",
+      "special schema for ai",
+      "structured data for ai mode",
+      "ai overview schema",
+      "schema to appear in ai"
+    ]
+  },
+  {
+    "id": "self-serving-review-stars",
+    "claim": "Showing your Google or Trustpilot star rating in your own Organization/LocalBusiness markup gets stars in search results.",
+    "reality": "Since Sept 2019, self-serving reviews for LocalBusiness/Organization are not displayed, including reviews embedded via third-party widgets.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/blog/2019/09/making-review-rich-results-more-helpful",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/review-snippet",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "add your google reviews to schema",
+      "trustpilot rating in organization markup",
+      "aggregaterating to your organization",
+      "review stars from your testimonials",
+      "aggregaterating on localbusiness"
+    ]
+  },
+  {
+    "id": "article-headline-110",
+    "claim": "Article headline must be 110 characters or fewer.",
+    "reality": "Google removed the 110-character limit on 2023-01-03. Concise headlines are only recommended to avoid truncation.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "headline must be 110 characters",
+      "110-character headline",
+      "headline under 110 characters"
+    ]
+  },
+  {
+    "id": "organization-on-every-page",
+    "claim": "Organization markup must be on every page.",
+    "reality": "Google says to add it to the home page or one about page; it is not needed on every page.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/organization",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "organization markup on every page",
+      "organization schema on all pages"
+    ]
+  },
+  {
+    "id": "rich-results-test-validates-all",
+    "claim": "The Rich Results Test validates all of schema.org and site names.",
+    "reality": "The Rich Results Test covers only Google features and does not support site names. Google points to the Schema Markup Validator for generic validation. Neither tool has a documented public API.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/site-names",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://validator.schema.org/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "rich results test validates all schema",
+      "test site names in the rich results test"
+    ]
+  },
+  {
+    "id": "unsupported-markup-harms",
+    "claim": "Leftover unsupported markup (FAQPage, SearchAction, ClaimReview) harms the site.",
+    "reality": "Google says unsupported markup causes no issues or Search Console errors, and that use of retired types outside Google Search is unaffected.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/blog/2024/10/sitelinks-search-box",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2025/06/simplifying-search-results",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "remove faqpage because it harms",
+      "unsupported markup harms",
+      "retired schema hurts",
+      "remove searchaction because"
+    ]
+  },
+  {
+    "id": "breadcrumbs-mobile-display",
+    "claim": "Breadcrumb markup changes how URLs look on mobile results.",
+    "reality": "Since Jan 2025 Google's breadcrumb rich result is available on desktop only.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/breadcrumb",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/visual-elements-gallery",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "breadcrumbs in mobile results",
+      "breadcrumb markup changes mobile urls",
+      "breadcrumbs on mobile serps"
+    ]
+  },
+  {
+    "id": "text-value-is-error",
+    "claim": "A plain-text value where schema.org expects an entity (e.g. author: \"Ana\") is an error.",
+    "reality": "schema.org's datamodel says expected types are guidelines and text is commonly accepted. Only Google feature docs that require a specific type (e.g. author Person/Organization for Article best practice) make it a defect.",
+    "sources": [
+      {
+        "url": "https://schema.org/docs/datamodel.html",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/article",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "author must be a person object",
+      "text values are schema errors"
+    ]
+  },
+  {
+    "id": "videoobject-description-required",
+    "claim": "VideoObject.description is required.",
+    "reality": "description moved to recommended on 2023-05-04. Only name, thumbnailUrl and uploadDate are required.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/video",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "videoobject description is required",
+      "video description is required for rich results"
+    ]
+  },
+  {
+    "id": "virtual-events-rich-results",
+    "claim": "Online or virtual events can get Google event rich results with VirtualLocation.",
+    "reality": "Google requires events to take place in a physical location and removed the online-event properties from its docs in June 2025.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/event",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "virtuallocation for event rich results",
+      "online event rich results"
+    ]
+  },
+  {
+    "id": "professionalservice-for-agencies",
+    "claim": "Agencies should use the ProfessionalService type to rank for services.",
+    "reality": "schema.org notes that the general ProfessionalService type for local businesses was deprecated due to confusion with Service. No type affects ranking, and Service/OfferCatalog have no Google rich result.",
+    "sources": [
+      {
+        "url": "https://schema.org/ProfessionalService",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/search-gallery",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "use professionalservice",
+      "professionalservice type to rank"
+    ]
+  },
+  {
+    "id": "qapage-replaces-faqpage",
+    "claim": "QAPage is the replacement for FAQPage on a company FAQ.",
+    "reality": "QAPage is only for pages where users can submit answers to a single question. Site-authored FAQs are explicitly ineligible.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/qapage",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "use qapage instead of faqpage",
+      "switch faqpage to qapage",
+      "qapage for your faq"
+    ]
+  },
+  {
+    "id": "html-lang-decides-language",
+    "claim": "Google uses the <html lang> attribute (or Content-Language) to decide a page's language.",
+    "reality": "Google says it uses the visible content and doesn't use code-level language information such as lang attributes, or the URL. It also says it doesn't use hreflang or lang to detect language.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/localized-versions",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "google uses html lang",
+      "lang attribute tells google the language",
+      "content-language header tells google"
+    ]
+  },
+  {
+    "id": "hreflang-penalty",
+    "claim": "hreflang errors cause a penalty or ranking demotion.",
+    "reality": "Invalid or unreciprocated annotations are ignored, and valid pairs keep working. The cost is wrong-locale URLs showing, not a penalty.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/localized-versions",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "hreflang penalty",
+      "hreflang errors cause a penalty",
+      "penalized for hreflang"
+    ]
+  },
+  {
+    "id": "hreflang-guarantees-indexing",
+    "claim": "hreflang guarantees that every language version gets indexed.",
+    "reality": "Mueller (May 2025): 'hreflang doesn't guarantee indexing'. Same-language variants (fr-FR/fr-BE) are often folded into one canonical, with reporting on the canonical URL.",
+    "sources": [
+      {
+        "url": "https://www.seroundtable.com/google-hreflang-doesnt-guarantee-indexing-39388.html",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "hreflang guarantees indexing",
+      "hreflang ensures every version is indexed"
+    ]
+  },
+  {
+    "id": "canonicalize-translations",
+    "claim": "You should canonicalize all translations to the main-language page to avoid duplicate content.",
+    "reality": "Translated pages aren't duplicates. Google says to specify a canonical in the same language, or the best substitute language. Only untranslated main content counts as duplicate.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/localized-versions",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "canonicalize translations to the main language",
+      "canonical to the english version",
+      "canonicalize all language versions"
+    ]
+  },
+  {
+    "id": "x-default-mandatory",
+    "claim": "x-default is mandatory.",
+    "reality": "Google recommends it as a fallback, especially for selectors or redirecting homepages. It isn't required.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/localized-versions",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "x-default is required",
+      "x-default is mandatory",
+      "missing x-default is an error",
+      "the root must be the x-default"
+    ]
+  },
+  {
+    "id": "invalid-hreflang-codes-valid",
+    "claim": "en-UK, es-419 and country-only codes (uk, us) are valid hreflang values.",
+    "reality": "Google ignores reserved region codes like UK/EU/UN, doesn't support es-419, and doesn't accept region-only values (it doesn't derive language from country).",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/localized-versions",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "hreflang=\"en-uk\"",
+      "hreflang=en-uk",
+      "es-419 in hreflang"
+    ]
+  },
+  {
+    "id": "generic-cctld-targets-country",
+    "claim": "A country-code domain always tells Google which country a site targets.",
+    "reality": "Google treats some country-code top-level domains, such as .io, .co, .me and .tv, as generic, so they carry no country signal. Country targeting for those domains comes from hreflang and local signals such as addresses, phone numbers and currency.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "the cctld tells google the target country",
+      ".io domain targets",
+      ".co domain targets colombia"
+    ]
+  },
+  {
+    "id": "search-console-target-country",
+    "claim": "You can set a target country in Search Console.",
+    "reality": "The International Targeting report and its country setting were deprecated in August 2022 and removed in September 2022. hreflang is still supported.",
+    "sources": [
+      {
+        "url": "https://support.google.com/webmasters/answer/12474899",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "set a target country in search console",
+      "international targeting report",
+      "geotargeting setting in search console"
+    ]
+  },
+  {
+    "id": "server-location-required",
+    "claim": "Hosting the server in the target country is required for local rankings.",
+    "reality": "Server location is a signal but not a definitive one (CDNs obscure it). ccTLDs, hreflang and local signals matter more.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "host the server in the target country",
+      "server location for local rankings",
+      "local hosting for seo"
+    ]
+  },
+  {
+    "id": "geo-meta-tags",
+    "claim": "geo.position / geo.region meta tags help local SEO.",
+    "reality": "Google ignores locational meta tags like geo.position.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "geo.position",
+      "geo.region",
+      "geo meta tags",
+      "icbm meta"
+    ]
+  },
+  {
+    "id": "googlebot-us-only",
+    "claim": "Googlebot only crawls from the US, so geo-targeted content can never be seen.",
+    "reality": "Googlebot's default IPs appear US-based, but it also crawls from IPs outside the US. It never sends Accept-Language, so language-adaptive serving is still unreliable.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/locale-adaptive-pages",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "googlebot only crawls from the us",
+      "geo-targeted content can never be seen"
+    ]
+  },
+  {
+    "id": "machine-translation-spam",
+    "claim": "Machine-translated content is always spam.",
+    "reality": "The spam policy targets pages generated at scale mainly to manipulate rankings, including through automated translation. Reviewed translations that help users aren't the target.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/essentials/spam-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/using-gen-ai-content",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "machine translation is spam",
+      "machine-translated content is penalized",
+      "auto-translation is always spam"
+    ]
+  },
+  {
+    "id": "block-auto-translated-pages",
+    "claim": "Block auto-translated pages in robots.txt.",
+    "reality": "Google removed that guidance from its multilingual docs on 2025-06-11. Blocking also prevents hreflang reciprocity from being read.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "block auto-translated pages",
+      "disallow machine-translated pages",
+      "robots.txt for translated pages"
+    ]
+  },
+  {
+    "id": "url-structure-ranks-better",
+    "claim": "Subdirectories (or ccTLDs) rank better than other structures.",
+    "reality": "Google lists pros and cons for ccTLD, subdomain and subdirectory, recommends against parameters, and states no ranking preference.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "subdirectories rank better",
+      "subfolders rank better",
+      "cctlds rank better",
+      "subdomains rank worse"
+    ]
+  },
+  {
+    "id": "bing-language-signals",
+    "claim": "Bing ignores language markup and only uses hreflang (or the reverse: Bing uses hreflang like Google).",
+    "reality": "Bing's Fabrice Canel (2020) called hreflang 'a far weaker signal than content-language at Bing' and said Bing infers language and market from links and visitors.",
+    "sources": [
+      {
+        "url": "https://www.seroundtable.com/bing-hreflang-weak-signal-30099.html",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "bing only uses hreflang",
+      "bing ignores language markup"
+    ]
+  },
+  {
+    "id": "business-profile-pay-or-stuff",
+    "claim": "You can pay for, or keyword-stuff your way to, better Business Profile rankings.",
+    "reality": "Google: 'There's no way to request or pay for a better local ranking.' Names must be the real-world name, and extra info in the name isn't permitted.",
+    "sources": [
+      {
+        "url": "https://support.google.com/business/answer/7091",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://support.google.com/business/answer/3038177",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "keywords in the business profile name",
+      "add keywords to your business name",
+      "pay for business profile rankings"
+    ]
+  },
+  {
+    "id": "page-per-town",
+    "claim": "Creating one page per nearby town boosts local rankings.",
+    "reality": "Pages targeted at specific cities that funnel users to one page are a listed example of doorway abuse.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/essentials/spam-policies",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "one page per town",
+      "a page for every nearby city",
+      "location pages for each city",
+      "city landing pages for every"
+    ]
+  },
+  {
+    "id": "favicon-multiple-of-48",
+    "claim": "Favicons must be a multiple of 48 px (48, 96, 144…).",
+    "reality": "Since Oct 2024 Google requires a square (1:1) favicon of at least 8×8 px and recommends one larger than 48×48. The 'multiple of 48' requirement is gone. Supported formats are BMP, GIF, ICO, PNG, JPEG, PPM and TIFF, and SVG is not listed.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/favicon-in-search",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "multiple of 48",
+      "48px multiple",
+      "favicon must be 48"
+    ]
+  },
+  {
+    "id": "security-headers-ranking",
+    "claim": "Security headers such as HSTS, CSP or X-Content-Type-Options are SEO ranking factors.",
+    "reality": "Mueller (June 2023): 'No, the HSTS header does not affect Search.' Mueller (June 2026): the only security headers that might matter for SEO are those that block iframing by other sites. Lighthouse gives the CSP, HSTS, COOP and XFO audits weight 0.",
+    "sources": [
+      {
+        "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/config/default-config.js",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "hsts is a ranking factor",
+      "security headers improve rankings",
+      "csp improves seo",
+      "security headers for seo"
+    ]
+  },
+  {
+    "id": "mobile-friendly-test",
+    "claim": "Check mobile-friendliness with Google's Mobile-Friendly Test or the Search Console Mobile Usability report.",
+    "reality": "Both, along with the Mobile-Friendly Test API, were retired in Dec 2023. The Page Experience report was removed later. Google points to Lighthouse instead.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2024/06/mobile-indexing-vlast-final-final.doc",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "mobile-friendly test",
+      "mobile usability report",
+      "mobile friendly test"
+    ]
+  },
+  {
+    "id": "lighthouse-seo-tap-targets",
+    "claim": "Lighthouse SEO checks tap targets, font sizes, the viewport and plugins.",
+    "reality": "In Lighthouse 12 (Apr 2024), tap-targets was replaced by the a11y target-size audit, plugins was removed, and viewport and font-size moved to best practices. Lighthouse 13 (Oct 2025) removed font-size, and the viewport check became a performance insight. The current SEO category has 10 scored audits plus a manual structured-data audit.",
+    "sources": [
+      {
+        "url": "https://github.com/GoogleChrome/lighthouse/releases/tag/v12.0.0",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://github.com/GoogleChrome/lighthouse/releases/tag/v13.0.0",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/config/default-config.js",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "lighthouse seo tap targets",
+      "lighthouse seo font size",
+      "tap-targets audit",
+      "plugins audit"
+    ]
+  },
+  {
+    "id": "lighthouse-seo-100",
+    "claim": "A Lighthouse SEO score of 100 means the page is SEO-optimized.",
+    "reality": "The category is a handful of basic checks (is-crawlable alone can fail it). It does not judge content, it doesn't flag cross-domain canonicals, and it passes is-crawlable even when only Googlebot is blocked.",
+    "sources": [
+      {
+        "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/seo/is-crawlable.js",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/seo/canonical.js",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "seo score of 100 means",
+      "perfect lighthouse seo score",
+      "lighthouse seo 100"
+    ]
+  },
+  {
+    "id": "cookie-banner-interstitial",
+    "claim": "Cookie consent banners count as intrusive interstitials and hurt rankings.",
+    "reality": "Interstitials required by law are exempt from the guidance. Google recommends overlaying the content instead of redirecting to a separate page. The real risks are CLS, LCP and INP, or gating the DOM content.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/avoid-intrusive-interstitials",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/cookie-notice-best-practices",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "cookie banner hurts rankings",
+      "cookie banners are intrusive interstitials",
+      "consent banner penalty"
+    ]
+  },
+  {
+    "id": "meta-refresh-ignored-spam",
+    "claim": "Google ignores meta refresh redirects, or treats them as spam.",
+    "reality": "Google treats an instant meta refresh as a permanent redirect and a delayed one as temporary. Server-side redirects are still preferred.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/301-redirects",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "meta refresh is spam",
+      "google ignores meta refresh"
+    ]
+  },
+  {
+    "id": "html-validation-hurts-seo",
+    "claim": "Any HTML validation error (W3C validator) hurts SEO.",
+    "reality": "Google only flags head validity as relevant: invalid elements such as img or iframe end the head, and metadata after them is skipped. General body validation errors are not a documented factor.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/valid-page-metadata",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "w3c validation errors hurt seo",
+      "html validation affects rankings",
+      "fix all w3c errors for seo"
+    ]
+  },
+  {
+    "id": "open-graph-ranking",
+    "claim": "Open Graph tags are a Google ranking factor.",
+    "reality": "OG tags serve social previews. Google lists og:title as one possible source of title links and og:site_name as a site-name fallback, but neither is described as a ranking factor.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/title-link",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/site-names",
+        "verified": "2026-11-04"
+      }
+    ],
+    "patterns": [
+      "open graph is a ranking factor",
+      "og tags improve rankings",
+      "open graph for rankings"
+    ]
+  },
+  {
+    "id": "robots-blocks-slack-previews",
+    "claim": "Blocking Slackbot in robots.txt prevents Slack previews.",
+    "reality": "Slack does not honor robots.txt for link unfurling.",
+    "sources": [
+      {
+        "url": "https://api.slack.com/robots",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "block slackbot in robots.txt",
+      "robots.txt prevents slack previews"
+    ]
+  },
+  {
+    "id": "mixed-images-http-canonical",
+    "claim": "Mixed images make Google prefer the HTTP version of the page.",
+    "reality": "Google's canonicalization exception covers 'insecure dependencies (other than images)'. Passive images are auto-upgraded by Chrome.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://web.dev/articles/what-is-mixed-content",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "mixed images make google prefer http",
+      "http images cause http canonical"
+    ]
+  },
+  {
+    "id": "fonts-tap-targets-ranking",
+    "claim": "Small fonts and tiny tap targets are Google ranking or indexing problems.",
+    "reality": "These are UX and accessibility checks. The Google report that showed them is retired, and Lighthouse moved them out of SEO (target-size is now an a11y audit, and font-size was removed).",
+    "sources": [
+      {
+        "url": "https://github.com/GoogleChrome/lighthouse/releases/tag/v12.0.0",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://github.com/GoogleChrome/lighthouse/releases/tag/v13.0.0",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "small fonts hurt rankings",
+      "tap targets are a ranking factor",
+      "font size ranking factor"
+    ]
+  },
+  {
+    "id": "google-extended-ai-overviews",
+    "claim": "Blocking Google-Extended removes a site from AI Overviews or AI Mode.",
+    "reality": "Google-Extended controls Gemini model training and grounding in Gemini Apps and Vertex AI. It does not affect inclusion or ranking in Google Search. The AI features are controlled with nosnippet, max-snippet, noindex or the site-wide Search Console generative AI control.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://blog.google/products-and-platforms/products/search/new-controls-website-owners/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "block google-extended to remove",
+      "google-extended removes ai overviews",
+      "google-extended to opt out of ai overviews",
+      "google-extended for ai mode"
+    ]
+  },
+  {
+    "id": "gptbot-chatgpt-search",
+    "claim": "Blocking GPTBot removes the site from ChatGPT search.",
+    "reality": "GPTBot is for training. ChatGPT search inclusion is controlled by OAI-SearchBot, and OpenAI says each setting is independent.",
+    "sources": [
+      {
+        "url": "https://developers.openai.com/api/docs/bots",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "blocking gptbot removes",
+      "allow gptbot to appear in chatgpt search",
+      "gptbot for chatgpt search"
+    ]
+  },
+  {
+    "id": "chunk-content-for-ai",
+    "claim": "Content must be chunked into small passages or rewritten specially for AI.",
+    "reality": "Google: there is no requirement to break content into tiny pieces, no ideal page length, and no need to write in a specific way for generative AI search.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "chunk your content",
+      "content chunking",
+      "rewrite content for llms",
+      "split content into chunks",
+      "passage chunking for ai"
+    ]
+  },
+  {
+    "id": "seed-brand-mentions",
+    "claim": "Seeding brand mentions across the web is a reliable AI-visibility tactic.",
+    "reality": "Google: seeking inauthentic mentions is not as helpful as it might seem, and its spam systems target manipulation of generative AI responses. Studies show AI engines favour earned third-party coverage, which is not the same as manufactured mentions.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/essentials/spam-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://arxiv.org/abs/2509.08919",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "seed brand mentions",
+      "brand mentions for ai visibility",
+      "get mentioned on reddit for ai"
+    ]
+  },
+  {
+    "id": "geo-tactics-40-percent",
+    "claim": "GEO tactics (adding quotes and statistics) reliably boost AI citations by 40%.",
+    "reality": "The up-to-40% figure is from lab conditions on GEO-bench, with gains concentrated on lower-ranked sources and losses for top-ranked ones. C-SEO Bench (NeurIPS D&B 2025) found most such methods largely ineffective and classic ranking much more effective.",
+    "sources": [
+      {
+        "url": "https://arxiv.org/html/2311.09735v3",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://arxiv.org/abs/2506.11097",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "boost ai citations by 40%",
+      "40% more ai visibility",
+      "geo tactics guarantee"
+    ]
+  },
+  {
+    "id": "keyword-stuffing-llm",
+    "claim": "Keyword stuffing helps LLM answers pick your page.",
+    "reality": "In the GEO paper, keyword stuffing lowered position-adjusted visibility (about -8%) and was the worst method tested.",
+    "sources": [
+      {
+        "url": "https://arxiv.org/html/2311.09735v3",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "keyword stuffing for llms",
+      "repeat keywords so ai",
+      "keyword-stuff for ai answers"
+    ]
+  },
+  {
+    "id": "ai-crawlers-render-js",
+    "claim": "All AI crawlers render JavaScript like Googlebot.",
+    "reality": "In Vercel/MERJ's network measurement, GPTBot, ClaudeBot and PerplexityBot fetched JS files but did not execute them. Googlebot (used for Gemini) and Applebot render.",
+    "sources": [
+      {
+        "url": "https://vercel.com/blog/the-rise-of-the-ai-crawler",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://support.apple.com/en-us/119829",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "ai crawlers render javascript",
+      "gptbot renders javascript",
+      "all ai crawlers execute javascript"
+    ]
+  },
+  {
+    "id": "robots-blocks-user-fetches",
+    "claim": "robots.txt blocks every AI fetch, including those made for a user.",
+    "reality": "User-triggered fetchers from Google, Perplexity and OpenAI generally ignore robots.txt or may not apply it; Meta's fetcher may bypass it. Anthropic's Claude-User is an exception that honours robots.txt.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/crawling/docs/crawlers-fetchers/google-user-triggered-fetchers",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://docs.perplexity.ai/guides/bots",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.openai.com/api/docs/bots",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "robots.txt blocks all ai fetches",
+      "robots.txt stops chatgpt-user",
+      "robots.txt blocks perplexity-user"
+    ]
+  },
+  {
+    "id": "content-signals-enforced",
+    "claim": "Content-Signal lines (ai-train=no, ai-input=no) are enforced and legally block AI use.",
+    "reality": "Cloudflare describes them as preferences, not technical countermeasures, and says some companies may ignore them. No major operator has stated that it honours them.",
+    "sources": [
+      {
+        "url": "https://blog.cloudflare.com/content-signals-policy/",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "content-signal blocks",
+      "ai-train=no legally",
+      "content signals are enforced"
+    ]
+  },
+  {
+    "id": "ai-visibility-tools-rankings",
+    "claim": "Third-party AI visibility tools show your real Google AI Overview rankings.",
+    "reality": "Google: no third-party tool has access to its internal ranking or AI systems. First-party data is the Search Console Generative AI performance report (impressions only).",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2026/06/gen-ai-performance-reports",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "ai overview rankings",
+      "ai visibility score",
+      "share of voice in ai overviews",
+      "ai rank tracking"
+    ]
+  },
+  {
+    "id": "ai-opt-out-hurts-rankings",
+    "claim": "Opting out of Google's AI features hurts your regular rankings.",
+    "reality": "Google says the Search Console generative AI control is not used as a ranking signal for results outside those features. The site loses AI-feature traffic and impressions only.",
+    "sources": [
+      {
+        "url": "https://blog.google/products-and-platforms/products/search/new-controls-website-owners/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "opting out of ai features hurts rankings",
+      "ai opt-out lowers rankings"
+    ]
+  },
+  {
+    "id": "top-10-ai-citation",
+    "claim": "Ranking in the top 10 guarantees an AI Overview citation, or only top-10 pages get cited.",
+    "reality": "Ahrefs found 76% of cited pages in the top 10 (Jul 2025), and its later 2026 data, with a changed methodology, about 38%. Correlation is moderate and many citations come from deeper results. (Industry studies; the 2026 figure comes from secondary coverage.)",
+    "sources": [
+      {
+        "url": "https://ahrefs.com/blog/search-rankings-ai-citations",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "top 10 guarantees an ai overview",
+      "only top-10 pages are cited",
+      "rank in the top 10 to be cited"
+    ]
+  },
+  {
+    "id": "applebot-extended-siri",
+    "claim": "Applebot-Extended must be allowed for Siri/Spotlight visibility.",
+    "reality": "Applebot-Extended does not crawl; it only controls training use of data Applebot already crawled, and is not considered in search ranking. Applebot is the crawler to allow.",
+    "sources": [
+      {
+        "url": "https://support.apple.com/en-us/119829",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "allow applebot-extended for siri",
+      "applebot-extended for spotlight"
+    ]
+  },
+  {
+    "id": "ip-block-ai-crawlers",
+    "claim": "Blocking AI crawler IP addresses is a reliable opt-out.",
+    "reality": "Anthropic says IP blocking may not work correctly or persistently. Cloudflare documented undeclared crawling from rotating IPs. robots.txt plus verified-bot WAF rules are the documented path.",
+    "sources": [
+      {
+        "url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://blog.cloudflare.com/perplexity-is-using-stealth-undeclared-crawlers-to-evade-website-no-crawl-directives/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "block ai crawler ip",
+      "ip blocking to opt out of ai",
+      "block ai bots by ip"
+    ]
+  },
+  {
+    "id": "lastmod-today-freshness",
+    "claim": "Setting every sitemap lastmod to today signals freshness to AI search.",
+    "reality": "Bing: lastmod must reflect the real content change, not the sitemap generation time. Google: page dates must describe actual publication or update.",
+    "sources": [
+      {
+        "url": "https://blogs.bing.com/webmaster/2025/7/Keeping-Content-Discoverable-with-Sitemaps-in-AI-Powered-Search/",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/publication-dates",
+        "verified": "2026-11-03"
+      }
+    ],
+    "patterns": [
+      "set lastmod to today",
+      "lastmod to the current date",
+      "update every lastmod"
+    ]
+  }
+]
