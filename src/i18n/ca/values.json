@@ -1,0 +1,312 @@
+{
+  "aiItem": {
+    "title element": "element title",
+    "title element outside the head": "element title fora del head",
+    "meta description": "metadescripció",
+    "{property} meta property": "propietat meta {property}",
+    "html lang attribute": "atribut lang de l'element html",
+    "canonical link": "enllaç canonical",
+    "{tag} text": "text de {tag}",
+    "text hidden by {method}": "text ocult mitjançant {method}",
+    "text hidden by {method} inside main": "text ocult mitjançant {method} dins de main",
+    "img without an alt attribute": "img sense atribut alt",
+    "img with empty alt (decorative)": "img amb alt buit (decorativa)",
+    "img alt text": "text alternatiu d'img",
+    "{direction} link": "enllaç {direction}",
+    "{direction} link (rel {rel})": "enllaç {direction} (rel {rel})",
+    "JSON-LD block that does not parse": "bloc JSON-LD que no es pot analitzar",
+    "JSON-LD block": "bloc JSON-LD",
+    "microdata item": "element de microdades",
+    "response header {name}": "capçalera de resposta {name}",
+    "h{level} heading": "encapçalament h{level}",
+    "hreflang link": "enllaç hreflang"
+  },
+  "assistants": {
+    "none by referrer": "cap amb referent"
+  },
+  "band": {
+    "good": "bona",
+    "needs improvement": "cal millorar",
+    "poor": "deficient"
+  },
+  "causes": {
+    "none attributed": "cap"
+  },
+  "collector": {
+    "not measured": "sense mesurar"
+  },
+  "conditions": {
+    "lab, Lighthouse {version}, {formFactor}, {throttling} throttling": "laboratori, Lighthouse {version}, {formFactor}, limitació {throttling}"
+  },
+  "contentType": {
+    "(none)": "(cap)"
+  },
+  "crawl-js-content-dependency/share": {
+    "title": "títol",
+    "meta description": "metadescripció",
+    "structured data types": "tipus de dades estructurades"
+  },
+  "crawlers": {
+    "none": "cap"
+  },
+  "detail": {
+    "HTTP error": "error HTTP",
+    "{count} URLs": "{count} URL",
+    "{count} lines": "{count} línies",
+    "{count} entries": "{count} entrades",
+    "{entries} entries, {bytes} bytes": "{entries} entrades, {bytes} bytes",
+    "not a sitemap": "no és un mapa del lloc",
+    "index inside an index": "índex dins d'un altre índex",
+    "(none)": "(cap)"
+  },
+  "direction": {
+    "internal": "intern",
+    "outbound": "sortint"
+  },
+  "duration": {
+    "unknown": "desconeguda"
+  },
+  "embeds": {
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} sol·licituds, {size}, fil principal {time}"
+  },
+  "entities": {
+    "{entity}: main thread {time}, transfer {size}": "{entity}: fil principal {time}, transferència {size}"
+  },
+  "field": {
+    "title": "títol",
+    "meta description": "metadescripció",
+    "image alt texts": "textos alternatius de les imatges"
+  },
+  "fileReason": {
+    "contains {token}": "conté {token}",
+    "contains the observed text": "conté el text observat",
+    "named after .{name}": "té el nom de .{name}",
+    "uses {name}": "fa servir {name}",
+    "configures how the platform answers": "configura com respon la plataforma"
+  },
+  "files": {
+    "not listed": "sense detallar"
+  },
+  "first": {
+    "html": "HTML",
+    "header": "capçalera HTTP Link",
+    "sitemap": "mapa del lloc"
+  },
+  "formFactor": {
+    "PHONE": "telèfon",
+    "DESKTOP": "ordinador",
+    "mobile": "mòbil",
+    "desktop": "ordinador"
+  },
+  "formFactors": {
+    "PHONE": "telèfon",
+    "DESKTOP": "ordinador"
+  },
+  "includeSubDomains": {
+    "yes": "sí",
+    "no": "no"
+  },
+  "issuer": {
+    "unknown": "desconegut"
+  },
+  "issues": {
+    "HTTP {status} in its index details": "HTTP {status} als detalls del seu índex"
+  },
+  "kind": {
+    "canvas": "canvas",
+    "video": "vídeo",
+    "embed": "element incrustat",
+    "pdf": "PDF"
+  },
+  "kinds": {
+    "canvas": "canvas",
+    "video": "vídeo",
+    "embed": "element incrustat",
+    "pdf": "PDF"
+  },
+  "lastCrawl": {
+    "never": "mai"
+  },
+  "live": {
+    "no response": "cap resposta"
+  },
+  "location": {
+    "hidden element": "element ocult",
+    "comment": "comentari",
+    "attribute": "atribut",
+    "meta": "meta",
+    "rendered hidden": "text ocult després de renderitzar"
+  },
+  "maxAge": {
+    "invalid": "no vàlid"
+  },
+  "method": {
+    "display-none": "display: none",
+    "visibility-hidden": "visibility: hidden",
+    "opacity-zero": "opacitat 0",
+    "visually-hidden": "ocultació visual",
+    "zero-size": "mida zero",
+    "offscreen": "fora de la pantalla",
+    "tiny-font": "lletra minúscula",
+    "same-color": "mateix color que el fons"
+  },
+  "metrics": {
+    "{metric} {value} ({band})": "{metric} {value} ({band})",
+    "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} enfront de {withSoftnavs} amb navegacions suaus"
+  },
+  "operators": {
+    "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloquejat, {training} permès)"
+  },
+  "preload": {
+    "yes": "sí",
+    "no": "no"
+  },
+  "presence": {
+    "raw": "HTML en brut",
+    "raw only": "només a l'HTML en brut",
+    "rendered only": "només al DOM renderitzat"
+  },
+  "problem": {
+    "in the body": "al body",
+    "carries {attributes}": "porta {attributes}"
+  },
+  "problems": {
+    "the file is empty": "el fitxer és buit",
+    "the first line is not an H1 heading": "la primera línia no és un encapçalament H1",
+    "it has {count} H1 headings": "té {count} encapçalaments H1",
+    "empty member": "membre buit",
+    "invalid key \"{key}\"": "clau \"{key}\" no vàlida",
+    "{key} needs y or n": "{key} necessita y o n"
+  },
+  "query": {
+    "query {number}": "consulta {number}"
+  },
+  "raw": {
+    "(none)": "(cap)"
+  },
+  "reasons": {
+    "not stated": "sense especificar",
+    "display-none": "display: none",
+    "visibility-hidden": "visibility: hidden",
+    "opacity-zero": "opacitat 0",
+    "visually-hidden": "ocultació visual",
+    "zero-size": "mida zero",
+    "offscreen": "fora de la pantalla",
+    "tiny-font": "lletra minúscula",
+    "same-color": "mateix color que el fons"
+  },
+  "rendered": {
+    "(none)": "(cap)"
+  },
+  "resource": {
+    "script": "script",
+    "stylesheet": "full d'estil",
+    "image": "imatge",
+    "img": "imatge",
+    "font": "font",
+    "media": "contingut multimèdia",
+    "audio": "àudio",
+    "video": "vídeo",
+    "frame": "marc",
+    "object": "object",
+    "embed": "embed",
+    "form": "formulari",
+    "document": "document",
+    "fetch": "fetch",
+    "xhr": "XHR",
+    "other": "altre recurs"
+  },
+  "role": {
+    "stylesheet": "full d'estil",
+    "script": "script",
+    "fetch": "fetch",
+    "font": "font",
+    "image": "imatge",
+    "document": "document",
+    "other": "altre recurs"
+  },
+  "schemes": {
+    "cctld": "ccTLD",
+    "subdomain": "subdomini",
+    "subdirectory": "subdirectori",
+    "parameter": "paràmetre",
+    "same-path": "mateix camí"
+  },
+  "scope": {
+    "URL-level": "nivell d'URL",
+    "origin-level": "nivell d'origen"
+  },
+  "scripts": {
+    "not attributed": "sense atribuir"
+  },
+  "second": {
+    "html": "HTML",
+    "header": "capçalera HTTP Link",
+    "sitemap": "mapa del lloc"
+  },
+  "snippet": {
+    "async-hide class": "classe async-hide",
+    "Adobe Target pre-hiding snippet": "fragment d'ocultació prèvia d'Adobe Target",
+    "Kameleoon loading style sheet": "full d'estil de càrrega de Kameleoon",
+    "style rule that hides the page": "regla d'estil que oculta la pàgina",
+    "{tag} element hidden in the server HTML": "element {tag} ocult a l'HTML del servidor"
+  },
+  "sources": {
+    "not attributed": "sense atribuir",
+    "html": "HTML",
+    "rendered": "DOM renderitzat",
+    "header": "capçalera HTTP Link",
+    "sitemap": "mapa del lloc"
+  },
+  "state": {
+    "Crawled - currently not indexed": "Rastrejada: actualment sense indexar",
+    "Discovered - currently not indexed": "Descoberta: actualment sense indexar",
+    "Excluded by ‘noindex’ tag": "Exclosa per l'etiqueta «noindex»",
+    "Excluded by 'noindex' tag": "Exclosa per l'etiqueta «noindex»",
+    "Blocked by robots.txt": "Bloquejada pel robots.txt",
+    "Indexed, though blocked by robots.txt": "Indexada tot i que el robots.txt la bloqueja",
+    "Not found (404)": "No s'ha trobat (404)",
+    "Soft 404": "Soft 404",
+    "Server error (5xx)": "Error del servidor (5xx)",
+    "Redirect error": "Error de redirecció",
+    "Duplicate without user-selected canonical": "Duplicada: l'usuari no ha indicat cap versió canònica",
+    "URL is unknown to Google": "URL desconeguda per a Google",
+    "Blocked due to unauthorized request (401)": "Bloquejada a causa d'una sol·licitud no autoritzada (401)",
+    "Blocked due to access forbidden (403)": "Bloquejada a causa d'un accés prohibit (403)",
+    "Blocked due to other 4xx issue": "Bloquejada per un altre problema de tipus 4xx",
+    "Page indexed without content": "Pàgina indexada sense contingut"
+  },
+  "status": {
+    "none": "sense resposta",
+    "unknown": "desconegut"
+  },
+  "subparts": {
+    "time to first byte {share}": "temps fins al primer byte {share}",
+    "resource load delay {share}": "retard de càrrega del recurs {share}",
+    "element render delay {share}": "retard de renderització de l'element {share}"
+  },
+  "tech-favicon-file-valid/problem": {
+    "not-200": "no respon 200",
+    "not-an-image": "no és una imatge",
+    "svg": "és un SVG",
+    "unsupported-format": "format no admès",
+    "not-square": "no és quadrat",
+    "too-small": "massa petit",
+    "noindex": "porta noindex o noimageindex",
+    "blocked-for-googlebot-image": "el robots.txt el bloqueja per a Googlebot-Image"
+  },
+  "throttling": {
+    "simulate": "simulada",
+    "devtools": "de DevTools",
+    "provided": "proporcionada"
+  },
+  "url": {
+    "unknown": "URL desconeguda"
+  },
+  "where": {
+    "title": "títol",
+    "meta description": "metadescripció",
+    "page text": "text de la pàgina",
+    "image alt text": "text alternatiu de les imatges"
+  }
+}

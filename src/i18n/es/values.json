@@ -1,0 +1,312 @@
+{
+  "aiItem": {
+    "title element": "elemento title",
+    "title element outside the head": "elemento title fuera del head",
+    "meta description": "metadescripción",
+    "{property} meta property": "propiedad meta {property}",
+    "html lang attribute": "atributo lang del elemento html",
+    "canonical link": "enlace canonical",
+    "{tag} text": "texto de {tag}",
+    "text hidden by {method}": "texto oculto mediante {method}",
+    "text hidden by {method} inside main": "texto oculto mediante {method} dentro de main",
+    "img without an alt attribute": "img sin atributo alt",
+    "img with empty alt (decorative)": "img con alt vacío (decorativa)",
+    "img alt text": "texto alternativo de img",
+    "{direction} link": "enlace {direction}",
+    "{direction} link (rel {rel})": "enlace {direction} (rel {rel})",
+    "JSON-LD block that does not parse": "bloque JSON-LD que no se puede analizar",
+    "JSON-LD block": "bloque JSON-LD",
+    "microdata item": "elemento de microdatos",
+    "response header {name}": "cabecera de respuesta {name}",
+    "h{level} heading": "encabezado h{level}",
+    "hreflang link": "enlace hreflang"
+  },
+  "assistants": {
+    "none by referrer": "ninguna con referente"
+  },
+  "band": {
+    "good": "«buena»",
+    "needs improvement": "«necesita mejorar»",
+    "poor": "«deficiente»"
+  },
+  "causes": {
+    "none attributed": "ninguna"
+  },
+  "collector": {
+    "not measured": "sin medir"
+  },
+  "conditions": {
+    "lab, Lighthouse {version}, {formFactor}, {throttling} throttling": "laboratorio, Lighthouse {version}, {formFactor}, limitación {throttling}"
+  },
+  "contentType": {
+    "(none)": "(ninguno)"
+  },
+  "crawl-js-content-dependency/share": {
+    "title": "título",
+    "meta description": "metadescripción",
+    "structured data types": "tipos de datos estructurados"
+  },
+  "crawlers": {
+    "none": "ninguno"
+  },
+  "detail": {
+    "HTTP error": "error HTTP",
+    "{count} URLs": "{count} URLs",
+    "{count} lines": "{count} líneas",
+    "{count} entries": "{count} entradas",
+    "{entries} entries, {bytes} bytes": "{entries} entradas, {bytes} bytes",
+    "not a sitemap": "no es un sitemap",
+    "index inside an index": "índice dentro de otro índice",
+    "(none)": "(ninguno)"
+  },
+  "direction": {
+    "internal": "interno",
+    "outbound": "saliente"
+  },
+  "duration": {
+    "unknown": "desconocida"
+  },
+  "embeds": {
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} solicitudes, {size}, hilo principal {time}"
+  },
+  "entities": {
+    "{entity}: main thread {time}, transfer {size}": "{entity}: hilo principal {time}, transferencia {size}"
+  },
+  "field": {
+    "title": "título",
+    "meta description": "metadescripción",
+    "image alt texts": "textos alternativos de las imágenes"
+  },
+  "fileReason": {
+    "contains {token}": "contiene {token}",
+    "contains the observed text": "contiene el texto observado",
+    "named after .{name}": "se llama como .{name}",
+    "uses {name}": "usa {name}",
+    "configures how the platform answers": "configura cómo responde la plataforma"
+  },
+  "files": {
+    "not listed": "sin detallar"
+  },
+  "first": {
+    "html": "HTML",
+    "header": "cabecera HTTP Link",
+    "sitemap": "sitemap"
+  },
+  "formFactor": {
+    "PHONE": "móvil",
+    "DESKTOP": "ordenador",
+    "mobile": "móvil",
+    "desktop": "ordenador"
+  },
+  "formFactors": {
+    "PHONE": "móvil",
+    "DESKTOP": "ordenador"
+  },
+  "includeSubDomains": {
+    "yes": "sí",
+    "no": "no"
+  },
+  "issuer": {
+    "unknown": "desconocido"
+  },
+  "issues": {
+    "HTTP {status} in its index details": "HTTP {status} en los detalles de su índice"
+  },
+  "kind": {
+    "canvas": "canvas",
+    "video": "vídeo",
+    "embed": "elemento insertado",
+    "pdf": "PDF"
+  },
+  "kinds": {
+    "canvas": "canvas",
+    "video": "vídeo",
+    "embed": "elemento insertado",
+    "pdf": "PDF"
+  },
+  "lastCrawl": {
+    "never": "nunca"
+  },
+  "live": {
+    "no response": "ninguna respuesta"
+  },
+  "location": {
+    "hidden element": "elemento oculto",
+    "comment": "comentario",
+    "attribute": "atributo",
+    "meta": "meta",
+    "rendered hidden": "texto oculto tras renderizar"
+  },
+  "maxAge": {
+    "invalid": "no válido"
+  },
+  "method": {
+    "display-none": "display: none",
+    "visibility-hidden": "visibility: hidden",
+    "opacity-zero": "opacidad 0",
+    "visually-hidden": "ocultación visual",
+    "zero-size": "tamaño cero",
+    "offscreen": "fuera de la pantalla",
+    "tiny-font": "letra diminuta",
+    "same-color": "mismo color que el fondo"
+  },
+  "metrics": {
+    "{metric} {value} ({band})": "{metric} {value} ({band})",
+    "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} frente a {withSoftnavs} con navegaciones suaves"
+  },
+  "operators": {
+    "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloqueado, {training} permitido)"
+  },
+  "preload": {
+    "yes": "sí",
+    "no": "no"
+  },
+  "presence": {
+    "raw": "HTML original",
+    "raw only": "solo en el HTML original",
+    "rendered only": "solo en el DOM renderizado"
+  },
+  "problem": {
+    "in the body": "en el body",
+    "carries {attributes}": "lleva {attributes}"
+  },
+  "problems": {
+    "the file is empty": "el archivo está vacío",
+    "the first line is not an H1 heading": "la primera línea no es un encabezado H1",
+    "it has {count} H1 headings": "tiene {count} encabezados H1",
+    "empty member": "miembro vacío",
+    "invalid key \"{key}\"": "clave \"{key}\" no válida",
+    "{key} needs y or n": "{key} necesita y o n"
+  },
+  "query": {
+    "query {number}": "consulta {number}"
+  },
+  "raw": {
+    "(none)": "(ninguna)"
+  },
+  "reasons": {
+    "not stated": "sin especificar",
+    "display-none": "display: none",
+    "visibility-hidden": "visibility: hidden",
+    "opacity-zero": "opacidad 0",
+    "visually-hidden": "ocultación visual",
+    "zero-size": "tamaño cero",
+    "offscreen": "fuera de la pantalla",
+    "tiny-font": "letra diminuta",
+    "same-color": "mismo color que el fondo"
+  },
+  "rendered": {
+    "(none)": "(ninguna)"
+  },
+  "resource": {
+    "script": "script",
+    "stylesheet": "hoja de estilos",
+    "image": "imagen",
+    "img": "imagen",
+    "font": "fuente",
+    "media": "contenido multimedia",
+    "audio": "audio",
+    "video": "vídeo",
+    "frame": "marco",
+    "object": "object",
+    "embed": "embed",
+    "form": "formulario",
+    "document": "documento",
+    "fetch": "fetch",
+    "xhr": "XHR",
+    "other": "otro recurso"
+  },
+  "role": {
+    "stylesheet": "hoja de estilos",
+    "script": "script",
+    "fetch": "fetch",
+    "font": "fuente",
+    "image": "imagen",
+    "document": "documento",
+    "other": "otro recurso"
+  },
+  "schemes": {
+    "cctld": "ccTLD",
+    "subdomain": "subdominio",
+    "subdirectory": "subdirectorio",
+    "parameter": "parámetro",
+    "same-path": "misma ruta"
+  },
+  "scope": {
+    "URL-level": "nivel de URL",
+    "origin-level": "nivel de origen"
+  },
+  "scripts": {
+    "not attributed": "sin atribuir"
+  },
+  "second": {
+    "html": "HTML",
+    "header": "cabecera HTTP Link",
+    "sitemap": "sitemap"
+  },
+  "snippet": {
+    "async-hide class": "clase async-hide",
+    "Adobe Target pre-hiding snippet": "fragmento de ocultación previa de Adobe Target",
+    "Kameleoon loading style sheet": "hoja de estilos de carga de Kameleoon",
+    "style rule that hides the page": "regla de estilo que oculta la página",
+    "{tag} element hidden in the server HTML": "elemento {tag} oculto en el HTML del servidor"
+  },
+  "sources": {
+    "not attributed": "sin atribuir",
+    "html": "HTML",
+    "rendered": "DOM renderizado",
+    "header": "cabecera HTTP Link",
+    "sitemap": "sitemap"
+  },
+  "state": {
+    "Crawled - currently not indexed": "Rastreada: actualmente sin indexar",
+    "Discovered - currently not indexed": "Descubierta: actualmente sin indexar",
+    "Excluded by ‘noindex’ tag": "Excluida por una etiqueta «noindex»",
+    "Excluded by 'noindex' tag": "Excluida por una etiqueta «noindex»",
+    "Blocked by robots.txt": "Bloqueada por robots.txt",
+    "Indexed, though blocked by robots.txt": "Indexada aunque un archivo robots.txt la haya bloqueado",
+    "Not found (404)": "No se ha encontrado (404)",
+    "Soft 404": "Soft 404",
+    "Server error (5xx)": "Error de servidor (5xx)",
+    "Redirect error": "Error de redirección",
+    "Duplicate without user-selected canonical": "Duplicada: el usuario no ha indicado ninguna versión canónica",
+    "URL is unknown to Google": "URL desconocida para Google",
+    "Blocked due to unauthorized request (401)": "Bloqueada debido a una solicitud no autorizada (401)",
+    "Blocked due to access forbidden (403)": "Bloqueada debido a un acceso prohibido (403)",
+    "Blocked due to other 4xx issue": "Bloqueada por otro problema de tipo 4xx",
+    "Page indexed without content": "Página indexada sin contenido"
+  },
+  "status": {
+    "none": "sin respuesta",
+    "unknown": "desconocido"
+  },
+  "subparts": {
+    "time to first byte {share}": "tiempo hasta el primer byte {share}",
+    "resource load delay {share}": "retraso de carga del recurso {share}",
+    "element render delay {share}": "retraso de renderizado del elemento {share}"
+  },
+  "tech-favicon-file-valid/problem": {
+    "not-200": "no responde 200",
+    "not-an-image": "no es una imagen",
+    "svg": "es un SVG",
+    "unsupported-format": "formato no admitido",
+    "not-square": "no es cuadrado",
+    "too-small": "demasiado pequeño",
+    "noindex": "lleva noindex o noimageindex",
+    "blocked-for-googlebot-image": "robots.txt lo bloquea para Googlebot-Image"
+  },
+  "throttling": {
+    "simulate": "simulada",
+    "devtools": "de DevTools",
+    "provided": "proporcionada"
+  },
+  "url": {
+    "unknown": "URL desconocida"
+  },
+  "where": {
+    "title": "el título",
+    "meta description": "la metadescripción",
+    "page text": "el texto de la página",
+    "image alt text": "el texto alternativo de las imágenes"
+  }
+}

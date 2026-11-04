@@ -2,10 +2,12 @@ import type { AiFinding, ProviderSummary, ReportAnalysis } from '../ai/types.ts'
 import { rule as catalogRule, myths } from '../catalog/index.ts';
 import type { EvidenceItem } from '../core/evidence.ts';
 import { categories, type Category } from '../core/types.ts';
+import { evidenceLabelText } from '../i18n/evidence.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
+import { localizeValue } from '../i18n/values.ts';
 import type { FindingScope } from '../rules/engine.ts';
-import { severityWeights } from '../score/score.ts';
+import { scoreFormula, severityWeights } from '../score/score.ts';
 import type { Report, ReportFinding } from './model.ts';
 import { cleanLine, untrustedBlock, untrustedInline } from './sanitize.ts';
 import type { Task } from './tasks.ts';
@@ -14,10 +16,36 @@ export function scopeLabel(scope: FindingScope): string {
   return scope.kind === 'page' ? scope.url : scope.origin;
 }
 
-function evidenceLine(item: EvidenceItem): string {
-  const where = [item.url, item.line ? `line ${item.line}` : undefined, item.path].filter(Boolean).join(', ');
+/** Where an evidence item was observed: its URL, line and path. */
+export function evidenceWhere(item: Pick<EvidenceItem, 'url' | 'line' | 'path'>, language: Language): string {
+  return [item.url, item.line ? format(ui(language).lineNumber, { line: item.line }) : undefined, item.path].filter(Boolean).join(', ');
+}
+
+function evidenceLine(item: EvidenceItem, language: Language): string {
+  const where = evidenceWhere(item, language);
   const excerpt = item.excerpt === undefined ? '' : `: ${untrustedInline(item.excerpt, 240)}`;
-  return `${cleanLine(item.label)}${where ? ` (${cleanLine(where)})` : ''}${excerpt}`;
+  return `${cleanLine(evidenceLabelText(language, item))}${where ? ` (${cleanLine(where)})` : ''}${excerpt}`;
+}
+
+/** A rule's title in `language`, or `fallback` for a rule the catalog no longer has. */
+export function ruleTitle(language: Language, ruleId: string, fallback: string): string {
+  const rule = catalogRule(ruleId);
+  return rule ? ruleTexts(language, rule).title : fallback;
+}
+
+/** The score formula in `language` when the report used the current one; an older report keeps its own words. */
+export function formulaText(report: Report, language: Language): string {
+  return report.score.formula === scoreFormula ? ui(language).scoreFormula : report.score.formula;
+}
+
+/** The page type a report shows, in `language`. */
+export function pageTypeText(pageType: string, language: Language): string {
+  return (ui(language).pageTypes as Readonly<Record<string, string>>)[pageType] ?? pageType;
+}
+
+/** Why a file was picked for a task, in `language`: each reason is a pattern of the `fileReason` value catalog. */
+export function fileReasonText(reason: string, language: Language): string {
+  return reason.split('; ').map(part => localizeValue(language, 'fileReason', part)).join('; ');
 }
 
 function message(language: Language, finding: ReportFinding): string {
@@ -99,7 +127,7 @@ function analysisLines(analysis: ReportAnalysis, language: Language): string[] {
   }
   if (analysis.injectionCandidates.length > 0) {
     lines.push(`### ${a.injection}`, '', a.injectionIntro, '');
-    for (const candidate of analysis.injectionCandidates) lines.push(`- ${untrustedInline(candidate.page, 160)} · ${cleanLine(candidate.where)}: ${untrustedInline(candidate.excerpt, 240)}`);
+    for (const candidate of analysis.injectionCandidates) lines.push(`- ${untrustedInline(candidate.page, 160)} · ${cleanLine(localizeValue(language, 'aiItem', candidate.where))}: ${untrustedInline(candidate.excerpt, 240)}`);
     lines.push('');
   }
   const unverified = analysis.unverified.filter(finding => finding.outcome === 'fail');
@@ -167,7 +195,7 @@ export function renderMarkdown(report: Report, language: Language): string {
       lines.push(`  ${cleanLine(message(language, finding), 600)}`);
       for (const id of finding.evidence.slice(0, 4)) {
         const item = evidence.get(id);
-        if (item) lines.push(`  - ${t.evidence}: ${evidenceLine(item)}`);
+        if (item) lines.push(`  - ${t.evidence}: ${evidenceLine(item, language)}`);
       }
       if (texts.fix) lines.push(`  - ${t.fix}: ${cleanLine(texts.fix, 700)}`);
       for (const source of rule?.sources.slice(0, 2) ?? []) lines.push(`  - ${t.source}: <${source.url}> (${format(t.verified, { date: source.verified })})`);
@@ -178,7 +206,7 @@ export function renderMarkdown(report: Report, language: Language): string {
   const pending = report.findings.filter(finding => finding.needsJudgment && finding.judgment === undefined);
   if (pending.length > 0) {
     lines.push(`## ${t.pendingReview}`, '', t.pendingReviewIntro, '');
-    for (const finding of pending) lines.push(`- ${cleanLine(finding.title)} (\`${finding.ruleId}\`) · ${untrustedInline(scopeLabel(finding.scope), 160)}`);
+    for (const finding of pending) lines.push(`- ${cleanLine(ruleTitle(language, finding.ruleId, finding.title))} (\`${finding.ruleId}\`) · ${untrustedInline(scopeLabel(finding.scope), 160)}`);
     lines.push('');
   }
   if (report.ai) lines.push(...analysisLines(report.ai, language));
@@ -193,16 +221,17 @@ export function renderMarkdown(report: Report, language: Language): string {
   }
 
   lines.push(`## ${t.pages}`, '', `| ${t.page} | ${t.status} | ${t.type} | ${t.rendered} |`, '| --- | --- | --- | --- |');
-  for (const page of report.pages) lines.push(`| ${untrustedInline(page.finalUrl, 160)} | ${page.status ?? '-'} | ${page.pageType} | ${page.rendered ? t.yes : t.no} |`);
-  lines.push('', `## ${t.method}`, '', t.methodIntro, '', cleanLine(report.score.formula, 1200), '');
+  for (const page of report.pages) lines.push(`| ${untrustedInline(page.finalUrl, 160)} | ${page.status ?? '-'} | ${cleanLine(pageTypeText(page.pageType, language))} | ${page.rendered ? t.yes : t.no} |`);
+  lines.push('', `## ${t.method}`, '', t.methodIntro, '', cleanLine(formulaText(report, language), 1200), '');
   lines.push(`${format(t.mythsLine, { count: myths.length })} <${mythsListUrl}>`, '');
-  lines.push(`Catalog \`${report.catalog.hash.slice(0, 12)}\` · ${report.catalog.implemented}/${report.catalog.rules} · Node ${report.run.versions.node}${report.run.versions.chrome ? ` · ${cleanLine(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${cleanLine(report.run.versions.lighthouse)}` : ''}`, '');
+  const catalog = format(t.catalogLine, { hash: `\`${cleanLine(report.catalog.hash.slice(0, 12))}\``, implemented: report.catalog.implemented, rules: report.catalog.rules });
+  lines.push(`${catalog} · Node ${report.run.versions.node}${report.run.versions.chrome ? ` · ${cleanLine(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${cleanLine(report.run.versions.lighthouse)}` : ''}`, '');
   return lines.join('\n');
 }
 
-function verifyHint(task: Task): string {
+function verifyHint(task: Task, language: Language): string {
   const base = `altimeter verify report.json --task ${task.id}`;
-  return task.verifiableBy === 'local' ? `${base} --static <build directory>` : base;
+  return task.verifiableBy === 'local' ? `${base} --static <${ui(language).buildDirectory}>` : base;
 }
 
 function taskBody(report: Report, task: Task, language: Language, evidenceBudget: number): string {
@@ -215,7 +244,7 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
   lines.push(`- ${t.page}: ${task.scopes.map(scope => untrustedInline(scopeLabel(scope), 160)).join(', ')}`);
   lines.push(`- ${t.whereToFix}: ${t.fixLocations[task.fixLocation]}`);
   lines.push(`- ${t.howToVerify}: ${t.verifications[task.verifiableBy]}`);
-  lines.push(`- ${t.verifyCommand}: \`${verifyHint(task)}\``, '');
+  lines.push(`- ${t.verifyCommand}: \`${verifyHint(task, language)}\``, '');
   const problem = findingMessage(language, task.ruleId, 'fail', task.reason, task.params) ?? task.problem;
   lines.push(`### ${t.problem}`, '', untrustedBlock(problem, 1500), '');
   if (texts.why) lines.push(cleanLine(texts.why, 700), '');
@@ -224,11 +253,11 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
   for (const id of task.evidence) {
     const item = evidence.get(id);
     if (!item) continue;
-    const where = [item.url, item.line ? `line ${item.line}` : undefined, item.path].filter(Boolean).join(', ');
+    const where = evidenceWhere(item, language);
     const block = item.excerpt === undefined ? '' : `\n\n${untrustedBlock(item.excerpt, 1200)}`;
-    const entry = `- \`${item.id}\` ${cleanLine(item.label)}${where ? ` (${cleanLine(where)})` : ''}${block}`;
+    const entry = `- \`${item.id}\` ${cleanLine(evidenceLabelText(language, item))}${where ? ` (${cleanLine(where)})` : ''}${block}`;
     if (used + entry.length > evidenceBudget) {
-      lines.push(`- … ${task.evidence.length} evidence items in report.json`);
+      lines.push(`- ${format(t.moreEvidence, { count: task.evidence.length })}`);
       break;
     }
     used += entry.length;
@@ -237,7 +266,7 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
   lines.push('', `### ${t.desiredState}`, '', cleanLine(texts.fix, 700), '');
   if (task.files?.length || task.mustNotChange?.length) {
     lines.push(`### ${t.whereToLook}`, '');
-    for (const file of task.files ?? []) lines.push(`- \`${cleanLine(file.path, 200)}\` · ${t.fileConfidence[file.confidence]} · ${cleanLine(file.reason, 200)}`);
+    for (const file of task.files ?? []) lines.push(`- \`${cleanLine(file.path, 200)}\` · ${t.fileConfidence[file.confidence]} · ${cleanLine(fileReasonText(file.reason, language), 200)}`);
     for (const path of task.mustNotChange ?? []) lines.push(`- \`${cleanLine(path, 200)}\` · ${t.dataFile}`);
     lines.push('');
   }
@@ -272,5 +301,5 @@ export function renderTaskFile(report: Report, task: Task, language: Language): 
     const text = `${intro}\n\n${taskBody(report, task, language, budget)}\n`;
     if (Buffer.byteLength(text, 'utf8') <= taskFileLimit) return text;
   }
-  return `${intro}\n\n## ${task.id}\n\nSee report.json for this task.\n`;
+  return `${intro}\n\n## ${task.id}\n\n${t.taskInReport}\n`;
 }

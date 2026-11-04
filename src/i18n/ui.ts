@@ -1,4 +1,5 @@
-import type { Category, FixLocation, Outcome, Severity, Verification } from '../core/types.ts';
+import type { Category, FixLocation, Outcome, PageType, Severity, Verification } from '../core/types.ts';
+import { scoreFormula } from '../score/score.ts';
 import type { Language } from './messages.ts';
 
 export interface UiStrings {
@@ -51,6 +52,19 @@ export interface UiStrings {
   readonly dataFile: string;
   readonly fixPlanIntro: readonly string[];
   readonly warnings: string;
+  readonly severity: string;
+  readonly all: string;
+  /** Where an evidence item was observed in a file. */
+  readonly lineNumber: string;
+  readonly moreEvidence: string;
+  readonly taskInReport: string;
+  readonly buildDirectory: string;
+  readonly catalogLine: string;
+  /** The score formula; English is `scoreFormula`, which report.json also carries. */
+  readonly scoreFormula: string;
+  /** The end of a list that summarizeList shortened, as in "a, b and 3 more". */
+  readonly moreItems: string;
+  readonly pageTypes: Readonly<Record<PageType, string>>;
   readonly analysis: AnalysisStrings;
   readonly categories: Readonly<Record<Category, string>>;
   readonly severities: Readonly<Record<Severity, string>>;
@@ -144,6 +158,19 @@ const en: UiStrings = {
     'Tasks for an external account or an owner decision are for a person, not for a coding agent.',
   ],
   warnings: 'Warnings',
+  severity: 'Severity',
+  all: 'All',
+  lineNumber: 'line {line}',
+  moreEvidence: '… {count} evidence items in report.json',
+  taskInReport: 'See report.json for this task.',
+  buildDirectory: 'build directory',
+  catalogLine: 'Catalog {hash} · {implemented} of {rules} rules implemented',
+  scoreFormula,
+  moreItems: '{items} and {count} more',
+  pageTypes: {
+    home: 'home', service: 'service', product: 'product', article: 'article', listing: 'listing', contact: 'contact',
+    about: 'about', legal: 'legal', utility: 'utility', error: 'error', other: 'other',
+  },
   analysis: {
     title: 'Model analysis',
     intro: 'A model read the pages listed here and judged what code cannot. Every finding below quotes the evidence it rests on, passed validation in code and was checked by a verifier. These findings do not change the score, the tasks or --fail-on.',
@@ -254,6 +281,19 @@ const es: UiStrings = {
     'Las tareas de una cuenta externa o de una decisión del propietario son para una persona, no para un agente de programación.',
   ],
   warnings: 'Avisos',
+  severity: 'Severidad',
+  all: 'Todas',
+  lineNumber: 'línea {line}',
+  moreEvidence: '… {count} elementos de evidencia en report.json',
+  taskInReport: 'Consulta esta tarea en report.json.',
+  buildDirectory: 'directorio de compilación',
+  catalogLine: 'Catálogo {hash} · {implemented} de {rules} reglas implementadas',
+  scoreFormula: 'En cada categoría, puntuación = 100 x (1 - suma de los pesos de las severidades de las comprobaciones fallidas / suma de los pesos de la severidad máxima de cada comprobación evaluada), con los pesos crítica 10, alta 5, media 3 y baja 1. Solo cuentan las comprobaciones deterministas que puntúan; los juicios del modelo, las comprobaciones informativas y las que no se han podido evaluar nunca cambian la puntuación. La puntuación global pondera cada categoría por la suma de sus pesos evaluados.',
+  moreItems: '{items} y {count} más',
+  pageTypes: {
+    home: 'inicio', service: 'servicio', product: 'producto', article: 'artículo', listing: 'listado', contact: 'contacto',
+    about: 'quiénes somos', legal: 'legal', utility: 'utilidad', error: 'error', other: 'otro',
+  },
   analysis: {
     title: 'Análisis con modelo',
     intro: 'Un modelo ha leído las páginas que se indican y ha juzgado lo que el código no puede. Cada hallazgo de esta sección cita la evidencia en la que se apoya, ha superado la validación en código y lo ha comprobado un verificador. Estos hallazgos no cambian la puntuación, las tareas ni --fail-on.',
@@ -364,6 +404,19 @@ const ca: UiStrings = {
     'Les tasques d\'un compte extern o d\'una decisió del propietari són per a una persona, no per a un agent de programació.',
   ],
   warnings: 'Avisos',
+  severity: 'Severitat',
+  all: 'Totes',
+  lineNumber: 'línia {line}',
+  moreEvidence: '… {count} elements d\'evidència a report.json',
+  taskInReport: 'Consulta aquesta tasca a report.json.',
+  buildDirectory: 'directori de compilació',
+  catalogLine: 'Catàleg {hash} · {implemented} de {rules} regles implementades',
+  scoreFormula: 'En cada categoria, puntuació = 100 x (1 - suma dels pesos de les severitats de les comprovacions fallides / suma dels pesos de la severitat màxima de cada comprovació avaluada), amb els pesos crítica 10, alta 5, mitjana 3 i baixa 1. Només compten les comprovacions deterministes que puntuen; els judicis del model, les comprovacions informatives i les que no s\'han pogut avaluar no canvien mai la puntuació. La puntuació global pondera cada categoria per la suma dels seus pesos avaluats.',
+  moreItems: '{items} i {count} més',
+  pageTypes: {
+    home: 'inici', service: 'servei', product: 'producte', article: 'article', listing: 'llistat', contact: 'contacte',
+    about: 'qui som', legal: 'legal', utility: 'utilitat', error: 'error', other: 'altre',
+  },
   analysis: {
     title: 'Anàlisi amb model',
     intro: 'Un model ha llegit les pàgines que s\'indiquen i ha jutjat el que el codi no pot. Cada troballa d\'aquesta secció cita l\'evidència en què es basa, ha superat la validació en codi i l\'ha comprovada un verificador. Aquestes troballes no canvien la puntuació, les tasques ni --fail-on.',

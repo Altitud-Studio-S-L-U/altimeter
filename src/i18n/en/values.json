@@ -1,0 +1,312 @@
+{
+  "aiItem": {
+    "title element": "title element",
+    "title element outside the head": "title element outside the head",
+    "meta description": "meta description",
+    "{property} meta property": "{property} meta property",
+    "html lang attribute": "html lang attribute",
+    "canonical link": "canonical link",
+    "{tag} text": "{tag} text",
+    "text hidden by {method}": "text hidden by {method}",
+    "text hidden by {method} inside main": "text hidden by {method} inside main",
+    "img without an alt attribute": "img without an alt attribute",
+    "img with empty alt (decorative)": "img with empty alt (decorative)",
+    "img alt text": "img alt text",
+    "{direction} link": "{direction} link",
+    "{direction} link (rel {rel})": "{direction} link (rel {rel})",
+    "JSON-LD block that does not parse": "JSON-LD block that does not parse",
+    "JSON-LD block": "JSON-LD block",
+    "microdata item": "microdata item",
+    "response header {name}": "response header {name}",
+    "h{level} heading": "h{level} heading",
+    "hreflang link": "hreflang link"
+  },
+  "assistants": {
+    "none by referrer": "none by referrer"
+  },
+  "band": {
+    "good": "good",
+    "needs improvement": "needs improvement",
+    "poor": "poor"
+  },
+  "causes": {
+    "none attributed": "none attributed"
+  },
+  "collector": {
+    "not measured": "not measured"
+  },
+  "conditions": {
+    "lab, Lighthouse {version}, {formFactor}, {throttling} throttling": "lab, Lighthouse {version}, {formFactor}, {throttling} throttling"
+  },
+  "contentType": {
+    "(none)": "(none)"
+  },
+  "crawl-js-content-dependency/share": {
+    "title": "title",
+    "meta description": "meta description",
+    "structured data types": "structured data types"
+  },
+  "crawlers": {
+    "none": "none"
+  },
+  "detail": {
+    "HTTP error": "HTTP error",
+    "{count} URLs": "{count} URLs",
+    "{count} lines": "{count} lines",
+    "{count} entries": "{count} entries",
+    "{entries} entries, {bytes} bytes": "{entries} entries, {bytes} bytes",
+    "not a sitemap": "not a sitemap",
+    "index inside an index": "index inside an index",
+    "(none)": "(none)"
+  },
+  "direction": {
+    "internal": "internal",
+    "outbound": "outbound"
+  },
+  "duration": {
+    "unknown": "unknown"
+  },
+  "embeds": {
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} requests, {size}, main thread {time}"
+  },
+  "entities": {
+    "{entity}: main thread {time}, transfer {size}": "{entity}: main thread {time}, transfer {size}"
+  },
+  "field": {
+    "title": "title",
+    "meta description": "meta description",
+    "image alt texts": "image alt texts"
+  },
+  "fileReason": {
+    "contains {token}": "contains {token}",
+    "contains the observed text": "contains the observed text",
+    "named after .{name}": "named after .{name}",
+    "uses {name}": "uses {name}",
+    "configures how the platform answers": "configures how the platform answers"
+  },
+  "files": {
+    "not listed": "not listed"
+  },
+  "first": {
+    "html": "html",
+    "header": "header",
+    "sitemap": "sitemap"
+  },
+  "formFactor": {
+    "PHONE": "PHONE",
+    "DESKTOP": "DESKTOP",
+    "mobile": "mobile",
+    "desktop": "desktop"
+  },
+  "formFactors": {
+    "PHONE": "PHONE",
+    "DESKTOP": "DESKTOP"
+  },
+  "includeSubDomains": {
+    "yes": "yes",
+    "no": "no"
+  },
+  "issuer": {
+    "unknown": "unknown"
+  },
+  "issues": {
+    "HTTP {status} in its index details": "HTTP {status} in its index details"
+  },
+  "kind": {
+    "canvas": "canvas",
+    "video": "video",
+    "embed": "embed",
+    "pdf": "pdf"
+  },
+  "kinds": {
+    "canvas": "canvas",
+    "video": "video",
+    "embed": "embed",
+    "pdf": "pdf"
+  },
+  "lastCrawl": {
+    "never": "never"
+  },
+  "live": {
+    "no response": "no response"
+  },
+  "location": {
+    "hidden element": "hidden element",
+    "comment": "comment",
+    "attribute": "attribute",
+    "meta": "meta",
+    "rendered hidden": "rendered hidden"
+  },
+  "maxAge": {
+    "invalid": "invalid"
+  },
+  "method": {
+    "display-none": "display-none",
+    "visibility-hidden": "visibility-hidden",
+    "opacity-zero": "opacity-zero",
+    "visually-hidden": "visually-hidden",
+    "zero-size": "zero-size",
+    "offscreen": "offscreen",
+    "tiny-font": "tiny-font",
+    "same-color": "same-color"
+  },
+  "metrics": {
+    "{metric} {value} ({band})": "{metric} {value} ({band})",
+    "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} vs {withSoftnavs} with soft navigations"
+  },
+  "operators": {
+    "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} blocked, {training} allowed)"
+  },
+  "preload": {
+    "yes": "yes",
+    "no": "no"
+  },
+  "presence": {
+    "raw": "raw",
+    "raw only": "raw only",
+    "rendered only": "rendered only"
+  },
+  "problem": {
+    "in the body": "in the body",
+    "carries {attributes}": "carries {attributes}"
+  },
+  "problems": {
+    "the file is empty": "the file is empty",
+    "the first line is not an H1 heading": "the first line is not an H1 heading",
+    "it has {count} H1 headings": "it has {count} H1 headings",
+    "empty member": "empty member",
+    "invalid key \"{key}\"": "invalid key \"{key}\"",
+    "{key} needs y or n": "{key} needs y or n"
+  },
+  "query": {
+    "query {number}": "query {number}"
+  },
+  "raw": {
+    "(none)": "(none)"
+  },
+  "reasons": {
+    "not stated": "not stated",
+    "display-none": "display-none",
+    "visibility-hidden": "visibility-hidden",
+    "opacity-zero": "opacity-zero",
+    "visually-hidden": "visually-hidden",
+    "zero-size": "zero-size",
+    "offscreen": "offscreen",
+    "tiny-font": "tiny-font",
+    "same-color": "same-color"
+  },
+  "rendered": {
+    "(none)": "(none)"
+  },
+  "resource": {
+    "script": "script",
+    "stylesheet": "stylesheet",
+    "image": "image",
+    "img": "img",
+    "font": "font",
+    "media": "media",
+    "audio": "audio",
+    "video": "video",
+    "frame": "frame",
+    "object": "object",
+    "embed": "embed",
+    "form": "form",
+    "document": "document",
+    "fetch": "fetch",
+    "xhr": "xhr",
+    "other": "other"
+  },
+  "role": {
+    "stylesheet": "stylesheet",
+    "script": "script",
+    "fetch": "fetch",
+    "font": "font",
+    "image": "image",
+    "document": "document",
+    "other": "other"
+  },
+  "schemes": {
+    "cctld": "cctld",
+    "subdomain": "subdomain",
+    "subdirectory": "subdirectory",
+    "parameter": "parameter",
+    "same-path": "same-path"
+  },
+  "scope": {
+    "URL-level": "URL-level",
+    "origin-level": "origin-level"
+  },
+  "scripts": {
+    "not attributed": "not attributed"
+  },
+  "second": {
+    "html": "html",
+    "header": "header",
+    "sitemap": "sitemap"
+  },
+  "snippet": {
+    "async-hide class": "async-hide class",
+    "Adobe Target pre-hiding snippet": "Adobe Target pre-hiding snippet",
+    "Kameleoon loading style sheet": "Kameleoon loading style sheet",
+    "style rule that hides the page": "style rule that hides the page",
+    "{tag} element hidden in the server HTML": "{tag} element hidden in the server HTML"
+  },
+  "sources": {
+    "not attributed": "not attributed",
+    "html": "html",
+    "rendered": "rendered",
+    "header": "header",
+    "sitemap": "sitemap"
+  },
+  "state": {
+    "Crawled - currently not indexed": "Crawled - currently not indexed",
+    "Discovered - currently not indexed": "Discovered - currently not indexed",
+    "Excluded by ‘noindex’ tag": "Excluded by ‘noindex’ tag",
+    "Excluded by 'noindex' tag": "Excluded by 'noindex' tag",
+    "Blocked by robots.txt": "Blocked by robots.txt",
+    "Indexed, though blocked by robots.txt": "Indexed, though blocked by robots.txt",
+    "Not found (404)": "Not found (404)",
+    "Soft 404": "Soft 404",
+    "Server error (5xx)": "Server error (5xx)",
+    "Redirect error": "Redirect error",
+    "Duplicate without user-selected canonical": "Duplicate without user-selected canonical",
+    "URL is unknown to Google": "URL is unknown to Google",
+    "Blocked due to unauthorized request (401)": "Blocked due to unauthorized request (401)",
+    "Blocked due to access forbidden (403)": "Blocked due to access forbidden (403)",
+    "Blocked due to other 4xx issue": "Blocked due to other 4xx issue",
+    "Page indexed without content": "Page indexed without content"
+  },
+  "status": {
+    "none": "none",
+    "unknown": "unknown"
+  },
+  "subparts": {
+    "time to first byte {share}": "time to first byte {share}",
+    "resource load delay {share}": "resource load delay {share}",
+    "element render delay {share}": "element render delay {share}"
+  },
+  "tech-favicon-file-valid/problem": {
+    "not-200": "not-200",
+    "not-an-image": "not-an-image",
+    "svg": "svg",
+    "unsupported-format": "unsupported-format",
+    "not-square": "not-square",
+    "too-small": "too-small",
+    "noindex": "noindex",
+    "blocked-for-googlebot-image": "blocked-for-googlebot-image"
+  },
+  "throttling": {
+    "simulate": "simulate",
+    "devtools": "devtools",
+    "provided": "provided"
+  },
+  "url": {
+    "unknown": "unknown"
+  },
+  "where": {
+    "title": "title",
+    "meta description": "meta description",
+    "page text": "page text",
+    "image alt text": "image alt text"
+  }
+}

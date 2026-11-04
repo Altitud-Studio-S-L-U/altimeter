@@ -20,6 +20,8 @@ import esIntl from './es/rules/intl.json' with { type: 'json' };
 import esPerf from './es/rules/perf.json' with { type: 'json' };
 import esSchema from './es/rules/schema.json' with { type: 'json' };
 import esTech from './es/rules/tech.json' with { type: 'json' };
+import { format, placeholders } from './format.ts';
+import { localizeParams } from './values.ts';
 
 export const languages = ['en', 'es', 'ca'] as const;
 export type Language = (typeof languages)[number];
@@ -57,27 +59,18 @@ export function messagesFor(language: Language): MessageCatalog {
   return catalogs[language] ?? catalogs.en!;
 }
 
-const placeholder = /\{([a-zA-Z][a-zA-Z0-9]*)\}/gu;
-
-export function placeholders(template: string): string[] {
-  return [...template.matchAll(placeholder)].map(match => match[1]!).sort();
-}
+export { format, placeholders };
 
 /**
- * Fills a template. Values are inserted as plain text; escaping for HTML or Markdown is the renderer's job.
- * A missing value leaves the placeholder visible rather than inventing text.
+ * The message for a finding in `language`, falling back to English and then to `fail`. A translated template also
+ * gets the English words that code wrote into its values translated; the English template keeps them as they are.
  */
-export function format(template: string, params: Readonly<Record<string, string | number>> = {}): string {
-  return template.replace(placeholder, (match, name: string) => (params[name] === undefined ? match : String(params[name])));
-}
-
-/** The message for a finding in `language`, falling back to English and then to `fail`. */
 export function findingMessage(language: Language, ruleId: string, outcome: string, reason: string | undefined, params?: Readonly<Record<string, string | number>>): string | undefined {
-  for (const catalog of [messagesFor(language), messagesFor('en')]) {
-    const entry = catalog[ruleId];
+  for (const catalogLanguage of language === 'en' ? ['en' as const] : [language, 'en' as const]) {
+    const entry = messagesFor(catalogLanguage)[ruleId];
     if (!entry) continue;
     const template = (reason ? entry.messages[`${outcome}:${reason}`] : undefined) ?? entry.messages[outcome];
-    if (template !== undefined) return format(template, params);
+    if (template !== undefined) return format(template, params && catalogLanguage !== 'en' ? localizeParams(catalogLanguage, params, ruleId) : params);
   }
   return undefined;
 }

@@ -56,7 +56,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test",
-    "docs:rules": "node scripts/rules-doc.ts"
+    "docs:rules": "node scripts/rules-doc.ts",
+    "i18n:labels": "node scripts/evidence-labels.ts"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

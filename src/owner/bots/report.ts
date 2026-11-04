@@ -1,6 +1,7 @@
 import { rule as catalogRule, rules as catalogRules } from '../../catalog/index.ts';
 import { EvidenceStore, type EvidenceItem } from '../../core/evidence.ts';
 import type { SiteFacts } from '../../core/facts.ts';
+import { evidenceLabelText } from '../../i18n/evidence.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../../i18n/messages.ts';
 import { ui } from '../../i18n/ui.ts';
 import { runRules, type Finding } from '../../rules/engine.ts';
@@ -8,7 +9,7 @@ import { implementations } from '../../rules/owner/bots.ts';
 import { cleanLine, untrustedBlock, untrustedInline } from '../../report/sanitize.ts';
 import { severityWeights } from '../../score/score.ts';
 import { version } from '../../version.ts';
-import type { BotActivity, BotPurpose, BotSummary } from './activity.ts';
+import type { BotActivity, BotPurpose, BotSummary, IpListStatus } from './activity.ts';
 
 /** bots.json: the activity, the findings of the crawler rules and the evidence they cite. */
 export interface BotsReport {
@@ -76,9 +77,12 @@ interface Labels {
   readonly discarded: string;
   readonly lists: string;
   readonly listLine: string;
+  readonly listSources: Readonly<Record<IpListStatus['from'], string>>;
   readonly dnsOn: string;
+  readonly dnsOnCapped: string;
   readonly dnsOff: string;
   readonly robots: string;
+  readonly robotsSources: Readonly<Record<NonNullable<NonNullable<BotActivity['site']>['robots']>['effectiveFromSource'], string>>;
   readonly untrusted: string;
 }
 
@@ -121,9 +125,12 @@ const labels: Readonly<Record<Language, Labels>> = {
     discarded: 'Set aside: {list}.',
     lists: 'Published address lists',
     listLine: '{id}: {prefixes} prefixes, created {created}, {from}',
-    dnsOn: 'Reverse DNS: {lookups} addresses looked up, {errors} failed{capped}.',
+    listSources: { network: 'network', cache: 'cache', 'stale-cache': 'stale-cache', unavailable: 'unavailable' },
+    dnsOn: 'Reverse DNS: {lookups} addresses looked up, {errors} failed.',
+    dnsOnCapped: 'Reverse DNS: {lookups} addresses looked up, {errors} failed (limit reached).',
     dnsOff: 'Reverse DNS: off.',
     robots: 'robots.txt is taken to apply from {date} ({source}).',
+    robotsSources: { owner: 'owner', 'last-modified': 'last-modified', assumed: 'assumed' },
     untrusted: 'Paths, user agents and file names come from the logs; they are shown as untrusted text.',
   },
   es: {
@@ -164,9 +171,12 @@ const labels: Readonly<Record<Language, Labels>> = {
     discarded: 'Apartadas: {list}.',
     lists: 'Listas de direcciones publicadas',
     listLine: '{id}: {prefixes} prefijos, creada {created}, {from}',
-    dnsOn: 'DNS inverso: {lookups} direcciones consultadas, {errors} con error{capped}.',
+    listSources: { network: 'descargada ahora', cache: 'desde la caché', 'stale-cache': 'copia caducada de la caché', unavailable: 'no disponible' },
+    dnsOn: 'DNS inverso: {lookups} direcciones consultadas, {errors} con error.',
+    dnsOnCapped: 'DNS inverso: {lookups} direcciones consultadas, {errors} con error (se ha alcanzado el límite).',
     dnsOff: 'DNS inverso: desactivado.',
     robots: 'Se considera que el robots.txt actual se aplica desde el {date} ({source}).',
+    robotsSources: { owner: 'fecha indicada por el propietario', 'last-modified': 'cabecera Last-Modified', assumed: 'fecha supuesta' },
     untrusted: 'Las rutas, los user agents y los nombres de archivo vienen de los registros y se muestran como texto no fiable.',
   },
   ca: {
@@ -207,9 +217,12 @@ const labels: Readonly<Record<Language, Labels>> = {
     discarded: 'Apartades: {list}.',
     lists: 'Llistes d\'adreces publicades',
     listLine: '{id}: {prefixes} prefixos, creada {created}, {from}',
-    dnsOn: 'DNS invers: {lookups} adreces consultades, {errors} amb error{capped}.',
+    listSources: { network: 'baixada ara', cache: 'de la memòria cau', 'stale-cache': 'còpia caducada de la memòria cau', unavailable: 'no disponible' },
+    dnsOn: 'DNS invers: {lookups} adreces consultades, {errors} amb error.',
+    dnsOnCapped: 'DNS invers: {lookups} adreces consultades, {errors} amb error (s\'ha arribat al límit).',
     dnsOff: 'DNS invers: desactivat.',
     robots: 'Es considera que el robots.txt actual s\'aplica des del {date} ({source}).',
+    robotsSources: { owner: 'data indicada pel propietari', 'last-modified': 'capçalera Last-Modified', assumed: 'data suposada' },
     untrusted: 'Els camins, els user agents i els noms de fitxer vénen dels registres i es mostren com a text no fiable.',
   },
 };
@@ -226,9 +239,9 @@ function statuses(values: Readonly<Record<string, number>>): string {
   return entries.length === 0 ? '-' : entries.map(([status, hits]) => `${status} x${Math.round(hits)}`).join(', ');
 }
 
-function evidenceLine(item: EvidenceItem): string {
-  const where = [item.url, item.line ? `line ${item.line}` : undefined].filter(Boolean).join(', ');
-  const head = `${cleanLine(item.label)}${where ? ` (${untrustedInline(where, 160)})` : ''}`;
+function evidenceLine(item: EvidenceItem, language: Language): string {
+  const where = [item.url, item.line ? format(ui(language).lineNumber, { line: item.line }) : undefined].filter(Boolean).join(', ');
+  const head = `${cleanLine(evidenceLabelText(language, item))}${where ? ` (${untrustedInline(where, 160)})` : ''}`;
   if (item.excerpt === undefined) return head;
   return item.excerpt.includes('\n') ? `${head}:\n\n${untrustedBlock(item.excerpt, 3000).split('\n').map(line => `    ${line}`).join('\n')}\n` : `${head}: ${untrustedInline(item.excerpt, 300)}`;
 }
@@ -271,7 +284,7 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
     if (text) lines.push(`  ${cleanLine(text, 600)}`);
     for (const id of finding.evidence.slice(0, 4)) {
       const item = evidence.get(id);
-      if (item) lines.push(`  - ${t.evidence}: ${evidenceLine(item)}`);
+      if (item) lines.push(`  - ${t.evidence}: ${evidenceLine(item, language)}`);
     }
     if (texts.fix) lines.push(`  - ${t.fix}: ${cleanLine(texts.fix, 700)}`);
   }
@@ -320,12 +333,12 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
   lines.push(format(l.clientIp, { source: `\`${activity.clientIp.source}\``, checkable: amount(activity, language, activity.clientIp.checkable), claims: amount(activity, language, activity.clientIp.claims) }));
   const discarded = Object.entries(activity.clientIp.discarded);
   if (discarded.length > 0) lines.push('', format(l.discarded, { list: discarded.map(([reason, hits]) => `\`${cleanLine(reason, 40)}\` ${amount(activity, language, hits)}`).join(', ') }));
-  lines.push('', activity.dns.enabled ? format(l.dnsOn, { lookups: activity.dns.lookups, errors: activity.dns.errors, capped: activity.dns.capped ? ' (limit reached)' : '' }) : l.dnsOff);
-  if (activity.site?.robots) lines.push('', format(l.robots, { date: day(activity.site.robots.effectiveFrom), source: activity.site.robots.effectiveFromSource }));
+  lines.push('', activity.dns.enabled ? format(activity.dns.capped ? l.dnsOnCapped : l.dnsOn, { lookups: activity.dns.lookups, errors: activity.dns.errors }) : l.dnsOff);
+  if (activity.site?.robots) lines.push('', format(l.robots, { date: day(activity.site.robots.effectiveFrom), source: l.robotsSources[activity.site.robots.effectiveFromSource] }));
   if (activity.ipLists.length > 0) {
     lines.push('', `### ${l.lists}`, '');
     for (const list of activity.ipLists) {
-      lines.push(`- ${format(l.listLine, { id: `\`${list.id}\``, prefixes: list.prefixes, created: untrustedInline(list.creationTime ?? '-', 40), from: list.from })} <${list.url}>`);
+      lines.push(`- ${format(l.listLine, { id: `\`${list.id}\``, prefixes: list.prefixes, created: untrustedInline(list.creationTime ?? '-', 40), from: l.listSources[list.from] })} <${list.url}>`);
     }
   }
   if (activity.warnings.length > 0) lines.push('', `### ${t.warnings}`, '', ...activity.warnings.map(warning => `- ${cleanLine(warning, 400)}`));
