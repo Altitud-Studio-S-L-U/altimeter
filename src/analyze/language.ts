@@ -150,12 +150,12 @@ export function tokenize(text: string): string[] {
       continue;
     }
     const parts = run.split("'").filter(Boolean);
+    // A short trailing clitic, as in "dóna'ls", is its own token; otherwise an apostrophe ends an elision (l', qu').
+    const clitic = parts.length > 1 && parts.at(-1)!.length <= 2 && parts.at(-2)!.length > 2;
     for (const [index, part] of parts.entries()) {
       const last = index === parts.length - 1;
-      if (!last) tokens.push(`${part}'`);
-      // A short trailing clitic, as in "dóna'ls", is its own token.
-      else if (index > 0 && part.length <= 2 && parts[index - 1]!.length > 2) tokens.push(`'${part}`);
-      else tokens.push(part);
+      if (last) tokens.push(clitic ? `'${part}` : part);
+      else tokens.push(clitic && index === parts.length - 2 ? part : `${part}'`);
     }
   }
   return tokens;

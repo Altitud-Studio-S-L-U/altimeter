@@ -123,11 +123,10 @@ export function parseHreflang(input: string): ParsedHreflang {
   const parts = subtags.filter(Boolean);
   if (parts.some(part => !/^[a-z0-9]+$/iu.test(part))) problems.push('malformed');
   const first = (parts[0] ?? '').toLowerCase();
-  let language: string | undefined = first || undefined;
-  if (first === 'x' || first === 'i') {
-    problems.push('private-use');
-    language = undefined;
-  } else if (/^[a-z]{2}$/u.test(first)) {
+  const language: string | undefined = first || undefined;
+  // Subtags after a private-use or grandfathered prefix have no grammar to check.
+  if (first === 'x' || first === 'i') return { value, xDefault: false, language: undefined, script: undefined, region: undefined, problems: [...problems, 'private-use'] };
+  if (/^[a-z]{2}$/u.test(first)) {
     if (withdrawn639[first]) problems.push('withdrawn-language');
     else if (!iso639_1.has(first)) problems.push(parts.length === 1 && iso3166.has(first.toUpperCase()) ? 'country-as-language' : 'unknown-language');
   } else if (first !== '') problems.push('language-not-two-letters');
