@@ -10,7 +10,7 @@ The Spanish (Spain) terms used to translate the rule catalog and report messages
 - Decimal numbers in prose take a decimal comma (`0,1`, `2,5 s`); numbers of five or more digits group thousands with a point (`50.000`), four-digit numbers take no separator (`2048`). The numbers that code passes to a template are written this way for you. Versions keep their point (`HTTP/1.1`, `WCAG 2.2`, `Lighthouse 13.6`), and so do literal values a format requires, such as a JSON price.
 - Units are separated from the number by a plain space (`20 px`). The percent sign takes a non-breaking space, written `5\u00a0%` in the JSON files; a share that code passes is written with `{share, number, percent}`, which adds it.
 - Quoted words, labels and short literal values take angle quotes (`«ca»`, `«Block»`, `«{title}»`); code such as HTML, JSON or a header value keeps its own quotes. Apostrophes are straight (`'`) and spaces are plain, except the one before the percent sign.
-- English `(s)` plurals become `(s)` or `(es)` (`valor(es)`, `anotación(es)`), with the verb in the plural.
+- A count that can be 1 picks its form with a plural argument, `{count, plural, one {# valor no es válido} other {# valores no son válidos}}`: `#` is the number, `other` is required, and each branch agrees its own verb and adjectives. A count may instead follow a label (`Enlaces rotos: {count}`), which reads right for any number. Older strings still use `(s)` or `(es)` endings (`valor(es)`, with the verb in the plural); give them a plural argument when you change them.
 - The plural of URL is `URLs`, as in Google Search Central and Search Console in Spanish; other acronyms stay invariable (`los CMS`, `las API`).
 - Events the audit observed take the present perfect, as in the report interface (`ha respondido`, `se han encontrado`).
 - Google's products keep their official Spanish names: `Búsqueda de Google`, `Google Imágenes`, `Vistas creadas con IA`, `Modo IA`, `Aplicaciones de Gemini`, `Perfil de Empresa en Google`, `Inspección de URLs`.
@@ -37,6 +37,7 @@ The Spanish (Spain) terms used to translate the rule catalog and report messages
 | soft 404 | soft 404 | as in Search Console |
 | user agent | user-agent | user-agent token: `token de user-agent` |
 | fetch (verb), fetcher | obtener, fetcher | a fetch a user starts: `una solicitud que inicia un usuario`; prefetch: `obtener por adelantado` |
+| request, requests from crawlers | solicitud, solicitudes de rastreadores | not `petición`; HTTP request: `solicitud HTTP` |
 | internal link, anchor text | enlace interno, texto del enlace | followed link: `enlace follow` |
 | URL fragment | identificador de fragmento | or `fragmento de la URL`; `fragmento` alone means a snippet |
 | home page | página de inicio | |
@@ -74,6 +75,7 @@ The Spanish (Spain) terms used to translate the rule catalog and report messages
 | above the fold | mitad superior de la página | |
 | freshness | actualidad | |
 | assistive technology | tecnologías de apoyo | |
+| about page | página «Quiénes somos» | contact page: `página de contacto` |
 
 ### Structured data
 
@@ -148,6 +150,7 @@ The Spanish (Spain) terms used to translate the rule catalog and report messages
 | finding, check, evidence | hallazgo, comprobación, evidencia | |
 | sampled | muestreado | sampled paths: `rutas muestreadas` |
 | report (verb) | informar de, indicar | |
+| referrer, referring hosts | URL de referencia, sitios de referencia | |
 
 ## Sources
 
