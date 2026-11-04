@@ -25,7 +25,7 @@ Without `--yes` the command prints the plan (engines, queries, runs and the most
 At most 10 queries are asked, each with its origin recorded:
 
 1. Your `--keyword` values, first and in order.
-2. With `--from-gsc`, the Search Console queries of the last 28 complete days with the most impressions, leaving out queries that name the brand (the same test as the audit's brand split) or the domain. Search Console is read with the same read-only credential an audit with `--gsc` uses.
+2. With `--from-gsc`, the Search Console queries of the last 28 complete days with the most impressions, leaving out queries that name the brand (the same test as the audit's brand split) or the domain. Search Console is read with the same read-only credential an audit with `--gsc` uses. These queries leave your machine as questions to the engines, and `probe.json` and `probe.md` list them with their impressions, clicks and position: the probe has no `--redact-queries`, so review the report before you share it.
 3. Otherwise, up to 5 queries inferred from the H1 and title of the home page and up to 3 pages it links to, without the brand name. Contact, about, legal and utility pages are skipped, and so is any heading shaped like an instruction to a model. These queries are labelled as inferred.
 4. A brand question, "What is <brand>?", asked in the site's language when it is English, Spanish or Catalan, when the site declares a distinctive name (WebSite name, og:site_name or Organization name) and the plan has room. A brand question names the brand, so it measures recognition, not visibility, and the report keeps it in a section of its own.
 

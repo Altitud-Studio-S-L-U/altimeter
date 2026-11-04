@@ -93,4 +93,4 @@ Each rule's thresholds and sources are in the [rule catalog](rules.md).
 Logs are read on your machine and never uploaded. Paths and user agents in the output are cleaned of control and
 invisible characters and treated as untrusted text. Reverse DNS sends the addresses of claimed crawler requests to
 your DNS resolver; `--no-dns` avoids it. The Cloudflare token is sent only to Cloudflare's API and never appears in
-reports, logs or error messages. Crawler activity, like all owner data, never reaches a model.
+reports, logs or error messages. Crawler activity never reaches a model.
