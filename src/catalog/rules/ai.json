@@ -933,7 +933,9 @@
       }
     ],
     "status": "requires-owner-data",
-    "notes": "Emit context: Google added a site-wide Search Console setting (Settings > Search generative AI) that excludes the site from AI Overviews, AI Mode and AI Overviews in Discover, worldwide since 31 Aug 2026. If the user supplies Search Console access or a screenshot, record its state. The setting is site-wide only and is not exposed in HTML or robots.txt. Google says it is not a ranking signal for results outside those features and does not affect training (that is Google-Extended). Never infer its state from missing AI impressions."
+    "notes": "Emit context: Google added a site-wide Search Console setting (Settings > Search generative AI) that excludes the site from AI Overviews, AI Mode and AI Overviews in Discover, worldwide since 31 Aug 2026. If the user supplies Search Console access or a screenshot, record its state. The setting is site-wide only and is not exposed in HTML or robots.txt. Google says it is not a ranking signal for results outside those features and does not affect training (that is Google-Extended). Never infer its state from missing AI impressions.",
+    "fixLocation": "owner-decision",
+    "verifiableBy": "manual"
   },
   {
     "id": "ai-js-only-content",
@@ -1340,7 +1342,9 @@
     "method": "owner-data",
     "scope": "site",
     "inputs": [
-      "gsc",
+      "gsc"
+    ],
+    "optionalInputs": [
       "bing",
       "bot-activity"
     ],
@@ -1371,7 +1375,9 @@
       }
     ],
     "status": "requires-owner-data",
-    "notes": "Emit the measurement options that apply: the Google Search Console Generative AI performance report (impressions by page, country, device and date; no clicks), Bing Webmaster Tools AI Performance (citations, cited pages, grounding queries; sampled; no clicks), ChatGPT referrals tagged utm_source=chatgpt.com in analytics, and referrer domains in analytics/logs (chatgpt.com, perplexity.ai, copilot.microsoft.com, gemini.google.com). If the user supplies server logs, count requests per verified AI UA (IP-verified against the published JSON ranges). Google: no third-party tool has access to its internal ranking or AI systems. Prompt-sampling tools measure samples, not share of voice. The CLI must not run its own LLM queries and report them as rankings."
+    "notes": "Emit the measurement options that apply: the Google Search Console Generative AI performance report (impressions by page, country, device and date; no clicks), Bing Webmaster Tools AI Performance (citations, cited pages, grounding queries; sampled; no clicks), ChatGPT referrals tagged utm_source=chatgpt.com in analytics, and referrer domains in analytics/logs (chatgpt.com, perplexity.ai, copilot.microsoft.com, gemini.google.com). If the user supplies server logs, count requests per verified AI UA (IP-verified against the published JSON ranges). Google: no third-party tool has access to its internal ranking or AI systems. Prompt-sampling tools measure samples, not share of voice. The CLI must not run its own LLM queries and report them as rankings.",
+    "fixLocation": "external-account",
+    "verifiableBy": "manual"
   },
   {
     "id": "ai-bots-crawl-activity",

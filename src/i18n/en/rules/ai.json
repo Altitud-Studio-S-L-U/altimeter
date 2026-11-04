@@ -231,5 +231,19 @@
     "messages": {
       "fail": "{visits} visits came from AI assistants ({assistants}), and {tagged} carried utm_source=chatgpt.com. Clicks from Google's AI Overviews and AI Mode count as Google Search and cannot be seen here."
     }
+  },
+  "ai-google-genai-control-context": {
+    "messages": {
+      "fail": "Search Console has a site-wide setting that keeps a site out of AI Overviews, AI Mode and AI Overviews in Discover. Neither the pages, robots.txt nor the Search Console API show it, so this audit cannot tell its state for {property}; check it in the property's settings. It does not change training, which the Google-Extended token in robots.txt controls."
+    }
+  },
+  "ai-measurement-context": {
+    "messages": {
+      "fail": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API.",
+      "fail:all-sources": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API. Bing's AI Performance report has no API either. Visits that AI assistants refer appear in the crawler activity, but visits from AI Overviews and AI Mode arrive as Google search and cannot be told apart.",
+      "fail:without-bing": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API. Bing Webmaster Tools data (--bing) would add Bing's search data and point to its AI Performance report, which lists citations in Copilot.",
+      "fail:without-bots": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API. Access logs or Cloudflare analytics (--bots-from) would show which AI crawlers really fetch the site and the visits AI assistants refer.",
+      "fail:without-both": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API. Bing Webmaster Tools data (--bing) and access logs or Cloudflare analytics (--bots-from) would add Bing's search data and the AI crawler visits and assistant referrals the site really received."
+    }
   }
 }

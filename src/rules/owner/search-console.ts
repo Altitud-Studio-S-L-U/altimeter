@@ -269,6 +269,35 @@ const richResults: RuleImplementation = {
   },
 };
 
+/** The site-wide control for Google's AI features lives in the property's settings, which no API exposes. */
+const genAiControl: RuleImplementation = {
+  id: 'ai-google-genai-control-context',
+  evaluate(context) {
+    const { property } = gscOf(context);
+    const evidence = [context.evidence.add({ kind: 'owner-data', label: 'Search Console property whose settings hold the generative AI control', excerpt: property.siteUrl })];
+    return { outcome: 'fail', severity: 'info', evidence, params: { property: property.siteUrl } };
+  },
+};
+
+/** What the owner sources read for this report say about AI search, and what none of their APIs expose. */
+const measurementContext: RuleImplementation = {
+  id: 'ai-measurement-context',
+  evaluate(context) {
+    const owner = context.site.owner!;
+    const { property } = gscOf(context);
+    const bots = owner.bots;
+    const lines = [
+      `Search Console ${property.siteUrl}: AI Overviews and AI Mode are counted in the web search type; the generative AI performance report has no API`,
+      owner.bing ? `Bing Webmaster Tools ${owner.bing.site}: the AI Performance report has no API` : 'Bing Webmaster Tools: not read',
+      bots ? `crawler activity from ${bots.window.start.slice(0, 10)} to ${bots.window.end.slice(0, 10)}, ${bots.referrals ? 'with' : 'without'} referrers` : 'crawler activity: not read',
+    ];
+    const reason = owner.bing && bots ? 'all-sources' : owner.bing ? 'without-bots' : bots ? 'without-bing' : 'without-both';
+    const evidence = [context.evidence.add({ kind: 'owner-data', label: 'owner sources this report read about AI search', excerpt: lines.join('\n') })];
+    return { outcome: 'fail', severity: 'info', reason, evidence, params: { property: property.siteUrl } };
+  },
+};
+
 export const implementations: readonly RuleImplementation[] = [
   indexStatus, googleCanonical, crawlRecency, sitemapReports, sitemapUrlsWithoutImpressions, lowCtr, competingPages, nearFirstPage, trafficDrop, richResults,
+  genAiControl, measurementContext,
 ];

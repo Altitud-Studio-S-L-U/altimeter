@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { rules } from '../../src/catalog/index.ts';
 import { EvidenceStore } from '../../src/core/evidence.ts';
+import { findingMessage, messagesFor } from '../../src/i18n/messages.ts';
+import type { BingData } from '../../src/owner/bing.ts';
 import type { GscData, SearchRow, UrlInspection } from '../../src/owner/gsc.ts';
 import { runRules, type Finding, type RuleImplementation } from '../../src/rules/engine.ts';
 import { implementations, searchQueriesPath } from '../../src/rules/owner/search-console.ts';
+import { activity } from '../support/bots.ts';
 import { evaluate, page, site, type SiteSpec } from '../support/facts.ts';
 
 const origin = 'https://example.com';
@@ -159,6 +162,43 @@ describe('schema-url-inspection-rich-results', () => {
     const warnings = inspected({ richResults: [{ type: 'Product snippets', issues: [{ severity: 'WARNING', message: 'Missing field "review"' }] }] });
     assert.deepEqual([check('schema-url-inspection-rich-results', gsc({ inspections: [warnings] })).first?.reason], ['warnings']);
     assert.equal(check('schema-url-inspection-rich-results', gsc({ inspections: [inspected()] })).first?.reason, 'no-rich-results-detected');
+  });
+});
+
+/** Every failure must render a complete English message: a reason without a template, or a missing value, fails. */
+function message(finding: Finding | undefined): string {
+  assert.ok(finding?.outcome === 'fail', 'a failing finding');
+  if (finding.reason) assert.ok(messagesFor('en')[finding.ruleId]?.messages[`fail:${finding.reason}`], `${finding.ruleId} has a message for ${finding.reason}`);
+  const text = findingMessage('en', finding.ruleId, 'fail', finding.reason, finding.params);
+  assert.ok(text, `${finding.ruleId} has a message`);
+  assert.doesNotMatch(text, /\{[a-zA-Z]+\}/u, `${finding.ruleId}:${finding.reason ?? ''} leaves a placeholder: ${text}`);
+  return text;
+}
+
+describe('Search Console context rules', () => {
+  // Context only: they have no passing state, and without Search Console data the engine does not run them.
+  test('ai-google-genai-control-context says the control is in the property settings, which nothing outside shows', () => {
+    const { first, excerpts } = check('ai-google-genai-control-context', gsc());
+    assert.deepEqual([first?.outcome, first?.severity, first?.params?.property], ['fail', 'info', 'sc-domain:example.com']);
+    assert.deepEqual(excerpts(first), ['sc-domain:example.com']);
+    assert.match(message(first), /cannot tell its state for sc-domain:example\.com; check it in the property's settings/u);
+  });
+
+  test('ai-measurement-context names the owner sources read and what the others would add', () => {
+    const bing: BingData = { fetchedAt: '2026-11-04T09:00:00.000Z', site: `${origin}/`, crawlIssues: [], pageStats: [], pageQueries: [], urlInfo: [], unavailable: [] };
+    const cases: ReadonlyArray<readonly [Partial<SiteSpec>, string, RegExp]> = [
+      [{}, 'without-both', /--bing\) and access logs or Cloudflare analytics \(--bots-from\)/u],
+      [{ owner: { gsc: gsc(), bing } }, 'without-bots', /\(--bots-from\) would show which AI crawlers/u],
+      [{ owner: { gsc: gsc(), bots: activity() } }, 'without-bing', /\(--bing\) would add Bing's search data/u],
+      [{ owner: { gsc: gsc(), bing, bots: activity() } }, 'all-sources', /arrive as Google search and cannot be told apart/u],
+    ];
+    for (const [extra, reason, text] of cases) {
+      const { first, excerpts } = check('ai-measurement-context', gsc(), extra);
+      assert.deepEqual([first?.outcome, first?.severity, first?.reason], ['fail', 'info', reason]);
+      assert.match(message(first), /AI Overviews and AI Mode in the web search type, so the Search Console analyses for sc-domain:example\.com include them/u);
+      assert.match(message(first), text, reason);
+      assert.match(excerpts(first)[0] ?? '', /^Search Console sc-domain:example\.com: /u);
+    }
   });
 });
 
