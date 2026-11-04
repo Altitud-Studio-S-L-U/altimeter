@@ -758,7 +758,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "candidate = medium, pending the analyst: a marked-up price, ratingValue, reviewCount or ratingCount that appears nowhere in the page text, element attributes or rendered text blocks. Hidden blocks count as present, so tabs, accordions and reveal-on-scroll sections never fail here.",
+    "thresholds": "candidate = medium, pending the analyst: a marked-up price, ratingValue, reviewCount or ratingCount that appears nowhere in the page text, element attributes or rendered text blocks, or a Question name (FAQPage, QAPage) whose words do not appear there. Hidden blocks count as present, so tabs, accordions and reveal-on-scroll sections never fail here.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",

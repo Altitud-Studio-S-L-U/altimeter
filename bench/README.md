@@ -71,7 +71,7 @@ Each false-positive trap of the tuned site appears in its correct form, where th
 | Accept-Language ignored on purpose | `studio-home`, `studio-root` | `locale-redirects`, `locale-adaptive` |
 | `Vary: Cookie` on a private, no-store redirect | `studio-root` | `locale-redirects` (cacheable without Vary) |
 | `/sitemap.xml` answers 404; the index is declared | `studio-home` | `sitemap-missing` |
-| Valid FAQPage that matches the page | `studio-home` (information only) | `faq-not-visible` (known gap), `markup-mismatch` |
+| Valid FAQPage that matches the page | `studio-home` (information only) | `faq-not-visible`, `markup-mismatch` |
 | WebSite without SearchAction | `studio-home` | `markup-mismatch` |
 | `alt=""` on decorative images | `studio-home` | `image-problems` |
 | Noindex, follow legal pages out of the sitemap | `studio-crawl` | `legal-in-sitemap` |
@@ -96,10 +96,7 @@ Not applicable, and why:
 - **The root is not the x-default.** The catalog says this is never a finding, so `studio-root` expects the root and x-default rules not to fail.
 - **Decorative images that cannot rank in image search.** `alt=""` is never counted as missing; `studio-home` expects `content-img-alt-missing` not to fail.
 
-Known gaps, listed by every run:
-
-- `tech-security-headers-info` (`studio-home`): the inventory shows the CSP, but its thresholds flag only a broken `nosniff` value, not `script-src 'unsafe-inline'`.
-- `schema-visible-content-parity` (`faq-not-visible`): by its thresholds it compares only prices and ratings with the page text, so FAQ answers missing from the page are left to the model analysis.
+There are no known gaps: every expectation must hold.
 
 ## Adding a scenario
 

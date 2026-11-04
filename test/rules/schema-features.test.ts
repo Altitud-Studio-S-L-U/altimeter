@@ -351,8 +351,20 @@ describe('schema-visible-content-parity', () => {
       textBlocks: [{ selector: 'section[data-reveal] p', text: '1.299,00 € 4,5 (120)', hidden: 'opacity-zero' as const, fontSize: 16, top: 900, inMain: true }] };
     passes(visibleContentParity, { html: doc(ld(lamp), '<main><section data-reveal><p>1.299,00 € 4,5 (120)</p></section></main>'), rendered, pageType: 'product' });
   });
-  test('is not applicable without prices or ratings', () => {
+  test('is not applicable without prices, ratings or questions', () => {
     assert.deepEqual(outcome(visibleContentParity, on('other', { '@type': 'WebPage', name: 'x' })), ['not_applicable', 'no-checked-values']);
+  });
+  const faq = { '@type': 'FAQPage', mainEntity: [
+    { '@type': 'Question', name: 'Do you work with startups?', acceptedAnswer: { '@type': 'Answer', text: 'Yes, from the first prototype.' } },
+    { '@type': 'Question', name: "What's included in an audit?", acceptedAnswer: { '@type': 'Answer', text: 'A report and a plan.' } },
+  ] };
+  test('finds FAQ questions in the page text whatever their punctuation, quotes or case', () => {
+    passes(visibleContentParity, { html: doc(ld(faq), '<main><h2>FAQ</h2><h3>Do you work with Startups</h3><p>Yes.</p><details><summary>What’s included in an audit</summary><p>A report.</p></details></main>') });
+  });
+  test('hands a question that the page does not show to the analyst', () => {
+    const { finding, excerpts } = failure(visibleContentParity, { html: doc(ld(faq), '<main><h3>Do you work with startups?</h3><p>Yes.</p></main>') }, 'question-not-on-page');
+    assert.deepEqual([finding.severity, finding.needsJudgment, finding.params?.count], ['medium', true, 1]);
+    assert.equal(excerpts[0], "What's included in an audit?");
   });
 });
 

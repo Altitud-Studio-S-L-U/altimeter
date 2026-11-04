@@ -10,8 +10,7 @@ export default defineScenario({
     home.body = home.body.replace(/<section class="faq"[\s\S]*?<\/section>\n/u, '');
   }),
   mustFail: [
-    { rule: 'schema-visible-content-parity', page: '/en/',
-      known: 'its thresholds compare only prices and ratings with the page text, so FAQ answers missing from the page are left to the model analysis' },
+    { rule: 'schema-visible-content-parity', reason: 'question-not-on-page', page: '/en/' },
     // Still information, never an error.
     { rule: 'schema-faqpage-retired', severity: 'info', page: '/en/' },
   ],

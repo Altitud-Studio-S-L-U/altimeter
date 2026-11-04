@@ -311,7 +311,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "web-standard",
-    "thresholds": "Info only: the inventory of the HTML response, and an X-Content-Type-Options value other than nosniff. A CSP that blocks first-party resources goes up to medium through tech-console-errors.",
+    "thresholds": "Info only: the inventory of the HTML response, an X-Content-Type-Options value other than nosniff, and an enforced Content-Security-Policy that lets inline scripts run ('unsafe-inline' in script-src, or in default-src without script-src, with no nonce, hash or 'strict-dynamic', as Lighthouse's csp-xss reads it). A CSP that blocks first-party resources goes up to medium through tech-console-errors.",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/lighthouse/best-practices/csp-xss",

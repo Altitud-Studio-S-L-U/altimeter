@@ -194,6 +194,22 @@ describe('tech-security-headers-info', () => {
     assert.equal(excerpt(result, finding), 'x-content-type-options: yes');
   });
 
+  test('reports a script policy that lets inline scripts run as info, as Lighthouse csp-xss reads it', () => {
+    const headers = (csp: string) => site({ pages: [page(home, { html: doc(), headers: { 'content-security-policy': csp } })] });
+    const inline = only(evaluate(securityHeadersInfo, headers("default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com")).findings);
+    assert.deepEqual([inline.outcome, inline.severity, inline.reason, inline.params?.directive], ['fail', 'info', 'csp-inline-scripts', "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com"]);
+    assert.equal(only(evaluate(securityHeadersInfo, headers("default-src 'self' 'unsafe-inline'")).findings).reason, 'csp-inline-scripts', 'default-src applies without script-src');
+    for (const csp of ["script-src 'self' 'unsafe-inline' 'nonce-r4nd0m'", "script-src 'unsafe-inline' 'sha256-abc='", "script-src 'unsafe-inline' 'strict-dynamic' 'nonce-x'",
+      "script-src 'self'", "img-src 'self'", "script-src 'self' 'unsafe-inline', script-src 'self'"]) {
+      assert.equal(only(evaluate(securityHeadersInfo, headers(csp)).findings).outcome, 'pass', csp);
+    }
+  });
+
+  test('reports a broken nosniff value and inline scripts together', () => {
+    const facts = site({ pages: [page(home, { html: doc(), headers: { 'x-content-type-options': 'yes', 'content-security-policy': "script-src 'unsafe-inline'" } })] });
+    assert.deepEqual(evaluate(securityHeadersInfo, facts).findings.map(finding => finding.reason).sort(), ['csp-inline-scripts', 'invalid-nosniff']);
+  });
+
   test('never reports missing X-Robots-Tag, Content-Language or Link headers', () => {
     const result = evaluate(securityHeadersInfo, site({ pages: [page(home, { html: doc() })] }));
     const finding = only(result.findings);

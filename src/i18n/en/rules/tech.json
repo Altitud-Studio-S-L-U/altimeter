@@ -63,7 +63,8 @@
   "tech-security-headers-info": {
     "messages": {
       "fail": "A security header on the HTML response has an unexpected value.",
-      "fail:invalid-nosniff": "X-Content-Type-Options is \"{value}\"; browsers only recognise nosniff."
+      "fail:invalid-nosniff": "X-Content-Type-Options is \"{value}\"; browsers only recognise nosniff.",
+      "fail:csp-inline-scripts": "The Content-Security-Policy lets inline scripts run ({directive} allows 'unsafe-inline' with no nonce or hash), so it does not protect the page against cross-site scripting. Lighthouse lists this as a best-practices diagnostic; it is not a Search signal."
     }
   },
   "tech-framing-protection": {

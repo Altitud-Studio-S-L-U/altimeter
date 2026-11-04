@@ -147,7 +147,8 @@
   },
   "schema-visible-content-parity": {
     "messages": {
-      "fail": "{count} marked-up value(s) were not found in the page text: {items}"
+      "fail": "{count} marked-up value(s) were not found in the page text: {items}",
+      "fail:question-not-on-page": "{count} marked-up question(s) were not found in the page text: {items}"
     }
   },
   "schema-blocked-or-nonindexable-carrier": {

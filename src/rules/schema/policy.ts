@@ -1,5 +1,6 @@
 import { isAllowed } from '../../fetch/robots.ts';
 import { attribute, isElement, type HtmlNode } from '../../parse/html.ts';
+import { fold, words } from '../content/common.ts';
 import type { RuleImplementation } from '../engine.ts';
 import { directivesFor, robotsDirectives } from '../helpers.ts';
 import { texts, topLevel, type GraphNode, type PageGraph } from './graph.ts';
@@ -57,6 +58,9 @@ function visibleText(graph: PageGraph, blocks: readonly string[]): string {
   return [graph.doc.parsed.bodyText, ...blocks, ...attributeText(graph.doc.parsed.document)].join(' \n ');
 }
 
+/** Text as its folded words between spaces, so punctuation, quotes, case and accents never decide whether it appears. */
+const wordsOf = (text: string) => ` ${words(fold(text).replace(/[\u2018\u2019\u02BC]/gu, "'")).join(' ')} `;
+
 export const visibleContentParity: RuleImplementation = {
   id: 'schema-visible-content-parity',
   evaluate(context) {
@@ -68,14 +72,22 @@ export const visibleContentParity: RuleImplementation = {
       for (const property of ['ratingValue', 'reviewCount', 'ratingCount']) for (const value of texts(graph, rating, property)) checked.push({ node: rating, property, value });
     }
     const numeric = checked.filter(entry => plainNumber(entry.value) !== undefined);
-    if (numeric.length === 0) return { outcome: 'not_applicable', reason: 'no-checked-values' };
+    // FAQPage and QAPage questions must be visible on the page, like any marked-up content.
+    const questions = nodesOfType(graph, 'Question').flatMap(node => texts(graph, node, 'name').filter(name => wordsOf(name).trim() !== '').map(value => ({ node, value })));
+    if (numeric.length === 0 && questions.length === 0) return { outcome: 'not_applicable', reason: 'no-checked-values' };
     // Hidden render blocks count as present: tabs, accordions and reveal-on-scroll sections are visible to users.
     const blocks = context.page!.rendered?.result.textBlocks.map(block => block.text) ?? [];
-    const numbers = numbersIn(visibleText(graph, blocks));
+    const visible = visibleText(graph, blocks);
+    const numbers = numbersIn(visible);
     const problems: Problem[] = numeric.filter(entry => !numbers.some(number => Math.abs(number - plainNumber(entry.value)!) < 0.005)).map(entry => ({
       reason: 'value-not-on-page', severity: 'medium', subject: `${entry.property}: ${entry.value}`, needsJudgment: true,
       evidence: cite(context, graph, entry.node, `${entry.property} not found in the page text`, entry.property, entry.value),
     }));
+    const visibleWords = wordsOf(visible);
+    for (const entry of questions.filter(question => !visibleWords.includes(wordsOf(question.value)))) {
+      problems.push({ reason: 'question-not-on-page', severity: 'medium', subject: entry.value, needsJudgment: true,
+        evidence: cite(context, graph, entry.node, 'question not found in the page text', 'name', entry.value) });
+    }
     return report(problems);
   },
 };

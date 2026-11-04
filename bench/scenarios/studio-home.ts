@@ -11,8 +11,7 @@ export default defineScenario({
     { rule: 'crawl-host-variant-consolidation', severity: 'low', reason: 'temporary-redirect' },
     { rule: 'crawl-sitemap-lastmod', severity: 'low', reason: 'missing' },
     { rule: 'schema-organization', severity: 'low', reason: 'missing-recommended' },
-    { rule: 'tech-security-headers-info', severity: 'info',
-      known: 'the inventory shows the CSP, but its thresholds flag only a broken nosniff value, not script-src \'unsafe-inline\'' },
+    { rule: 'tech-security-headers-info', severity: 'info', reason: 'csp-inline-scripts' },
     // Valid FAQPage markup is reported as information that the rich result is gone, never as an error.
     { rule: 'schema-faqpage-retired', severity: 'info', reason: 'present', page: '/en/' },
     { rule: 'ai-cdn-cloudflare-detected', severity: 'info', reason: 'cloudflare' },
