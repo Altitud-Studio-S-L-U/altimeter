@@ -243,6 +243,28 @@ describe('planning, budget and providers', () => {
     assert.deepEqual(result.calls.map(call => [call.role, call.pass]), [['analyst', 'content'], ['analyst', 'content'], ['verifier', 'content']]);
   });
 
+  test('Codex as the analyst reaches the same conclusions from the same answers', async t => {
+    const { options } = await setup(t);
+    const viaClaude = await runAnalysis(options());
+    const home = await sandbox(t);
+    const codex = await providerDouble(home, 'codex', hotelScenario);
+    const viaCodex = await runAnalysis({ ...hotelAudit(), provider: 'codex', env: testEnv(home, { codex: codex.executable }), cacheDir: join(home, 'cache') });
+    assert.equal(viaCodex.provider.analyst?.name, 'codex');
+    assert.deepEqual(outcomes(viaCodex), outcomes(viaClaude));
+    for (const call of await codex.calls()) assert.ok(call.stdin.startsWith(systemPrompt), 'Codex gets the system prompt on stdin');
+  });
+
+  test('the overall deadline cancels hung calls and skips the rest', { timeout: 60_000 }, async t => {
+    const { options } = await setup(t, { default: { hang: true } });
+    const started = Date.now();
+    const result = await runAnalysis(options({ deadlineMs: 6000, concurrency: 1 }));
+    assert.ok(Date.now() - started < 30_000);
+    assert.deepEqual(result.findings, []);
+    assert.equal(result.calls[0]?.status, 'failed');
+    assert.equal(result.calls[0]?.error?.code, 'cancelled');
+    assert.ok(result.calls.slice(1).every(call => call.status === 'skipped' && call.error?.code === 'deadline'));
+  });
+
   test('analyses only as many pages as asked', async t => {
     const { claude, options } = await setup(t);
     const result = await runAnalysis(options({ aiPages: 1 }));

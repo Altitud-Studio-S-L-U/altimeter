@@ -35,7 +35,8 @@ describe('cache keys', () => {
   });
 
   test('live in the user cache folder', () => {
-    assert.equal(analysisCacheDirectory({ LOCALAPPDATA: 'C:\\Users\\u\\AppData\\Local' }, 'win32'), join('C:\\Users\\u\\AppData\\Local', 'altimeter', 'ai-cache'));
+    assert.equal(analysisCacheDirectory({ LOCALAPPDATA: 'C:\\Users\\u\\AppData\\Local' }, 'win32'), 'C:\\Users\\u\\AppData\\Local\\altimeter\\ai-cache');
+    assert.equal(analysisCacheDirectory({ HOME: '/home/u' }, 'linux'), '/home/u/.cache/altimeter/ai-cache');
   });
 });
 

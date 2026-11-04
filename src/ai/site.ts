@@ -306,8 +306,9 @@ export function collectSiteStrings(site: SiteFacts, analysed: readonly PageFacts
     registry.addSlice(info, 'hreflang', hreflang);
     registry.addSlice(info, 'http', httpSpecs(page));
   });
-  for (const page of site.pages.values()) {
-    if (analysed.includes(page) || !page.raw) continue;
+  // Siblings were fetched too, so their titles count for uniqueness and they can be the alternates a page lists.
+  for (const page of [...site.pages.values(), ...site.siblings]) {
+    if (analysed.includes(page) || !page.raw || pages.some(entry => entry.key === page.url)) continue;
     const info = pageInfo(page, `P${pages.length + 1}`, 'context');
     pages.push(info);
     registry.addSlice(info, 'metadata', metadataSpecs(pageDocument(page), page.fetch.finalUrl));
@@ -437,7 +438,7 @@ function detectBrand(site: SiteFacts, strings: SiteStrings): string | undefined 
 export function buildCorpus(site: SiteFacts, strings: SiteStrings): FactCorpus {
   const pages = new Map<string, PageCorpus>();
   for (const info of strings.pages) {
-    const facts = site.pages.get(info.key);
+    const facts = site.pages.get(info.key) ?? site.siblings.find(entry => entry.url === info.key);
     const rendered = facts?.rendered && facts.rendered.result.error === undefined ? facts.rendered.result.textBlocks : [];
     const metadata = itemsOf(strings, info.key, 'metadata');
     const title = metadata.find(item => item.label === 'title element')?.text;
@@ -455,7 +456,7 @@ export function buildCorpus(site: SiteFacts, strings: SiteStrings): FactCorpus {
     });
   }
   const links = new Set<string>();
-  for (const page of site.pages.values()) {
+  for (const page of [...site.pages.values(), ...site.siblings]) {
     for (const url of referencedUrls(page)) {
       const normalized = normalizeUrl(url);
       if (normalized) links.add(normalized);

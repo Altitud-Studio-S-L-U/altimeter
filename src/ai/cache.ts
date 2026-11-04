@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, posix, win32 } from 'node:path';
 import { userCacheDirectory, type Environment } from './providers.ts';
 import { validateSchema, type Schema } from './schema.ts';
 import type { ProviderName, Role, Usage } from './types.ts';
@@ -8,8 +8,9 @@ import type { ProviderName, Role, Usage } from './types.ts';
 /** Answers are reused for a week, then asked again: sites and models change. */
 export const cacheTtlMs = 7 * 24 * 60 * 60 * 1000;
 
+/** Cached answers: %LOCALAPPDATA%\altimeter\ai-cache on Windows, the matching folder of the user cache elsewhere. */
 export function analysisCacheDirectory(env: Environment = process.env, platform: NodeJS.Platform = process.platform): string {
-  return join(userCacheDirectory(env, platform), 'ai-cache');
+  return (platform === 'win32' ? win32 : posix).join(userCacheDirectory(env, platform), 'ai-cache');
 }
 
 export interface CacheKeyInput {

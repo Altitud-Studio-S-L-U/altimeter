@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { buildPack, scrubVolatile, type PackSection } from '../src/ai/pack.ts';
+import { planPasses } from '../src/ai/passes.ts';
 import { collectSiteStrings, injectionCandidates, itemsOf, selectPages } from '../src/ai/site.ts';
 import { page, site } from './support/facts.ts';
 import { hotelAudit, roomsUrl } from './support/analysis.ts';
@@ -87,6 +88,27 @@ describe('site strings', () => {
     const facts = site({ pages, homeUrl: 'https://example.com/' });
     assert.deepEqual(selectPages(facts, 3).map(entry => entry.url), ['https://example.com/a', 'https://example.com/', 'https://example.com/c']);
     assert.deepEqual(selectPages(facts, 1).map(entry => entry.url), ['https://example.com/a']);
+  });
+
+  test('plans the international pass only with alternates or several languages, and sends the alternates\' metadata', () => {
+    const english = '<!doctype html><html lang="en"><head><title>Rooms | Hotel</title><link rel="alternate" hreflang="ca" href="https://hotel.example/ca/habitacions/"></head><body><p>Our rooms look over the valley.</p></body></html>';
+    const catalan = '<!doctype html><html lang="ca"><head><title>Habitacions | Hotel</title></head><body><p>Les habitacions donen a la vall.</p></body></html>';
+    const audited = page('https://hotel.example/rooms/', { html: english, rendered: english, pageType: 'other' });
+    const alternate = page('https://hotel.example/ca/habitacions/', { html: catalan });
+    const facts = site({ pages: [audited], siblings: [alternate, page('https://hotel.example/contact/', { html: catalan })] });
+    const strings = collectSiteStrings(facts, selectPages(facts, 3));
+    const pages = strings.pages.filter(entry => entry.role !== 'context');
+    const { report } = hotelAudit();
+    const { plans, skipped } = planPasses({ report: { ...report, findings: [] }, site: facts, strings, pages });
+    const intl = plans.find(plan => plan.pass === 'intl');
+    assert.ok(intl, JSON.stringify(skipped));
+    assert.deepEqual(intl.contextPages.map(entry => entry.url), ['https://hotel.example/ca/habitacions/']);
+    assert.ok(intl.rules.some(rule => rule.id === 'intl-mixed-language-page'));
+    const monolingual = site({ pages: [page('https://hotel.example/rooms/', { html: english.replace(/<link[^>]+>/u, ''), rendered: english.replace(/<link[^>]+>/u, ''), pageType: 'other' })] });
+    const single = collectSiteStrings(monolingual, selectPages(monolingual, 3));
+    const none = planPasses({ report: { ...report, findings: [] }, site: monolingual, strings: single, pages: single.pages.filter(entry => entry.role !== 'context') });
+    assert.equal(none.plans.some(plan => plan.pass === 'intl'), false);
+    assert.ok(none.skipped.some(entry => entry.pass === 'intl' && /single language/u.test(entry.reason)));
   });
 
   test('marks slices complete only when every item was kept whole', () => {
