@@ -58,6 +58,13 @@ describe('crawl-sitemap-validity', () => {
     assertFail(finding, 'high', 'wrong-namespace');
     assert.deepEqual(excerpts(), ['http://www.google.com/schemas/sitemap/0.84']);
   });
+  test('fails high over the entry limit and counts every entry', () => {
+    const xml = urlset(Array.from({ length: 50_001 }, (_, index) => entry(`${origin}/p/${index}`)));
+    const { finding, excerpts } = run(id, { pages: [home()], sitemaps: [{ url: map, xml }] });
+    assertFail(finding, 'high', 'over-limit');
+    assert.match(excerpts()[0]!, /^50001 entries, /u);
+    assert.match(String(finding.params?.detail), /^50001 entries, /u);
+  });
   test('fails medium on relative locs, unreachable children and nested indexes', () => {
     const { finding, excerpts } = run(id, { pages: [home()], sitemaps: [{ url: map, xml: urlset([entry('/relative')]) }] });
     assertFail(finding, 'medium', 'invalid-urls');

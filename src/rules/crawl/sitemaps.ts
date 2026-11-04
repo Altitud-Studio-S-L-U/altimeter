@@ -71,8 +71,8 @@ const sitemapValidity: RuleImplementation = {
         continue;
       }
       if (document.overEntryLimit || document.overByteLimit) {
-        const id = evidence.add({ kind: 'sitemap', url, label: 'entries and uncompressed bytes', excerpt: `${document.urls.length + document.sitemaps.length} entries, ${document.bytes} bytes` });
-        results.push(failure({ severity: 'high', evidence: [id], reason: 'over-limit', params: { url, detail: `${document.urls.length + document.sitemaps.length} entries, ${document.bytes} bytes` } }));
+        const id = evidence.add({ kind: 'sitemap', url, label: 'entries and uncompressed bytes', excerpt: `${document.entries} entries, ${document.bytes} bytes` });
+        results.push(failure({ severity: 'high', evidence: [id], reason: 'over-limit', params: { url, detail: `${document.entries} entries, ${document.bytes} bytes` } }));
         continue;
       }
       if (entry.source === 'index' && document.kind === 'sitemapindex') {

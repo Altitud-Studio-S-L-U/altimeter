@@ -45,6 +45,8 @@ export interface SitemapDocument {
   readonly missingLoc: readonly { readonly line: number; readonly element: 'url' | 'sitemap' }[];
   /** What keeps the file from being read: malformed XML, a document type declaration or invalid gzip data. */
   readonly errors: readonly { readonly line: number; readonly message: string }[];
+  /** <url> and <sitemap> entries in the file; only the first 50,000, the protocol limit, are kept in urls, sitemaps and missingLoc. */
+  readonly entries: number;
   /** Uncompressed size in bytes. */
   readonly bytes: number;
   readonly gzipped: boolean;
@@ -72,6 +74,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
   let kind: SitemapDocument['kind'] = 'unknown';
   let namespace: string | undefined;
   let depth = 0;
+  let entries = 0;
   let text = '';
   let entry: { loc?: string; lastmod?: string; changefreq?: string; priority?: string; alternates: SitemapAlternate[];
     images: number; videos: number; news: boolean; line: number } | undefined;
@@ -92,7 +95,9 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
       return;
     }
     if (depth === 2 && tag.uri === ns.sitemap && (tag.local === 'url' || tag.local === 'sitemap')) {
-      entry = { alternates: [], images: 0, videos: 0, news: false, line: parser.line };
+      entries += 1;
+      // Entries past the protocol limit are only counted, so an oversized file cannot exhaust memory.
+      if (entries <= sitemapLimits.entries) entry = { alternates: [], images: 0, videos: 0, news: false, line: parser.line };
       return;
     }
     if (!entry) return;
@@ -152,9 +157,10 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
     sitemaps,
     missingLoc,
     errors,
+    entries,
     bytes: decoded.xml.length,
     gzipped: decoded.gzipped,
-    overEntryLimit: urls.length + sitemaps.length > sitemapLimits.entries,
+    overEntryLimit: entries > sitemapLimits.entries,
     overByteLimit: decoded.xml.length > sitemapLimits.bytes,
   };
 }

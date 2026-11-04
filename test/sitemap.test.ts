@@ -61,6 +61,15 @@ describe('parseSitemap', () => {
     assert.ok(doc.urls.every(url => !url.loc.includes('evil')));
   });
 
+  test('keeps the entries within the protocol limit and counts the rest', () => {
+    const doc = parseSitemap(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${'<url><loc>https://example.com/</loc></url>'.repeat(sitemapLimits.entries + 10)}<url/></urlset>`);
+    assert.equal(doc.entries, sitemapLimits.entries + 11);
+    assert.equal(doc.urls.length, sitemapLimits.entries);
+    assert.deepEqual(doc.missingLoc, []);
+    assert.equal(doc.overEntryLimit, true);
+    assert.equal(parseSitemap(urlset).entries, 2);
+  });
+
   test('decompresses gzip by content and enforces the size limit', () => {
     const doc = parseSitemap(gzipSync(urlset));
     assert.equal(doc.gzipped, true);
