@@ -126,7 +126,7 @@ function engineBlock(t: ProbeStrings, report: ProbeReport, section: EngineSectio
     return [...lines, format(t.unavailable, { engine: engineNames[section.engine], problem: cleanLine(section.problem ?? '', 300) }), ''];
   }
   const label = sectionLabel(t, section);
-  lines.push(label, '', ...caveats(t, section).map(text => `> ${text}`), '');
+  lines.push(label, '', caveats(t, section).map(text => `> ${text}`).join('\n>\n'), '');
   for (const notice of section.notices) lines.push(`- ${engineNoticeText(t, notice, section)}`);
   if (section.notices.length > 0) lines.push('');
   const groups = [
