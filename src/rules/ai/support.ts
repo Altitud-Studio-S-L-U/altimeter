@@ -13,7 +13,7 @@ export function parsedRobots(context: RuleContext): Parsed | RuleResult {
   if (!robots) return { outcome: 'not_evaluated', reason: 'robots-not-fetched' };
   if (robots.availability.kind === 'unreachable') return { outcome: 'not_evaluated', reason: 'robots-unreachable' };
   if (robots.availability.kind === 'unrestricted') return { outcome: 'not_applicable', reason: 'no-robots-rules' };
-  const text = robots.fetch.body.toString('utf8').replace(/^﻿/u, '');
+  const text = robots.fetch.body.toString('utf8').replace(/^\uFEFF/u, '');
   return { file: robots.availability.file, url: robots.url, lines: text.split(/\r\n|\r|\n/u) };
 }
 

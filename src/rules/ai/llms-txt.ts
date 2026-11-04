@@ -12,7 +12,7 @@ export interface LlmsTxtShape {
 }
 
 export function llmsTxtShape(text: string): LlmsTxtShape {
-  const lines = text.replace(/^﻿/u, '').split(/\r\n|\r|\n/u);
+  const lines = text.replace(/^\uFEFF/u, '').split(/\r\n|\r|\n/u);
   const problems: string[] = [];
   const first = lines.findIndex(line => line.trim() !== '');
   if (first === -1) return { problems: ['the file is empty'], links: [] };
