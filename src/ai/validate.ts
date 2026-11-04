@@ -1,3 +1,4 @@
+import { detectableLanguages, isDetectable, languageScores, tokenize } from '../analyze/language.ts';
 import { rule as catalogRule } from '../catalog/index.ts';
 import { severities, type Myth, type RuleMeta, type Severity } from '../core/types.ts';
 import type { Report, ReportFinding } from '../report/model.ts';
@@ -194,11 +195,23 @@ function wordPattern(word: string): RegExp {
   return new RegExp(`(?<![\\p{L}\\p{N}])${fold(word).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}(?![\\p{L}\\p{N}])`, 'u');
 }
 
-/** Language claims need at least two distinct words, found in the cited items, that only that language uses. */
-function checkDiscriminatingWords(words: readonly string[], cited: readonly string[], context: ValidationContext): Rejection | undefined {
+/**
+ * Whether a word tells a language apart: the language detector's word lists and spelling features count it for
+ * that language more than for any other. For a language the detector does not know, none of them may count it.
+ */
+function discriminates(word: string, language: string): boolean {
+  const scores = languageScores(tokenize(word));
+  if (!isDetectable(language)) return detectableLanguages.every(other => scores[other] === 0);
+  return detectableLanguages.every(other => other === language || scores[other] < scores[language]);
+}
+
+/** Language claims need a language and at least two distinct words, found in the cited items, that only that language uses. */
+function checkDiscriminatingWords(language: string | null | undefined, words: readonly string[], cited: readonly string[], context: ValidationContext): Rejection | undefined {
+  const claimed = primaryLanguage(language ?? undefined);
+  if (claimed === undefined || claimed === 'und') return reject('discriminating-words', 'no language given');
   const texts = cited.map(id => context.pack.included.get(id)).filter(item => item && !item.section).map(item => fold(item!.text));
-  const found = new Set(words.map(word => fold(word)).filter(word => word.length >= 2 && texts.some(text => wordPattern(word).test(text))));
-  return found.size >= 2 ? undefined : reject('discriminating-words', `${found.size} of ${words.length} found`);
+  const found = new Set(words.filter(word => fold(word).length >= 2 && discriminates(word, claimed) && texts.some(text => wordPattern(word).test(text))).map(word => fold(word)));
+  return found.size >= 2 ? undefined : reject('discriminating-words', `${found.size} of ${words.length} found and discriminating`);
 }
 
 interface FindingAnswer {
@@ -212,6 +225,7 @@ interface FindingAnswer {
   readonly evidenceIds: readonly string[];
   readonly quotes: readonly Quote[];
   readonly notes: Raw;
+  readonly language?: string | null;
   readonly discriminatingWords?: readonly string[];
 }
 
@@ -272,7 +286,7 @@ function validateFinding(raw: unknown, index: number, itemSchema: Schema, contex
   if (recommendation) return recommendation;
   const outcome = answer.verdict === 'not_confirmed' ? 'pass' : 'fail';
   if (context.plan.pass === 'intl' && languageRules.includes(rule.id) && outcome === 'fail') {
-    const words = checkDiscriminatingWords(answer.discriminatingWords ?? [], answer.evidenceIds, context);
+    const words = checkDiscriminatingWords(answer.language, answer.discriminatingWords ?? [], answer.evidenceIds, context);
     if (words) return words;
   }
   const scope: FindingScope = rule.scope === 'site' ? { kind: 'site', origin: context.report.target.origin } : { kind: 'page', url: page.key };

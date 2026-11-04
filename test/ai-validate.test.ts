@@ -9,6 +9,7 @@ import { defaultMythMatcher, distinctProposals, ownerPlaceholder, recommendsNewM
 import type { Report, ReportFinding } from '../src/report/model.ts';
 import { mythMatches } from '../src/rules/myth-filter.ts';
 import { homeUrl, hotelAudit, roomsTitle, roomsUrl } from './support/analysis.ts';
+import { page, site } from './support/facts.ts';
 
 const audit = hotelAudit();
 const siteFacts = audit.collected.site;
@@ -16,7 +17,6 @@ const strings = collectSiteStrings(siteFacts, selectPages(siteFacts, 3));
 const pages = strings.pages.filter(entry => entry.role !== 'context');
 const corpus = buildCorpus(siteFacts, strings);
 const { plans } = planPasses({ report: audit.report, site: siteFacts, strings, pages });
-const rooms = pages.find(entry => entry.key === roomsUrl)!;
 
 function planned(pass: PassPlan['pass']): PassPlan {
   return plans.find(entry => entry.pass === pass && entry.page.key === roomsUrl)!;
@@ -285,21 +285,48 @@ describe('validating proposals', () => {
 });
 
 describe('validating language claims', () => {
-  // A mixed-language rule reaches the analyst only as a candidate from code; confirming it is still a language claim.
-  const plan: PassPlan = { pass: 'intl', page: rooms, sitePage: true, rules: [rule('intl-mixed-language-page')!], candidates: [], facts: [], contextPages: [] };
-  const claim = (words: readonly string[], extra: Record<string, unknown> = {}) => finding({
-    ruleId: 'intl-mixed-language-page', reasonCode: 'catalan-paragraph', severity: 'medium', language: 'en', discriminatingWords: words,
-    ...quote('Our 45 rooms', 'Our 45 rooms look over the valley'), ...extra,
+  // A Spanish page with a Catalan paragraph and a Dutch sentence. A mixed-language rule reaches the analyst only as a
+  // candidate from code; confirming it is still a language claim.
+  const [eAcute, oGrave, oAcute] = [0x00e9, 0x00f2, 0x00f3].map(point => String.fromCodePoint(point));
+  const spanishUrl = 'https://hotel.example/es/habitaciones/';
+  const spanish = 'Nuestras habitaciones dan al valle y el desayuno se sirve en el patio.';
+  const catalan = `Les habitacions donen a la vall i tamb${eAcute} tenen balc${oAcute}, per${oGrave} els preus s${oAcute}n els mateixos.`;
+  const dutch = 'Het hotel ligt in de vallei van Andorra.';
+  const html = `<!doctype html><html lang="es"><head><title>Habitaciones | Hotel Example</title></head><body><main><p>${spanish}</p><p>${catalan}</p><p>${dutch}</p></main></body></html>`;
+  const facts = site({ pages: [page(spanishUrl, { html, pageType: 'other' })] });
+  const local = collectSiteStrings(facts, selectPages(facts, 1));
+  const plan: PassPlan = { pass: 'intl', page: local.pages[0]!, sitePage: true, rules: [rule('intl-mixed-language-page')!], candidates: [], facts: [], contextPages: [] };
+  const intl: ValidationContext = {
+    plan, pack: buildPack({ trusted: 'x', sections: packSections(plan, local, audit.report), nonce: 'n' }), schema: passSchema(plan),
+    report: audit.report, strings: local, corpus: buildCorpus(facts, local), keyword: [], mythMatches: defaultMythMatcher,
+  };
+  const cited = (text: string) => {
+    const item = [...local.items.values()].find(entry => entry.text === text)!.id;
+    return { evidenceIds: [item], quotes: [{ evidenceId: item, text: text.split(' ').slice(0, 5).join(' ') }] };
+  };
+  const claim = (language: string | null, words: readonly string[], text = catalan, extra: Record<string, unknown> = {}) => finding({
+    ruleId: 'intl-mixed-language-page', scope: spanishUrl, reasonCode: 'catalan-paragraph', severity: 'medium', language, discriminatingWords: words, ...cited(text), ...extra,
+  });
+  const check = (entry: Record<string, unknown>) => reasons(validateAnswer({ findings: [entry] }, intl));
+
+  test('needs two words of the cited items that tell the claimed language apart from every other the detector knows', () => {
+    assert.deepEqual(check(claim('ca', [`tamb${eAcute}`, `per${oGrave}`])), []);
+    assert.deepEqual(check(claim('ca-AD', ['els', `s${oAcute}n`])), [], 'a region subtag claims its language');
+    assert.deepEqual(check(claim('ca', ['la', 'les'])), ['discriminating-words'], 'Spanish uses these words too');
+    assert.deepEqual(check(claim('ca', ['el', 'en'], spanish)), ['discriminating-words'], 'a Spanish sentence with shared words shows no Catalan');
+    assert.deepEqual(check(claim('ca', ['nuestras', 'habitaciones'], spanish)), ['discriminating-words'], 'Spanish words show Spanish');
+    assert.deepEqual(check(claim('ca', [`tamb${eAcute}`, 'aquesta'])), ['discriminating-words'], 'a word must be in the cited items');
   });
 
-  test('needs two discriminating words that appear in the cited items', () => {
-    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['valley', 'rooms'])] }, context(plan))), []);
-    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['vall', 'habitacions'])] }, context(plan))), ['discriminating-words']);
-    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['valley', 'esmorzar'])] }, context(plan))), ['discriminating-words']);
+  test('refuses a claim without a language, and takes for other languages only words no known language uses', () => {
+    assert.deepEqual(check(claim(null, [`tamb${eAcute}`, `per${oGrave}`])), ['discriminating-words']);
+    assert.deepEqual(check(claim('und', ['preus', 'mateixos'])), ['discriminating-words']);
+    assert.deepEqual(check(claim('nl', ['het', 'ligt'], dutch)), []);
+    assert.deepEqual(check(claim('nl', [`tamb${eAcute}`, `per${oGrave}`])), ['discriminating-words'], 'Catalan words do not show Dutch');
   });
 
   test('never accepts a recommendation to add languages or markets', () => {
-    const result = validateAnswer({ findings: [claim(['valley', 'rooms'], { notes: { ...notes, en: 'Add new languages to reach visitors from more countries.' } })] }, context(plan));
+    const result = validateAnswer({ findings: [claim('ca', [`tamb${eAcute}`, `per${oGrave}`], catalan, { notes: { ...notes, en: 'Add new languages to reach visitors from more countries.' } })] }, intl);
     assert.deepEqual(reasons(result), ['new-market']);
   });
 });

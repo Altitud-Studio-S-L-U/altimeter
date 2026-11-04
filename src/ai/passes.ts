@@ -470,7 +470,7 @@ ${outputContract}`;
       return `Judge ${page} for the international rules in scope: translation parity with its alternates, mixed languages, and whether the content language matches what the page declares.${site}
 
 - Decide the content language from the text itself, never from lang, hreflang or the URL.
-- For every finding about the language of content, set language to the BCP 47 tag you detected and list in discriminatingWords at least two words, copied from the cited items, that only that language uses. Otherwise set language to null and discriminatingWords to [].
+- For every finding about the language of content, set language to the BCP 47 tag you detected and list in discriminatingWords at least two words, copied from the cited items, that only that language uses, such as articles, pronouns or conjunctions that neighbouring languages do not share. Otherwise set language to null and discriminatingWords to [].
 - Never recommend entering new markets, targeting new countries or adding languages; those are the owner's decisions.
 
 ${outputContract}`;
