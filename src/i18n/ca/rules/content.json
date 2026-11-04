@@ -54,7 +54,7 @@
     "fix": "Posa primer les paraules més importants perquè el truncament només elimini la marca o les paraules secundàries.",
     "messages": {
       "fail": "La longitud del títol pot provocar-ne la reescriptura o el truncament.",
-      "fail:short": "El títol té {characters} caràcters; els títols molt curts es reescriuen més sovint.",
+      "fail:short": "El títol té {characters} caràcter(s); els títols molt curts es reescriuen més sovint.",
       "fail:likely-truncated": "El títol fa uns {width} px d'amplada en Arial a 20 px, de manera que probablement es trunca als resultats d'ordinador (és una estimació, no un límit de Google)."
     }
   },
@@ -129,7 +129,7 @@
       "fail:placeholder": "La metadescripció conté un marcador de posició de plantilla sense omplir.",
       "fail:same-as-title": "La metadescripció repeteix el títol en lloc de resumir la pàgina.",
       "fail:keyword-list": "La metadescripció sembla una llista de {segments} frases curtes; l'analista hauria de confirmar si és una llista de paraules clau.",
-      "fail:short": "La metadescripció té {words} paraules; l'analista hauria de confirmar si resumeix la pàgina."
+      "fail:short": "La metadescripció té {words} paraula(es); l'analista hauria de confirmar si resumeix la pàgina."
     }
   },
   "content-data-nosnippet-invalid": {
@@ -138,8 +138,8 @@
     "fix": "Fes servir data-nosnippet només en elements span, div o section. Inclou-lo a l'HTML del servidor o en el moment en què JS insereix l'element per primera vegada.",
     "messages": {
       "fail": "data-nosnippet es fa servir d'una manera que Google no respecta tal com es pretén.",
-      "fail:unsupported-element": "{count} atributs data-nosnippet són en elements que Google no respecta ({tags}); només s'admeten span, div i section.",
-      "fail:added-by-javascript": "JavaScript afegeix {count} atributs data-nosnippet a elements que existeixen a l'HTML del servidor sense aquests atributs.",
+      "fail:unsupported-element": "{count} atribut(s) data-nosnippet són en elements que Google no respecta ({tags}); només s'admeten span, div i section.",
+      "fail:added-by-javascript": "JavaScript afegeix {count} atribut(s) data-nosnippet a elements que existeixen a l'HTML del servidor sense aquest atribut.",
       "fail:covers-main-content": "Els elements amb data-nosnippet contenen aproximadament un {share} % del contingut principal, de manera que aquest text queda fora dels fragments i de l'entrada de les AI Overviews."
     }
   },
@@ -167,7 +167,7 @@
     "fix": "Posa el text del títol a l'h1. Quan una imatge de logotip fa d'h1, dona-li un text alternatiu que anomeni la pàgina o la marca.",
     "messages": {
       "fail": "L'h1 de la pàgina no dona cap títol principal.",
-      "fail:empty": "{count} elements h1 no tenen text, alt d'imatge ni etiqueta, de manera que no tenen nom accessible.",
+      "fail:empty": "{count} element(s) h1 no tenen text, alt d'imatge ni etiqueta, de manera que no tenen nom accessible.",
       "fail:hidden": "Tots els h1 de la pàgina ({count}) queden fora de la vista a la renderització."
     }
   },
@@ -176,7 +176,7 @@
     "why": "Els nivells d'encapçalament que se salten fan que l'esquema sigui més difícil de seguir amb tecnologies d'assistència. Google afirma que l'ordre dels encapçalaments no importa per al posicionament, de manera que això és una qüestió d'accessibilitat.",
     "fix": "Fes servir els nivells d'encapçalament per reflectir l'estructura (h2 per a les seccions, h3 per a les subseccions). Dona estil amb CSS, no amb el nivell d'encapçalament.",
     "messages": {
-      "fail": "Els nivells d'encapçalament se salten {count} vegades, la primera de {from} a {to} a «{heading}»; això afecta l'accessibilitat, no el posicionament."
+      "fail": "Hi ha salts de nivell d'encapçalament ({count}); el primer, de {from} a {to}, és a «{heading}». Això afecta l'accessibilitat, no el posicionament."
     }
   },
   "content-headings-descriptive": {
@@ -238,9 +238,9 @@
     "why": "Les directrius de Google sobre el contingut creat amb IA generativa demanen exactitud i qualitat sigui quin sigui el mètode de producció. Les frases d'assistent que han quedat, els marcadors de posició de plantilla o les variables sense omplir mostren que el contingut es va publicar sense revisió.",
     "fix": "Elimina les restes i revisa a mà tot el contingut per comprovar-ne l'exactitud; Google demana la verificació manual dels fets de tota la sortida d'IA, incloses les metadades.",
     "messages": {
-      "fail": "S'han trobat {count} restes de generació o de plantilla sense editar (ubicació: {where}).",
-      "fail:template-token": "S'han trobat {count} marcadors de plantilla sense omplir o restes de generació (ubicació: {where}).",
-      "fail:assistant-phrase": "S'han trobat {count} frases d'assistent sense editar (ubicació: {where})."
+      "fail": "S'han trobat restes de generació o de plantilla sense editar ({count}; ubicació: {where}).",
+      "fail:template-token": "S'han trobat marcadors de plantilla sense omplir o restes de generació ({count}; ubicació: {where}).",
+      "fail:assistant-phrase": "S'han trobat frases d'assistent sense editar ({count}; ubicació: {where})."
     }
   },
   "content-ymyl-classification": {
@@ -260,7 +260,7 @@
     "why": "Les polítiques de Google contra el contingut brossa prohibeixen el text ocult per als usuaris però present per als cercadors, com el text del color del fons, darrere d'imatges o posicionat fora de la pantalla. Permeten explícitament pestanyes, acordions, controls lliscants, indicadors de funció i text per a lectors de pantalla.",
     "fix": "Elimina el text ocult o fes-lo visible com a contingut útil.",
     "messages": {
-      "fail": "{words} paraules en {blocks} blocs de text estan ocultes per als usuaris ({reasons}); l'analista hauria de jutjar si això correspon a la política sobre text ocult."
+      "fail": "{words} paraules estan ocultes per als usuaris en {blocks} bloc(s) de text ({reasons}); l'analista hauria de jutjar si això correspon a la política sobre text ocult."
     }
   },
   "content-hidden-links": {
@@ -268,7 +268,7 @@
     "why": "Les polítiques de Google contra el contingut brossa prohibeixen els enllaços ocults per als usuaris, com un enllaç en un sol caràcter o amb un estil que el fa invisible, quan existeixen per manipular el posicionament.",
     "fix": "Elimina els enllaços ocults. Si el lloc pot estar compromès, investiga si hi ha codi injectat (consulta content-hacked-signals).",
     "messages": {
-      "fail": "{count} enllaços externs que es poden seguir estan ocults o ocupen un sol caràcter (amfitrions: {hosts}); l'analista hauria de jutjar si són elements legítims de la interfície."
+      "fail": "Enllaços externs que es poden seguir i que estan ocults o ocupen un sol caràcter: {count} (amfitrions: {hosts}). L'analista hauria de jutjar si són elements legítims de la interfície."
     }
   },
   "content-keyword-stuffing": {
@@ -306,9 +306,9 @@
     "fix": "Neteja la intrusió, aplica pedaços al CMS i als connectors, canvia les credencials i, després, sol·licita una revisió a Search Console si hi ha una acció manual.",
     "messages": {
       "fail": "S'han trobat senyals compatibles amb contingut brossa injectat; l'analista els hauria de contrastar amb el tema del lloc.",
-      "fail:spam-urls-in-sitemap": "{count} URL del mapa del lloc contenen vocabulari típic del contingut brossa injectat.",
-      "fail:spam-vocabulary": "{count} enllaços o passatges contenen vocabulari típic del contingut brossa injectat.",
-      "fail:foreign-script-block": "{count} pàgines contenen grans blocs de text en xinès, japonès o coreà, a diferència de la resta del lloc.",
+      "fail:spam-urls-in-sitemap": "URL del mapa del lloc amb vocabulari típic del contingut brossa injectat: {count}.",
+      "fail:spam-vocabulary": "Enllaços o passatges amb vocabulari típic del contingut brossa injectat: {count}.",
+      "fail:foreign-script-block": "Pàgines amb grans blocs de text en xinès, japonès o coreà, a diferència de la resta del lloc: {count}.",
       "fail:cloaked-spam": "«{term}» se serveix a l'agent d'usuari de Googlebot però no a un agent d'usuari de navegador."
     }
   },
@@ -317,7 +317,7 @@
     "why": "Les polítiques de Google contra el contingut brossa inclouen les pàgines d'afiliats amb poc contingut que copien descripcions i ressenyes dels comerciants sense aportar valor original. Els enllaços d'afiliat en si mateixos són correctes.",
     "fix": "Afegeix una avaluació original (evidències, mesures, comparacions). Enllaça a diversos venedors. Qualifica els enllaços amb rel=sponsored o nofollow.",
     "messages": {
-      "fail": "La pàgina té {count} enllaços d'afiliat ({networks}); l'analista hauria de jutjar si el contingut aporta una avaluació original."
+      "fail": "La pàgina té {count} enllaç(os) d'afiliat ({networks}); l'analista hauria de jutjar si el contingut aporta una avaluació original."
     }
   },
   "content-paid-links-unqualified": {
@@ -325,7 +325,7 @@
     "why": "Google demana als llocs que qualifiquin els enllaços de pagament, patrocinats i d'afiliat amb rel=sponsored o rel=nofollow. Els enllaços de pagament sense qualificar entren dins de la política contra els enllaços brossa.",
     "fix": "Afegeix rel=\"sponsored\" (o nofollow) als enllaços de pagament i d'afiliat.",
     "messages": {
-      "fail": "{count} de {total} enllaços de pagament o d'afiliat no tenen rel=\"sponsored\" ni rel=\"nofollow\"."
+      "fail": "Enllaços de pagament o d'afiliat sense rel=\"sponsored\" ni rel=\"nofollow\": {count} de {total}."
     }
   },
   "content-ugc-link-qualifiers": {
@@ -333,7 +333,7 @@
     "why": "Google recomana rel=ugc o rel=nofollow per als enllaços del contingut generat per usuaris i documenta com afecta un lloc el contingut brossa generat per usuaris que no es modera.",
     "fix": "Afegeix rel=ugc o nofollow als enllaços dels usuaris, modera els comentaris i aplica mesures contra el contingut brossa.",
     "messages": {
-      "fail": "{count} enllaços externs del contingut generat per usuaris no tenen rel=\"ugc\" ni rel=\"nofollow\"."
+      "fail": "Enllaços externs del contingut generat per usuaris sense rel=\"ugc\" ni rel=\"nofollow\": {count}."
     }
   },
   "content-link-schemes-visible": {
@@ -349,9 +349,9 @@
     "why": "Google fa servir el text d'ancoratge per entendre la pàgina enllaçada, i el text alternatiu d'una imatge fa de text d'ancoratge als enllaços d'imatge. Els enllaços sense text i sense alt no donen cap context.",
     "fix": "Afegeix un text descriptiu. Als enllaços d'imatge, defineix un alt que descrigui la destinació.",
     "messages": {
-      "fail": "{count} enllaços no tenen text, alt d'imatge ni etiqueta.",
-      "fail:internal": "{count} enllaços no tenen text, alt d'imatge ni etiqueta; {internal} apunten a pàgines d'aquest lloc.",
-      "fail:external": "{count} enllaços externs no tenen text, alt d'imatge ni etiqueta."
+      "fail": "Enllaços sense text, alt d'imatge ni etiqueta: {count}.",
+      "fail:internal": "Enllaços sense text, alt d'imatge ni etiqueta: {count} (cap a pàgines d'aquest lloc: {internal}).",
+      "fail:external": "Enllaços externs sense text, alt d'imatge ni etiqueta: {count}."
     }
   },
   "content-anchor-text-quality": {
@@ -360,8 +360,8 @@
     "fix": "Fes servir ancoratges concisos i descriptius que tinguin sentit fora de context, per exemple «preus del disseny de logotips» en lloc de «fes clic aquí».",
     "messages": {
       "fail": "Alguns textos d'ancoratge no descriuen la seva destinació.",
-      "fail:generic": "{count} enllaços del contingut principal fan servir text genèric ({examples}) i no hi ha cap enllaç descriptiu a la mateixa pàgina.",
-      "fail:too-long": "{count} enllaços tenen un text d'ancoratge de més de 100 caràcters.",
+      "fail:generic": "{count} enllaç(os) del contingut principal fan servir text genèric ({examples}) i no hi ha cap enllaç descriptiu a la mateixa pàgina.",
+      "fail:too-long": "{count} enllaç(os) tenen un text d'ancoratge de més de 100 caràcters.",
       "fail:repeated": "L'ancoratge «{anchor}» enllaça a la mateixa pàgina {count} vegades."
     }
   },
@@ -370,7 +370,7 @@
     "why": "Google assenyala que enllaçar a les fonts pot ajudar els usuaris a verificar les afirmacions i generar confiança, i aconsella nofollow només per als enllaços que el lloc no avala.",
     "fix": "Cita fonts primàries amb ancoratges descriptius. Fes servir nofollow només per als enllaços que no són de confiança.",
     "messages": {
-      "fail": "Tots els {count} enllaços externs editorials són nofollow; Google aconsella nofollow només per als enllaços que el lloc no avala."
+      "fail": "Tots els enllaços externs editorials ({count}) són nofollow; Google aconsella nofollow només per als enllaços que el lloc no avala."
     }
   },
   "content-img-alt-missing": {
@@ -378,9 +378,9 @@
     "why": "Google fa servir el text alternatiu, juntament amb la visió artificial i el text del voltant, per entendre les imatges, i el text alternatiu fa de text d'ancoratge a les imatges enllaçades. Si falta l'atribut alt, no hi ha cap alternativa textual; un alt buit és correcte per a les imatges decoratives.",
     "fix": "Afegeix un text alternatiu que descrigui la imatge en el context de la pàgina. Fes servir alt=\"\" només per a les imatges purament decoratives.",
     "messages": {
-      "fail": "{count} de {total} imatges no tenen atribut alt (unes altres {emptyAlt} tenen alt=\"\", cosa que és correcta per a les imatges decoratives).",
-      "fail:content-image": "{count} de {total} imatges no tenen atribut alt, incloses imatges de contingut del contingut principal (unes altres {emptyAlt} tenen alt=\"\", cosa que és correcta per a les imatges decoratives).",
-      "fail:other-image": "{count} de {total} imatges no tenen atribut alt (unes altres {emptyAlt} tenen alt=\"\", cosa que és correcta per a les imatges decoratives)."
+      "fail": "Imatges sense atribut alt: {count} de {total} (amb alt=\"\", que és correcte per a les imatges decoratives: {emptyAlt}).",
+      "fail:content-image": "Imatges sense atribut alt: {count} de {total}, incloses imatges que formen part del contingut principal (amb alt=\"\", que és correcte per a les imatges decoratives: {emptyAlt}).",
+      "fail:other-image": "Imatges sense atribut alt: {count} de {total} (amb alt=\"\", que és correcte per a les imatges decoratives: {emptyAlt})."
     }
   },
   "content-img-alt-quality": {
@@ -389,11 +389,11 @@
     "fix": "Escriu descripcions breus i riques en informació, per exemple «cadell de dàlmata jugant a buscar la pilota» en lloc de «cadell gos cadellet cadells».",
     "messages": {
       "fail": "Alguns textos alternatius no descriuen la seva imatge.",
-      "fail:filename": "{count} imatges fan servir el nom del fitxer o un nom de càmera com a text alternatiu.",
-      "fail:generic": "{count} imatges tenen un text alternatiu genèric d'una sola paraula; l'analista les hauria de revisar en context.",
-      "fail:keyword-list": "{count} imatges tenen un text alternatiu format per una llista de paraules clau; l'analista les hauria de revisar.",
+      "fail:filename": "{count} imatge(s) fan servir el nom del fitxer o un nom de càmera com a text alternatiu.",
+      "fail:generic": "{count} imatge(s) tenen un text alternatiu genèric d'una sola paraula; l'analista ho hauria de revisar en context.",
+      "fail:keyword-list": "{count} imatge(s) tenen un text alternatiu format per una llista de paraules clau; l'analista ho hauria de revisar.",
       "fail:repeated": "{count} imatges diferents comparteixen el text alternatiu «{alt}»; l'analista les hauria de revisar.",
-      "fail:too-long": "{count} imatges tenen un text alternatiu de més de 250 caràcters; l'analista les hauria de revisar."
+      "fail:too-long": "{count} imatge(s) tenen un text alternatiu de més de 250 caràcters; l'analista ho hauria de revisar."
     }
   },
   "content-img-filename": {
@@ -401,7 +401,7 @@
     "why": "Google descriu els noms de fitxer descriptius com una pista molt lleu sobre el tema d'una imatge. Els noms amb hash generats per un CMS o un CDN són habituals i tenen poc impacte.",
     "fix": "Fes servir noms de fitxer breus, descriptius i localitzats, per exemple el-meu-gatet-negre-nou.jpg, i codifica per a URL els caràcters no llatins.",
     "messages": {
-      "fail": "{count} de {total} imatges de contingut de {url} tenen noms de fitxer no descriptius, un senyal molt lleu."
+      "fail": "Imatges de contingut de {url} amb noms de fitxer no descriptius: {count} de {total}, un senyal molt lleu."
     }
   },
   "content-img-css-background": {
@@ -419,7 +419,7 @@
     "fix": "Serveix un format compatible, per exemple AVIF/WebP amb una alternativa JPEG/PNG al src de l'img.",
     "messages": {
       "fail": "Algunes imatges fan servir un format que Google Imatges no indexa.",
-      "fail:unsupported-format": "{count} imatges fan servir un format que Google Imatges no indexa.",
+      "fail:unsupported-format": "{count} imatge(s) fan servir un format que Google Imatges no indexa.",
       "fail:extension-mismatch": "{url} té l'extensió .{extension}, però els seus bytes corresponen a {actual}."
     }
   },
@@ -428,7 +428,7 @@
     "why": "Google documenta que Googlebot no es desplaça ni fa clic, però renderitza amb una àrea de visualització alta, de manera que troba les imatges que es carreguen quan hi entren. Les imatges que només es carreguen després d'un esdeveniment de desplaçament o d'un clic no es troben.",
     "fix": "Treu loading=lazy de les imatges de la part visible sense desplaçament. Fes servir la càrrega diferida nativa o IntersectionObserver, que carreguen sense accions de l'usuari.",
     "messages": {
-      "fail": "{count} imatges només carreguen la font real després d'un desplaçament, cosa que Googlebot no fa."
+      "fail": "{count} imatge(s) només carreguen la font real després d'un desplaçament, cosa que Googlebot no fa."
     }
   },
   "content-preferred-image": {
@@ -490,7 +490,7 @@
     "why": "Google fa servir sistemes d'actualitat quan els usuaris esperen informació recent. El contingut perenne no necessita actualitzacions freqüents, i Google adverteix contra els canvis de data merament estètics.",
     "fix": "Actualitza els fets i les xifres obsolets i canvia la data en conseqüència, o etiqueta el contingut com a històric.",
     "messages": {
-      "fail": "{count} afirmacions de la pàgina estan datades en anys anteriors a {year}; l'analista hauria de jutjar si el tema necessita informació més recent."
+      "fail": "Afirmacions de la pàgina datades en anys anteriors a {year}: {count}. L'analista hauria de jutjar si el tema necessita informació més recent."
     }
   },
   "content-intent-match": {
@@ -526,7 +526,7 @@
     "why": "Les consultes per a les quals una pàgina ja es posiciona entre les posicions 11 i 20 són les que costa menys millorar: la pàgina és rellevant, i una resposta millor o uns enllaços interns més forts la poden portar a la primera pàgina.",
     "fix": "Per a cada consulta, comprova que la pàgina la respon de manera completa i aviat, i enllaça-hi des de pàgines relacionades amb un text d'ancoratge descriptiu.",
     "messages": {
-      "fail": "{count} consultes es posicionen entre les posicions 11 i 20, per exemple «{query}» per a {page} a la posició {position}."
+      "fail": "Consultes entre les posicions 11 i 20: {count}; per exemple, «{query}» per a {page} a la posició {position}."
     }
   },
   "content-gsc-traffic-drop": {
@@ -534,7 +534,7 @@
     "why": "Una caiguda significativa dels clics d'una pàgina apunta a una pèrdua de posicionament, a un problema d'indexació o a un canvi en la demanda, i val la pena revisar-la abans que s'estengui.",
     "fix": "Inspecciona la pàgina per detectar canvis d'indexació i de canònica, compara'n les consultes entre els dos períodes a Search Console i revisa les edicions recents de la pàgina.",
     "messages": {
-      "fail": "{page} ha baixat de {before} a {now} clics respecte dels 28 dies anteriors."
+      "fail": "{page} ha baixat de {before} clics a {now} respecte dels 28 dies anteriors."
     }
   },
   "content-bing-low-ctr": {
