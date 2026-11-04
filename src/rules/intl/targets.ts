@@ -59,11 +59,12 @@ const onlyXDefault = (target: Target) => target.annotations.every(isXDefault);
 
 function hopEvidence(evidence: EvidenceStore, url: string, fetch: PageFacts['fetch']): string {
   const chain = fetch.hops.map(hop => `${hop.status} ${hop.url}${hop.location ? ` -> ${hop.location}` : ''}`).join('\n');
+  const excerpt = chain || fetch.error?.message;
   return evidence.add({
     kind: fetch.hops.length > 1 ? 'redirect' : 'http',
     url,
-    label: fetch.error ? evidenceLabel('request for the hreflang target failed ({code})', { code: fetch.error.code }) : evidenceLabel('response to a request for the hreflang target without Accept-Language'),
-    excerpt: chain || fetch.error?.message || 'no response',
+    label: fetch.error ? evidenceLabel('request for the hreflang target failed ({fetchError})', { fetchError: fetch.error.code }) : evidenceLabel('response to a request for the hreflang target without Accept-Language'),
+    ...(excerpt ? { excerpt } : {}),
   });
 }
 
@@ -276,7 +277,10 @@ export const onNonCanonicalPage: RuleImplementation = {
     const self = normalizeUrl(page!.fetch.finalUrl)!;
     const first = annotationEvidence(evidence, annotations[0]!, evidenceLabel('hreflang annotation on this page'));
     if (page!.fetch.status !== 200) {
-      return fail('medium', [first, evidence.add({ kind: 'http', url: self, label: evidenceLabel('HTTP status of the page that declares hreflang'), excerpt: String(page!.fetch.status ?? page!.fetch.error?.code ?? 'none') })],
+      const status = page!.fetch.status === undefined
+        ? evidence.add({ kind: 'http', url: self, label: evidenceLabel('page that declares hreflang, which got no response ({fetchError})', { fetchError: page!.fetch.error?.code ?? 'connection' }) })
+        : evidence.add({ kind: 'http', url: self, label: evidenceLabel('HTTP status of the page that declares hreflang'), excerpt: `HTTP ${page!.fetch.status}` });
+      return fail('medium', [first, status],
         { status: String(page!.fetch.status ?? 'none'), url: self }, 'not-200');
     }
     const results: RuleResult[] = [];

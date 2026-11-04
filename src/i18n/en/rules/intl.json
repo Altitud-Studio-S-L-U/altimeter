@@ -226,13 +226,13 @@
   },
   "intl-mixed-language-page": {
     "messages": {
-      "fail": "About {share}% of the main content reads as {secondary} on a page that is mostly {primary}. Confirm whether this is intentional, such as a quotation or bilingual legal text."
+      "fail": "About {share, number, percent} of the main content reads as {secondary} on a page that is mostly {primary}. Confirm whether this is intentional, such as a quotation or bilingual legal text."
     }
   },
   "intl-untranslated-variant": {
     "messages": {
       "fail": "{url} and {other} are declared as different languages ({languages}) but look untranslated.",
-      "fail:near-identical": "{url} and {other} are declared as different languages ({languages}) but their main content is {similarity}% identical.",
+      "fail:near-identical": "{url} and {other} are declared as different languages ({languages}) but their main content is {similarity, number, percent} identical.",
       "fail:same-language": "{url} and {other} are declared as different languages ({languages}) but both read as {detected}."
     }
   },

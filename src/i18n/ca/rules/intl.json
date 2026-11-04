@@ -312,7 +312,7 @@
     "why": "Google recomana una sola llengua per pàgina per al contingut principal i la navegació, perquè detecta la llengua de la pàgina a partir del contingut visible i les pàgines mixtes són més difícils de fer coincidir amb els usuaris.",
     "fix": "Fes servir una sola llengua per al contingut i la navegació de cada pàgina. Posa les traduccions en URL separades.",
     "messages": {
-      "fail": "Aproximadament un {share} % del contingut principal sembla escrit en {secondary} en una pàgina que és majoritàriament en {primary}. Confirma si és intencionat, com una citació o un text legal bilingüe."
+      "fail": "Aproximadament un {share, number, percent} del contingut principal sembla escrit en {secondary} en una pàgina que és majoritàriament en {primary}. Confirma si és intencionat, com una citació o un text legal bilingüe."
     }
   },
   "intl-untranslated-variant": {
@@ -321,7 +321,7 @@
     "fix": "Tradueix el contingut principal, o elimina la configuració regional sense traduir de les anotacions hreflang i canonicalitza-la a l'original.",
     "messages": {
       "fail": "{url} i {other} es declaren per a llengües diferents ({languages}), però semblen sense traduir.",
-      "fail:near-identical": "{url} i {other} es declaren per a llengües diferents ({languages}), però el seu contingut principal és idèntic en un {similarity} %.",
+      "fail:near-identical": "{url} i {other} es declaren per a llengües diferents ({languages}), però el seu contingut principal és idèntic en un {similarity, number, percent}.",
       "fail:same-language": "{url} i {other} es declaren per a llengües diferents ({languages}), però totes dues semblen escrites en {detected}."
     }
   },
