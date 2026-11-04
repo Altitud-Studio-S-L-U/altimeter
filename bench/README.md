@@ -1,6 +1,6 @@
 # Integrated benchmark
 
-`npm run bench` audits 27 synthetic sites end to end, over HTTPS and with Chrome, and checks each audit against what the scenario declares. It prints true and false positives and negatives per rule with precision and recall, then every expectation that did not hold. It exits 0 when every expectation holds, 1 when one does not, and 2 when Chrome is missing or an argument is wrong.
+`npm run bench` audits 46 synthetic sites end to end, over HTTPS and with Chrome, and checks each audit against what the scenario declares. It prints true and false positives and negatives per rule with precision and recall, then every expectation that did not hold. It exits 0 when every expectation holds, 1 when one does not, and 2 when Chrome is missing or an argument is wrong.
 
 ```sh
 npm run bench
@@ -9,14 +9,14 @@ npm run bench -- --repeat 3     # also fail when a scenario's deterministic find
 npm run bench -- --findings     # also list every failing finding, to help write expectations
 ```
 
-It needs Chrome or Chromium (found as the CLI finds it, or through `CHROME_PATH`) and takes about three to four minutes on a laptop.
+It needs Chrome or Chromium (found as the CLI finds it, or through `CHROME_PATH`) and takes about seven to eight minutes on a laptop, half of them for the [hold-out set](#the-hold-out-set).
 
 ## How it works
 
 - **One port, both protocols.** Each scenario gets a fresh loopback port that answers plain HTTP and HTTPS: the first byte of a connection decides, since 0x16 opens a TLS handshake. URL variants, `http://` upgrades and `www` counterparts therefore keep the same explicit port, as the collector builds them. The `Host` header picks the site and SNI picks the certificate.
 - **Nothing leaves the machine.** The scenario's host names resolve to 127.0.0.1 through the `lookup` option that `audit()` passes to the HTTP client, the TLS probe and Chrome's guarded proxy. Every other name fails to resolve, and the network policy admits private addresses only for those names. The sites use the reserved `.example` domain because Altimeter treats `*.test` hosts as staging hosts and skips several rules for them.
 - **Real certificates, generated per run.** `test/support/certificates.ts` creates a CA in memory and a leaf for each scenario's hosts; servers send the leaf with the CA. The audit receives the CA through its `ca` option: the HTTP client and the TLS probe trust it besides the default roots, and Chrome accepts the chain through `--ignore-certificate-errors-spki-list`. No key is written to disk.
-- **The real pipeline.** Every scenario runs through `audit()` with Chrome rendering, no model provider and crawls without a delay. Lighthouse runs, once, only in the two scenarios that need it.
+- **The real pipeline.** Every scenario runs through `audit()` with Chrome rendering, no model provider and crawls without a delay. Lighthouse runs, once, only in the three scenarios that need it.
 
 ## Expectations and the scores
 
@@ -60,6 +60,25 @@ The shared site is an invented engineering studio in English and Spanish (`bench
 | `header-conflicts` | A Spanish `Content-Language` on an English page, a `Link` hreflang without the page and `X-Robots-Tag: noindex`. |
 | `transport-problems` | An expired certificate on `www`, a 302 HTTP upgrade and no Strict-Transport-Security. |
 | `crux-no-data` | A Chrome UX Report endpoint with no data for the page: information, not a failing Core Web Vital. |
+| `holdout-ai-robots-named` | robots.txt groups that name the AI training crawlers, a legacy `Perplexity` token, AI search agents answered 403 and 402 at the edge, and a `dateModified` stamped per request. |
+| `holdout-ai-robots-inherited` | A `*` group that disallows the site while Googlebot and Bingbot keep their own groups, the same edge answers, and prerendered HTML for Googlebot. |
+| `holdout-robots-directives` | `noindex` and `crawl-delay` lines, a Googlebot group that drops the crawl-trap rules of `*`, a blocked analytics script and the Spanish services blocked for Googlebot. |
+| `holdout-robots-redirected` | robots.txt redirected to the HTML home, a `<base href>` that sends relative links to 404, a canonical in the body, `noarchive` and `unavailable_after` ten days away. |
+| `holdout-legacy-host` | robots.txt answering 503, an XHTML doctype, a 1024-pixel viewport without zoom, HSTS preload with a one-day max-age, framing limited by a meta CSP and a canonical to staging. |
+| `holdout-noindex-blocked` | A noindex legal notice that robots.txt disallows, with `indexifembedded`, `noarchive`, an older year in its title and no description; well-formed business identifiers. |
+| `holdout-head-pixel` | A tracking pixel in the head before the canonical and hreflang, 10px text, a 900px table, zoom capped at 3x, an icon-only link and one anchor repeated ten times. |
+| `holdout-head-js` | A script that sets the title, changes the canonical and adds hreflang and a BreadcrumbList, with the stylesheet blocked for Googlebot, geo meta tags, an `unload` listener and a font preload without `crossorigin`. |
+| `holdout-noindex-js` | A noindex that JavaScript removes, which also adds the only canonical, prefixes an unread counter to the title and marks a block `data-nosnippet`; a noscript pixel. |
+| `holdout-canonical-conflict` | Two canonicals, an hreflang link with a media query, a delayed meta refresh, a past `unavailable_after` with `indexifembedded`, `notranslate` and only nofollow citations. |
+| `holdout-hreflang-invalid` | `fil`, `es-419`, `pt_BR`, a root-relative href, `de` and `DE` on two URLs, one URL for two languages and a canonical with a fragment. |
+| `holdout-hreflang-regional` | `EN`, `en-GB` and `en-US` on one URL, `es`, x-default and a page for US clients declared as `us`. |
+| `holdout-hreflang-cross-language` | A Spanish page canonicalised to the English one, in a cluster of `en-GB`, `es-ES` and a Catalan page declared as `ca`, without x-default. |
+| `holdout-mixed-content` | A script and an image over http without `upgrade-insecure-requests`, http links, canonical and hreflang, a combined preconnect and an iframe without a title. |
+| `holdout-mixed-upgraded` | The same requests behind `upgrade-insecure-requests`, a relative canonical, a scrolling carousel, speculation rules, a titled iframe and a form declared as a WebMCP tool. |
+| `holdout-template-leftovers` | An empty title beside an SVG title, an empty description, an assistant phrase, template tokens and a JSON-LD block without `@context`, hidden notes for AI assistants and a 300-row table. |
+| `holdout-blog` | A crawled blog: posts with and without bylines, images, matching dates and qualified links, a stale year in a title, a canonical loop, page 2 canonicalised to page 1, hash routes and a post that answers 500. |
+| `holdout-shop` | A crawled shop: a free product with an out-of-range rating, a bad GTIN and shipping in another currency beside its correct twin, events, an expired job and a LocalBusiness. |
+| `holdout-lab-field` | The service page under Lighthouse with field data: a 1.5-second script at load, an unnamed button, unused unminified JavaScript and a stylesheet cached for an hour. |
 
 ## The traps
 
@@ -97,6 +116,18 @@ Not applicable, and why:
 - **Decorative images that cannot rank in image search.** `alt=""` is never counted as missing; `studio-home` expects `content-img-alt-missing` not to fail.
 
 There are no known gaps: every expectation must hold.
+
+## The hold-out set
+
+The `holdout-*` scenarios measure whether rules do what their catalog entries promise, rather than whether they fit fixtures written next to them. They check 128 rules that no other scenario checks, with 192 expectations: 132 failures to find and 60 correct forms, most of them the exemptions and edge cases that the entries name. Each expectation was derived from the rule's catalog entry alone (its thresholds, exemptions and notes), without reading the rule implementations or their tests, and the scenarios were committed before they were first run. `bench/support/holdout.ts` holds the few helpers they share.
+
+`npm run bench` runs them after the other scenarios, in about four minutes. To run only some of them, name each one:
+
+```sh
+npm run bench -- --scenario holdout-blog --scenario holdout-shop --scenario holdout-lab-field
+```
+
+An expectation of the set that does not hold stays failing until it is triaged against the rule: a scenario that did not serve what it meant is fixed, and so is a rule that contradicts its catalog entry; an entry that is ambiguous for the case is clarified. An expectation is never weakened, deleted or marked `known` to make the run pass.
 
 ## Adding a scenario
 
