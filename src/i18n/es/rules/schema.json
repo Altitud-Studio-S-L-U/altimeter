@@ -197,7 +197,7 @@
     "fix": "Marca lo que realmente es lo principal de la página. Usa ItemList/CollectionPage en los listados, y usa el marcado de carrusel/ItemList solo donde Google lo documenta.",
     "messages": {
       "fail": "Es posible que el tipo de marcado principal no se ajuste al propósito de la página: {items}",
-      "fail:several-products": "La página lleva {items} elementos en el nivel superior, como haría un listado; el marcado Product corresponde a las páginas de un solo producto.",
+      "fail:several-products": "La página lleva {items} en el nivel superior, como haría un listado; el marcado Product corresponde a las páginas de un solo producto.",
       "fail:article-on-home": "La página de inicio lleva marcado {items}; comprueba si la página es un artículo.",
       "fail:profile-page-on-home": "La página de inicio lleva marcado ProfilePage; comprueba si trata de una sola persona u organización."
     }
@@ -273,7 +273,7 @@
     "messages": {
       "fail": "El marcado WebSite con el nombre del sitio de la página de inicio requiere atención: {items}",
       "fail:missing": "La página de inicio a la que llega Googlebot no tiene ningún elemento WebSite con nombre; Google elegirá el nombre del sitio a partir de otras señales.",
-      "fail:several-websites": "La página de inicio tiene varios elementos WebSite ({items}); Google pide un solo nodo WebSite.",
+      "fail:several-websites": "La página de inicio tiene {items}; Google pide un solo nodo WebSite.",
       "fail:url-other-host": "La propiedad url de WebSite apunta a otro host: {items}",
       "fail:name-conflict": "El nombre del sitio difiere entre el marcado WebSite y otras fuentes: {items}"
     }
@@ -506,7 +506,7 @@
       "fail:expired": "{count} oferta(s) de empleo caducaron antes de que se obtuviera la página, pero la página está activa y es indexable: {items}",
       "fail:missing-required": "Al marcado JobPosting le faltan propiedades obligatorias: {items}",
       "fail:remote-without-applicant-location": "{count} oferta(s) de empleo en remoto no tienen applicantLocationRequirements: {items}",
-      "fail:several-jobs": "La página lleva {items} elementos; JobPosting corresponde a las páginas de una sola oferta de empleo."
+      "fail:several-jobs": "La página lleva {items}; JobPosting corresponde a las páginas de una sola oferta de empleo."
     }
   },
   "schema-course-list": {
