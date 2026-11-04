@@ -7,11 +7,17 @@ import type { Language } from './i18n/messages.ts';
 import { runRules, type RuleImplementation } from './rules/engine.ts';
 import { implementations as registered } from './rules/registry.ts';
 import { buildReport, type Report } from './report/model.ts';
+import { HttpClient } from './fetch/http.ts';
+import { loadLogin } from './owner/credential-store.ts';
+import { refreshAccessToken, tokenFromEnvironment, tokenFromServiceAccount, type AccessToken } from './owner/google-auth.ts';
+import { fetchGscData } from './owner/gsc.ts';
 
 export interface AuditOptions extends CollectOptions {
   readonly language?: Language;
   /** Rule implementations to run; defaults to every registered implementation. */
   readonly implementations?: ReadonlyMap<string, RuleImplementation>;
+  /** Read the owner's Search Console data; `property` overrides the automatic choice. */
+  readonly gsc?: { readonly property?: string };
   /** Options recorded in the report, already free of secrets. */
   readonly recordedOptions?: Readonly<Record<string, string | number | boolean>>;
 }
@@ -30,13 +36,39 @@ function markAuditability(collected: CollectResult): CollectResult {
   return { ...collected, site: { ...collected.site, pages } };
 }
 
+/** The first Search Console credential available: a short-lived token, a service account key, then a stored login. */
+export async function searchConsoleToken(client: HttpClient): Promise<AccessToken | undefined> {
+  const fromEnvironment = tokenFromEnvironment();
+  if (fromEnvironment) return fromEnvironment;
+  if (process.env.ALTIMETER_GSC_SA_KEY) return tokenFromServiceAccount(client, process.env.ALTIMETER_GSC_SA_KEY);
+  const login = await loadLogin();
+  if (!login) return undefined;
+  return refreshAccessToken(client, { clientId: login.clientId, clientSecret: login.clientSecret, authUri: '', tokenUri: 'https://oauth2.googleapis.com/token' }, login.refreshToken);
+}
+
+async function withSearchConsole(collected: CollectResult, options: AuditOptions): Promise<CollectResult> {
+  if (!options.gsc) return collected;
+  const client = new HttpClient();
+  try {
+    const token = await searchConsoleToken(client);
+    if (!token) return { ...collected, warnings: [...collected.warnings, 'Search Console was requested but no credential was found. Run "altimeter gsc login" or set ALTIMETER_GSC_ACCESS_TOKEN.'] };
+    const inspectUrls = [...collected.site.pages.values()].filter(page => page.fetch.status === 200).map(page => page.fetch.finalUrl).slice(0, 10);
+    const gsc = await fetchGscData(client, token, { url: options.url, inspectUrls, ...(options.gsc.property ? { siteUrl: options.gsc.property } : {}) });
+    return { ...collected, site: { ...collected.site, owner: { ...collected.site.owner, gsc } } };
+  } catch (error) {
+    return { ...collected, warnings: [...collected.warnings, `Search Console data was not used: ${error instanceof Error ? error.message : 'unknown error'}`] };
+  } finally {
+    await client.close();
+  }
+}
+
 /**
- * Runs a deterministic audit of one URL: collects the facts, evaluates every implemented rule and builds the report.
- * This programmatic API is experimental until 1.0.
+ * Runs a deterministic audit of one URL: collects the facts, adds the owner's data when authorised, evaluates every
+ * implemented rule and builds the report. This programmatic API is experimental until 1.0.
  */
 export async function audit(options: AuditOptions): Promise<AuditResult> {
   const startedAt = new Date();
-  const collected = markAuditability(await collect(options));
+  const collected = await withSearchConsole(markAuditability(await collect(options)), options);
   const evidence = new EvidenceStore();
   const implementations = options.implementations ?? registered;
   const findings = runRules({ rules: catalogRules, implementations, site: collected.site, evidence });

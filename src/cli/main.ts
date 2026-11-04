@@ -15,6 +15,9 @@ import type { Report } from '../report/model.ts';
 import { cleanLine } from '../report/sanitize.ts';
 import { reportDirectory, writeReport } from '../report/write.ts';
 import { verifyExitCode, verifyTasks } from '../verify/index.ts';
+import { HttpClient } from '../fetch/http.ts';
+import { deleteLogin, loadLogin, loginStatus, saveLogin } from '../owner/credential-store.ts';
+import { readOAuthClient, startLoopbackLogin } from '../owner/google-auth.ts';
 import { version } from '../version.ts';
 
 export const help = `Altimeter ${version}: evidence-based SEO audits.
@@ -28,12 +31,16 @@ Usage:
   altimeter rules [--category <name>] [--stale]    List the rule catalog.
   altimeter explain <rule-id>                      Show a rule and its sources.
   altimeter doctor                                 Check Node.js and Chrome.
+  altimeter gsc login --client <client_secret.json> [--remember <dpapi|file>]
+  altimeter gsc logout | gsc status                Manage read-only Search Console access.
   altimeter --version                              Print the version.
 
 Audit options:
   --lang <en|es|ca>          Report language (default en).
   --crawl                    Crawl the site politely from the page, the home page and the sitemaps.
   --max-pages <n>            Pages to audit when crawling, 1 to 1000 (default 100).
+  --gsc                      Add Search Console data (from ALTIMETER_GSC_ACCESS_TOKEN, ALTIMETER_GSC_SA_KEY or gsc login).
+  --gsc-property <property>  Use this property, for example sc-domain:example.com.
   --out <dir>                Parent folder for reports (default ./altimeter-report).
   --no-render                Skip Chrome rendering and Lighthouse.
   --no-lighthouse            Skip Lighthouse.
@@ -71,7 +78,7 @@ async function auditCommand(args: string[]): Promise<number> {
     options: {
       lang: { type: 'string' }, out: { type: 'string' }, 'no-render': { type: 'boolean' }, 'no-lighthouse': { type: 'boolean' },
       'lab-runs': { type: 'string' }, 'fail-on': { type: 'string' }, 'allow-private-network': { type: 'boolean' }, quiet: { type: 'boolean' },
-      crawl: { type: 'boolean' }, 'max-pages': { type: 'string' },
+      crawl: { type: 'boolean' }, 'max-pages': { type: 'string' }, gsc: { type: 'boolean' }, 'gsc-property': { type: 'string' },
     },
   });
   if (positionals.length !== 1) throw new UsageError('audit needs exactly one URL.');
@@ -91,7 +98,8 @@ async function auditCommand(args: string[]): Promise<number> {
   const lang = language(values.lang);
   const quiet = values.quiet === true;
   const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(message)}\n`);
-  const recordedOptions = { crawl: values.crawl === true, maxPages, render: values['no-render'] !== true, lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true };
+  const useGsc = values.gsc === true || values['gsc-property'] !== undefined;
+  const recordedOptions = { crawl: values.crawl === true, maxPages, searchConsole: useGsc, render: values['no-render'] !== true, lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true };
   const result = await audit({
     url: url.href,
     language: lang,
@@ -101,6 +109,7 @@ async function auditCommand(args: string[]): Promise<number> {
     labRuns,
     crawl: values.crawl === true,
     maxPages,
+    ...(useGsc ? { gsc: { ...(values['gsc-property'] ? { property: values['gsc-property'] } : {}) } } : {}),
     ...(process.env.ALTIMETER_GOOGLE_API_KEY ? { cruxKey: process.env.ALTIMETER_GOOGLE_API_KEY } : {}),
     ...(log ? { log } : {}),
     recordedOptions,
@@ -184,6 +193,47 @@ async function verifyCommand(args: string[]): Promise<number> {
   return verifyExitCode(results);
 }
 
+async function gscCommand(args: string[]): Promise<number> {
+  const [action, ...rest] = args;
+  if (action === 'status') {
+    const status = await loginStatus();
+    process.stdout.write(status.stored ? `A Search Console login is stored (${status.mode}, since ${status.createdAt}).\n` : 'No Search Console login is stored.\n');
+    return 0;
+  }
+  if (action === 'logout') {
+    const login = await loadLogin().catch(() => undefined);
+    if (login) {
+      const client = new HttpClient();
+      await client.fetch('https://oauth2.googleapis.com/revoke', { method: 'POST', followRedirects: false, headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token: login.refreshToken }).toString() });
+      await client.close();
+    }
+    await deleteLogin();
+    process.stdout.write('The stored Search Console login was revoked and deleted.\n');
+    return 0;
+  }
+  if (action !== 'login') throw new UsageError('Use "altimeter gsc login", "gsc logout" or "gsc status".');
+  const { values } = parseArgs({ args: rest, strict: true, allowPositionals: false, options: { client: { type: 'string' }, remember: { type: 'string' } } });
+  if (!values.client) throw new UsageError('gsc login needs --client with the Desktop OAuth client JSON from your Google Cloud project.');
+  if (values.remember !== undefined && values.remember !== 'dpapi' && values.remember !== 'file') throw new UsageError('--remember must be dpapi (Windows) or file.');
+  const oauth = await readOAuthClient(resolve(values.client));
+  const client = new HttpClient();
+  try {
+    const login = await startLoopbackLogin(client, oauth);
+    process.stderr.write(`Open this address in your browser and allow read-only access to Search Console:\n\n${login.authorizationUrl}\n\n`);
+    const token = await login.token;
+    if (values.remember) {
+      if (!token.refreshToken) throw new UsageError('Google did not return a refresh token, so the login cannot be stored.');
+      const path = await saveLogin({ clientId: oauth.clientId, clientSecret: oauth.clientSecret, refreshToken: token.refreshToken, createdAt: new Date().toISOString() }, values.remember);
+      process.stdout.write(`Signed in. The login is stored in ${path}. If your OAuth consent screen is in Testing mode, Google expires it after 7 days.\n`);
+    } else {
+      process.stdout.write('Signed in for this session only. Pass the token to an audit with ALTIMETER_GSC_ACCESS_TOKEN, or log in again with --remember.\n');
+    }
+    return 0;
+  } finally {
+    await client.close();
+  }
+}
+
 function rulesCommand(args: string[]): number {
   const { values } = parseArgs({ args, strict: true, allowPositionals: false, options: { category: { type: 'string' }, stale: { type: 'boolean' }, lang: { type: 'string' } } });
   const lang = language(values.lang);
@@ -236,6 +286,7 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
       case 'render': return await renderCommand(rest);
       case 'compare': return await compareCommand(rest);
       case 'verify': return await verifyCommand(rest);
+      case 'gsc': return await gscCommand(rest);
       case 'rules': return rulesCommand(rest);
       case 'explain': return explainCommand(rest);
       case 'doctor': return doctorCommand();

@@ -4,6 +4,7 @@ import type { FetchResult } from '../fetch/http.ts';
 import type { RobotsAvailability } from '../fetch/robots.ts';
 import type { SitemapDocument } from '../fetch/sitemap.ts';
 import type { TlsFacts } from '../fetch/tls.ts';
+import type { GscData } from '../owner/gsc.ts';
 import type { ParsedHtml } from '../parse/html.ts';
 import type { StructuredData } from '../parse/structured-data.ts';
 import type { RenderResult } from '../render/chrome.ts';
@@ -39,6 +40,10 @@ export interface PageFacts {
    * than the page. No page rule is evaluated on it.
    */
   readonly notAuditable?: string;
+}
+
+export interface OwnerData {
+  readonly gsc?: GscData;
 }
 
 export interface AgentProbe {
@@ -90,6 +95,8 @@ export interface SiteFacts {
   readonly tls?: TlsFacts;
   /** The home page fetched with the user agent of each crawler that decides search and AI-answer visibility. */
   readonly agentProbes: readonly AgentProbe[];
+  /** Data the site owner authorised: Search Console today, more sources later. */
+  readonly owner?: OwnerData;
   /** Favicons, Open Graph images, logos and /llms.txt, fetched once each. */
   readonly resources: readonly ResourceFacts[];
   /**

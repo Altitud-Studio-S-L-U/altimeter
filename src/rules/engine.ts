@@ -90,6 +90,7 @@ export function inputAvailable(input: InputId, site: SiteFacts, page: PageFacts 
     case 'ua-probe':
       return page ? (page.uaProbes?.length ?? 0) > 0 : site.agentProbes.length > 0;
     case 'gsc':
+      return site.owner?.gsc !== undefined;
     case 'bing':
     case 'bot-activity':
     case 'ai':
