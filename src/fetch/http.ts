@@ -6,7 +6,7 @@ import { pipeline } from 'node:stream/promises';
 import zlib from 'node:zlib';
 import { Agent, request } from 'undici';
 import { version } from '../version.ts';
-import { addressAllowed, publicOnly, type NetworkPolicy } from './ip-guard.ts';
+import { addressAllowed, hostPort, publicOnly, type NetworkPolicy } from './ip-guard.ts';
 
 export const defaultUserAgent = `Mozilla/5.0 (compatible; Altimeter/${version}; +https://github.com/Altitud-Studio-S-L-U/altimeter)`;
 
@@ -68,12 +68,15 @@ export interface FetchOptions {
 type Lookup = typeof dnsLookup;
 type LookupCallback = (error: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void;
 
-/** Wraps DNS resolution so a connection is only opened to addresses the policy allows. */
-export function guardedLookup(policy: NetworkPolicy, resolve: Lookup = dnsLookup) {
+/**
+ * Wraps DNS resolution so a connection is only opened to addresses the policy allows. A lookup never sees the port,
+ * so `port` is given when every connection through it uses that port, which lets `privateOrigins` apply.
+ */
+export function guardedLookup(policy: NetworkPolicy, resolve: Lookup = dnsLookup, port?: number) {
   return (hostname: string, options: { all?: boolean }, callback: LookupCallback): void => {
     resolve(hostname, { ...options, all: true }, (error, addresses) => {
       if (error) return callback(error, []);
-      const allowed = addresses.filter(entry => addressAllowed(policy, hostname, entry.address));
+      const allowed = addresses.filter(entry => addressAllowed(policy, hostname, entry.address, port));
       if (allowed.length === 0) {
         const blocked: NodeJS.ErrnoException = new Error(`${hostname} resolves only to addresses that the network policy blocks`);
         blocked.code = 'ALTIMETER_BLOCKED_ADDRESS';
@@ -134,21 +137,43 @@ function errorCode(error: unknown): FetchErrorCode {
 /** An HTTP client that never connects to blocked addresses and records every redirect hop. */
 export class HttpClient {
   readonly #agent: Agent;
+  /** Agents for the hosts and ports of `privateOrigins`, each with a lookup that knows its port. */
+  readonly #originAgents = new Map<string, Agent>();
   readonly #policy: NetworkPolicy;
   readonly #userAgent: string;
+  readonly #lookup: Lookup | undefined;
+  readonly #ca: string | readonly string[] | undefined;
 
   constructor(options: { policy?: NetworkPolicy; userAgent?: string; lookup?: Lookup; ca?: string | readonly string[] } = {}) {
     this.#policy = options.policy ?? publicOnly;
     this.#userAgent = options.userAgent ?? defaultUserAgent;
-    this.#agent = new Agent({
+    this.#lookup = options.lookup;
+    this.#ca = options.ca;
+    this.#agent = this.#newAgent();
+  }
+
+  #newAgent(port?: number): Agent {
+    return new Agent({
       connect: {
-        lookup: guardedLookup(this.#policy, options.lookup) as never,
+        lookup: guardedLookup(this.#policy, this.#lookup, port) as never,
         timeout: 10_000,
-        ...(options.ca === undefined ? {} : { ca: options.ca as string | string[] }),
+        ...(this.#ca === undefined ? {} : { ca: this.#ca as string | string[] }),
       },
       headersTimeout: 20_000,
       bodyTimeout: 20_000,
     });
+  }
+
+  /** The agent for one hop: only a host and port the policy exempts get a lookup that applies the exemption. */
+  #dispatcherFor(host: string, port: number): Agent {
+    const key = hostPort(host, port);
+    if (!this.#policy.privateOrigins?.has(key)) return this.#agent;
+    let agent = this.#originAgents.get(key);
+    if (!agent) {
+      agent = this.#newAgent(port);
+      this.#originAgents.set(key, agent);
+    }
+    return agent;
   }
 
   async fetch(url: string, options: FetchOptions = {}): Promise<FetchResult> {
@@ -184,7 +209,8 @@ export class HttpClient {
         return finish({ error: { code: 'unsupported-protocol', message: `Only http and https are fetched, not ${target.protocol}` } });
       }
       const host = target.hostname.replace(/^\[|\]$/gu, '');
-      if (isIP(host) !== 0 && !addressAllowed(this.#policy, host, host)) {
+      const port = Number(target.port) || (target.protocol === 'https:' ? 443 : 80);
+      if (isIP(host) !== 0 && !addressAllowed(this.#policy, host, host, port)) {
         return finish({ error: { code: 'blocked-address', message: `${host} is not a public address` } });
       }
       visited.add(target.href);
@@ -193,7 +219,7 @@ export class HttpClient {
       let response;
       try {
         response = await request(target, {
-          dispatcher: this.#agent,
+          dispatcher: this.#dispatcherFor(host, port),
           method,
           ...(requestBody === undefined ? {} : { body: requestBody }),
           signal: AbortSignal.any(signals),
@@ -293,6 +319,6 @@ export class HttpClient {
   }
 
   async close(): Promise<void> {
-    await this.#agent.close();
+    await Promise.all([this.#agent, ...this.#originAgents.values()].map(agent => agent.close()));
   }
 }

@@ -7,7 +7,7 @@ export interface Comparison {
   readonly introduced: readonly ReportFinding[];
   /** Fail in both. */
   readonly remaining: readonly ReportFinding[];
-  /** Evaluated in only one of the two reports, so they cannot be compared. */
+  /** Failures whose check the other report did not evaluate or, after the change, found not applicable. */
   readonly notComparable: readonly ReportFinding[];
 }
 
@@ -15,7 +15,10 @@ function key(finding: ReportFinding): string {
   return JSON.stringify([finding.ruleId, finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin]);
 }
 
-const evaluated = (finding: ReportFinding) => (finding.outcome === 'pass' || finding.outcome === 'fail') && !finding.needsJudgment && finding.origin !== 'ai';
+const deterministic = (finding: ReportFinding) => !finding.needsJudgment && finding.origin !== 'ai';
+const evaluated = (finding: ReportFinding) => (finding.outcome === 'pass' || finding.outcome === 'fail') && deterministic(finding);
+/** A check that did not apply before shows the problem did not exist then, so a failure after it is new. */
+const evaluatedBefore = (finding: ReportFinding) => finding.outcome !== 'not_evaluated' && deterministic(finding);
 
 /** Compares two reports of the same site made with the same rule catalog. */
 export function compareReports(before: Report, after: Report): Comparison {
@@ -23,7 +26,7 @@ export function compareReports(before: Report, after: Report): Comparison {
     throw new Error('The reports were made with different rule catalogs, so their results are not comparable. Audit both states with the same Altimeter version.');
   }
   const previous = new Map<string, ReportFinding[]>();
-  for (const finding of before.findings.filter(evaluated)) previous.set(key(finding), [...(previous.get(key(finding)) ?? []), finding]);
+  for (const finding of before.findings.filter(evaluatedBefore)) previous.set(key(finding), [...(previous.get(key(finding)) ?? []), finding]);
   const current = new Map<string, ReportFinding[]>();
   for (const finding of after.findings.filter(evaluated)) current.set(key(finding), [...(current.get(key(finding)) ?? []), finding]);
   const fixed: ReportFinding[] = [];

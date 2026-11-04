@@ -11,7 +11,7 @@ export interface TaskCheck {
 }
 
 export interface Task {
-  /** Stable across runs while the same rule fails for the same reason with the same evidence: `T-<hash>`. */
+  /** Stable across runs while the same rule fails for the same reason with evidence of the same shape: `T-<hash>`. */
   readonly id: string;
   readonly ruleId: string;
   readonly category: Category;
@@ -35,7 +35,10 @@ export interface Task {
   readonly agentReady: boolean;
   /** Checks that must pass once the task is done. */
   readonly acceptance: readonly TaskCheck[];
-  /** Checks that pass today on the same scope and must keep passing, so the fix does not trade one problem for another. */
+  /**
+   * Checks that pass today on the same scope and must keep passing, so the fix does not trade one problem for another;
+   * only those `altimeter verify` can run again.
+   */
   readonly mustRemainPassing: readonly TaskCheck[];
   readonly sources: readonly RuleSource[];
   /** Files of the site's repository, given with --source, that most likely hold the fix; repository-relative paths. */
@@ -62,20 +65,42 @@ export function defaultVerification(rule: RuleMeta): Verification {
   return 'local';
 }
 
+/** Inputs `altimeter verify` never collects: it crawls nothing and runs no Lighthouse, field data, owner data or model analysis. */
+const inputsVerifyLacks: readonly InputId[] = ['crawl', 'lighthouse', 'crux', 'gsc', 'bing', 'bot-activity', 'ai'];
+
+/** Whether `altimeter verify` can run a check again: it confirms local and deployed checks whose inputs it collects. */
+function recheckable(rule: RuleMeta): boolean {
+  const verification = defaultVerification(rule);
+  return (verification === 'local' || verification === 'deployed') && !rule.inputs.some(input => inputsVerifyLacks.includes(input));
+}
+
 /** Where task building reads evidence: the audit's store, or the evidence list of a saved report. */
 export interface EvidenceLookup {
   get(id: string): EvidenceItem | undefined;
 }
 
+/** The random segment of the not-found probe's path, which is new on every run. */
+const probeSegment = /altimeter-probe-[0-9a-f]+/gu;
+/** An HTTP date such as a Date header, whose day and month names change too. */
+const httpDate = /\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT\b/gu;
+const withoutProbe = (value: string) => value.replace(probeSegment, 'altimeter-probe');
+/** Numbers and dates change from run to run while the problem stays the same. */
+const shape = (value: string) => withoutProbe(value).replace(httpDate, '#').replace(/\d+/gu, '#');
+
 /**
  * A defect repeated on several pages is usually one template fix, so page findings group by the shape of their
- * evidence while the observed values differ from page to page. Site findings keep the values, which tell them apart.
+ * evidence while the observed values differ from page to page. Site findings keep what tells them apart: where each
+ * item was observed and what was seen there, except the figures and lists of owner data, which move with the
+ * reporting window. Numbers, dates and the not-found probe's random path never count, so an unchanged problem keeps
+ * its id from run to run.
  */
 function groupKey(finding: Finding, evidence: EvidenceLookup): string {
   const page = finding.scope.kind === 'page';
-  const shape = (value: string) => value.replace(/\d+/gu, '#');
   const items = finding.evidence.map(id => evidence.get(id)).filter((item): item is EvidenceItem => item !== undefined);
-  const facts = [...new Set(items.map(item => JSON.stringify(page ? [item.kind, shape(item.label), shape(item.path ?? '')] : [item.kind, item.label, item.excerpt ?? '', item.path ?? ''])))].sort();
+  const fact = (item: EvidenceItem) => page
+    ? [item.kind, shape(item.label), shape(item.path ?? '')]
+    : [item.kind, withoutProbe(item.url ?? ''), shape(item.label), shape(item.path ?? ''), item.kind === 'owner-data' ? '' : shape(item.excerpt ?? '')];
+  const facts = [...new Set(items.map(item => JSON.stringify(fact(item))))].sort();
   return JSON.stringify([finding.ruleId, finding.reason ?? '', page ? '' : (finding.scope as { readonly origin: string }).origin, facts]);
 }
 
@@ -121,7 +146,10 @@ export function buildTasks(findings: readonly Finding[], rulesById: ReadonlyMap<
       agentReady: fixLocation === 'repo' || fixLocation === 'platform-config' || fixLocation === 'content',
       acceptance: scopes.map(scope => ({ ruleId: rule.id, scope })),
       mustRemainPassing: passing
-        .filter(pass => rulesById.get(pass.ruleId)?.category === rule.category && scopeKeys.has(scopeKey(pass.scope)))
+        .filter(pass => {
+          const meta = rulesById.get(pass.ruleId);
+          return meta?.category === rule.category && recheckable(meta) && scopeKeys.has(scopeKey(pass.scope));
+        })
         .slice(0, 12)
         .map(pass => ({ ruleId: pass.ruleId, scope: pass.scope })),
       sources: rule.sources,

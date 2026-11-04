@@ -22,7 +22,7 @@ import { mythMatches } from '../rules/myth-filter.ts';
 import { cleanLine } from '../report/sanitize.ts';
 import { isInside, reportDirectory, writeReport } from '../report/write.ts';
 import { locateFixes } from '../source/locate.ts';
-import { verifyExitCode, verifyTasks } from '../verify/index.ts';
+import { verifyExitCode, verifyTasks, type CheckResult } from '../verify/index.ts';
 import { HttpClient } from '../fetch/http.ts';
 import { spkiHashes } from '../fetch/tls.ts';
 import { deleteLogin, loadLogin, loginStatus, saveLogin } from '../owner/credential-store.ts';
@@ -39,8 +39,9 @@ Usage:
   altimeter audit <url> [options]                  Audit a page and its site context.
   altimeter render <report.json> --lang <en|es|ca>  Write a report again in another language.
   altimeter compare <before.json> <after.json>     Show fixed, new and remaining problems.
-  altimeter verify <report.json> [--task <id>] [--static <dir> | --origin <url>]
-                                                   Re-check tasks against a local build or another origin.
+  altimeter verify <report.json> [--task <id>] [--static <dir> | --origin <url>] [--render]
+                                                   Re-check tasks against a local build or another origin;
+                                                   rendered checks run only with --render.
   altimeter rules [--category <name>] [--stale]    List the rule catalog.
   altimeter explain <rule-id>                      Show a rule and its sources.
   altimeter doctor [--probe]                       Check Node.js, Chrome and the Claude Code and Codex CLIs; --probe
@@ -315,14 +316,15 @@ async function verifyCommand(args: string[]): Promise<number> {
     ...(values.origin ? { origin: new URL(values.origin).origin } : {}),
     render: values.render === true,
   });
+  const where = (entry: CheckResult) => cleanLine(entry.check.scope.kind === 'page' ? entry.check.scope.url : entry.check.scope.origin, 160);
   for (const result of results) {
     const label = result.verdict === 'pass' ? 'PASS' : result.verdict === 'fail' ? 'FAIL' : 'NOT VERIFIABLE';
-    process.stdout.write(`${result.taskId} ${label}${result.reason ? ` (${cleanLine(result.reason)})` : ''}
-`);
-    for (const check of [...result.acceptance.filter(entry => entry.outcome !== 'pass'), ...result.regressions]) {
-      process.stdout.write(`  ${check.check.ruleId} ${check.outcome} · ${cleanLine(check.check.scope.kind === 'page' ? check.check.scope.url : check.check.scope.origin, 160)}
-`);
+    process.stdout.write(`${result.taskId} ${label}${result.reason ? ` (${cleanLine(result.reason)})` : ''}\n`);
+    for (const entry of [...result.acceptance.filter(check => check.outcome !== 'pass'), ...result.regressions]) {
+      process.stdout.write(`  ${entry.check.ruleId} ${entry.outcome}${entry.reason ? ` (${cleanLine(entry.reason)})` : ''} · ${where(entry)}\n`);
     }
+    // Checks this run could not evaluate leave the verdict alone; --render or a deployment can still confirm them.
+    for (const entry of result.notRechecked) process.stdout.write(`  ${entry.check.ruleId} not re-checked (${cleanLine(entry.reason ?? entry.outcome)}) · ${where(entry)}\n`);
   }
   return verifyExitCode(results);
 }

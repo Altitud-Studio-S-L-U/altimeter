@@ -1,17 +1,25 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
 import { EvidenceStore } from '../src/core/evidence.ts';
 import { HttpClient } from '../src/fetch/http.ts';
 import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
+import { implementations as registered } from '../src/rules/registry.ts';
 import { buildReport } from '../src/report/model.ts';
+import type { TaskCheck } from '../src/report/tasks.ts';
 import { serveStatic } from '../src/verify/static-server.ts';
 import { rebaseSite, verifyExitCode, verifyTasks } from '../src/verify/index.ts';
 import { page, site } from './support/facts.ts';
+
+const cli = fileURLToPath(new URL('../src/cli/main.ts', import.meta.url));
 
 const titleRule: RuleImplementation = {
   id: 'content-title-missing',
@@ -69,6 +77,92 @@ describe('verify', () => {
   test('rejects unknown task ids', async () => {
     await assert.rejects(verifyTasks({ report, taskIds: ['T-0000000000'], staticDir: build, implementations, rules }), /Unknown task/u);
   });
+
+  test('checks an origin on the IPv6 loopback address', async context => {
+    const server = createServer((req, res) => {
+      if (req.url === '/') res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><title>Home</title>');
+      else res.writeHead(404).end();
+    });
+    try {
+      await new Promise<void>((resolve, reject) => server.once('error', reject).listen(0, '::1', resolve));
+    } catch {
+      context.skip('this machine has no IPv6 loopback address');
+      return;
+    }
+    try {
+      const [result] = await verifyTasks({ report, origin: `http://[::1]:${(server.address() as AddressInfo).port}`, implementations, rules });
+      assert.equal(result?.verdict, 'pass');
+    } finally {
+      server.closeAllConnections();
+      await new Promise(resolve => server.close(resolve));
+    }
+  });
+
+  test('never reaches another port of the loopback address from the build it serves', async () => {
+    let reached = 0;
+    const other = createServer((_req, res) => {
+      reached += 1;
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><title>Another local service</title>');
+    });
+    await new Promise<void>(resolve => other.listen(0, '127.0.0.1', resolve));
+    const elsewhere = `http://127.0.0.1:${(other.address() as AddressInfo).port}`;
+    try {
+      await writeFile(join(build, 'index.html'), `<!doctype html><title>Home</title><link rel="icon" href="${elsewhere}/favicon.ico"><meta property="og:image" content="${elsewhere}/og.png">`
+        + `<a href="${elsewhere}/admin">Admin</a> <a href="${elsewhere}/settings">Settings</a>`);
+      const [result] = await verifyTasks({ report, staticDir: build, implementations, rules });
+      assert.equal(result?.verdict, 'pass');
+      assert.equal(reached, 0);
+    } finally {
+      other.closeAllConnections();
+      await new Promise(resolve => other.close(resolve));
+    }
+  });
+
+  const keeping = (...ruleIds: string[]) => ({ ...report, tasks: report.tasks.map(task => ({ ...task, mustRemainPassing: ruleIds.map((ruleId): TaskCheck => ({ ruleId, scope: task.scopes[0]! })) })) });
+  const withRules = (...extra: RuleImplementation[]) => new Map([...implementations, ...extra.map(entry => [entry.id, entry] as const)]);
+
+  test('passes a fix when a check that must keep passing cannot run here, and lists it as not re-checked', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
+    const rendered = registered.get('content-title-raw-rendered-mismatch')!;
+    const [result] = await verifyTasks({ report: keeping(rendered.id), staticDir: build, implementations: withRules(rendered), rules });
+    assert.equal(result?.verdict, 'pass');
+    assert.deepEqual(result?.regressions, []);
+    assert.deepEqual(result?.notRechecked.map(entry => [entry.check.ruleId, entry.outcome, entry.reason]), [[rendered.id, 'not_evaluated', 'missing-input:rendered-dom']]);
+    assert.equal(verifyExitCode([result!]), 0);
+  });
+
+  test('fails a fix that breaks a check that passed before', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
+    const description = registered.get('content-meta-description-missing')!;
+    const [result] = await verifyTasks({ report: keeping(description.id), staticDir: build, implementations: withRules(description), rules });
+    assert.equal(result?.verdict, 'fail');
+    assert.deepEqual(result?.regressions.map(entry => [entry.check.ruleId, entry.outcome]), [[description.id, 'fail']]);
+  });
+
+  test('re-checks what only a deployment can show against an origin, never against a served build', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
+    let runs = 0;
+    // content-img-format needs a deployment: a CDN may convert the images the build holds.
+    const deployedCheck: RuleImplementation = {
+      id: 'content-img-format',
+      evaluate: () => {
+        runs += 1;
+        return { outcome: 'fail', severity: 'low', evidence: [] };
+      },
+    };
+    const served = await verifyTasks({ report: keeping(deployedCheck.id), staticDir: build, implementations: withRules(deployedCheck), rules });
+    assert.equal(served[0]?.verdict, 'pass');
+    assert.deepEqual(served[0]?.notRechecked.map(entry => [entry.check.ruleId, entry.outcome, entry.reason]), [[deployedCheck.id, 'not_evaluated', 'needs deployed verification']]);
+    assert.equal(runs, 0);
+    const server = await serveStatic(build);
+    try {
+      const deployed = await verifyTasks({ report: keeping(deployedCheck.id), origin: server.origin, implementations: withRules(deployedCheck), rules });
+      assert.equal(deployed[0]?.verdict, 'fail');
+      assert.equal(runs, 1);
+    } finally {
+      await server.close();
+    }
+  });
 });
 
 describe('static server and rebasing', () => {
@@ -88,6 +182,21 @@ describe('static server and rebasing', () => {
     }
   });
 
+  test('answers a path with an empty segment as unknown instead of serving another page', async () => {
+    await writeFile(join(build, 'index.html'), '<!doctype html><title>Home</title>');
+    const server = await serveStatic(build);
+    const client = new HttpClient({ policy: { allowPrivate: false, privateHosts: new Set(['127.0.0.1']) } });
+    try {
+      for (const path of ['//about', '//about/', '/about//', '//']) {
+        const answer = await client.fetch(`${server.origin}${path}`, { followRedirects: false });
+        assert.deepEqual([answer.status, answer.hops[0]?.location], [404, undefined], path);
+      }
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
   test('presents local facts with the production origin', () => {
     const local = site({ pages: [page('http://127.0.0.1:5000/en/', { html: '<title>x</title>', redirects: [[301, 'http://127.0.0.1:5000/en/']] })], homeUrl: 'http://127.0.0.1:5000/' });
     const rebased = rebaseSite(local, 'http://127.0.0.1:5000', 'https://example.com');
@@ -96,5 +205,30 @@ describe('static server and rebasing', () => {
     assert.equal(entry?.url, 'https://example.com/en/');
     assert.equal(entry?.fetch.hops[0]?.location, 'https://example.com/en/');
     assert.equal(rebased.homeUrl, 'https://example.com/');
+  });
+});
+
+describe('altimeter verify', () => {
+  test('passes a fixed task and names the checks that must keep passing but need --render', async () => {
+    const work = await mkdtemp(join(tmpdir(), 'altimeter-verify-cli-'));
+    try {
+      const html = '<!doctype html><html lang="en"><head><title>Home</title></head><body><h1>Home</h1></body></html>';
+      const facts = site({ pages: [page('https://example.com/', { html, rendered: html })], homeUrl: 'https://example.com/' });
+      const evidence = new EvidenceStore();
+      const used = catalogRules.filter(rule => rule.id === 'content-meta-description-missing' || rule.id === 'content-title-raw-rendered-mismatch');
+      const findings = runRules({ rules: used, implementations: registered, site: facts, evidence });
+      const collected: CollectResult = { site: facts, versions: {}, warnings: [], durationMs: 1 };
+      const audited = buildReport({ collected, findings, evidence, implemented: used.length, language: 'en', startedAt: new Date('2026-11-04T10:00:00Z'), targetUrl: 'https://example.com/', options: {} });
+      const [task] = audited.tasks;
+      assert.deepEqual([audited.tasks.length, task?.ruleId, task?.mustRemainPassing.map(check => check.ruleId)], [1, 'content-meta-description-missing', ['content-title-raw-rendered-mismatch']]);
+      await writeFile(join(work, 'report.json'), JSON.stringify(audited));
+      await mkdir(join(work, 'dist'));
+      await writeFile(join(work, 'dist', 'index.html'), html.replace('</title>', '</title><meta name="description" content="What the home page offers, in one sentence.">'));
+      const result = spawnSync(process.execPath, [cli, 'verify', join(work, 'report.json'), '--static', join(work, 'dist')], { encoding: 'utf8', windowsHide: true });
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stdout, `${task!.id} PASS\n  content-title-raw-rendered-mismatch not re-checked (missing-input:rendered-dom) · https://example.com/\n`);
+    } finally {
+      await rm(work, { recursive: true, force: true });
+    }
   });
 });

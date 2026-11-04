@@ -6,11 +6,14 @@ import { describe, test } from 'node:test';
 import type { ReportAnalysis } from '../src/ai/types.ts';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
-import { EvidenceStore } from '../src/core/evidence.ts';
-import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
+import { EvidenceStore, type NewEvidence } from '../src/core/evidence.ts';
+import { runRules, type Finding, type RuleImplementation } from '../src/rules/engine.ts';
+import { implementations as registered } from '../src/rules/registry.ts';
+import { compareReports } from '../src/report/compare.ts';
 import { renderHtml } from '../src/report/html.ts';
 import { renderFixPlan, renderMarkdown, renderTaskFile, taskFileLimit } from '../src/report/markdown.ts';
 import { buildReport, mergeAnalysis } from '../src/report/model.ts';
+import { buildTasks } from '../src/report/tasks.ts';
 import { isInside, runFolderName, safeFolderName, writeReport } from '../src/report/write.ts';
 import { page, site } from './support/facts.ts';
 
@@ -76,6 +79,104 @@ describe('buildReport', () => {
   test('keeps task ids stable across runs', () => {
     const pages = () => [page('https://example.com/b', { html: '<!doctype html><p>No title</p>' })];
     assert.equal(auditOf(pages()).tasks[0]!.id, auditOf(pages()).tasks[0]!.id);
+  });
+});
+
+describe('tasks', () => {
+  const rulesById = new Map(catalogRules.map(rule => [rule.id, rule]));
+
+  test('lists as checks that must keep passing only those verify can run again', () => {
+    const scope = { kind: 'page' as const, url: 'https://example.com/a' };
+    const finding = (ruleId: string, outcome: 'pass' | 'fail'): Finding => ({
+      ruleId, scope, outcome, ...(outcome === 'fail' ? { severity: 'low' as const } : {}), evidence: [], evidenceSignature: ruleId, confidence: 'high', origin: 'deterministic',
+    });
+    const tasks = buildTasks([
+      finding('content-title-missing', 'fail'), finding('content-meta-description-missing', 'pass'), finding('content-title-raw-rendered-mismatch', 'pass'), finding('content-originality', 'pass'),
+      finding('tech-viewport-meta', 'fail'), finding('tech-viewport-zoom-allowed', 'pass'), finding('tech-tap-target-size', 'pass'),
+      finding('crawl-meta-robots-noindex', 'fail'), finding('crawl-status-final', 'pass'), finding('crawl-gsc-index-status', 'pass'),
+      finding('perf-render-blocking', 'fail'), finding('perf-crux-lcp-p75', 'pass'), finding('perf-lab-lcp', 'pass'), finding('perf-text-compression', 'pass'),
+      finding('intl-hreflang-relative-url', 'fail'), finding('intl-hreflang-outside-head', 'pass'), finding('intl-mixed-language-page', 'pass'),
+    ], rulesById, new EvidenceStore());
+    const kept = (ruleId: string) => tasks.find(task => task.ruleId === ruleId)?.mustRemainPassing.map(check => check.ruleId);
+    // Rendered checks need verify --render and deployment checks an origin; crawl, Lighthouse, field, owner and manual checks never run there.
+    assert.deepEqual(kept('content-title-missing'), ['content-meta-description-missing', 'content-title-raw-rendered-mismatch']);
+    assert.deepEqual(kept('tech-viewport-meta'), ['tech-viewport-zoom-allowed']);
+    assert.deepEqual(kept('crawl-meta-robots-noindex'), ['crawl-status-final']);
+    assert.deepEqual(kept('perf-render-blocking'), ['perf-text-compression']);
+    assert.deepEqual(kept('intl-hreflang-relative-url'), ['intl-hreflang-outside-head']);
+  });
+
+  /** Task ids of site findings, one run each: every finding records its evidence in that run's store. */
+  const siteTaskIds = (...findings: ReadonlyArray<readonly [ruleId: string, reason: string | undefined, evidence: readonly NewEvidence[]]>) => {
+    const store = new EvidenceStore();
+    const built = findings.map(([ruleId, reason, items]): Finding => ({
+      ruleId, scope: { kind: 'site', origin: 'https://example.com' }, outcome: 'fail', severity: 'low', ...(reason ? { reason } : {}),
+      evidence: items.map(item => store.add(item)), evidenceSignature: ruleId, confidence: 'high', origin: 'deterministic',
+    }));
+    return buildTasks(built, rulesById, store).map(task => task.id);
+  };
+
+  test('keeps the task id of a site finding when only the reporting window, the figures or the probe path change', () => {
+    const blocked = (window: string, requests: number, paths: string) => siteTaskIds(['crawl-bots-blocked-at-edge', 'refused', [
+      { kind: 'owner-data', label: `verified Googlebot requests for paths robots.txt allows, from ${window}`, excerpt: `Googlebot: ${requests} requests; answers 403 x${requests - 2}, 200 x2` },
+      { kind: 'owner-data', label: 'paths where Googlebot got errors or refusals', excerpt: paths },
+    ]]);
+    assert.deepEqual(blocked('2026-10-05 to 2026-11-04', 40, '/a 403 x20\n/b 403 x18'), blocked('2026-10-06 to 2026-11-05', 52, '/a 403 x30\n/c 403 x20'));
+    const dropped = (period: string, clicks: number) => siteTaskIds(['content-gsc-traffic-drop', undefined, [
+      { kind: 'owner-data', url: 'https://example.com/a', label: `clicks from ${period}`, excerpt: `clicks ${clicks} -> 4; z=-2.9` },
+    ]]);
+    assert.deepEqual(dropped('2026-08-08 to 2026-09-04 and from 2026-09-05 to 2026-10-02', 40), dropped('2026-08-09 to 2026-09-05 and from 2026-09-06 to 2026-10-03', 38));
+    const soft = (token: string) => siteTaskIds(['crawl-soft-404', 'probe-200', [
+      { kind: 'probe', url: `https://example.com/altimeter-probe-${token}/`, label: 'response to a random unknown path', excerpt: 'HTTP 200' },
+    ]]);
+    assert.deepEqual(soft('0a1b2c3d4e5f'), soft('f00dbabe1234'));
+    const generated = (lastmod: string, date: string) => siteTaskIds(['crawl-sitemap-lastmod', 'generation-time', [
+      { kind: 'sitemap', url: 'https://example.com/sitemap.xml', label: 'lastmod value shared by most URLs, with its count', excerpt: `${lastmod} (40 of 41)` },
+      { kind: 'header', url: 'https://example.com/sitemap.xml', label: 'Date header of the sitemap response', excerpt: date },
+    ]]);
+    assert.deepEqual(generated('2026-11-04T10:00:00Z', 'Wed, 04 Nov 2026 10:00:00 GMT'), generated('2026-11-05T09:30:12Z', 'Thu, 05 Nov 2026 09:30:12 GMT'));
+  });
+
+  test('keeps site findings about different crawlers, pages, lines or variants apart', () => {
+    const blockedBot = (bot: string) => ['crawl-bots-blocked-at-edge', 'refused', [{ kind: 'owner-data', label: `verified ${bot} requests for paths robots.txt allows, from 2026-10-05 to 2026-11-04`, excerpt: `${bot}: 40 requests` }]] as const;
+    assert.equal(new Set(siteTaskIds(blockedBot('Googlebot'), blockedBot('Bingbot'))).size, 2);
+    const lowCtr = (url: string) => ['content-gsc-low-ctr', undefined, [{ kind: 'owner-data', url, label: 'Search Console performance of the page from 2026-10-05 to 2026-11-04', excerpt: 'impressions=900; clicks=3' }]] as const;
+    assert.equal(new Set(siteTaskIds(lowCtr('https://example.com/a'), lowCtr('https://example.com/b'))).size, 2);
+    const token = (line: string) => ['ai-robots-legacy-tokens', 'legacy-token', [{ kind: 'robots', url: 'https://example.com/robots.txt', label: 'user-agent line naming a token that no current crawler documentation lists', excerpt: line }]] as const;
+    assert.equal(new Set(siteTaskIds(token('User-agent: anthropic-ai'), token('User-agent: Claude-Web'))).size, 2);
+    const variant = (url: string) => ['crawl-host-variant-consolidation', 'temporary-redirect', [{ kind: 'redirect', url, label: 'redirect hop 1', excerpt: '302 -> https://example.com/a' }]] as const;
+    assert.equal(new Set(siteTaskIds(variant('https://example.com/a/'), variant('https://example.com/a/index.html'))).size, 2);
+  });
+});
+
+describe('compareReports', () => {
+  const syntax = catalogRules.filter(rule => rule.id === 'schema-jsonld-syntax-error');
+  const reportOf = (html?: string) => {
+    const facts = site({ pages: [page('https://example.com/', html === undefined ? {} : { html })] });
+    const evidence = new EvidenceStore();
+    const findings = runRules({ rules: syntax, implementations: registered, site: facts, evidence });
+    const collected: CollectResult = { site: facts, versions: {}, warnings: [], durationMs: 1 };
+    return buildReport({ collected, findings, evidence, implemented: 1, language: 'en', startedAt: new Date('2026-11-04T10:00:00Z'), targetUrl: 'https://example.com/', options: {} });
+  };
+  const none = reportOf('<!doctype html><title>Home</title>');
+  const valid = reportOf('<!doctype html><title>Home</title><script type="application/ld+json">{"@type": "Organization"}</script>');
+  const broken = reportOf('<!doctype html><title>Home</title><script type="application/ld+json">{"@type": "Organization",</script>');
+  const unread = reportOf();
+  const counts = (comparison: ReturnType<typeof compareReports>) =>
+    [comparison.fixed.length, comparison.introduced.length, comparison.remaining.length, comparison.notComparable.length];
+
+  test('counts a failure as new when the check did not apply before', () => {
+    assert.deepEqual([none, broken].map(report => report.findings[0]?.outcome), ['not_applicable', 'fail']);
+    assert.deepEqual(counts(compareReports(none, broken)), [0, 1, 0, 0]);
+  });
+
+  test('compares failures with passes, and leaves a check evaluated in only one report out of fixed and new', () => {
+    assert.deepEqual(counts(compareReports(valid, broken)), [0, 1, 0, 0]);
+    assert.deepEqual(counts(compareReports(broken, valid)), [1, 0, 0, 0]);
+    assert.deepEqual(counts(compareReports(broken, broken)), [0, 0, 1, 0]);
+    assert.equal(unread.findings[0]?.outcome, 'not_evaluated');
+    assert.deepEqual(counts(compareReports(unread, broken)), [0, 0, 0, 1]);
+    assert.deepEqual(counts(compareReports(broken, none)), [0, 0, 0, 1]);
   });
 });
 

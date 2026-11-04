@@ -3,6 +3,7 @@ import type { LookupAddress } from 'node:dns';
 import { createServer, type AddressInfo } from 'node:net';
 import { test } from 'node:test';
 import { createServer as createTlsServer, getCACertificates } from 'node:tls';
+import { hostPort } from '../src/fetch/ip-guard.ts';
 import { inspectTls, spkiHashes, trustedRoots } from '../src/fetch/tls.ts';
 import { createTestCertificates } from './support/certificates.ts';
 
@@ -56,4 +57,24 @@ test('hashes the public key of every certificate in a PEM bundle', () => {
   assert.deepEqual(spkiHashes(ca.cert), [ca.spki]);
   assert.deepEqual(spkiHashes(`${leaf.cert}\n${ca.cert}`), [leaf.spki, ca.spki]);
   assert.deepEqual(spkiHashes('not a certificate'), []);
+});
+
+test('reaches a host of privateOrigins only on its port', async () => {
+  const server = createServer(socket => socket.end('HTTP/1.1 400 Bad Request\r\n\r\n'));
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const port = (server.address() as { port: number }).port;
+  const loopback = ((_host: string, _options: unknown, callback: (error: null, addresses: LookupAddress[]) => void) => {
+    callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  }) as never;
+  try {
+    for (const host of ['127.0.0.1', 'site.test']) {
+      const policy = { allowPrivate: false, privateOrigins: new Set([hostPort(host, port)]) };
+      const reached = await inspectTls(host, { port, policy, lookup: loopback, timeoutMs: 3000 });
+      const elsewhere = await inspectTls(host, { port: 443, policy, lookup: loopback, timeoutMs: 3000 });
+      assert.notEqual(reached.error, 'BLOCKED_ADDRESS', host);
+      assert.equal(elsewhere.error, 'BLOCKED_ADDRESS', host);
+    }
+  } finally {
+    server.close();
+  }
 });

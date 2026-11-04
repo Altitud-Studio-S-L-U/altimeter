@@ -98,14 +98,24 @@ export function classifyAddress(address: string): AddressClass {
 export interface NetworkPolicy {
   /** Allows every non-public address, for audits of local or staging sites. */
   readonly allowPrivate: boolean;
-  /** Lowercase host names allowed to resolve to non-public addresses, such as the origin given to `verify --origin`. */
+  /** Lowercase host names allowed to resolve to non-public addresses on any port. */
   readonly privateHosts?: ReadonlySet<string>;
+  /** Hosts allowed to resolve to non-public addresses on one port only, written by `hostPort`, such as the build `verify` checks. */
+  readonly privateOrigins?: ReadonlySet<string>;
 }
 
 export const publicOnly: NetworkPolicy = { allowPrivate: false };
 
-export function addressAllowed(policy: NetworkPolicy, host: string, address: string): boolean {
+/** A host and port as `privateOrigins` holds them: lowercase, an IPv6 literal in brackets, the port always written. */
+export function hostPort(host: string, port: number): string {
+  const bare = host.replace(/^\[|\]$/gu, '').toLowerCase();
+  return `${bare.includes(':') ? `[${bare}]` : bare}:${port}`;
+}
+
+/** Whether a connection to `address`, resolved from `host`, may open; `privateOrigins` apply only when the port is known. */
+export function addressAllowed(policy: NetworkPolicy, host: string, address: string, port?: number): boolean {
   if (policy.allowPrivate) return true;
   if (policy.privateHosts?.has(host.replace(/^\[|\]$/gu, '').toLowerCase())) return true;
+  if (port !== undefined && policy.privateOrigins?.has(hostPort(host, port))) return true;
   return classifyAddress(address) === 'public';
 }
