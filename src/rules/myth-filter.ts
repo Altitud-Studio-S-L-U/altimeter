@@ -63,10 +63,9 @@ export function matchedPatterns(text: string, myth: Myth): string[] {
  * words by a negation in the same clause ("do not add rel=next", "there is no need to add a SearchAction") is a
  * refutation and does not count.
  *
- * The analyst output validation runs every recommendation, fix and rationale the model returns through this function
- * before the finding is accepted. A finding whose text matches a myth is not reported as written: it is sent back once
- * with the myth's `reality` and sources so the model can correct it, and dropped if it still matches, with the myth id
- * kept in the run log as the reason.
+ * The analyst output validation runs every note and proposal the model returns through this function before the
+ * claim is accepted. A claim whose text matches a myth is dropped, never rephrased, and the report lists it among the
+ * dropped claims with the reason `myth`.
  */
 export function mythMatches(text: string): Myth[] {
   const parts = clauses(text);
