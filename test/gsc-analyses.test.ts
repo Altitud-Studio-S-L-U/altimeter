@@ -7,6 +7,7 @@ const row = (keys: string[], clicks: number, impressions: number, position: numb
 
 const data: GscData = {
   property: { siteUrl: 'sc-domain:example.com', permissionLevel: 'siteOwner' },
+  fetchedAt: '2026-11-04T09:00:00.000Z',
   period: { start: '2026-10-05', end: '2026-11-01' },
   previousPeriod: { start: '2026-09-07', end: '2026-10-04' },
   byPage: [row(['/a'], 60, 1000, 2.1), row(['/b'], 4, 900, 2.0), row(['/c'], 10, 200, 14)],

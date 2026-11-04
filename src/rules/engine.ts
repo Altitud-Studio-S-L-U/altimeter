@@ -143,6 +143,9 @@ export interface EngineInput {
  * Runs every implemented rule over the site and each audited page. A rule whose inputs were not collected
  * is reported as not evaluated, and a rule outside its page types as not applicable, so coverage stays honest.
  */
+/** Inputs only the site owner can provide. */
+const ownerInputs: ReadonlySet<InputId> = new Set(['gsc', 'bing', 'bot-activity']);
+
 export function runRules(input: EngineInput): Finding[] {
   const findings: Finding[] = [];
   const run = (rule: RuleMeta, implementation: RuleImplementation, scope: FindingScope, page: PageFacts | undefined) => {
@@ -170,7 +173,9 @@ export function runRules(input: EngineInput): Finding[] {
   };
   for (const rule of input.rules) {
     const implementation = input.implementations.get(rule.id);
-    if (!implementation || rule.status !== 'v1') continue;
+    if (!implementation || rule.status === 'planned') continue;
+    // Owner data is opt-in: its rules run only when the owner provided that data, and stay out of coverage otherwise.
+    if (rule.status === 'requires-owner-data' && rule.inputs.some(entry => ownerInputs.has(entry) && !inputAvailable(entry, input.site, undefined))) continue;
     if (rule.scope === 'site') run(rule, implementation, { kind: 'site', origin: input.site.origin }, undefined);
     else for (const page of input.site.pages.values()) run(rule, implementation, { kind: 'page', url: page.url }, page);
   }

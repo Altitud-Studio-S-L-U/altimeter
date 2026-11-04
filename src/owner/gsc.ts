@@ -44,6 +44,8 @@ export interface GscSitemap {
 
 export interface GscData {
   readonly property: GscProperty;
+  /** When the data was read; ages such as the last crawl are measured from it. */
+  readonly fetchedAt: string;
   readonly period: { readonly start: string; readonly end: string };
   readonly previousPeriod: { readonly start: string; readonly end: string };
   readonly byPage: readonly SearchRow[];
@@ -195,7 +197,8 @@ export async function fetchGscData(client: HttpClient, token: AccessToken, optio
   if (!property || property.permissionLevel === 'siteUnverifiedUser') {
     throw new SearchConsoleError(`No verified Search Console property covers ${new URL(options.url).origin}. Add the site in Search Console or pass --gsc with the property.`);
   }
-  const periods = reportingPeriods(options.now ?? new Date());
+  const fetchedAt = options.now ?? new Date();
+  const periods = reportingPeriods(fetchedAt);
   let truncated = false;
   const all = async (dimensions: string[], period: { start: string; end: string }) => {
     const collected: SearchRow[] = [];
@@ -231,5 +234,5 @@ export async function fetchGscData(client: HttpClient, token: AccessToken, optio
     warnings: Number(entry.warnings ?? 0),
     errors: Number(entry.errors ?? 0),
   }));
-  return { property, period: periods.current, previousPeriod: periods.previous, byPage, byQuery, byPageQuery, byCountry, byDevice, previousByPage, inspections, sitemaps, truncated };
+  return { property, fetchedAt: fetchedAt.toISOString(), period: periods.current, previousPeriod: periods.previous, byPage, byQuery, byPageQuery, byCountry, byDevice, previousByPage, inspections, sitemaps, truncated };
 }

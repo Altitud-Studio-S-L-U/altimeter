@@ -2564,5 +2564,202 @@
     ],
     "status": "planned",
     "notes": "If the user provides an IndexNow key, or one is discoverable (e.g. a CMS plugin exposes /{key}.txt), check that the key file is UTF-8, contains exactly the key, is 8-128 chars [a-zA-Z0-9-], is at the root or matches keyLocation scope. Optionally submit a dry-run validation only if the user opts in (state-changing). Never submit URLs without explicit user consent: submission is a write action against third-party APIs. Never report IndexNow as a Google factor. Planned: key discovery is not standardised, so the collector needs a user-supplied key before this rule can run."
+  },
+  {
+    "id": "crawl-gsc-index-status",
+    "category": "crawl",
+    "title": "Google's index status for audited pages",
+    "why": "URL Inspection reports whether Google indexed the page and why not, as of its last crawl. A page the audit finds indexable but Google does not index gets no search traffic.",
+    "fix": "Fix the cause the state names (server errors, blocks, soft 404s, duplicates without a canonical), then request indexing in URL Inspection. For \"crawled, currently not indexed\", improve the page before asking again.",
+    "maxSeverity": "high",
+    "method": "owner-data",
+    "scope": "page",
+    "inputs": [
+      "gsc"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The page is kept out of the index on purpose: it has noindex or a canonical to another URL, and Google reports exactly that.",
+      "Google reports an alternate page with a proper canonical tag or a page with redirect, which are expected states."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "High: soft 404, not found, server error, redirect error, blocked by robots.txt, noindex, 401, 403 or another 4xx, or indexed without content. Medium: crawled or discovered but currently not indexed, a duplicate without a user-selected canonical, or another state that is not indexed. Low: indexed though blocked by robots.txt, or unknown to Google. Pages Google reports as indexed pass.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/urlInspection.index/UrlInspectionResult",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://support.google.com/webmasters/answer/7440203",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Reads indexStatusResult (verdict, coverageState, robotsTxtState, indexingState, pageFetchState, lastCrawlTime) for the audited pages Altimeter inspected, at most 50 per audit. The state reflects Google's last crawl, so a page fixed since then keeps the old state until Google crawls it again; the message gives that date. Duplicates where Google chose another canonical are reported by crawl-gsc-google-canonical.",
+    "related": [
+      "crawl-gsc-google-canonical",
+      "crawl-meta-robots-noindex",
+      "crawl-soft-404"
+    ],
+    "fixLocation": "external-account",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-gsc-google-canonical",
+    "category": "crawl",
+    "title": "Canonical chosen by Google matches the declared one",
+    "why": "Google picks the canonical URL from several signals and shows its choice in URL Inspection. When it differs from the declared canonical, the declared page is not the one that ranks.",
+    "fix": "Make every signal point to one URL: the rel=canonical, internal links, the sitemap, redirects and hreflang. If the two pages are not duplicates, make their content clearly different.",
+    "maxSeverity": "medium",
+    "method": "owner-data",
+    "scope": "page",
+    "inputs": [
+      "gsc"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "Google and the page agree on the canonical, or the page declares none and Google chose the page itself."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Medium: the declared canonical differs from the canonical Google selected. Low: the page declares no canonical and Google selected another URL.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/urlInspection.index/UrlInspectionResult",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Compares indexStatusResult.userCanonical and googleCanonical after removing fragments and lowercasing the host. Google only selects a canonical that is similar to the page, so a difference means Google sees the two URLs as duplicates.",
+    "related": [
+      "crawl-gsc-index-status",
+      "crawl-canonical-signal-consistency"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-gsc-crawl-recency",
+    "category": "crawl",
+    "title": "Google crawled indexable pages recently, with its smartphone crawler",
+    "why": "URL Inspection gives the date and the crawler of the last crawl. A page Google has not crawled for months shows old content in search, and Google indexes with its smartphone crawler.",
+    "fix": "Link to the page from pages Google crawls, list it in the sitemap with an accurate lastmod and request indexing after significant changes. A desktop crawl is rare since mobile-first indexing; check that phones get the same content.",
+    "maxSeverity": "low",
+    "method": "owner-data",
+    "scope": "page",
+    "inputs": [
+      "gsc"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The page is kept out of the index on purpose (noindex or a canonical to another URL)."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Low: an indexable page last crawled more than 90 days before the data was read (tool convention). Info: the last crawl used the desktop crawler.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/urlInspection.index/UrlInspectionResult",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/mobile/mobile-sites-mobile-first-indexing",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Reads lastCrawlTime and crawledAs. The 90-day line is a tool convention: Google crawls small and stable sites less often and sets no target.",
+    "related": [
+      "crawl-gsc-index-status",
+      "crawl-sitemap-lastmod"
+    ],
+    "fixLocation": "content",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-gsc-sitemaps",
+    "category": "crawl",
+    "title": "Search Console reads the sitemaps without errors",
+    "why": "Search Console reports, for each submitted sitemap, the errors and warnings it found when it last read it. Submitting the sitemaps also gives per-sitemap indexing reports.",
+    "fix": "Fix the errors Search Console lists for the sitemap, then resubmit it. Submit the sitemaps the site declares in robots.txt so their reports appear in Search Console.",
+    "maxSeverity": "medium",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "gsc"
+    ],
+    "optionalInputs": [
+      "sitemaps"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Medium: a submitted sitemap with errors. Low: a submitted sitemap with warnings. Info: a sitemap the site declares that is not submitted in Search Console (Google can still read it from robots.txt).",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/sitemaps",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Reads sitemaps.list for the property: path, errors, warnings, lastDownloaded and isPending. Child sitemaps of an index are not compared, because submitting the index covers them.",
+    "related": [
+      "crawl-sitemap-validity"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-gsc-sitemap-urls-without-impressions",
+    "category": "crawl",
+    "title": "Sitemap URLs that earned no impressions",
+    "why": "A URL listed in the sitemap with no impressions over 28 days is either not indexed or never shown for any query. Both are worth knowing before writing more pages like it.",
+    "fix": "Inspect the URLs in Search Console. If they are not indexed, see crawl-gsc-index-status; if they are, improve their content and internal links, or remove them from the sitemap if they should not be indexed.",
+    "maxSeverity": "info",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "gsc",
+      "sitemaps"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The page was published within the reporting period."
+    ],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Info: the share and examples of sitemap URLs with no impressions in the 28 days read.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/searchanalytics/query",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://support.google.com/webmasters/answer/7576553",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Compares the URLs of the sitemaps Altimeter read with the pages in the Search Console performance data for the same period. Search Console leaves rare queries out of query lists for privacy but still counts their impressions per page, so a page with no impressions had none.",
+    "related": [
+      "crawl-gsc-index-status"
+    ],
+    "fixLocation": "content",
+    "verifiableBy": "owner-data"
   }
 ]

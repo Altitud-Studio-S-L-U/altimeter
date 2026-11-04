@@ -447,5 +447,50 @@
       "fail": "{count} pages share the same main text without one shared canonical: {urls}.",
       "fail:not-consolidated": "{count} pages share the same main text and language without one shared canonical: {urls}. Confirm that they are true duplicates."
     }
+  },
+  "crawl-gsc-index-status": {
+    "messages": {
+      "fail": "Google reports {url} as \"{state}\" (last crawl {lastCrawl}).",
+      "fail:soft-404": "Google treats {url} as a soft 404: the page answers 200 but reads as not found (last crawl {lastCrawl}).",
+      "fail:not-found": "Google last got a 404 for {url} (last crawl {lastCrawl}).",
+      "fail:server-error": "Google got a server error for {url} (last crawl {lastCrawl}).",
+      "fail:redirect-error": "Google could not follow the redirects of {url} (last crawl {lastCrawl}).",
+      "fail:blocked-by-robots": "robots.txt blocked Google from {url} (last crawl {lastCrawl}).",
+      "fail:noindex": "Google found noindex on {url} (last crawl {lastCrawl}).",
+      "fail:access-blocked": "Google was refused access to {url}: \"{state}\" (last crawl {lastCrawl}).",
+      "fail:indexed-without-content": "Google indexed {url} without being able to read its content (last crawl {lastCrawl}).",
+      "fail:crawled-not-indexed": "Google crawled {url} but chose not to index it (last crawl {lastCrawl}).",
+      "fail:discovered-not-indexed": "Google knows {url} but has not crawled it yet.",
+      "fail:duplicate-without-canonical": "Google sees {url} as a duplicate without a declared canonical and indexes another URL.",
+      "fail:indexed-blocked-by-robots": "Google indexed {url} although robots.txt blocks it, so it shows without a description.",
+      "fail:unknown-to-google": "Google does not know {url} yet."
+    }
+  },
+  "crawl-gsc-google-canonical": {
+    "messages": {
+      "fail": "Google chose {chosen} as the canonical of {url}.",
+      "fail:differs": "{url} declares {declared} as canonical, but Google chose {chosen}.",
+      "fail:chosen-without-declared": "{url} declares no canonical and Google chose {chosen}."
+    }
+  },
+  "crawl-gsc-crawl-recency": {
+    "messages": {
+      "fail": "Google last crawled {url} {days} days before the data was read.",
+      "fail:stale-crawl": "Google last crawled {url} {days} days before the data was read.",
+      "fail:desktop-crawler": "Google last crawled {url} with its desktop crawler."
+    }
+  },
+  "crawl-gsc-sitemaps": {
+    "messages": {
+      "fail": "Search Console reports problems with the sitemap {sitemap}.",
+      "fail:errors": "Search Console found {count} error(s) in the sitemap {sitemap}.",
+      "fail:warnings": "Search Console found {count} warning(s) in the sitemap {sitemap}.",
+      "fail:not-submitted": "The sitemap {sitemap} is not submitted in Search Console, so its indexing report is not available there."
+    }
+  },
+  "crawl-gsc-sitemap-urls-without-impressions": {
+    "messages": {
+      "fail": "{count} of {total} sitemap URLs had no impressions in the 28 days read, for example {examples}."
+    }
   }
 }

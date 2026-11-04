@@ -142,6 +142,7 @@ export interface SiteSpec {
   readonly localeProbes?: ReadonlyArray<{ readonly label: string; readonly url: string } & ResponseSpec>;
   readonly tls?: SiteFacts['tls'];
   readonly counterpartTls?: SiteFacts['counterpartTls'];
+  readonly owner?: SiteFacts['owner'];
 }
 
 export function site(spec: SiteSpec): SiteFacts {
@@ -187,6 +188,7 @@ export function site(spec: SiteSpec): SiteFacts {
     localeProbes: (spec.localeProbes ?? []).map(entry => ({ label: entry.label, url: entry.url, fetch: response(entry.url, entry) })),
     ...(spec.tls ? { tls: spec.tls } : {}),
     ...(spec.counterpartTls ? { counterpartTls: spec.counterpartTls } : {}),
+    ...(spec.owner ? { owner: spec.owner } : {}),
   };
 }
 

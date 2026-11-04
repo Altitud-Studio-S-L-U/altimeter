@@ -96,6 +96,8 @@ export function ruleProblems(entry: unknown): string[] {
     && Array.isArray(rule.inputs) && rule.inputs.some(input => input === 'gsc' || input === 'bing' || input === 'bot-activity')) {
     problems.push(`${where}: rules that read owner data use status requires-owner-data`);
   }
+  // Scores must compare between audits with and without the owner's data.
+  if (rule.status === 'requires-owner-data' && rule.scored === true) problems.push(`${where}: rules that read owner data cannot be scored`);
   if (rule.maxSeverity === 'info' && rule.scored === true) problems.push(`${where}: info rules cannot be scored`);
   return problems;
 }

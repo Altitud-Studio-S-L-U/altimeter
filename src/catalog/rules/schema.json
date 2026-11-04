@@ -2230,7 +2230,7 @@
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
-    "scored": true,
+    "scored": false,
     "evidenceLevel": "official-google",
     "thresholds": "any ERROR issue = high (Google states items with ERROR cannot appear as rich results); WARNING = low",
     "sources": [

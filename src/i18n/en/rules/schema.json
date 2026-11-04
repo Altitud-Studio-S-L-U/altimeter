@@ -444,5 +444,12 @@
       "fail:conflicting-duplicate": "{count} entit(ies) are described twice with different values: {items}",
       "fail:exact-duplicate": "{count} entit(ies) are described twice with the same values: {items}"
     }
+  },
+  "schema-url-inspection-rich-results": {
+    "messages": {
+      "fail": "Google reports rich result problems for {url}: {items}.",
+      "fail:errors": "Google found {count} error(s) in the rich results of {url}, which keep them from showing: {items}.",
+      "fail:warnings": "Google found {count} warning(s) in the rich results of {url}: {items}."
+    }
   }
 }

@@ -2446,5 +2446,156 @@
     ],
     "status": "planned",
     "notes": "Detect the language. Compute sentence and paragraph statistics for all languages: mean and p90 sentence length in words, paragraphs >150 words, and sections >400 words without a subheading. Formula by language: English uses Flesch Reading Ease (206.835 − 1.015·words/sentence − 84.6·syllables/word). Spanish uses Szigriszt-Pazos perspicuity (206.835 − 62.3·syllables/word − words/sentence) interpreted on the INFLESZ scale (<40 very difficult, 40–55 fairly difficult, 55–65 normal, 65–80 fairly easy, >80 very easy), with Fernández-Huerta optional. Catalan has no validated formula: report the statistics only. Use language-specific syllabification. Readability is not a ranking factor (Mueller 2018: Google doesn't use basic reading-level algorithms). Report it as UX only. Legal or technical audiences legitimately need complex text. Do not apply English Flesch to Spanish or Catalan. Formulas such as Flesch are language-specific; no score is computed for languages without a validated formula. Planned: needs the shared language detector (src/analyze/language.ts) to pick a validated formula per language."
+  },
+  {
+    "id": "content-gsc-low-ctr",
+    "category": "content",
+    "title": "Pages whose click-through rate is far below the site norm",
+    "why": "A page that appears often but is rarely clicked at its position usually has a title or snippet that does not match what searchers want. The comparison uses the site's own CTR at each position, not an industry curve.",
+    "fix": "Rewrite the title and meta description for the queries listed, keeping them accurate to the page. Check whether a rich result or a better-matching page of the site takes the clicks.",
+    "maxSeverity": "low",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "gsc"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "Most impressions come from queries the page does not answer, which a better-matching page should rank for instead."
+    ],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Low: a page with at least 100 impressions in 28 days and a CTR under half of the site's own CTR for its average position band (bands with at least 200 impressions). Up to five pages, most impressions first.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/searchanalytics/query",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/title-link",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/snippet",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Expected CTR comes from the site's page and query rows grouped by position band. The queries are owner data: they stay on this machine, are left out of analyst calls and are removed from reports written with --redact-queries.",
+    "related": [
+      "content-title-width",
+      "content-meta-description-quality"
+    ],
+    "fixLocation": "content",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "content-gsc-cannibalization",
+    "category": "content",
+    "title": "Several pages compete for the same query",
+    "why": "When two or more pages of the site split the impressions for one query and none takes most of the clicks, Google keeps switching between them and neither ranks as well as one page would.",
+    "fix": "Decide which page should answer the query. Make it the most complete, link to it from the others with the query words, and differentiate or merge the rest.",
+    "maxSeverity": "info",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "gsc"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The pages answer different intents behind the same words, or one is a category page and the other a detail page."
+    ],
+    "fpRisk": "high",
+    "scored": false,
+    "evidenceLevel": "industry-consensus",
+    "thresholds": "Info: a non-brand query with at least 50 impressions where two or more pages each have at least 10% of the impressions within the top 20 positions and no page has 80% of the clicks. Up to five queries.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/searchanalytics/query",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Brand queries are left out using the site and organization names. Google does not use the word cannibalization; the check describes how impressions split, and the owner decides whether it is a problem.",
+    "related": [
+      "content-gsc-low-ctr"
+    ],
+    "fixLocation": "owner-decision",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "content-gsc-striking-distance",
+    "category": "content",
+    "title": "Queries ranking just below the first page",
+    "why": "Queries for which a page already ranks in positions 11 to 20 are the cheapest to improve: the page is relevant, and a better answer or stronger internal links can move it onto the first page.",
+    "fix": "For each query, check that the page answers it fully and early, and link to it from related pages with descriptive anchor text.",
+    "maxSeverity": "info",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "gsc"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "industry-consensus",
+    "thresholds": "Info: page and query pairs with an average position from 10.5 to 20.5 and at least 50 impressions in 28 days, up to ten, most impressions first.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/searchanalytics/query",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Average position is an impression-weighted average that moves with personalisation and search features, so the list is a starting point for the owner, not a forecast.",
+    "related": [
+      "content-gsc-low-ctr"
+    ],
+    "fixLocation": "content",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "content-gsc-traffic-drop",
+    "category": "content",
+    "title": "Pages that lost clicks against the previous 28 days",
+    "why": "A significant drop in clicks for a page points to a ranking loss, an indexing problem or a change in demand, and is worth checking before it spreads.",
+    "fix": "Inspect the page for indexing and canonical changes, compare its queries between the two periods in Search Console and check recent edits to the page.",
+    "maxSeverity": "low",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "gsc"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The demand is seasonal, which the year-over-year comparison in Search Console shows."
+    ],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "industry-consensus",
+    "thresholds": "Low: a page whose clicks fell by at least 20 between the previous and the current 28 days, with a Poisson z-score of -2.5 or lower. Up to five pages, largest drop first.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/searchanalytics/query",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/monitor-debug/debugging-search-traffic-drops",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "z = (now - before) / sqrt(now + before) treats clicks as Poisson counts, so pages with little traffic need large changes to qualify. Search Console data is final only for days that ended at least two days before.",
+    "related": [
+      "crawl-gsc-index-status"
+    ],
+    "fixLocation": "content",
+    "verifiableBy": "owner-data"
   }
 ]
