@@ -1256,7 +1256,9 @@
       "sitemaps"
     ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The page has no Open Graph markup at all, so there is no preview metadata for og:locale to describe."
+    ],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "web-standard",

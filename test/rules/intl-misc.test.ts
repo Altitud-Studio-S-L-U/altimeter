@@ -37,9 +37,11 @@ describe('intl-tld-geotargeting-classification', () => {
 
   test('notes hreflang regions for other countries on a country-code TLD', () => {
     const facts = site({ origin: 'https://example.fr', pages: [page('https://example.fr/', { html: html({ head: links([['fr-FR', 'https://example.fr/'], ['es-ES', 'https://example.fr/es/']]) }) })] });
-    const finding = only(evaluate(tldGeotargetingClassification, facts).findings);
+    const { findings, evidence } = evaluate(tldGeotargetingClassification, facts);
+    const finding = only(findings);
     assertFail(finding, 'info', 'cctld-foreign-regions');
     assert.equal(finding.params?.regions, 'ES');
+    assert.deepEqual(excerpts(finding, evidence), ['example.fr', '<link rel="alternate" hreflang="es-ES" href="https://example.fr/es/">']);
   });
 
   test('is not applicable to an IP address', () => {
@@ -57,7 +59,7 @@ describe('intl-url-structure-assessment', () => {
     const { findings, evidence } = evaluate(urlStructureAssessment, facts);
     const finding = only(findings);
     assertFail(finding, 'info', 'mixed-schemes');
-    assert.equal(excerpts(finding, evidence).length, 2);
+    assert.deepEqual(excerpts(finding, evidence), [`<link rel="alternate" hreflang="ca" href="${ca}">`, '<link rel="alternate" hreflang="fr" href="https://fr.example.com/">']);
   });
 
   test('is not applicable without hreflang', () => {

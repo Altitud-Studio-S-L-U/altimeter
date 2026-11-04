@@ -105,7 +105,7 @@ describe('intl-hreflang-duplicate-locale-in-cluster', () => {
     const finding = only(findings);
     assertFail(finding, 'high', 'within-page');
     assert.equal(finding.params?.value, 'en-gb');
-    assert.equal(excerpts(finding, evidence).length, 2);
+    assert.deepEqual(excerpts(finding, evidence), [`<link rel="alternate" hreflang="en-GB" href="${en}">`, `<link rel="alternate" hreflang="en-gb" href="${url('/uk/')}">`]);
   });
 
   test('fails members that disagree on the URL of a value', () => {

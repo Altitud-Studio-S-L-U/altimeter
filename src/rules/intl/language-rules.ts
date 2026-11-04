@@ -289,6 +289,8 @@ export const ogLocale: RuleImplementation = {
     const fromHreflang = hreflangLanguages(page!, declaredSets(site)).languages[0];
     const pageCode = fromContent ?? fromLang ?? fromHreflang;
     if (!locale?.attrs.content) {
+      // Without Open Graph markup there is no preview metadata for og:locale to describe.
+      if (!doc.parsed.metas.some(meta => (meta.attrs.property ?? '').toLowerCase().startsWith('og:'))) return notApplicable('no-open-graph');
       if (!pageCode) return notEvaluated('page-language-unknown');
       if (sameLanguage(pageCode, 'en')) return pass();
       const ids = [fromContent ? languageEvidence(evidence, url, detected!) : evidence.add({ kind: 'html', url, label: 'declared page language', excerpt: fromLang ? `lang="${doc.parsed.htmlLang}"` : `hreflang ${fromHreflang}` })];

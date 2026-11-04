@@ -152,7 +152,7 @@ describe('intl-untranslated-variant', () => {
     const finding = only(findings);
     assertFail(finding, 'medium', 'near-identical');
     assert.equal(finding.params?.similarity, 100);
-    assert.equal(excerpts(finding, evidence).length, 2);
+    assert.ok(excerpts(finding, evidence).every(excerpt => excerpt.startsWith('We are a design studio')));
   });
 
   test('does not compare regional variants of one language', () => {
@@ -207,11 +207,20 @@ describe('intl-og-locale', () => {
     assert.deepEqual(excerpts(finding!, evidence), ['<meta property="og:locale" content="ca-AD">']);
   });
 
+  const og = '<meta property="og:title" content="Inici">';
+
   test('fails a missing og:locale on a Catalan page, which consumers read as en_US', () => {
-    assertFail(outcomeOn(evaluate(ogLocale, site({ pages: [page(ca, { html: html({ lang: 'ca', body: prose('ca') }) })] })).findings, ca), 'low', 'missing-non-english');
+    const { findings, evidence } = evaluate(ogLocale, site({ pages: [page(ca, { html: html({ lang: 'ca', head: og, body: prose('ca') }) })] }));
+    const finding = outcomeOn(findings, ca);
+    assertFail(finding, 'low', 'missing-non-english');
+    assert.ok(excerpts(finding!, evidence)[0]!.startsWith('Som un estudi de disseny'));
+  });
+
+  test('is not applicable to a page without Open Graph markup', () => {
+    assertOutcome(outcomeOn(evaluate(ogLocale, site({ pages: [page(ca, { html: html({ lang: 'ca', body: prose('ca') }) })] })).findings, ca), 'not_applicable', 'no-open-graph');
   });
 
   test('is not evaluated when the page language is unknown', () => {
-    assertOutcome(outcomeOn(evaluate(ogLocale, site({ pages: [page(ca, { html: html({ body: '<p>Hola</p>' }) })] })).findings, ca), 'not_evaluated', 'page-language-unknown');
+    assertOutcome(outcomeOn(evaluate(ogLocale, site({ pages: [page(ca, { html: html({ head: og, body: '<p>Hola</p>' }) })] })).findings, ca), 'not_evaluated', 'page-language-unknown');
   });
 });
