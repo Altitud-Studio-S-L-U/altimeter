@@ -4,6 +4,7 @@ import { charsetDeclaredEarly, doctypeStandardsMode, duplicateConflictingHeadTag
 import { faviconDeclared, faviconFileValid } from './favicon.ts';
 import { framingProtection, securityHeadersInfo } from './headers.ts';
 import { hstsHeader, hstsPreloadEligibility, httpToHttpsRedirect, httpsFinalUrl, httpsToHttpDowngrade, tlsCertificateValid } from './https.ts';
+import { intrusiveInterstitial } from './interstitial.ts';
 import { chromeBestPracticesTrust, lighthouseA11yOverlap, lighthouseSeoCategory } from './lighthouse.ts';
 import { maintenance503 } from './maintenance.ts';
 import { internalLinksToHttp, mixedContentActive, mixedContentPassive } from './mixed-content.ts';
@@ -24,6 +25,7 @@ export const implementations: readonly RuleImplementation[] = [
   framingProtection,
   cmpBlocksContent,
   consentModeOrdering,
+  intrusiveInterstitial,
   viewportMeta,
   viewportZoomAllowed,
   contentFitsViewport,

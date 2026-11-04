@@ -403,8 +403,7 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "user-render",
-      "rendered-dom"
+      "user-render"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -414,7 +413,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate: an overlay covering >= 30% of the viewport (tool heuristic; Google only says banners should use 'a small fraction of the screen'). Fail: a promotional overlay that covers most of the viewport, or a redirect away to collect consent or input.",
+    "thresholds": "Fail (medium): a fixed overlay whose text is promotional (newsletter, sign-up, discount, app install) covers at least half of the phone screen at load. Candidate (medium, for the analyst): any other fixed overlay covering at least 30% of the screen (tool heuristic; Google only says banners should use a small fraction of the screen), including login or subscription dialogs. Cookie, consent and age-verification notices are exempt, so they never fail on their own.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/avoid-intrusive-interstitials",
@@ -425,12 +424,14 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "planned",
-    "notes": "Code: in the mobile-emulated render (for example 412×915), at load and after 5 s without interaction, find fixed or absolute elements with z-index above the content that cover >= 30% of the viewport, or any element that sets body overflow:hidden. Take a screenshot. LLM: classify each candidate as a legally required notice (cookie or consent, age gate), a login or paywall, or a promotional element (newsletter, app install, promo). Also check whether the content is still in the DOM underneath and whether the overlay redirects to a separate URL. Interstitials required by law are exempt, so a consent banner is never a fail on its own. Google recommends overlaying the content (so it stays indexable) and letting verified Googlebot through age gates. The 30% figure is not from Google. Planned: the render facts carry text blocks without position, size or stacking, so code cannot measure how much of the viewport an overlay covers or whether it locks scrolling. It needs overlay elements (fixed or sticky, with bounding box and z-index) and a body overflow flag from the phone render.",
+    "status": "v1",
+    "notes": "v1 reads the phone-sized user render right after load and before scrolling: fixed and sticky elements with their box, z-index, share of the viewport and visible text, and whether html or body locks scrolling. Sticky elements stay in the flow and are not candidates. Each covering overlay is classified by its text and container names: consent platforms (OneTrust, Cookiebot, Didomi, Usercentrics and others), cookie, consent and age wording, login or subscription wording, and promotional wording. The analyst classifies the unclassified ones and checks whether the content stays in the DOM underneath. Overlays that appear only after a delay longer than the load settling time are not seen. Google recommends overlaying legally required notices on the content (so it stays indexable) and letting verified Googlebot through age gates. The 30% and 50% figures are not from Google.",
     "related": [
       "content-filler-before-mc",
       "tech-cmp-blocks-content"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "tech-cmp-blocks-content",
