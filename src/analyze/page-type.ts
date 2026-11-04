@@ -1,5 +1,8 @@
+import type { DocumentFacts } from '../core/facts.ts';
 import type { PageType } from '../core/types.ts';
 import type { StructuredData, StructuredNode } from '../parse/structured-data.ts';
+import { absoluteUrl, hreflangLinks } from '../rules/helpers.ts';
+import { sameLanguage } from '../rules/intl/codes.ts';
 
 export interface PageTypeInput {
   readonly url: string;
@@ -10,6 +13,11 @@ export interface PageTypeInput {
   readonly data: StructuredData | undefined;
   /** True when the URL is the site's home page in any locale. */
   readonly isHome?: boolean;
+  /**
+   * The language tags the page gives itself, from `ownLanguages`. With them, a one-segment path such as /ca/ or
+   * /en-us/ is a locale root only when one of them names that language or region; without them the path decides.
+   */
+  readonly languages?: readonly string[];
 }
 
 export interface PageTypeDecision {
@@ -24,7 +32,25 @@ const about = /^(about|about-us|sobre|sobre-[a-z0-9-]+|quienes-somos|nosotros|qu
 const utility = /\b(search|buscar|cercar|cart|carrito|cistella|checkout|login|signin|sign-in|account|cuenta|compte|thank-you|gracias|gracies|unsubscribe)\b/iu;
 const services = /^(services?|servicios?|serveis?|servei)$/iu;
 const listing = /^(blog|news|noticias|noticies|category|categoria|tag|etiqueta|archive|archivo|arxiu)$/iu;
-const localeRoot = /^\/(?:[a-z]{2}(?:[-_][a-z]{2,4})?\/?)?$/iu;
+const localeSegment = /^\/([a-z]{2}(?:[-_][a-z]{2,4})?)\/?$/iu;
+
+/**
+ * Whether a locale-like path segment such as ca, pt-br or us-en names the language or the region of `tag`, with uk
+ * standing for GB as sites write it. Two letters alone do not make a locale: /ai/, /go/ or /it/ are often topics.
+ */
+function namesLocale(segment: string, tag: string): boolean {
+  const [language = '', ...subtags] = tag.trim().toLowerCase().replaceAll('_', '-').split('-');
+  const regions = subtags.filter(subtag => subtag.length === 2);
+  return segment.toLowerCase().split(/[-_]/u).some(part => sameLanguage(part, language) || regions.includes(part) || (part === 'uk' && regions.includes('gb')));
+}
+
+/** The language tags a page gives itself: its html lang and the hreflang values of the annotations that point to it. */
+export function ownLanguages(doc: DocumentFacts, url: string): string[] {
+  const base = absoluteUrl(doc.parsed.bases.find(element => element.attrs.href !== undefined)?.attrs.href, url) ?? url;
+  const self = url.replace(/#.*$/su, '');
+  const annotated = hreflangLinks(doc, base).filter(link => link.href?.replace(/#.*$/su, '') === self).map(link => link.hreflang);
+  return [...(doc.parsed.htmlLang === undefined ? [] : [doc.parsed.htmlLang]), ...annotated];
+}
 
 /** Nodes that say what the page is: top-level ones and the main entity of another node, such as an ItemPage's Product. */
 const describesPage = (node: StructuredNode) => !node.nested || /\.mainEntity(?:\[\d+\])?$/u.test(node.path);
@@ -49,7 +75,9 @@ export function classifyPage(input: PageTypeInput): PageTypeDecision {
   } catch {
     // An unparseable URL falls through to content-based checks.
   }
-  if (input.isHome || localeRoot.test(path)) return { type: 'home', reason: 'home page or locale root' };
+  const locale = localeSegment.exec(path)?.[1];
+  const localeRoot = locale !== undefined && (input.languages?.some(tag => namesLocale(locale, tag)) ?? true);
+  if (input.isHome || path === '/' || localeRoot) return { type: 'home', reason: 'home page or locale root' };
   const parts = segments(input.url);
   const last = parts.at(-1) ?? '';
   const words = `${parts.join(' ')} ${input.title ?? ''} ${input.h1 ?? ''}`;
