@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -53,6 +53,15 @@ describe('altimeter audit', () => {
     assert.equal(report.target.origin, origin);
     assert.equal(report.run.options.render, false);
     assert.deepEqual([report.run.options.provider, report.ai], ['none', undefined]);
+  });
+
+  test('never writes the report inside the --source repository', async () => {
+    const repo = join(work, 'site-repo');
+    await mkdir(repo, { recursive: true });
+    const inside = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--source', repo, '--out', join(repo, 'reports')]);
+    assert.equal(inside.status, 2);
+    assert.match(inside.stderr, /outside the --source repository/u);
+    assert.equal((await run(['audit', `${origin}/`, '--source', join(work, 'missing')])).status, 2);
   });
 
   test('rejects bad analysis options', async () => {

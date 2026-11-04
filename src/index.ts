@@ -12,3 +12,4 @@ export { mergeAnalysis, type Report } from './report/model.ts';
 export { writeReport } from './report/write.ts';
 export { compareReports } from './report/compare.ts';
 export { verifyTasks, verifyExitCode } from './verify/index.ts';
+export { locateFixes } from './source/locate.ts';

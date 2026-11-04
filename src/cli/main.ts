@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { realpathSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -18,7 +18,8 @@ import { analysisSummary } from '../report/markdown.ts';
 import { mergeAnalysis, type Report } from '../report/model.ts';
 import { mythMatches } from '../rules/myth-filter.ts';
 import { cleanLine } from '../report/sanitize.ts';
-import { reportDirectory, writeReport } from '../report/write.ts';
+import { isInside, reportDirectory, writeReport } from '../report/write.ts';
+import { locateFixes } from '../source/locate.ts';
 import { verifyExitCode, verifyTasks } from '../verify/index.ts';
 import { HttpClient } from '../fetch/http.ts';
 import { deleteLogin, loadLogin, loginStatus, saveLogin } from '../owner/credential-store.ts';
@@ -48,6 +49,7 @@ Audit options:
   --gsc                      Add Search Console data (from ALTIMETER_GSC_ACCESS_TOKEN, ALTIMETER_GSC_SA_KEY or gsc login).
   --gsc-property <property>  Use this property, for example sc-domain:example.com.
   --redact-queries           Write numbered labels instead of Search Console queries, for a report to share.
+  --source <dir>             The site's repository: tasks name the files that most likely hold each fix (read only).
   --out <dir>                Parent folder for reports (default ./altimeter-report).
   --no-render                Skip Chrome rendering and Lighthouse.
   --no-lighthouse            Skip Lighthouse.
@@ -140,7 +142,7 @@ async function auditCommand(args: string[]): Promise<number> {
       lang: { type: 'string' }, out: { type: 'string' }, 'no-render': { type: 'boolean' }, 'no-lighthouse': { type: 'boolean' },
       'lab-runs': { type: 'string' }, 'fail-on': { type: 'string' }, 'allow-private-network': { type: 'boolean' }, quiet: { type: 'boolean' },
       crawl: { type: 'boolean' }, 'max-pages': { type: 'string' }, gsc: { type: 'boolean' }, 'gsc-property': { type: 'string' },
-      'redact-queries': { type: 'boolean' }, provider: { type: 'string' }, verifier: { type: 'string' }, model: { type: 'string' },
+      'redact-queries': { type: 'boolean' }, source: { type: 'string' }, provider: { type: 'string' }, verifier: { type: 'string' }, model: { type: 'string' },
       'ai-pages': { type: 'string' }, 'ai-max-calls': { type: 'string' }, keyword: { type: 'string', multiple: true }, 'dry-run': { type: 'string' },
       'use-api-keys': { type: 'boolean' }, 'no-ai-cache': { type: 'boolean' },
     },
@@ -164,8 +166,15 @@ async function auditCommand(args: string[]): Promise<number> {
   const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(message)}\n`);
   const useGsc = values.gsc === true || values['gsc-property'] !== undefined;
   const ai = analysisOptions(values);
+  const outRoot = resolve(values.out ?? 'altimeter-report');
+  const source = values.source === undefined ? undefined : resolve(values.source);
+  if (source !== undefined) {
+    if (!(await stat(source).then(info => info.isDirectory(), () => false))) throw new UsageError('--source must be the folder of the site\'s repository.');
+    // The repository is only read; a report folder inside it could end up committed with the site.
+    if (isInside(source, outRoot)) throw new UsageError('--out must be outside the --source repository.');
+  }
   const recordedOptions = {
-    crawl: values.crawl === true, maxPages, searchConsole: useGsc, redactQueries: values['redact-queries'] === true, render: values['no-render'] !== true,
+    crawl: values.crawl === true, maxPages, searchConsole: useGsc, redactQueries: values['redact-queries'] === true, source: source !== undefined, render: values['no-render'] !== true,
     lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true,
     provider: ai.provider, verifier: ai.verifier, aiPages: ai.aiPages, aiMaxCalls: ai.maxCalls, dryRun: ai.dryRunDir !== undefined,
   };
@@ -188,7 +197,8 @@ async function auditCommand(args: string[]): Promise<number> {
     const analysis = await runAnalysis({ ...ai, report, collected: result.collected, mythMatches, ...(log ? { log } : {}) });
     report = mergeAnalysis(report, analysis);
   }
-  const directory = reportDirectory(resolve(values.out ?? 'altimeter-report'), report.target.origin, new Date(report.run.startedAt));
+  if (source !== undefined) report = await locateFixes(report, source);
+  const directory = reportDirectory(outRoot, report.target.origin, new Date(report.run.startedAt));
   await writeReport(directory, report, lang);
   const shown = relative(process.cwd(), directory) || '.';
   if (quiet) {

@@ -38,6 +38,17 @@ export interface Task {
   /** Checks that pass today on the same scope and must keep passing, so the fix does not trade one problem for another. */
   readonly mustRemainPassing: readonly TaskCheck[];
   readonly sources: readonly RuleSource[];
+  /** Files of the site's repository, given with --source, that most likely hold the fix; repository-relative paths. */
+  readonly files?: readonly FileCandidate[];
+  /** Data files that only contain the observed text: the fix belongs in the code that uses them, not in them. */
+  readonly mustNotChange?: readonly string[];
+}
+
+export interface FileCandidate {
+  readonly path: string;
+  readonly confidence: 'high' | 'medium' | 'low';
+  /** Why the file was picked, such as the markup it emits or the text it contains. */
+  readonly reason: string;
 }
 
 const serverInputs: readonly InputId[] = ['http', 'redirects', 'variants', 'tls', 'robots', 'ua-probe', 'not-found-probe', 'sitemaps'];

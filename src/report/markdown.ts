@@ -224,7 +224,14 @@ function taskBody(report: Report, task: Task, language: Language, evidenceBudget
     used += entry.length;
     lines.push(entry);
   }
-  lines.push('', `### ${t.desiredState}`, '', cleanLine(texts.fix, 700), '', `### ${t.acceptance}`, '');
+  lines.push('', `### ${t.desiredState}`, '', cleanLine(texts.fix, 700), '');
+  if (task.files?.length || task.mustNotChange?.length) {
+    lines.push(`### ${t.whereToLook}`, '');
+    for (const file of task.files ?? []) lines.push(`- \`${cleanLine(file.path, 200)}\` · ${t.fileConfidence[file.confidence]} · ${cleanLine(file.reason, 200)}`);
+    for (const path of task.mustNotChange ?? []) lines.push(`- \`${cleanLine(path, 200)}\` · ${t.dataFile}`);
+    lines.push('');
+  }
+  lines.push(`### ${t.acceptance}`, '');
   for (const check of task.acceptance) lines.push(`- ${format(t.acceptanceLine, { rule: check.ruleId, scope: untrustedInline(scopeLabel(check.scope), 160) })}`);
   if (task.mustRemainPassing.length > 0) {
     lines.push('', `### ${t.keepPassing}`, '');
