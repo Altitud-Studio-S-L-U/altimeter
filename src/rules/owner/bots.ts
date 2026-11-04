@@ -57,13 +57,13 @@ function tallyEvidence(context: RuleContext, activity: BotActivity, bot: BotSumm
   });
 }
 
-/** One crawler's requests in the window, as an evidence item. */
+/** One crawler's requests in the window, as an evidence item; {bot} lists a crawler, while {crawler} names the one a finding is about. */
 function botEvidence(context: RuleContext, activity: BotActivity, bot: BotSummary): string {
-  const facts = { crawler: bot.name, operator: bot.operator, purpose: bot.purpose, ...windowOf(activity) };
+  const head = evidenceLabel('{bot} ({operator}, {purpose}), from {start} to {end}:', { bot: bot.name, operator: bot.operator, purpose: bot.purpose, ...windowOf(activity) });
   if (!bot.verifiable && bot.verified.hits === 0) {
     return context.evidence.add({
       kind: 'owner-data',
-      label: evidenceLabel('{crawler} ({operator}, {purpose}), from {start} to {end}: claimed requests: {claims}; the operator publishes no way to verify them', { ...facts, claims: Math.round(bot.unverified.hits) }),
+      label: joinLabels(head, evidenceLabel('claimed requests: {claims}; the operator publishes no way to verify them', { claims: Math.round(bot.unverified.hits) })),
     });
   }
   const counts = {
@@ -77,7 +77,7 @@ function botEvidence(context: RuleContext, activity: BotActivity, bot: BotSummar
   ];
   return context.evidence.add({
     kind: 'owner-data',
-    label: joinLabels(evidenceLabel('{crawler} ({operator}, {purpose}), from {start} to {end}: verified requests: {verified}; unverified: {unverified}; spoofed: {spoofed}; last verified: {last}; robots.txt: {robots}; llms.txt: {llms}; scripts: {scripts}; style sheets: {stylesheets}', { ...facts, ...counts }), ...notes),
+    label: joinLabels(head, evidenceLabel('verified requests: {verified}; unverified: {unverified}; spoofed: {spoofed}; last verified: {last}; robots.txt: {robots}; llms.txt: {llms}; scripts: {scripts}; style sheets: {stylesheets}', counts), ...notes),
   });
 }
 
@@ -166,7 +166,7 @@ const aiBlockedAtEdge: RuleImplementation = {
         evidence: [
           tallyEvidence(context, activity, bot, tally, claimed),
           paths === undefined
-            ? context.evidence.add({ kind: 'owner-data', label: evidenceLabel('paths where {crawler} was refused: none among the busiest paths', { crawler: bot.name }) })
+            ? context.evidence.add({ kind: 'owner-data', label: joinLabels(evidenceLabel('paths where {crawler} was refused', { crawler: bot.name }), evidenceLabel('(none among the busiest paths)')) })
             : context.evidence.add({ kind: 'owner-data', label: evidenceLabel('paths where {crawler} was refused', { crawler: bot.name }), excerpt: paths }),
         ],
         params: { agent: bot.name, blocked: count(activity, blocked), total: count(activity, tally.hits), share: share(blocked, tally.hits), statuses: statusList(tally.statuses, aiRefused) },
@@ -197,7 +197,7 @@ const aiSearchNotSeen: RuleImplementation = {
     const evidence = allowed.map(id => {
       const bot = bots.find(entry => entry.id === id);
       return bot ? botEvidence(context, activity, bot)
-        : context.evidence.add({ kind: 'owner-data', label: evidenceLabel('{crawler}, which robots.txt allows: no request from {start} to {end}', { crawler: botById(id)!.name, ...windowOf(activity) }) });
+        : context.evidence.add({ kind: 'owner-data', label: evidenceLabel('{bot}, which robots.txt allows: no request from {start} to {end}', { bot: botById(id)!.name, ...windowOf(activity) }) });
     });
     if (bots.some(bot => bot.verified.hits > 0)) return { outcome: 'pass', evidence };
     const names = allowed.map(id => botById(id)!.name);
@@ -252,7 +252,7 @@ const searchEngineBlocked: RuleImplementation = {
         return [
           tallyEvidence(context, activity, bot, tally, false),
           paths === undefined
-            ? context.evidence.add({ kind: 'owner-data', label: evidenceLabel('paths where {crawler} got errors or refusals: none among the busiest paths', { crawler: bot.name }) })
+            ? context.evidence.add({ kind: 'owner-data', label: joinLabels(evidenceLabel('paths where {crawler} got errors or refusals', { crawler: bot.name }), evidenceLabel('(none among the busiest paths)')) })
             : context.evidence.add({ kind: 'owner-data', label: evidenceLabel('paths where {crawler} got errors or refusals', { crawler: bot.name }), excerpt: paths }),
         ];
       };
@@ -362,8 +362,8 @@ const spoofedCrawlers: RuleImplementation = {
       ? [context.evidence.add({ kind: 'owner-data', label: evidenceLabel("crawler requests that failed their operator's checks, from {start} to {end}: none", windowOf(activity)) })]
       : impostors.map(bot => context.evidence.add({
         kind: 'owner-data',
-        label: evidenceLabel("{crawler} requests that failed its operator's checks, from {start} to {end}: {failed} of {checked} checked; answers: {statuses}", {
-          crawler: bot.name, ...windowOf(activity), failed: Math.round(bot.spoofed.hits), checked: Math.round(bot.verified.hits + bot.spoofed.hits), statuses: statusList(bot.spoofed.statuses),
+        label: evidenceLabel("{bot} requests that failed its operator's checks, from {start} to {end}: {failed} of {checked} checked; answers: {statuses}", {
+          bot: bot.name, ...windowOf(activity), failed: Math.round(bot.spoofed.hits), checked: Math.round(bot.verified.hits + bot.spoofed.hits), statuses: statusList(bot.spoofed.statuses),
         }),
       }));
     const spoofedShare = spoofed / checked;

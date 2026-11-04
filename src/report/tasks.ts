@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { EvidenceItem } from '../core/evidence.ts';
 import type { Category, FixLocation, InputId, RuleMeta, RuleSource, Severity, Verification } from '../core/types.ts';
-import { findingMessage } from '../i18n/messages.ts';
+import { findingMessage, format } from '../i18n/messages.ts';
 import type { Finding, FindingScope } from '../rules/engine.ts';
 import { severityWeights } from '../score/score.ts';
 
@@ -87,22 +87,34 @@ const probeSegment = /altimeter-probe-[0-9a-f]+/gu;
 /** An HTTP date such as a Date header, whose day and month names change too. */
 const httpDate = /\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT\b/gu;
 const withoutProbe = (value: string) => value.replace(probeSegment, 'altimeter-probe');
-/** Numbers and dates change from run to run while the problem stays the same. */
-const shape = (value: string) => withoutProbe(value).replace(httpDate, '#').replace(/\d+/gu, '#');
+/** Numbers and dates change from run to run while the problem stays the same; a number with group separators is one number. */
+const shape = (value: string) => withoutProbe(value).replace(httpDate, '#').replace(/\d{1,3}(?:,\d{3})+(?!\d)/gu, '#').replace(/\d+/gu, '#');
+
+/** Values of an owner data label that name what a finding is about, such as one crawler; the others move with the reporting window. */
+const ownerSubjects: ReadonlySet<string> = new Set(['crawler', 'issue']);
+
+/** The first template of an owner data label, with only the values that name its subject filled in. */
+function ownerLabel(item: EvidenceItem): string {
+  const first = item.labelParts?.[0];
+  if (!first) return item.label;
+  return format(first.template, Object.fromEntries(Object.entries(first.params ?? {}).filter(([name]) => ownerSubjects.has(name))));
+}
 
 /**
  * A defect repeated on several pages is usually one template fix, so page findings group by the shape of their
  * evidence while the observed values differ from page to page. Site findings keep what tells them apart: where each
  * item was observed and what was seen there, except the figures and lists of owner data, which move with the
- * reporting window. Numbers, dates and the not-found probe's random path never count, so an unchanged problem keeps
- * its id from run to run.
+ * reporting window: an owner data item counts by the first template of its label and the crawler or issue it names.
+ * Numbers, dates and the not-found probe's random path never count, so an unchanged problem keeps its id from run to run.
  */
 function groupKey(finding: Finding, evidence: EvidenceLookup): string {
   const page = finding.scope.kind === 'page';
   const items = finding.evidence.map(id => evidence.get(id)).filter((item): item is EvidenceItem => item !== undefined);
   const fact = (item: EvidenceItem) => page
     ? [item.kind, shape(item.label), shape(item.path ?? '')]
-    : [item.kind, withoutProbe(item.url ?? ''), shape(item.label), shape(item.path ?? ''), item.kind === 'owner-data' ? '' : shape(item.excerpt ?? '')];
+    : item.kind === 'owner-data'
+      ? [item.kind, withoutProbe(item.url ?? ''), shape(ownerLabel(item)), shape(item.path ?? ''), '']
+      : [item.kind, withoutProbe(item.url ?? ''), shape(item.label), shape(item.path ?? ''), shape(item.excerpt ?? '')];
   const facts = [...new Set(items.map(item => JSON.stringify(fact(item))))].sort();
   return JSON.stringify([finding.ruleId, finding.reason ?? '', page ? '' : (finding.scope as { readonly origin: string }).origin, facts]);
 }
