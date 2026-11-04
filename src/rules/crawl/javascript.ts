@@ -1,7 +1,7 @@
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { attribute, isElement, parseHtml, walk } from '../../parse/html.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, linksWithRel, metaNamed, pageDocument, summarizeList } from '../helpers.ts';
+import { absoluteUrl, linksWithRel, metaNamed, pageDocument, sameSite, summarizeList } from '../helpers.ts';
 import {
   documentBase, effectiveDirectives, failure, internalLinks, missingShare, normalizeUrl, notApplicable, notEvaluated, passed, percent,
   sitemapLocs, words,
@@ -114,9 +114,12 @@ const jsFragmentRouting: RuleImplementation = {
     if (documents.length === 0) return notApplicable('no-documents');
     const routes = new Map<string, { url: string; line: number; href: string }>();
     for (const { page, doc } of documents) {
+      const base = documentBase(doc, page.fetch.finalUrl);
       for (const anchor of doc!.parsed.anchors) {
         const href = anchor.attrs.href ?? '';
         if (!hashRoute.test(href)) continue;
+        const target = absoluteUrl(href, base);
+        if (!target || !/^https?:/u.test(target) || !sameSite(target, page.fetch.finalUrl)) continue;
         const fragment = href.slice(href.indexOf('#'));
         if (!routes.has(fragment)) routes.set(fragment, { url: page.fetch.finalUrl, line: anchor.line, href });
       }

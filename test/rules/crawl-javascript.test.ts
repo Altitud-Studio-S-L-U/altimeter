@@ -92,6 +92,14 @@ describe('crawl-js-fragment-routing', () => {
   test('reports a single route as low', () => {
     assertFail(run(id, one({ html: doc('<a href="#!/item">Item</a>') })).finding, 'low', 'single-hash-route');
   });
+  test('counts only links to the audited site, as the base URL resolves them', () => {
+    const app = '<a href="https://app.example-saas.io/#/login">Log in</a><a href="https://app.example-saas.io/#/signup">Sign up</a>';
+    assertOutcome(run(id, one({ html: doc(app) })).finding, 'pass');
+    assertOutcome(run(id, one({ html: doc('<a href="#/login">Log in</a><a href="#/signup">Sign up</a>', 'Products', '<base href="https://app.example-saas.io/">') })).finding, 'pass');
+    const { finding, excerpts } = run(id, one({ html: doc(`${app}<a href="https://www.example.com/#/about">About</a><a href="#/team">Team</a>`) }));
+    assertFail(finding, 'high', 'hash-routes');
+    assert.deepEqual(excerpts(), ['https://www.example.com/#/about', '#/team']);
+  });
   test('does not apply without documents', () => {
     assertOutcome(run(id, one({})).finding, 'not_applicable', 'no-documents');
   });
