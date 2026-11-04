@@ -34,6 +34,11 @@ export interface PageFacts {
   readonly crux?: Readonly<Record<'url' | 'origin', Readonly<Partial<Record<CruxFormFactor, CruxOutcome>>>>>;
   /** The raw page fetched again as Googlebot and as a browser, to compare what each receives. */
   readonly uaProbes?: readonly AgentProbe[];
+  /**
+   * Why the page cannot be audited, when the response is a firewall challenge, a login or a consent wall rather
+   * than the page. No page rule is evaluated on it.
+   */
+  readonly notAuditable?: string;
 }
 
 export interface AgentProbe {

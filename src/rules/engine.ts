@@ -141,6 +141,10 @@ export interface EngineInput {
 export function runRules(input: EngineInput): Finding[] {
   const findings: Finding[] = [];
   const run = (rule: RuleMeta, implementation: RuleImplementation, scope: FindingScope, page: PageFacts | undefined) => {
+    if (page?.notAuditable) {
+      findings.push(toFinding(rule, scope, { outcome: 'not_evaluated', reason: `page-not-auditable:${page.notAuditable}` }, input.evidence));
+      return;
+    }
     const missing = rule.inputs.filter(entry => !inputAvailable(entry, input.site, page));
     if (missing.length > 0) {
       findings.push(toFinding(rule, scope, { outcome: 'not_evaluated', reason: `missing-input:${missing.join(',')}` }, input.evidence));
