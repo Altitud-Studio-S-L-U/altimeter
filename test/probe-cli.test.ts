@@ -182,6 +182,19 @@ describe('altimeter ai-probe', () => {
     assert.ok(existsSync(join(await reportFolder(out), 'probe.md')), 'the report still says why');
   });
 
+  test('a cancelled probe still writes its report, and leaves no interrupt handler behind', async t => {
+    const { out, claude, run } = await setup(t);
+    const listeners = process.listenerCount('SIGINT');
+    const controller = new AbortController();
+    controller.abort();
+    const result = await run([origin, '--keyword', 'seo audit', '--engines', 'claude', '--runs', '1', '--yes', '--out', out], { probe: { pauseMs: 0, signal: controller.signal } });
+    assert.equal(result.status, 2);
+    assert.equal(process.listenerCount('SIGINT'), listeners);
+    const report = JSON.parse(await readFile(join(await reportFolder(out), 'probe.json'), 'utf8')) as ProbeReport;
+    assert.ok(report.engines[0]!.runs.every(entry => entry.status === 'skipped' && entry.skipped === 'cancelled'));
+    assert.deepEqual(await claude.calls(), []);
+  });
+
   test('rejects bad options with exit 2 and a message, before anything is sent', async t => {
     const { claude, run } = await setup(t);
     const cases: Array<[string[], RegExp]> = [

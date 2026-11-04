@@ -141,14 +141,25 @@ export async function aiProbeCommand(args: string[], context: AiProbeContext = {
       return 0;
     }
 
-    const report = await runProbe({
-      ...context.probe,
-      plan,
-      language,
-      env: context.env ?? process.env,
-      refresh: values.refresh === true,
-      log: message => warn(`· ${cleanLine(message)}\n`),
-    });
+    // Ctrl+C cancels the probe: the running CLI's process tree is stopped and the report says which runs were left.
+    // A second Ctrl+C exits at once.
+    const interrupted = new AbortController();
+    const onInterrupt = () => interrupted.abort();
+    process.once('SIGINT', onInterrupt);
+    let report: Awaited<ReturnType<typeof runProbe>>;
+    try {
+      report = await runProbe({
+        ...context.probe,
+        plan,
+        language,
+        env: context.env ?? process.env,
+        refresh: values.refresh === true,
+        log: message => warn(`· ${cleanLine(message)}\n`),
+        signal: context.probe?.signal ? AbortSignal.any([interrupted.signal, context.probe.signal]) : interrupted.signal,
+      });
+    } finally {
+      process.removeListener('SIGINT', onInterrupt);
+    }
     const cwd = context.cwd ?? process.cwd();
     const directory = probeDirectory(resolve(cwd, values.out ?? 'altimeter-report'), origin, new Date(report.generatedAt));
     await writeProbeReport(directory, report, language);

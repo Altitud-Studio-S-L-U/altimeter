@@ -5,8 +5,9 @@ import { probeCacheDirectory, probeCacheKey, probeCacheTtlMs, readProbeCache, wr
 import { planProbe } from '../src/probe/plan.ts';
 import { runProbe, type ProbeOptions } from '../src/probe/run.ts';
 import type { ProbeEngine, SiteProfile } from '../src/probe/types.ts';
+import { setTimeout as delay } from 'node:timers/promises';
 import { probeDouble } from './fixtures/probe/doubles.ts';
-import { sandbox, testEnv } from './support/providers.ts';
+import { alive, sandbox, testEnv } from './support/providers.ts';
 
 const site: SiteProfile = {
   origin: 'https://altitudstudio.ad', host: 'altitudstudio.ad', domain: 'altitudstudio.ad', brandNames: ['Altitud Studio'], language: 'en', pages: [], notices: [],
@@ -104,6 +105,19 @@ describe('running a probe', () => {
     const cancelled = await probe({ signal: controller.signal });
     assert.ok(cancelled.engines[0]!.runs.every(run => run.skipped === 'cancelled'));
     assert.deepEqual(await claude.calls(), []);
+  });
+
+  test('cancelling a probe stops the running CLI and skips the rest', { timeout: 30_000 }, async t => {
+    const { claude, probe } = await setup(t, { engines: ['claude'], runs: 1, codex: null, claude: { default: { hang: true } } });
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 500);
+    const report = await probe({ signal: controller.signal });
+    const runs = report.engines[0]!.runs;
+    assert.deepEqual(runs.map(run => run.error?.code ?? run.skipped), ['cancelled', 'cancelled', 'cancelled']);
+    const [call] = await claude.calls();
+    for (let attempt = 0; attempt < 20 && alive(call!.pid); attempt += 1) await delay(100);
+    assert.equal(alive(call!.pid), false);
+    assert.equal((await claude.calls()).length, 1);
   });
 
   test('stops asking an engine that broke its isolation, and one that failed twice in a row', async t => {

@@ -64,7 +64,9 @@ Every section of the report carries the engine, its CLI version, the model the r
 
 ## Cache
 
-Completed runs are kept for 7 days in the user cache folder (`%LOCALAPPDATA%\altimeter\ai-probe` on Windows, `~/Library/Caches/altimeter/ai-probe` on macOS, `$XDG_CACHE_HOME/altimeter/ai-probe` elsewhere), keyed by the engine, its CLI version, the search mode, the locale, the prompt template, the question and the run number. Entries are checked and cleaned again on every read; `--refresh` asks again. Each run in `probe.json` names its cache entry by key, never by path.
+Completed runs are kept for 7 days in the user cache folder (`%LOCALAPPDATA%\altimeter\ai-probe` on Windows, `~/Library/Caches/altimeter/ai-probe` on macOS, `$XDG_CACHE_HOME/altimeter/ai-probe` elsewhere), keyed by the engine, its CLI version, the search mode, the locale, the prompt template, the question and the run number. The site is not part of the key: the question never names it, so the same question to the same engine is the same sample, and the counts are computed again for the site being probed. Entries are checked and cleaned again on every read; `--refresh` asks again. Each run in `probe.json` names its cache entry by key, never by path.
+
+Pressing Ctrl+C during a probe stops the running CLI and its process tree, skips the remaining runs and still writes the report; a second Ctrl+C exits at once.
 
 ## Usage
 
