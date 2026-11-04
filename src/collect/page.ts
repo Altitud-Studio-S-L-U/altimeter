@@ -1,4 +1,4 @@
-import { classifyPage } from '../analyze/page-type.ts';
+import { classifyPage, ownLanguages } from '../analyze/page-type.ts';
 import type { DocumentFacts, PageFacts } from '../core/facts.ts';
 import { headerValue, type FetchResult, type HeaderMap, type HttpClient } from '../fetch/http.ts';
 import { metaContent, parseHtml } from '../parse/html.ts';
@@ -44,6 +44,7 @@ export async function fetchPage(client: HttpClient, url: string, options: { isHo
     ogType: raw ? metaContent(raw.parsed, 'og:type')[0]?.attrs.content : undefined,
     data: raw?.data,
     ...(options.isHome === undefined ? {} : { isHome: options.isHome }),
+    ...(raw ? { languages: ownLanguages(raw, fetch.finalUrl) } : {}),
   });
   return { url, fetch, pageType: decision.type, pageTypeReason: decision.reason, ...(raw ? { raw } : {}) };
 }

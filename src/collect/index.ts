@@ -204,6 +204,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       const home = await fetchPage(client, homeUrl, { isHome: true });
       homeFinal = home.fetch.finalUrl;
       if (home.fetch.finalUrl !== page.fetch.finalUrl) pages.set(home.url, home);
+      // The root lands on the audited page, so it is the home page whatever its path and languages say.
+      else pages.set(page.url, { ...page, pageType: home.pageType, pageTypeReason: home.pageTypeReason });
     }
 
     const declared = robots.availability.kind === 'parsed' ? robots.availability.file.sitemaps.map(line => line.value) : [];

@@ -84,3 +84,33 @@ describe('collect', () => {
     assert.ok(target?.userRender);
   });
 });
+
+/** A site of a few fixed responses on its own server; every other path answers 404. */
+async function serveSite(routes: Readonly<Record<string, { status: number; headers: Record<string, string>; body?: string }>>) {
+  const small = createServer((req, res) => {
+    const route = routes[req.url ?? '/'];
+    if (!route) return void res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><title>Not found</title>');
+    res.writeHead(route.status, route.headers).end(route.body ?? '');
+  });
+  await new Promise<void>(resolve => small.listen(0, '127.0.0.1', resolve));
+  return {
+    origin: `http://127.0.0.1:${(small.address() as AddressInfo).port}`,
+    close: async () => {
+      small.closeAllConnections();
+      await new Promise(resolve => small.close(resolve));
+    },
+  };
+}
+
+describe('collect on other sites', () => {
+  test('takes the page the root redirects to for the home page, whatever its path says', async () => {
+    const html = '<!doctype html><html lang="ca"><head><title>Estudi</title></head><body><main><h1>Estudi</h1></main></body></html>';
+    const small = await serveSite({ '/': { status: 302, headers: { location: '/inici/' } }, '/inici/': { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' }, body: html } });
+    try {
+      const { site } = await collect({ url: `${small.origin}/inici/`, policy, render: false });
+      assert.deepEqual([...site.pages.values()].map(entry => [new URL(entry.fetch.finalUrl).pathname, entry.pageType]), [['/inici/', 'home']]);
+    } finally {
+      await small.close();
+    }
+  });
+});
