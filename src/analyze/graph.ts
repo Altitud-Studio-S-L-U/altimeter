@@ -1,5 +1,5 @@
 import type { PageFacts, SiteFacts } from '../core/facts.ts';
-import { absoluteUrl, linksWithRel, pageDocument, sameSite } from '../rules/helpers.ts';
+import { absoluteUrl, documentBase, linksWithRel, pageDocument, sameSite } from '../rules/helpers.ts';
 
 export interface LinkEdge {
   readonly from: string;
@@ -50,11 +50,12 @@ export function linkGraph(site: SiteFacts): LinkGraph {
     finalUrls.set(page.url, from);
     const doc = pageDocument(page, 'raw') ?? pageDocument(page);
     if (!doc) continue;
-    const canonical = absoluteUrl(linksWithRel(doc, 'canonical')[0]?.attrs.href, from);
+    const base = documentBase(doc, from);
+    const canonical = absoluteUrl(linksWithRel(doc, 'canonical')[0]?.attrs.href, base);
     if (canonical) canonicalOf.set(from, canonical);
     const edges: LinkEdge[] = [];
     for (const anchor of doc.parsed.anchors) {
-      const target = absoluteUrl(anchor.attrs.href, from);
+      const target = absoluteUrl(anchor.attrs.href, base);
       if (!target || !/^https?:/u.test(target) || !sameSite(target, from)) continue;
       const edge: LinkEdge = { from, to: withoutFragment(target), text: anchor.text || anchor.imageAlt, rel: anchor.rel, template: templateRegion(doc.html, anchor.offset) };
       edges.push(edge);

@@ -94,6 +94,11 @@ export interface SiteFacts {
    * cookies (at most ten), so reciprocity and target checks work without a crawl.
    */
   readonly alternates?: readonly PageFacts[];
+  /**
+   * Links of the audited page that its base element sends elsewhere on the same host, fetched where the base sends
+   * them (at most four), so crawl-base-href can tell whether they land on errors without a crawl.
+   */
+  readonly baseLinks?: readonly ProbeFacts[];
   readonly pages: ReadonlyMap<string, PageFacts>;
   /** True when a crawl ran, so site-scope graph rules can be evaluated. */
   readonly crawled: boolean;

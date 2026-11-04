@@ -102,7 +102,7 @@ export const breadcrumb: RuleImplementation = {
     return perNode(context, 'BreadcrumbList', 'no-breadcrumb', (graph, list) => {
       const { problems, add } = collector(context, graph, list);
       const items = nodesAt(graph, list, 'itemListElement');
-      const shallow = context.page!.pageType === 'home' || topLevelPath(graph.base);
+      const shallow = context.page!.pageType === 'home' || topLevelPath(graph.url);
       if (items.length < 2 && !shallow) add('too-few-items', 'low', `${items.length} item(s)`, evidenceLabel('BreadcrumbList with fewer than two items'));
       const siteNames = [...nodesOfType(graph, 'WebSite'), ...nodesOfType(graph, 'Organization'), ...items.slice(0, 1)]
         .map(node => text(graph, node, 'name')).filter((name): name is string => name !== undefined && name.trim() !== '');
@@ -278,7 +278,7 @@ export const discussionForum: RuleImplementation = {
       }
       if (!has(graph, item, 'datePublished')) add('missing-date', 'medium', kind, evidenceLabel('{type} without datePublished', { type: kind }), item);
       const url = absoluteUrl(text(graph, item, 'url'), graph.base);
-      const elsewhere = url !== undefined && !sameDocument(url, graph.base);
+      const elsewhere = url !== undefined && !sameDocument(url, graph.url);
       if (!elsewhere && !['text', 'image', 'video'].some(property => has(graph, item, property))) add('missing-content', 'medium', kind, evidenceLabel('{type} without text, image or video', { type: kind }), item);
     }
     return problems;
@@ -360,7 +360,7 @@ export const carouselItemList: RuleImplementation = {
     if (full.every(entry => !entry)) {
       const urls = items.map(item => absoluteUrl(text(graph, item, 'url') ?? text(graph, item, 'item'), graph.base)).filter((url): url is string => url !== undefined);
       if (new Set(urls).size < urls.length) add('duplicate-urls', 'low', 'url', evidenceLabel('summary list with repeated URLs'));
-      const host = new URL(graph.base).host;
+      const host = new URL(graph.url).host;
       const foreign = urls.filter(url => new URL(url).host !== host);
       if (foreign.length > 0) add('other-site-urls', 'low', foreign[0]!, evidenceLabel('summary list with URLs on another host'), list, 'itemListElement', foreign[0]);
       return problems;
@@ -372,7 +372,7 @@ export const carouselItemList: RuleImplementation = {
         const gaps = missing(graph, entry, ['image', 'name', 'url']);
         if (gaps.length > 0) add('item-incomplete', 'low', gaps.join(', '), evidenceLabel('carousel item without {properties}', { properties: gaps.join(', ') }), entry);
         const url = absoluteUrl(text(graph, entry, 'url'), graph.base);
-        if (url && sameDocument(url, graph.base)) add('anchor-urls', 'low', url, evidenceLabel('carousel item pointing to an anchor on the list page'), entry, 'url', url);
+        if (url && sameDocument(url, graph.url)) add('anchor-urls', 'low', url, evidenceLabel('carousel item pointing to an anchor on the list page'), entry, 'url', url);
       }
     }
     return problems;

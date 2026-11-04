@@ -5,7 +5,7 @@ import { headerValue } from '../../fetch/http.ts';
 import { attribute, collapse, isElement, type HtmlElement, type HtmlNode } from '../../parse/html.ts';
 import type { StructuredNode } from '../../parse/structured-data.ts';
 import type { RuleContext } from '../engine.ts';
-import { absoluteUrl, directivesFor, linksWithRel, metaProperty, pageDocument, robotsDirectives } from '../helpers.ts';
+import { absoluteUrl, directivesFor, documentBase, linksWithRel, metaProperty, pageDocument, robotsDirectives } from '../helpers.ts';
 
 export interface CiteDetails {
   readonly excerpt?: string | undefined;
@@ -266,7 +266,7 @@ function withoutHash(url: string): string {
 export function indexability(page: PageFacts, doc: DocumentFacts | undefined = docOf(page)): Indexability {
   if (page.fetch.status !== 200) return { indexable: false, reason: 'non-200' };
   if (directivesFor(robotsDirectives(page.fetch.headers, doc)).has('noindex')) return { indexable: false, reason: 'noindex' };
-  const canonical = absoluteUrl(linksWithRel(doc, 'canonical')[0]?.attrs.href, page.fetch.finalUrl);
+  const canonical = absoluteUrl(linksWithRel(doc, 'canonical')[0]?.attrs.href, documentBase(doc, page.fetch.finalUrl));
   if (canonical && withoutHash(canonical) !== withoutHash(page.fetch.finalUrl)) return { indexable: false, reason: 'canonicalised' };
   return { indexable: true };
 }

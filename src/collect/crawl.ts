@@ -1,5 +1,6 @@
 import type { PageFacts } from '../core/facts.ts';
 import type { HttpClient } from '../fetch/http.ts';
+import { baseUrl } from '../parse/html.ts';
 import { fetchPage } from './page.ts';
 
 export interface CrawlOptions {
@@ -76,7 +77,13 @@ export async function crawlSite(client: HttpClient, options: CrawlOptions): Prom
     if (queue.length >= 4 * options.maxPages) break;
     enqueue(seed, seed);
   }
-  for (const page of options.known.values()) for (const anchor of page.raw?.parsed.anchors ?? []) enqueue(anchor.attrs.href, page.fetch.finalUrl);
+  // Links resolve against the page's base element, as Googlebot and browsers resolve them.
+  const enqueueLinks = (page: PageFacts) => {
+    if (!page.raw) return;
+    const base = baseUrl(page.raw.parsed, page.fetch.finalUrl);
+    for (const anchor of page.raw.parsed.anchors) enqueue(anchor.attrs.href, base);
+  };
+  for (const page of options.known.values()) enqueueLinks(page);
 
   const budget = Math.max(0, options.maxPages - options.known.size);
   // Workers reserve a slot before fetching, so concurrent workers never exceed the page limit.
@@ -93,7 +100,7 @@ export async function crawlSite(client: HttpClient, options: CrawlOptions): Prom
       const page = await fetchPage(client, url);
       pages.set(url, page);
       options.log?.(`Crawled ${pages.size + options.known.size}/${options.maxPages}`);
-      if (page.raw && page.fetch.status === 200) for (const anchor of page.raw.parsed.anchors) enqueue(anchor.attrs.href, page.fetch.finalUrl);
+      if (page.fetch.status === 200) enqueueLinks(page);
       if (options.delayMs) await new Promise(resolve => setTimeout(resolve, options.delayMs));
     }
   };

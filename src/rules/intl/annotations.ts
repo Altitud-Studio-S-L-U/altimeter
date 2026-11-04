@@ -1,7 +1,7 @@
 import { evidenceLabel, joinLabels, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import type { ElementRef, LinkRef } from '../../parse/html.ts';
-import { linksWithRel } from '../helpers.ts';
+import { documentBase, linksWithRel } from '../helpers.ts';
 
 export type AnnotationSource = 'html' | 'rendered' | 'header' | 'sitemap';
 
@@ -142,14 +142,14 @@ export function relTokens(rel: string | undefined): string[] {
   return (rel ?? '').toLowerCase().split(/\s+/u).filter(Boolean);
 }
 
-/** A link element with an hreflang attribute, as an annotation. */
-export function linkAnnotation(doc: DocumentFacts, link: LinkRef, base: string, source: 'html' | 'rendered'): Annotation {
+/** A link element with an hreflang attribute, as an annotation of the page at `pageUrl`. */
+export function linkAnnotation(doc: DocumentFacts, link: LinkRef, pageUrl: string, source: 'html' | 'rendered'): Annotation {
   return {
     source,
     value: (link.attrs.hreflang ?? '').trim(),
     rawHref: link.attrs.href,
-    href: normalizeUrl(link.attrs.href, base),
-    declaringUrl: base,
+    href: normalizeUrl(link.attrs.href, documentBase(doc, pageUrl)),
+    declaringUrl: pageUrl,
     excerpt: elementSource(doc.html, link),
     ...(link.line > 0 ? { line: link.line } : {}),
     inHead: link.inHead,
@@ -158,10 +158,10 @@ export function linkAnnotation(doc: DocumentFacts, link: LinkRef, base: string, 
   };
 }
 
-/** hreflang link elements of a document, wherever the parser placed them. */
-export function documentAnnotations(doc: DocumentFacts | undefined, base: string, source: 'html' | 'rendered'): Annotation[] {
+/** hreflang link elements of the document of the page at `pageUrl`, wherever the parser placed them. */
+export function documentAnnotations(doc: DocumentFacts | undefined, pageUrl: string, source: 'html' | 'rendered'): Annotation[] {
   if (!doc) return [];
-  return linksWithRel(doc, 'alternate').filter(link => link.attrs.hreflang !== undefined).map(link => linkAnnotation(doc, link, base, source));
+  return linksWithRel(doc, 'alternate').filter(link => link.attrs.hreflang !== undefined).map(link => linkAnnotation(doc, link, pageUrl, source));
 }
 
 export function headerAnnotations(page: PageFacts): Annotation[] {

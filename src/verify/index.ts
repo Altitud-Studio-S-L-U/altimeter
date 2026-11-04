@@ -70,6 +70,7 @@ export function rebaseSite(site: SiteFacts, from: string, to: string): SiteFacts
     pages,
     siblings: site.siblings.map(page => rebasePage(page, from, to)),
     ...(site.alternates ? { alternates: site.alternates.map(page => rebasePage(page, from, to)) } : {}),
+    ...(site.baseLinks ? { baseLinks: site.baseLinks.map(probe => ({ ...probe, url: swapOrigin(probe.url, from, to), fetch: rebaseFetch(probe.fetch, from, to) })) } : {}),
     variants: site.variants.map(probe => ({ ...probe, url: swapOrigin(probe.url, from, to), fetch: rebaseFetch(probe.fetch, from, to) })),
     sitemaps: site.sitemaps.map(entry => ({ ...entry, url: swapOrigin(entry.url, from, to), fetch: rebaseFetch(entry.fetch, from, to) })),
     resources: site.resources.map(entry => ({ ...entry, url: swapOrigin(entry.url, from, to), fetch: rebaseFetch(entry.fetch, from, to) })),

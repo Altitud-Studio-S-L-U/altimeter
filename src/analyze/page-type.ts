@@ -1,7 +1,7 @@
 import type { DocumentFacts } from '../core/facts.ts';
 import type { PageType } from '../core/types.ts';
 import type { StructuredData, StructuredNode } from '../parse/structured-data.ts';
-import { absoluteUrl, hreflangLinks } from '../rules/helpers.ts';
+import { documentBase, hreflangLinks } from '../rules/helpers.ts';
 import { sameLanguage } from '../rules/intl/codes.ts';
 
 export interface PageTypeInput {
@@ -46,7 +46,7 @@ function namesLocale(segment: string, tag: string): boolean {
 
 /** The language tags a page gives itself: its html lang and the hreflang values of the annotations that point to it. */
 export function ownLanguages(doc: DocumentFacts, url: string): string[] {
-  const base = absoluteUrl(doc.parsed.bases.find(element => element.attrs.href !== undefined)?.attrs.href, url) ?? url;
+  const base = documentBase(doc, url);
   const self = url.replace(/#.*$/su, '');
   const annotated = hreflangLinks(doc, base).filter(link => link.href?.replace(/#.*$/su, '') === self).map(link => link.hreflang);
   return [...(doc.parsed.htmlLang === undefined ? [] : [doc.parsed.htmlLang]), ...annotated];

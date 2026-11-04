@@ -3,7 +3,7 @@ import type { ResourceFacts, SiteFacts } from '../../core/facts.ts';
 import { isAllowed } from '../../fetch/robots.ts';
 import type { LinkRef } from '../../parse/html.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, directivesFor, pageDocument, robotsDirectives, sameSite } from '../helpers.ts';
+import { absoluteUrl, directivesFor, documentBase, pageDocument, robotsDirectives, sameSite } from '../helpers.ts';
 import { describeImage, imageInfo, type ImageInfo } from './image.ts';
 import { citer, fail, firstHeader, homePage, notApplicable, pass, type Cite } from './shared.ts';
 
@@ -56,7 +56,8 @@ function declaredOnHome(site: SiteFacts): Set<string> | undefined {
   const home = homePage(site);
   const doc = home ? pageDocument(home, 'raw') ?? pageDocument(home) : undefined;
   if (!home || !doc) return undefined;
-  return new Set(doc.parsed.links.filter(isFaviconLink).map(link => absoluteUrl(link.attrs.href, home.fetch.finalUrl)).filter((url): url is string => url !== undefined));
+  const base = documentBase(doc, home.fetch.finalUrl);
+  return new Set(doc.parsed.links.filter(isFaviconLink).map(link => absoluteUrl(link.attrs.href, base)).filter((url): url is string => url !== undefined));
 }
 
 function robotsProblem(site: SiteFacts, url: string): string | undefined {

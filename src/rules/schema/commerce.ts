@@ -351,7 +351,7 @@ export const reviewSnippet: RuleImplementation = {
 
 /** Whether an organization node describes the site that publishes the page. */
 export function isSiteOwner(graph: PageGraph, organization: GraphNode): boolean {
-  const pageHost = hostOf(graph.base);
+  const pageHost = hostOf(graph.url);
   const url = text(graph, organization, 'url');
   if (url !== undefined) return sameHost(hostOf(url, graph.base), pageHost);
   if (organization.id !== undefined && /^(https?:|\/|#)/u.test(organization.id)) return sameHost(hostOf(absoluteUrl(organization.id, graph.base)), pageHost);

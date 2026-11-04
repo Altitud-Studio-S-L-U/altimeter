@@ -12,7 +12,7 @@ import { isA } from './vocabulary.ts';
 export function cite(context: RuleContext, graph: PageGraph, node: GraphNode, label: EvidenceLabel, property?: string, excerpt?: string): string {
   return context.evidence.add({
     kind: 'structured-data',
-    url: graph.base,
+    url: graph.url,
     label: joinLabels(label, graph.source === 'rendered' ? evidenceLabel('(rendered DOM)') : evidenceLabel('(raw HTML)')),
     excerpt: excerpt ?? excerptOf(node, property),
     line: node.line,

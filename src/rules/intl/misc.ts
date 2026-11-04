@@ -1,6 +1,6 @@
 import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, directivesFor, pageDocument, robotsDirectives, sameSite } from '../helpers.ts';
+import { absoluteUrl, directivesFor, documentBase, pageDocument, robotsDirectives, sameSite } from '../helpers.ts';
 import { attribute, isElement, textOf, walk } from '../../parse/html.ts';
 import { annotationEvidence, effectiveAnnotations, elementSource, normalizeUrl } from './annotations.ts';
 import { declaredSets, isXDefault } from './cluster.ts';
@@ -143,9 +143,10 @@ export const languageSwitcherCrawlable: RuleImplementation = {
     const alternates = effectiveAnnotations(page!, site).filter(annotation => annotation.href && annotation.href !== self && !isXDefault(annotation));
     if (alternates.length === 0) return notApplicable('no-alternates');
     const doc = pageDocument(page!)!;
+    const base = documentBase(doc, page!.fetch.finalUrl);
     const hrefs = new Map<string, (typeof doc.parsed.anchors)[number]>();
     for (const anchor of doc.parsed.anchors) {
-      const href = normalizeUrl(absoluteUrl(anchor.attrs.href, self));
+      const href = normalizeUrl(absoluteUrl(anchor.attrs.href, base));
       if (href && !hrefs.has(href)) hrefs.set(href, anchor);
     }
     const linked = alternates.find(annotation => hrefs.has(annotation.href!));

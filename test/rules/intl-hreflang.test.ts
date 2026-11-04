@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { bcp47Problem, iso3166, iso639_1, parseHreflang } from '../../src/rules/intl/codes.ts';
-import { parseLinkHeader } from '../../src/rules/intl/annotations.ts';
+import { documentFacts } from '../../src/collect/page.ts';
+import { documentAnnotations, parseLinkHeader } from '../../src/rules/intl/annotations.ts';
 import { combinedLinkAttributes, httpHeaderFormat, outsideHead, relativeUrl, renderedOnly } from '../../src/rules/intl/placement.ts';
 import { invalidLanguageCode, invalidRegionCode, invalidScriptOrSyntax, regionOnlyValue } from '../../src/rules/intl/values.ts';
 import { evaluate, outcomeOn, page, site } from '../support/facts.ts';
@@ -11,6 +12,14 @@ const home = url('/en/');
 const withLinks = (entries: ReadonlyArray<readonly [string, string]>, extra: { headers?: Record<string, string>; rendered?: string } = {}) =>
   site({ pages: [page(home, { html: html({ lang: 'en', head: links(entries), body: prose('en') }), ...extra })] });
 const noHreflang = site({ pages: [page(home, { html: html({ lang: 'en', body: '<p>Hello</p>' }) })] });
+
+describe('hreflang annotations', () => {
+  test('resolve relative hrefs against the base element and belong to the page that declares them', () => {
+    const doc = documentFacts(html({ lang: 'en', head: `<base href="${url('/en/blog/')}">\n${links([['ca', 'ca/']])}` }));
+    const [annotation] = documentAnnotations(doc, url('/en/about/'), 'html');
+    assert.deepEqual([annotation?.href, annotation?.declaringUrl], [url('/en/blog/ca/'), url('/en/about/')]);
+  });
+});
 
 describe('hreflang grammar', () => {
   test('bundles complete code lists', () => {

@@ -507,6 +507,15 @@ describe('crawl-base-href', () => {
     assertFail(finding, 'high', 'relative-links-broken');
     assert.ok(excerpts().includes('HTTP 404'));
   });
+  test('fails high when the links the collector fetched through the base answer errors, without a crawl', () => {
+    assertFail(run(id, one(url, { html: based(`${origin}/sub/`) }, { baseLinks: [{ url: `${origin}/sub/page`, status: 404 }] })).finding, 'high', 'relative-links-broken');
+  });
+  test('passes when the links the base moves answer 200', () => {
+    assertOutcome(run(id, one(url, { html: based(`${origin}/sub/`) }, { baseLinks: [{ url: `${origin}/sub/page`, status: 200 }] })).finding, 'pass');
+  });
+  test('is not evaluated when none of the links the base moves was fetched', () => {
+    assertOutcome(run(id, one(url, { html: based(`${origin}/sub/`) })).finding, 'not_evaluated', 'shifted-links-not-fetched');
+  });
   test('does not apply without a base element', () => {
     assertOutcome(run(id, one(url, { html: doc('') })).finding, 'not_applicable', 'no-base');
   });

@@ -32,6 +32,8 @@ before(async () => {
     if (path === '/ca/sobre/') return void html(200, layout("Sobre l'estudi", '<h1>Sobre nosaltres</h1>'));
     if (path === '/en/services/') return void html(200, layout('Services', '<h1>Services</h1>'));
     if (path === '/en/legal/') return void html(200, layout('Legal notice', '<h1>Legal notice</h1>'));
+    if (path === '/en/based/') return void html(200, layout('Team', '<h1>Team</h1><a href="team/">Team</a> <a href="/en/legal/">Legal</a>', '<base href="/en/deep/">'));
+    if (path === '/en/staff/') return void html(200, layout('Staff', '<h1>Staff</h1><a href="team/">Team</a>', '<base href="/private/">'));
     if (path === '/en/about') return void res.writeHead(301, { location: '/en/about/' }).end();
     if (path === '/private/tracker.js') return void res.writeHead(200, { 'content-type': 'text/javascript' }).end("document.title += ' (tracked)';");
     html(404, layout('Not found', '<h1>Page not found</h1>'));
@@ -75,6 +77,14 @@ describe('collect', () => {
     assert.deepEqual(site.alternates?.map(alternate => [new URL(alternate.url).pathname, alternate.fetch.status]), [['/ca/sobre/', 200]]);
     assert.equal(site.tls, undefined);
     assert.deepEqual(target?.uaProbes?.map(probe => probe.agent.name), ['Googlebot Smartphone', 'Chrome (mobile)']);
+    assert.equal(site.baseLinks, undefined);
+  });
+
+  test('fetches the links a base element moves where it moves them, unless robots.txt disallows them', async () => {
+    const { site } = await collect({ url: `${origin}/en/based/`, policy, render: false });
+    assert.deepEqual(site.baseLinks?.map(link => [new URL(link.url).pathname, link.fetch.status]), [['/en/deep/team/', 404]]);
+    const blocked = await collect({ url: `${origin}/en/staff/`, policy, render: false });
+    assert.equal(blocked.site.baseLinks, undefined);
   });
 
   test('warns when the caps leave declared or child sitemaps unread', async () => {

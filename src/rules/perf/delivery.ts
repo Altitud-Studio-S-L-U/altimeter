@@ -2,7 +2,7 @@ import { evidenceLabel, type EvidenceLabel, type EvidenceStore } from '../../cor
 import type { PageFacts } from '../../core/facts.ts';
 import { headerValue, type Hop } from '../../fetch/http.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, directivesFor, hreflangLinks, pageDocument, robotsDirectives, summarizeList } from '../helpers.ts';
+import { absoluteUrl, directivesFor, documentBase, hreflangLinks, pageDocument, robotsDirectives, summarizeList } from '../helpers.ts';
 import {
   auditEvidence, auditOf, auditRan, elements, firstParty, formatKib, formatMs, isConsentScript, labEvidence, labOf, networkRequests,
   notApplicable, notEvaluated, num, openingTag, originOf, rows, str, textContent,
@@ -92,7 +92,8 @@ function localeEntryPoint(page: PageFacts, pages: ReadonlyMap<string, PageFacts>
   const requested = new URL(page.fetch.requestedUrl);
   const final = new URL(page.fetch.finalUrl);
   if (requested.pathname !== '/' || requested.search !== '' || final.pathname === '/' || page.fetch.status !== 200) return false;
-  const cluster = hreflangLinks(pageDocument(page), page.fetch.finalUrl).filter(link => link.href !== undefined && link.hreflang.toLowerCase() !== 'x-default');
+  const doc = pageDocument(page);
+  const cluster = hreflangLinks(doc, documentBase(doc, page.fetch.finalUrl)).filter(link => link.href !== undefined && link.hreflang.toLowerCase() !== 'x-default');
   if (cluster.length < 2 || !cluster.some(link => sameDocument(link.href!, page.fetch.finalUrl))) return false;
   return cluster.every(link => {
     const fetched = [...pages.values()].find(entry => sameDocument(entry.fetch.requestedUrl, link.href!));

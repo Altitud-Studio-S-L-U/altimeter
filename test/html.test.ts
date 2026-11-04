@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { metaContent, parseHtml } from '../src/parse/html.ts';
+import { baseUrl, metaContent, parseHtml } from '../src/parse/html.ts';
 
 describe('parseHtml', () => {
   test('extracts head metadata with positions', () => {
@@ -76,5 +76,21 @@ describe('parseHtml', () => {
     assert.deepEqual(parsed.images.map(image => image.attrs.alt), ['Home', '']);
     assert.equal(parsed.bodyText.includes('not text'), false);
     assert.match(parsed.bodyText, /Main heading Skipped level Our services/u);
+  });
+});
+
+describe('baseUrl', () => {
+  const page = 'https://example.com/en/about/team';
+  const base = (head: string) => baseUrl(parseHtml(`<!doctype html><html><head>${head}</head><body></body></html>`), page);
+
+  test('resolves the first base element with an href against the document URL', () => {
+    assert.equal(base('<base target="_blank"><base href="../blog/"><base href="/other/">'), 'https://example.com/en/blog/');
+    assert.equal(base('<base href="https://cdn.example.net/assets/">'), 'https://cdn.example.net/assets/');
+  });
+
+  test('falls back to the document URL without a usable http or https base', () => {
+    assert.equal(base(''), page);
+    assert.equal(base('<base href="javascript:void(0)">'), page);
+    assert.equal(base('<base href="http://[bad">'), page);
   });
 });

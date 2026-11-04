@@ -4,7 +4,7 @@ import { evidenceLabel, joinLabels, type EvidenceLabel, type EvidenceStore } fro
 import type { ProbeFacts, SiteFacts } from '../../core/facts.ts';
 import { headerValue, type HeaderMap } from '../../fetch/http.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, sameSite } from '../helpers.ts';
+import { absoluteUrl, documentBase, sameSite } from '../helpers.ts';
 import { annotationEvidence, normalizeUrl } from './annotations.ts';
 import { declaredSets, fetchedPages } from './cluster.ts';
 import { primaryLanguage } from './codes.ts';
@@ -158,8 +158,9 @@ export const separateUrlsPerLocale: RuleImplementation = {
     }
     let switcherLinks = 0;
     for (const page of fetchedPages(site)) {
+      const base = documentBase(page.raw, page.fetch.finalUrl);
       for (const anchor of page.raw?.parsed.anchors ?? []) {
-        const href = absoluteUrl(anchor.attrs.href, page.fetch.finalUrl);
+        const href = absoluteUrl(anchor.attrs.href, base);
         if (!href || !sameSite(href, page.fetch.finalUrl) || !parameterLocale(href) || urls.has(href)) continue;
         urls.add(href);
         switcherLinks += 1;

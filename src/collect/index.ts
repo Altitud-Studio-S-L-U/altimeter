@@ -7,6 +7,7 @@ import { HttpClient, defaultUserAgent } from '../fetch/http.ts';
 import { publicOnly, type NetworkPolicy } from '../fetch/ip-guard.ts';
 import { isAllowed, robotsAvailability, type RobotsAvailability } from '../fetch/robots.ts';
 import { inspectTls, trustedRoots } from '../fetch/tls.ts';
+import { baseUrl } from '../parse/html.ts';
 import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser, type RenderMode } from '../render/chrome.ts';
 import { runLighthouse } from '../render/lighthouse.ts';
 import { crawlSite } from './crawl.ts';
@@ -76,10 +77,7 @@ const maxAlternates = 10;
 function hreflangTargets(page: PageFacts): string[] {
   const parsed = page.raw?.parsed;
   if (!parsed) return [];
-  let base = page.fetch.finalUrl;
-  try {
-    if (parsed.bases[0]?.attrs.href) base = new URL(parsed.bases[0].attrs.href, page.fetch.finalUrl).href;
-  } catch {}
+  const base = baseUrl(parsed, page.fetch.finalUrl);
   const targets: string[] = [];
   for (const link of parsed.links) {
     if (!link.rel.includes('alternate') || link.attrs.hreflang === undefined || !link.attrs.href) continue;
@@ -94,12 +92,13 @@ function hreflangTargets(page: PageFacts): string[] {
 
 function pickSiblings(page: PageFacts, exclude: Set<string>): string[] {
   const picks: string[] = [];
+  const base = page.raw ? baseUrl(page.raw.parsed, page.fetch.finalUrl) : page.fetch.finalUrl;
   for (const anchor of page.raw?.parsed.anchors ?? []) {
     const href = anchor.attrs.href;
     if (!href) continue;
     let url: URL;
     try {
-      url = new URL(href, page.fetch.finalUrl);
+      url = new URL(href, base);
     } catch {
       continue;
     }
@@ -112,6 +111,34 @@ function pickSiblings(page: PageFacts, exclude: Set<string>): string[] {
     if (picks.length === 2) break;
   }
   return picks;
+}
+
+/** How many links of the audited page are fetched when its base element changes where they point. */
+const maxBaseLinks = 4;
+
+/**
+ * Relative links of the page (anchors, canonical and alternate links) that its base element sends to another URL on
+ * the same host, resolved against that base, which is where crawlers follow them.
+ */
+function baseShiftedLinks(page: PageFacts): string[] {
+  const parsed = page.raw?.parsed;
+  if (!parsed) return [];
+  const direct = page.fetch.finalUrl;
+  const base = baseUrl(parsed, direct);
+  if (base === direct || new URL(base).hostname !== new URL(direct).hostname) return [];
+  const targets: string[] = [];
+  for (const link of [...parsed.anchors, ...parsed.links.filter(entry => entry.rel.includes('canonical') || entry.rel.includes('alternate'))]) {
+    const href = link.attrs.href?.trim();
+    if (!href || href.startsWith('#') || href.startsWith('//') || /^[a-z][a-z0-9+.-]*:/iu.test(href)) continue;
+    try {
+      const shifted = new URL(href, base);
+      const unshifted = new URL(href, direct);
+      shifted.hash = '';
+      unshifted.hash = '';
+      if (shifted.href !== unshifted.href && !targets.includes(shifted.href)) targets.push(shifted.href);
+    } catch {}
+  }
+  return targets;
 }
 
 const maxResourcesPerPurpose = 4;
@@ -130,18 +157,19 @@ async function collectResources(client: HttpClient, origin: string, pages: reado
   for (const entry of pages) {
     const doc = entry.raw;
     if (!doc) continue;
-    const base = entry.fetch.finalUrl;
+    const page = entry.fetch.finalUrl;
+    const base = baseUrl(doc.parsed, page);
     for (const link of doc.parsed.links) {
-      if (link.rel.includes('icon')) want(link.attrs.href, base, 'favicon', base);
-      if (link.rel.includes('apple-touch-icon')) want(link.attrs.href, base, 'apple-touch-icon', base);
+      if (link.rel.includes('icon')) want(link.attrs.href, base, 'favicon', page);
+      if (link.rel.includes('apple-touch-icon')) want(link.attrs.href, base, 'apple-touch-icon', page);
     }
     for (const meta of doc.parsed.metas) {
-      if ((meta.attrs.property ?? '').toLowerCase() === 'og:image') want(meta.attrs.content, base, 'og-image', base);
+      if ((meta.attrs.property ?? '').toLowerCase() === 'og:image') want(meta.attrs.content, base, 'og-image', page);
     }
     for (const node of doc.data.nodes.filter(item => item.types.some(type => type === 'Organization' || type.endsWith('Business')))) {
       const logo = node.properties.logo;
       const value = typeof logo === 'string' ? logo : logo && typeof logo === 'object' && !Array.isArray(logo) ? (logo as Record<string, unknown>).url ?? (logo as Record<string, unknown>).contentUrl : undefined;
-      if (typeof value === 'string') want(value, base, 'logo', base);
+      if (typeof value === 'string') want(value, base, 'logo', page);
     }
   }
   if (![...wanted.values()].some(entry => entry.purpose === 'favicon')) want('/favicon.ico', origin, 'favicon', new URL('/', origin).href);
@@ -171,6 +199,13 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       robotsCache.set(origin, cached);
     }
     return cached;
+  };
+  const googlebotAllows = async (url: string) => {
+    const parsed = new URL(url);
+    const availability = await robotsFor(parsed.origin);
+    if (availability.kind === 'unrestricted') return true;
+    if (availability.kind === 'unreachable') return false;
+    return isAllowed(availability.file, googlebotTokens, `${parsed.pathname}${parsed.search}`).allowed;
   };
   let browser: AuditBrowser | undefined;
   try {
@@ -227,21 +262,19 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     if (alternateUrls.length > 0) log('Fetching the hreflang alternates of the page');
     const alternates: PageFacts[] = [];
     for (const url of alternateUrls) alternates.push(await fetchPage(client, url));
+    const baseLinks: ProbeFacts[] = [];
+    for (const url of baseShiftedLinks(page).filter(url => !fetched.has(url) && !alternateUrls.includes(url))) {
+      if (baseLinks.length === maxBaseLinks) break;
+      if (await googlebotAllows(url)) baseLinks.push(await probe(client, 'base-link', url));
+    }
 
     let crawlBlocked: string[] = [];
     let crawlSkipped = 0;
     if (options.crawl) {
       const sitemapUrls = sitemaps.flatMap(entry => entry.document?.urls.map(url => url.loc) ?? []);
-      const allows = async (url: string) => {
-        const parsed = new URL(url);
-        const availability = await robotsFor(parsed.origin);
-        if (availability.kind === 'unrestricted') return true;
-        if (availability.kind === 'unreachable') return false;
-        return isAllowed(availability.file, googlebotTokens, `${parsed.pathname}${parsed.search}`).allowed;
-      };
       log('Crawling the site');
       const crawled = await crawlSite(client, { seeds: [page.fetch.finalUrl, homeFinal, ...sitemapUrls], known: pages, maxPages: options.maxPages ?? 100,
-        robotsAllows: allows, concurrency: 2, delayMs: options.crawlDelayMs ?? 500, log });
+        robotsAllows: googlebotAllows, concurrency: 2, delayMs: options.crawlDelayMs ?? 500, log });
       for (const [url, entry] of crawled.pages) pages.set(url, entry);
       crawlBlocked = [...crawled.blockedByRobots];
       crawlSkipped = crawled.skipped;
@@ -255,15 +288,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       browser = await launchAuditBrowser({ policy: options.policy ?? publicOnly, executablePath: chromePath, ...(options.lookup ? { lookup: options.lookup } : {}),
         ...(options.ca === undefined ? {} : { ca: options.ca }) });
       versions.chrome = browser.version;
-      const robotsAllows = async (url: string) => {
-        const parsed = new URL(url);
-        const availability = await robotsFor(parsed.origin);
-        if (availability.kind === 'unrestricted') return true;
-        if (availability.kind === 'unreachable') return false;
-        return isAllowed(availability.file, googlebotTokens, `${parsed.pathname}${parsed.search}`).allowed;
-      };
       const renderAs = async (url: string, mode: RenderMode): Promise<RenderFacts> => {
-        const result = await renderPage(browser!, url, { mode, userAgent, robotsAllows });
+        const result = await renderPage(browser!, url, { mode, userAgent, robotsAllows: googlebotAllows });
         return { result, ...documentFacts(result.html) };
       };
       const keyPages = new Set([page.url, homeUrl]);
@@ -306,6 +332,7 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       notFound,
       siblings,
       ...(alternates.length > 0 ? { alternates } : {}),
+      ...(baseLinks.length > 0 ? { baseLinks } : {}),
       pages,
       crawled: options.crawl === true,
       ...(options.crawl ? { crawlBlocked, crawlSkipped } : {}),

@@ -1,7 +1,7 @@
 import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { hreflangLinks, summarizeList } from '../helpers.ts';
+import { documentBase, hreflangLinks, summarizeList } from '../helpers.ts';
 import { cite, clip, contentBlocks, contentText, fold, indexability, indexablePages, normalizeText, notApplicable, words } from './common.ts';
 import { designHiddenSelector } from './render.ts';
 
@@ -57,7 +57,7 @@ function shingles(text: string, size = 5): Set<string> {
 
 /** Final URLs a page names as its hreflang alternates; translations are expected to share structure. */
 function alternatesOf(page: PageFacts, doc: DocumentFacts): Set<string> {
-  return new Set(hreflangLinks(doc, page.fetch.finalUrl).map(link => link.href).filter((href): href is string => href !== undefined));
+  return new Set(hreflangLinks(doc, documentBase(doc, page.fetch.finalUrl)).map(link => link.href).filter((href): href is string => href !== undefined));
 }
 
 export const originality: RuleImplementation = {

@@ -225,3 +225,19 @@ export function metaContent(parsed: ParsedHtml, key: string): ElementRef[] {
   const wanted = key.toLowerCase();
   return parsed.metas.filter(meta => (meta.attrs.name ?? meta.attrs.property ?? '').toLowerCase() === wanted);
 }
+
+/**
+ * The URL that relative references in the document resolve against, as browsers and crawlers resolve them: the first
+ * base element with an href, resolved against the document URL, or the document URL when there is none or it is not
+ * an http or https URL.
+ */
+export function baseUrl(parsed: ParsedHtml, documentUrl: string): string {
+  const href = parsed.bases.find(base => base.attrs.href !== undefined)?.attrs.href;
+  if (href === undefined) return documentUrl;
+  try {
+    const base = new URL(href.trim(), documentUrl);
+    return /^https?:$/u.test(base.protocol) ? base.href : documentUrl;
+  } catch {
+    return documentUrl;
+  }
+}

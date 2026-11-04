@@ -383,12 +383,15 @@ const baseHref: RuleImplementation = {
       return failure({ severity: 'low', evidence: [baseId], reason: 'other-host-same-site', params: { url, base, count: relatives.length } });
     }
     const known = knownResponses(site);
-    const broken = relatives.map(entry => ({ entry, resolved: normalizeUrl(absoluteUrl(entry.attrs.href, base)) }))
-      .filter(item => item.resolved !== undefined && (known.get(item.resolved)?.status ?? 0) >= 400);
+    const resolved = relatives.map(entry => ({ entry, resolved: normalizeUrl(absoluteUrl(entry.attrs.href, base)), direct: normalizeUrl(absoluteUrl(entry.attrs.href, url)) }));
+    const broken = resolved.filter(item => item.resolved !== undefined && (known.get(item.resolved)?.status ?? 0) >= 400);
     if (broken.length > 0) {
       const ids = [baseId, ...broken.slice(0, 4).map(item => evidence.add({ kind: 'http', url: item.resolved!, label: evidenceLabel('relative link {href} resolved against the base', { href: item.entry.attrs.href ?? '' }), excerpt: `HTTP ${known.get(item.resolved!)!.status}` }))];
       return failure({ severity: 'high', evidence: ids, reason: 'relative-links-broken', params: { url, base, count: broken.length } });
     }
+    // Links the base sends elsewhere are correct only when some of them were fetched there and none failed.
+    const shifted = resolved.filter(item => item.resolved !== undefined && item.resolved !== item.direct);
+    if (shifted.length > 0 && !shifted.some(item => known.has(item.resolved!))) return notEvaluated('shifted-links-not-fetched');
     return passed([baseId]);
   },
 };

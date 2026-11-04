@@ -1,11 +1,16 @@
 import type { DocumentFacts, PageFacts } from '../core/facts.ts';
 import type { HeaderMap } from '../fetch/http.ts';
-import type { ElementRef, LinkRef } from '../parse/html.ts';
+import { baseUrl, type ElementRef, type LinkRef } from '../parse/html.ts';
 
 /** The document a rule should read: the rendered DOM when it exists and `prefer` allows, else the raw HTML. */
 export function pageDocument(page: PageFacts, prefer: 'raw' | 'rendered' = 'rendered'): DocumentFacts | undefined {
   if (prefer === 'rendered' && page.rendered && page.rendered.result.error === undefined) return page.rendered;
   return page.raw;
+}
+
+/** The URL relative references in `doc` resolve against: its base element when it has one, else `url`. */
+export function documentBase(doc: DocumentFacts | undefined, url: string): string {
+  return doc ? baseUrl(doc.parsed, url) : url;
 }
 
 export function absoluteUrl(href: string | undefined, base: string): string | undefined {

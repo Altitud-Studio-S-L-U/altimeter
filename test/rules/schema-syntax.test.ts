@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
+import { documentFacts } from '../../src/collect/page.ts';
 import type { EvidenceStore } from '../../src/core/evidence.ts';
 import type { Finding, RuleImplementation } from '../../src/rules/engine.ts';
+import { buildGraph } from '../../src/rules/schema/graph.ts';
 import { jsOnlyMarkup, rawRenderedConflict } from '../../src/rules/schema/rendering.ts';
 import { duplicateFeatureNodes, idDanglingOrConflicting } from '../../src/rules/schema/identity.ts';
 import { extractInventory, jsonLdContext, jsonLdSyntaxError, microdataRdfaStructure } from '../../src/rules/schema/syntax.ts';
@@ -38,6 +40,13 @@ function outcome(rule: RuleImplementation, spec: PageSpec): [string, string | un
 
 const product = { '@context': ctx, '@type': 'Product', name: 'Lamp', image: 'https://shop.example/lamp.jpg',
   offers: { '@type': 'Offer', price: '19.90', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' } };
+
+describe('structured data graph', () => {
+  test('resolves relative values against the base element while it belongs to the page', () => {
+    const graph = buildGraph(documentFacts(doc(`<base href="/assets/">${ld(product)}`)), url, 'raw');
+    assert.deepEqual([graph.url, graph.base], [url, 'https://shop.example/assets/']);
+  });
+});
 
 describe('schema-extract-inventory', () => {
   test('lists raw and rendered-only items', () => {

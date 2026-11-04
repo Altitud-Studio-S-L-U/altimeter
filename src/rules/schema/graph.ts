@@ -1,6 +1,6 @@
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { StructuredData, StructuredNode } from '../../parse/structured-data.ts';
-import { pageDocument } from '../helpers.ts';
+import { documentBase, pageDocument } from '../helpers.ts';
 
 /** One property value, with nested objects resolved to nodes and `{"@id"}` objects kept as references. */
 export type Value =
@@ -38,7 +38,9 @@ export interface PageGraph {
   readonly data: StructuredData;
   readonly doc: DocumentFacts;
   readonly source: 'raw' | 'rendered';
-  /** The page URL that relative values resolve against. */
+  /** The URL of the page the document belongs to. */
+  readonly url: string;
+  /** The URL relative values resolve against: the document's base element when it has one, else the page URL. */
   readonly base: string;
 }
 
@@ -168,8 +170,8 @@ class Builder {
   }
 }
 
-/** Builds the page's structured data graph from one document. */
-export function buildGraph(doc: DocumentFacts, base: string, source: 'raw' | 'rendered'): PageGraph {
+/** Builds the structured data graph of the page at `url` from one of its documents. */
+export function buildGraph(doc: DocumentFacts, url: string, source: 'raw' | 'rendered'): PageGraph {
   const builder = new Builder();
   for (const block of doc.data.jsonLd) {
     if (block.value === undefined) continue;
@@ -178,7 +180,7 @@ export function buildGraph(doc: DocumentFacts, base: string, source: 'raw' | 're
   builder.microdata(doc.data.nodes);
   const byId = new Map<string, GraphNode[]>();
   for (const node of builder.nodes) if (node.id !== undefined) byId.set(node.id, [...(byId.get(node.id) ?? []), node]);
-  return { nodes: builder.nodes, byId, data: doc.data, doc, source, base };
+  return { nodes: builder.nodes, byId, data: doc.data, doc, source, url, base: documentBase(doc, url) };
 }
 
 const graphs = new WeakMap<DocumentFacts, PageGraph>();

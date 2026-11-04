@@ -2,7 +2,7 @@ import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import { metaContent, type ElementRef } from '../../parse/html.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, hreflangLinks, linksWithRel, pageDocument, summarizeList } from '../helpers.ts';
+import { absoluteUrl, documentBase, hreflangLinks, linksWithRel, pageDocument, summarizeList } from '../helpers.ts';
 import { describeImage, imageInfo } from './image.ts';
 import { citer, fail, firstHeader, isHttps, notApplicable, notEvaluated, pass, worst } from './shared.ts';
 
@@ -75,7 +75,7 @@ function ogImageResource(site: SiteFacts, imageUrl: string) {
 
 function firstOgImage(page: PageFacts): { url: string; ref: ElementRef } | undefined {
   const entry = firstValue(page.raw, 'og:image') ?? firstValue(page.raw, 'og:image:url');
-  const url = entry ? absoluteUrl(entry.value, page.fetch.finalUrl) : undefined;
+  const url = entry ? absoluteUrl(entry.value, documentBase(page.raw, page.fetch.finalUrl)) : undefined;
   return entry && url ? { url, ref: entry.ref } : undefined;
 }
 

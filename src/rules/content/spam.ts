@@ -4,7 +4,7 @@ import { decodeHtml, documentFacts, isHtmlResponse } from '../../collect/page.ts
 import type { AgentProbe, DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { attribute } from '../../parse/html.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, summarizeList } from '../helpers.ts';
+import { absoluteUrl, documentBase, summarizeList } from '../helpers.ts';
 import {
   cite, clip, contentBlocks, contentText, docOf, elements, firstH1, fold, homePage, isHtmlElement, metaDescription, normalizeText, notApplicable, notEvaluated,
   pageTitle, registrableDomain, siteNames, stopwords, words,
@@ -268,7 +268,7 @@ const consentOrLogin = /consent|cookie|gdpr|privacy|captcha|challenge|login|sign
 function landing(view: ProbeView): string {
   const refresh = view.doc?.parsed.metas.find(meta => (meta.attrs['http-equiv'] ?? '').toLowerCase() === 'refresh');
   const target = /^\s*\d+\s*[;,]\s*url\s*=\s*['"]?([^'"]+)/iu.exec(refresh?.attrs.content ?? '')?.[1];
-  return (target && absoluteUrl(target, view.probe.fetch.finalUrl)) || view.probe.fetch.finalUrl;
+  return (target && absoluteUrl(target, documentBase(view.doc, view.probe.fetch.finalUrl))) || view.probe.fetch.finalUrl;
 }
 
 export const sneakyRedirects: RuleImplementation = {

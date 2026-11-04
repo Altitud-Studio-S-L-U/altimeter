@@ -138,6 +138,7 @@ export interface SiteSpec {
   readonly notFound?: ResponseSpec & { readonly html?: string };
   readonly siblings?: readonly PageFacts[];
   readonly alternates?: readonly PageFacts[];
+  readonly baseLinks?: ReadonlyArray<{ readonly url: string } & ResponseSpec>;
   readonly crawled?: boolean;
   readonly homeUrl?: string;
   readonly agentProbes?: SiteFacts['agentProbes'];
@@ -184,6 +185,7 @@ export function site(spec: SiteSpec): SiteFacts {
     ...(notFound ? { notFound } : {}),
     siblings: spec.siblings ?? [],
     ...(spec.alternates ? { alternates: spec.alternates } : {}),
+    ...(spec.baseLinks ? { baseLinks: spec.baseLinks.map(entry => ({ label: 'base-link', url: entry.url, fetch: response(entry.url, entry) })) } : {}),
     pages: new Map(spec.pages.map(entry => [entry.url, entry])),
     crawled: spec.crawled ?? false,
     ...(spec.homeUrl ? { homeUrl: spec.homeUrl } : {}),

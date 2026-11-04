@@ -4,7 +4,9 @@ import type { FetchResult, HeaderMap } from '../../fetch/http.ts';
 import { isAllowed, type RobotsDecision, type RobotsFile } from '../../fetch/robots.ts';
 import type { LinkRef } from '../../parse/html.ts';
 import type { RuleResult } from '../engine.ts';
-import { absoluteUrl, directivesFor, hreflangLinks, linksWithRel, robotsDirectives } from '../helpers.ts';
+import { absoluteUrl, directivesFor, documentBase, hreflangLinks, linksWithRel, robotsDirectives } from '../helpers.ts';
+
+export { documentBase };
 
 const order: readonly Severity[] = ['info', 'low', 'medium', 'high', 'critical'];
 
@@ -81,12 +83,6 @@ export function effectiveDirectives(page: PageFacts, doc: DocumentFacts | undefi
 
 export function robotsSources(page: PageFacts, doc: DocumentFacts | undefined, agent = 'googlebot') {
   return robotsDirectives(page.fetch.headers, doc).filter(entry => entry.agent === 'all' || entry.agent === agent);
-}
-
-/** The first `<base href>`, resolved against the document URL, which is how relative URLs in the document resolve. */
-export function documentBase(doc: DocumentFacts | undefined, url: string): string {
-  const href = doc?.parsed.bases.find(base => base.attrs.href !== undefined)?.attrs.href;
-  return absoluteUrl(href, url) ?? url;
 }
 
 export function canonicalLinks(doc: DocumentFacts | undefined): LinkRef[] {
@@ -201,6 +197,7 @@ export function knownResponses(site: SiteFacts): Map<string, KnownResponse> {
   };
   for (const page of site.pages.values()) record(page.fetch);
   for (const sibling of site.siblings) record(sibling.fetch);
+  for (const link of site.baseLinks ?? []) record(link.fetch);
   for (const variant of site.variants) record(variant.fetch);
   for (const probe of site.localeProbes) if (probe.label === 'accept-language:none') record(probe.fetch);
   return known;

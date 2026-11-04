@@ -23,6 +23,8 @@ before(async () => {
     if (path === '/b/') return void html(page('B', ['/']));
     if (path === '/c/') return void html(page('C', ['/d/']));
     if (path === '/d/') return void html(page('D', []));
+    if (path === '/based/') return void html(page('Based', ['x/']).replace('<head>', '<head><base href="/deep/">'));
+    if (path === '/deep/x/') return void html(page('Deep', []));
     if (path === '/orphan/') return void html(page('Orphan', []));
     if (path.startsWith('/shop/')) return void html(page('Shop', []));
     if (path.startsWith('/cdn-cgi/')) return void html(page('Email Protection | Cloudflare', []).replace('<head>', '<head><meta name="robots" content="noindex, nofollow">'));
@@ -50,6 +52,13 @@ describe('crawl', () => {
     assert.deepEqual(site.crawlBlocked, [`${origin}/private/secret/`]);
     assert.ok(!paths.includes('/file.pdf'));
     assert.ok(!paths.some(path => path.startsWith('/cdn-cgi/')), 'pages Cloudflare serves under /cdn-cgi/ are not the site\'s');
+  });
+
+  test('follows relative links where the base element sends them, as Googlebot does', async () => {
+    const { site } = await collect({ url: `${origin}/based/`, policy, render: false, crawl: true, maxPages: 50, crawlDelayMs: 0 });
+    const paths = [...site.pages.values()].map(entry => new URL(entry.fetch.finalUrl).pathname);
+    assert.ok(paths.includes('/deep/x/'));
+    assert.ok(!paths.includes('/based/x/'));
   });
 
   test('stops at the page limit and counts what it left out', async () => {

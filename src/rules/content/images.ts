@@ -3,7 +3,7 @@ import type { DocumentFacts, PageFacts, ResourceFacts } from '../../core/facts.t
 import { headerValue } from '../../fetch/http.ts';
 import { attribute, collapse } from '../../parse/html.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, metaProperty } from '../helpers.ts';
+import { absoluteUrl, documentBase, metaProperty } from '../helpers.ts';
 import {
   cite, clip, docOf, elements, firstString, fold, inMain, isHiddenByMarkup, isHtmlElement, lineOf, mainLandmarks, nodesOf, notApplicable, notEvaluated,
   type Visit,
@@ -23,7 +23,8 @@ const dimension = (element: Image['element'], name: 'width' | 'height') => {
 };
 
 /** Images a person sees: <img> and <input type=image>, without tracking pixels or images hidden from assistive technology. */
-function imagesOf(doc: DocumentFacts, base: string): Image[] {
+function imagesOf(doc: DocumentFacts, url: string): Image[] {
+  const base = documentBase(doc, url);
   return elements(doc.parsed.document, element => isHtmlElement(element)
     && (element.tagName === 'img' || (element.tagName === 'input' && (attribute(element, 'type') ?? '').toLowerCase() === 'image')))
     .filter(visit => {
@@ -220,7 +221,8 @@ const placeholderWords = /placeholder|blank|spacer|lazy|loading|transparent|1x1|
 const placeholderSource = (src: string) => /^data:/iu.test(src) || placeholderWords.test(src);
 const deferredAttributes = ['data-src', 'data-lazy-src', 'data-original', 'data-lazy', 'data-srcset'] as const;
 
-function deferredImages(doc: DocumentFacts, base: string) {
+function deferredImages(doc: DocumentFacts, url: string) {
+  const base = documentBase(doc, url);
   return elements(doc.parsed.document, element => element.tagName === 'img' && deferredAttributes.some(name => attribute(element, name) !== undefined))
     .map(visit => {
       const name = deferredAttributes.find(entry => attribute(visit.element, entry) !== undefined)!;
@@ -236,10 +238,9 @@ export const imgLazyMisuse: RuleImplementation = {
   id: 'content-img-lazy-misuse',
   evaluate(context) {
     const page = context.page!;
-    const base = page.fetch.finalUrl;
-    const tall = deferredImages(page.rendered!, base);
+    const tall = deferredImages(page.rendered!, page.fetch.finalUrl);
     if (tall.length === 0) return notApplicable('no-deferred-images');
-    const scrolled = deferredImages(page.userRender!, base);
+    const scrolled = deferredImages(page.userRender!, page.fetch.finalUrl);
     const late = tall.filter(image => image.waiting && image.real !== undefined
       && scrolled.some(other => other.real === image.real && !other.waiting));
     if (late.length === 0) return { outcome: 'pass' };
@@ -258,7 +259,7 @@ export const preferredImage: RuleImplementation = {
     const primary = nodesOf(doc, ['WebPage', 'Article', 'NewsArticle', 'BlogPosting', 'ItemPage', 'CollectionPage', 'AboutPage', 'ContactPage'])
       .map(node => firstString(node.properties.primaryImageOfPage)).find(value => value !== undefined);
     const raw = primary ?? og?.attrs.content;
-    const url = absoluteUrl(raw, page.fetch.finalUrl);
+    const url = absoluteUrl(raw, documentBase(doc, page.fetch.finalUrl));
     if (!url) {
       if (!contentPage) return notApplicable('not-a-content-page');
       return { outcome: 'fail', severity: 'low', reason: 'missing', evidence: [cite(context, 'html', evidenceLabel('no og:image or primaryImageOfPage'))] };

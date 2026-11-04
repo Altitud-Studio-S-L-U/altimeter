@@ -1,7 +1,7 @@
 import { evidenceLabel, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { SiteFacts } from '../../core/facts.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
-import { absoluteUrl, linksWithRel } from '../helpers.ts';
+import { absoluteUrl, documentBase, linksWithRel } from '../helpers.ts';
 import { annotationEvidence, effectiveAnnotations, normalizeUrl, pageAnnotations, type Annotation, type AnnotationSource } from './annotations.ts';
 import { clusters, declaredSets, documentAt, fetchOf, isXDefault, type DeclaredSet } from './cluster.ts';
 import { parseHreflang, primaryLanguage, sameLanguage } from './codes.ts';
@@ -30,7 +30,7 @@ export const missingSelfReference: RuleImplementation = {
     const self = normalizeUrl(page!.fetch.finalUrl)!;
     const selfEntry = annotations.find(annotation => annotation.href === self);
     if (selfEntry) return pass([annotationEvidence(evidence, selfEntry, evidenceLabel('hreflang entry for the page itself'))]);
-    const canonical = normalizeUrl(absoluteUrl(linksWithRel(page!.raw, 'canonical')[0]?.attrs.href, self));
+    const canonical = normalizeUrl(absoluteUrl(linksWithRel(page!.raw, 'canonical')[0]?.attrs.href, documentBase(page!.raw, page!.fetch.finalUrl)));
     // A page that canonicalises elsewhere is reported by intl-hreflang-on-non-canonical-page instead.
     if (canonical && canonical !== self && annotations.some(annotation => annotation.href === canonical)) return notApplicable('page-not-canonical');
     const near = annotations.find(annotation => annotation.href && loose(annotation.href) === loose(self));

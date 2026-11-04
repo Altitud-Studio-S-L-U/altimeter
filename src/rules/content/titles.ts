@@ -1,7 +1,7 @@
 import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
-import { hreflangLinks, summarizeList } from '../helpers.ts';
+import { documentBase, hreflangLinks, summarizeList } from '../helpers.ts';
 import {
   cite, clip, contentWords, docOf, documentTitles, firstH1, fold, indexability, indexablePages, isHome, lineOf, mainLandmarks,
   normalizeText, notApplicable, pageTitle, siteNames, words,
@@ -252,7 +252,7 @@ function titledPages(site: SiteFacts): TitledPage[] {
 /** True when every page of the group lists the others as hreflang alternates: translations sharing a brand title. */
 function hreflangCluster(group: readonly TitledPage[]): boolean {
   return group.every(member => {
-    const alternates = new Set(hreflangLinks(member.doc, member.page.fetch.finalUrl).map(link => link.href));
+    const alternates = new Set(hreflangLinks(member.doc, documentBase(member.doc, member.page.fetch.finalUrl)).map(link => link.href));
     return group.every(other => other === member || alternates.has(other.page.fetch.finalUrl));
   });
 }
