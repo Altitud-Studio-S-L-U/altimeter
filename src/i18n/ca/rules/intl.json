@@ -79,8 +79,8 @@
     "fix": "Renderitza al servidor els enllaços hreflang, o envia'ls a la capçalera HTTP Link o al mapa del lloc, perquè tots els rastrejadors, inclosos els que no renderitzen, com Bing, vegin el mateix conjunt.",
     "messages": {
       "fail": "Els enllaços hreflang del DOM renderitzat són diferents dels de l'HTML tal com se serveix.",
-      "fail:rendered-only": "Els {count} element(s) link hreflang només existeixen després que s'executi JavaScript. Els rastrejadors que no renderitzen no els veuen mai, i Google no documenta si llegeix els hreflang injectats.",
-      "fail:differs": "La renderització canvia els enllaços hreflang: {added} afegits i {removed} eliminats respecte de l'HTML tal com se serveix."
+      "fail:rendered-only": "Els elements link hreflang ({count}) només existeixen després que s'executi JavaScript. Els rastrejadors que no renderitzen no els veuen mai, i Google no documenta si llegeix els hreflang injectats.",
+      "fail:differs": "La renderització canvia els enllaços hreflang respecte de l'HTML tal com se serveix (afegits: {added}; eliminats: {removed})."
     }
   },
   "intl-hreflang-combined-link-attributes": {
@@ -101,7 +101,7 @@
     "messages": {
       "fail": "El conjunt hreflang de {url} no inclou la mateixa pàgina.",
       "fail:near-miss": "El conjunt hreflang no inclou exactament {url}; l'entrada més propera ({value}) apunta a {closest}. Una entrada pròpia ha de coincidir amb la URL de la pàgina, inclosos l'esquema i la barra final.",
-      "fail:absent": "Cap de les {count} entrades hreflang no apunta a la mateixa pàgina, {url}. Cada versió s'ha d'incloure a si mateixa a més de les altres versions."
+      "fail:absent": "Cap de les entrades hreflang ({count}) no apunta a la mateixa pàgina, {url}. Cada versió s'ha d'incloure a si mateixa a més de les altres versions."
     }
   },
   "intl-hreflang-missing-return-link": {
@@ -193,7 +193,7 @@
     "messages": {
       "fail": "Els membres d'un clúster hreflang declaren conjunts diferents.",
       "fail:conflicting-values": "Els membres d'un mateix clúster hreflang assignen valors diferents a {count} URL, com {targets}.",
-      "fail:missing-entries": "{count} de {members} membres del clúster ometen URL que els altres inclouen ({missing}). Els conjunts parcials continuen funcionant per als parells recíprocs."
+      "fail:missing-entries": "Membres del clúster que ometen URL que els altres inclouen: {count} de {members} ({missing}). Els conjunts parcials continuen funcionant per als parells recíprocs."
     }
   },
   "intl-hreflang-x-default-missing": {
@@ -219,7 +219,7 @@
     "why": "Google recomana una anotació només de llengua, com «de», a més de les regionals, perquè coincideixi amb els usuaris d'aquesta llengua d'altres regions.",
     "fix": "Afegeix un valor només de llengua (per exemple, hreflang='es') que apunti a una de les pàgines regionals perquè els parlants d'altres països (Mèxic, els EUA) hi quedin coberts.",
     "messages": {
-      "fail": "Tots els valors de la llengua {language} porten una regió ({values}) i el clúster no té cap valor només de llengua {language} ni x-default, de manera que els parlants de la llengua {language} d'altres països no tenen cap versió que hi coincideixi."
+      "fail": "Tots els valors en {language} porten una regió ({values}) i el clúster no té cap valor només de llengua ({language}) ni x-default, de manera que els qui parlen {language} en altres països no tenen cap versió que hi coincideixi."
     }
   },
   "intl-hreflang-source-conflict": {
@@ -240,9 +240,9 @@
       "fail": "{count} anotació(ns) hreflang del mapa del lloc estan mal formades ({sitemaps}).",
       "fail:namespace": "{count} mapa(es) del lloc contenen enllaços hreflang que no són a l'espai de noms xhtml (xmlns:xhtml=\"http://www.w3.org/1999/xhtml\"), de manera que no es llegeixen: {sitemaps}.",
       "fail:missing-self": "{count} entrada(es) del mapa del lloc inclouen alternatives, però cap xhtml:link al seu propi loc ({sitemaps}).",
-      "fail:relative-href": "{count} URL xhtml:link del mapa del lloc no són completes ({sitemaps}).",
+      "fail:relative-href": "URL xhtml:link del mapa del lloc que no són completes: {count} ({sitemaps}).",
       "fail:invalid-value": "{count} valor(s) xhtml:link del mapa del lloc no segueixen el format hreflang de Google ({sitemaps}).",
-      "fail:alternate-not-listed": "{count} URL alternatives dels mapes del lloc no tenen una entrada <url> pròpia ({sitemaps}).",
+      "fail:alternate-not-listed": "URL alternatives dels mapes del lloc sense una entrada <url> pròpia: {count} ({sitemaps}).",
       "fail:not-reciprocal": "{count} entrada(es) del mapa del lloc no inclouen, a la inversa, les URL que les indiquen com a alternatives ({sitemaps})."
     }
   },
@@ -357,7 +357,7 @@
     "why": "Google recomana URL separades per a cada versió lingüística en lloc de galetes o de la configuració del navegador, perquè Googlebot veu una versió per URL i no conserva galetes.",
     "fix": "Dona a cada versió de llengua o de país la seva pròpia URL (subdirectoris com /en/ /de/ /fr/, subdominis o ccTLD) i fes servir les galetes només com una preferència que no canviï mai el que serveix una URL.",
     "messages": {
-      "fail": "{count} URL de configuracions regionals seleccionen la llengua amb un paràmetre d'URL, per exemple {urls}. Google recomana URL diferents per a cada versió lingüística, no paràmetres."
+      "fail": "URL de configuracions regionals que seleccionen la llengua amb un paràmetre d'URL: {count} (per exemple, {urls}). Google recomana URL diferents per a cada versió lingüística, no paràmetres."
     }
   },
   "intl-language-switcher-crawlable": {
@@ -367,7 +367,7 @@
     "messages": {
       "fail": "La pàgina no enllaça a les seves altres versions lingüístiques amb enllaços rastrejables.",
       "fail:homepages-only": "Els enllaços de llengua porten a les pàgines d'inici de cada configuració regional ({count}) en lloc de la pàgina equivalent en cada llengua.",
-      "fail:no-crawlable-links": "Cap de les {count} altres versions lingüístiques d'aquesta pàgina no està enllaçada amb un <a href>; s'han trobat {controls} control(s) de llengua sense enllaços. Confirma com canvien de llengua els visitants."
+      "fail:no-crawlable-links": "Cap de les altres versions lingüístiques d'aquesta pàgina ({count}) no està enllaçada amb un <a href>; s'han trobat {controls} control(s) de llengua sense enllaços. Confirma com canvien de llengua els visitants."
     }
   },
   "intl-auto-redirect-by-language": {
