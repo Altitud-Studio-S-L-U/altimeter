@@ -96,7 +96,7 @@
     "messages": {
       "fail": "El protocolo de ejecución de Lighthouse limita la estabilidad de los valores de laboratorio.",
       "fail:few-runs": "Los valores de laboratorio proceden de la mediana de {validRuns} ejecuciones válidas de Lighthouse de {runs}; {recommended} ejecuciones dan una mediana más estable.",
-      "fail:run-warnings": "Lighthouse ha indicado {count} advertencias de ejecución, así que los valores de laboratorio pueden no ser fiables."
+      "fail:run-warnings": "Lighthouse ha indicado {count} advertencia(s) de ejecución, así que los valores de laboratorio pueden no ser fiables."
     }
   },
   "perf-lab-performance-score": {
@@ -224,7 +224,7 @@
     "messages": {
       "fail": "Las respuestas de texto se envían sin compresión gzip, Brotli ni zstd.",
       "fail:document": "La respuesta HTML, de {size} una vez descodificada, se envía sin compresión gzip, Brotli ni zstd.",
-      "fail:assets": "{count} recursos de texto propios se envían sin compresión: {urls}."
+      "fail:assets": "{count} recurso(s) de texto propio(s) se envían sin compresión: {urls}."
     }
   },
   "perf-http-protocol": {
@@ -241,8 +241,8 @@
     "why": "Los recursos estáticos con una duración de caché corta o inexistente se vuelven a descargar en las visitas repetidas. Lighthouse 13.6 lo indica en cache-insight. La ventaja solo se aplica a las visitas repetidas.",
     "fix": "Incluye una huella del contenido en los nombres de archivo de los recursos y sírvelos con Cache-Control: public, max-age=31536000, immutable (immutable es opcional); sirve el HTML con no-cache y un ETag.",
     "messages": {
-      "fail": "{count} recursos estáticos propios tienen una duración de caché inferior a 30 días o ninguna: {urls}.",
-      "fail:fingerprinted": "{count} recursos estáticos propios tienen una duración de caché inferior a 30 días o ninguna: {urls}. {hashed} de ellos tienen nombres de archivo con huella del contenido, que se pueden almacenar en caché durante un año."
+      "fail": "Recursos estáticos propios con una duración de caché inferior a 30 días o sin ella: {count} ({urls}).",
+      "fail:fingerprinted": "Recursos estáticos propios con una duración de caché inferior a 30 días o sin ella: {count} ({urls}). Con nombres de archivo con huella del contenido, que se pueden almacenar en caché durante un año: {hashed}."
     }
   },
   "perf-html-no-store": {
@@ -259,7 +259,7 @@
     "why": "web.dev incluye la caché de atrás y adelante entre las mejoras más eficaces para el LCP y el CLS en las navegaciones por el historial. Lighthouse 13.6 comprueba si la página es apta en la auditoría bf-cache.",
     "fix": "Elimina los controladores de unload, evita los no-store innecesarios, cierra IndexedDB/WebSocket/fetch en pagehide y evita window.opener (usa noopener).",
     "messages": {
-      "fail": "Lighthouse ha encontrado {count} motivos corregibles que dejan la página fuera de la caché de atrás y adelante: {reasons}."
+      "fail": "Lighthouse ha encontrado {count} motivo(s) corregible(s) que dejan la página fuera de la caché de atrás y adelante: {reasons}."
     }
   },
   "perf-unload-handlers": {
@@ -275,8 +275,8 @@
     "why": "web.dev documenta que las imágenes sin atributos width y height (o sin aspect-ratio) provocan cambios de diseño al cargarse. Lighthouse 13.6 las indica en la auditoría unsized-images.",
     "fix": "Añade los atributos width y height (con la misma relación de aspecto en todas las candidatas de srcset) o establece aspect-ratio en CSS.",
     "messages": {
-      "fail": "{count} imágenes no tienen dimensiones explícitas; {aboveFold} de ellas están en el primer viewport de la ejecución de laboratorio.",
-      "fail:below-fold": "{count} imágenes no tienen dimensiones explícitas, todas por debajo del primer viewport de la ejecución de laboratorio."
+      "fail": "{count} imagen(es) no tienen dimensiones explícitas; {aboveFold} de ellas están en el primer viewport de la ejecución de laboratorio.",
+      "fail:below-fold": "{count} imagen(es) no tienen dimensiones explícitas, ninguna en el primer viewport de la ejecución de laboratorio."
     }
   },
   "perf-cls-culprits": {
@@ -293,9 +293,9 @@
     "why": "web.dev recomienda reservar espacio para los anuncios, los iframes y los elementos insertados, porque el contenido que se carga en contenedores sin dimensiones desplaza la página.",
     "fix": "Reserva el tamaño más probable con min-height/aspect-ratio; mantén el marcador de posición cuando no se sirva ningún anuncio; coloca los espacios dinámicos más abajo en el viewport.",
     "messages": {
-      "fail": "{count} elementos insertados no tienen espacio reservado.",
-      "fail:attributed-shift": "{count} elementos insertados no tienen width y height ni una altura reservada, y Lighthouse atribuye un cambio de diseño de laboratorio a un iframe insertado.",
-      "fail:unsized-embed": "{count} elementos insertados no tienen width y height ni una altura reservada en línea; puede que una hoja de estilos o un contenedor reserven el espacio igualmente."
+      "fail": "{count} elemento(s) insertado(s) no tienen espacio reservado.",
+      "fail:attributed-shift": "{count} elemento(s) insertado(s) no tienen width y height ni una altura reservada, y Lighthouse atribuye un cambio de diseño de laboratorio a un iframe insertado.",
+      "fail:unsized-embed": "{count} elemento(s) insertado(s) no tienen width y height ni una altura reservada en línea; puede que una hoja de estilos o un contenedor reserven el espacio igualmente."
     }
   },
   "perf-non-composited-animations": {
@@ -303,7 +303,7 @@
     "why": "Las animaciones de propiedades que provocan un recálculo del diseño, como top, margin o width, se ejecutan en el hilo principal y pueden causar cambios de diseño. Lighthouse 13.6 las indica en non-composited-animations.",
     "fix": "Anima transform/opacity en su lugar; respeta prefers-reduced-motion.",
     "messages": {
-      "fail": "{count} elementos ejecutan animaciones que el navegador no puede componer: {reasons}."
+      "fail": "{count} elemento(s) ejecutan animaciones que el navegador no puede componer: {reasons}."
     }
   },
   "perf-font-display": {
@@ -311,7 +311,7 @@
     "why": "Las fuentes web sin font-display: swap u optional ocultan el texto hasta que se carga la fuente. Lighthouse 13.6 lo indica en font-display-insight.",
     "fix": "Usa font-display: swap para la marca y los titulares y optional para el texto del cuerpo; añade size-adjust o ajustes de métricas a la fuente alternativa para reducir el CLS.",
     "messages": {
-      "fail": "{count} fuentes web mantienen el texto invisible mientras se cargan: {fonts}."
+      "fail": "{count} fuente(s) web mantienen el texto invisible mientras se cargan: {fonts}."
     }
   },
   "perf-font-preload-crossorigin": {
@@ -327,8 +327,8 @@
     "why": "WOFF2 es el formato de fuente más pequeño con amplia compatibilidad, y muchos archivos de fuentes en la carga inicial compiten con los recursos críticos.",
     "fix": "Sirve solo WOFF2, crea subconjuntos con unicode-range y usa menos familias o pesos, o una fuente variable cuando ahorre bytes.",
     "messages": {
-      "fail": "{count} archivos de fuentes no son WOFF2: {fonts}.",
-      "fail:not-woff2": "{count} archivos de fuentes no son WOFF2: {fonts}.",
+      "fail": "{count} archivo(s) de fuentes no son WOFF2: {fonts}.",
+      "fail:not-woff2": "{count} archivo(s) de fuentes no son WOFF2: {fonts}.",
       "fail:many-files": "La página carga {count} archivos de fuentes ({size}) en el laboratorio; el umbral de más de seis es una heurística de la herramienta, no un límite."
     }
   },
@@ -339,7 +339,7 @@
     "messages": {
       "fail": "Las indicaciones preconnect de la página no coinciden con las solicitudes que hace.",
       "fail:too-many": "La página declara {count} indicaciones preconnect. El umbral de más de cuatro es una heurística: cada una abre una conexión que compite con las solicitudes críticas.",
-      "fail:combined-rel": "{count} elementos link combinan preconnect y dns-prefetch en un mismo atributo rel; se recomiendan elementos link separados.",
+      "fail:combined-rel": "{count} elemento(s) link combinan preconnect y dns-prefetch en un mismo atributo rel; se recomiendan elementos link separados.",
       "fail:unused": "Los orígenes con preconnect no han recibido ninguna solicitud de laboratorio en los primeros 10 segundos: {origins}.",
       "fail:missing": "Lighthouse estima que un preconnect aceleraría las solicitudes a {origins}."
     }
@@ -359,7 +359,7 @@
     "messages": {
       "fail": "Las imágenes se podrían servir con menos bytes (estimación de laboratorio).",
       "fail:lcp-image": "La imagen del LCP {url} podría ser unos {savings} más pequeña mediante el tamaño, el formato o la compresión (estimación de laboratorio).",
-      "fail:images": "{count} imágenes podrían ahorrar unos {savings} en total mediante el tamaño, el formato o la compresión (estimación de laboratorio)."
+      "fail:images": "{count} imagen(es) podrían ahorrar unos {savings} en total mediante el tamaño, el formato o la compresión (estimación de laboratorio)."
     }
   },
   "perf-long-tasks": {
@@ -367,7 +367,7 @@
     "why": "Las tareas del hilo principal de más de 50 ms bloquean la gestión de las entradas y el renderizado. web.dev documenta cómo dividirlas para mejorar la capacidad de respuesta.",
     "fix": "Divide el trabajo y cede el control; divide el código; aplaza la hidratación de los componentes que están por debajo de la mitad superior de la página; elimina las etiquetas que ya no se usan.",
     "messages": {
-      "fail": "{count} tareas largas bloquean el hilo principal durante {blocking} más allá de los 50 ms de cada una en la carga de laboratorio. Scripts con más tiempo de ejecución: {scripts}."
+      "fail": "{count} tarea(s) larga(s) bloquean el hilo principal durante {blocking} más allá de los 50 ms de cada una en la carga de laboratorio. Scripts con más tiempo de ejecución: {scripts}."
     }
   },
   "perf-forced-reflow": {

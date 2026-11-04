@@ -167,7 +167,7 @@
     "fix": "Pon el texto del título en el h1. Cuando una imagen de logotipo haga de h1, dale un texto alternativo que nombre la página o la marca.",
     "messages": {
       "fail": "El h1 de la página no ofrece ningún título principal.",
-      "fail:empty": "{count} elementos h1 no tienen texto, alt de imagen ni etiqueta, así que no tienen nombre accesible.",
+      "fail:empty": "{count} elemento(s) h1 no tienen texto, alt de imagen ni etiqueta, así que no tienen nombre accesible.",
       "fail:hidden": "Todos los h1 de la página ({count}) quedan fuera de la vista en el renderizado."
     }
   },
@@ -238,9 +238,9 @@
     "why": "La documentación de Google sobre el contenido de IA generativa pide exactitud y calidad sea cual sea el método de producción. Las frases de asistente que quedan, los marcadores de posición de plantilla o las variables sin rellenar muestran que el contenido se publicó sin revisar.",
     "fix": "Elimina esos restos y revisa a mano todo el texto para comprobar su exactitud; Google pide verificar manualmente los datos de todo lo generado con IA, incluidos los metadatos.",
     "messages": {
-      "fail": "Se han encontrado {count} restos sin editar de generación o de plantilla en {where}.",
-      "fail:template-token": "Se han encontrado {count} tokens de plantilla sin rellenar o restos de generación en {where}.",
-      "fail:assistant-phrase": "Se han encontrado {count} frases de asistente sin editar en {where}."
+      "fail": "Se han encontrado {count} resto(s) sin editar de generación o de plantilla en {where}.",
+      "fail:template-token": "Se han encontrado {count} token(s) de plantilla sin rellenar o resto(s) de generación en {where}.",
+      "fail:assistant-phrase": "Se han encontrado {count} frase(s) de asistente sin editar en {where}."
     }
   },
   "content-ymyl-classification": {
@@ -268,7 +268,7 @@
     "why": "Las políticas de spam de Google prohíben los enlaces ocultos para los usuarios, como un enlace en un solo carácter o con estilos que lo hacen invisible, cuando existen para manipular el posicionamiento.",
     "fix": "Elimina los enlaces ocultos. Si el sitio puede estar comprometido, investiga si hay código inyectado (consulta content-hacked-signals).",
     "messages": {
-      "fail": "{count} enlaces externos follow están ocultos o en un solo carácter (hosts: {hosts}); el analista debería juzgar si forman parte legítima de la interfaz."
+      "fail": "{count} enlace(s) externo(s) follow están ocultos o en un solo carácter (hosts: {hosts}); el analista debería juzgar si forman parte legítima de la interfaz."
     }
   },
   "content-keyword-stuffing": {
@@ -307,7 +307,7 @@
     "messages": {
       "fail": "Se han encontrado indicios compatibles con spam inyectado; el analista debería contrastarlos con la temática del sitio.",
       "fail:spam-urls-in-sitemap": "{count} URLs del sitemap contienen vocabulario típico del spam inyectado.",
-      "fail:spam-vocabulary": "{count} enlaces o pasajes contienen vocabulario típico del spam inyectado.",
+      "fail:spam-vocabulary": "{count} enlace(s) o pasaje(s) contienen vocabulario típico del spam inyectado.",
       "fail:foreign-script-block": "{count} páginas contienen grandes bloques de texto en chino, japonés o coreano, a diferencia del resto del sitio.",
       "fail:cloaked-spam": "«{term}» se sirve al user-agent de Googlebot, pero no a un user-agent de navegador."
     }
@@ -317,7 +317,7 @@
     "why": "Las políticas de spam de Google abarcan las páginas de afiliación sin valor que copian las descripciones y las reseñas del comercio sin aportar valor original. Los enlaces de afiliado en sí no son un problema.",
     "fix": "Añade una evaluación original (evidencias, mediciones, comparativas). Enlaza a varios vendedores. Califica los enlaces con rel=sponsored o nofollow.",
     "messages": {
-      "fail": "La página tiene {count} enlaces de afiliado ({networks}); el analista debería juzgar si el contenido aporta una evaluación original."
+      "fail": "La página tiene {count} enlace(s) de afiliado ({networks}); el analista debería juzgar si el contenido aporta una evaluación original."
     }
   },
   "content-paid-links-unqualified": {
@@ -333,7 +333,7 @@
     "why": "Google recomienda rel=ugc o rel=nofollow para los enlaces del contenido generado por usuarios y documenta cómo afecta a un sitio el spam generado por usuarios sin moderar.",
     "fix": "Añade rel=ugc o nofollow a los enlaces de los usuarios, modera los comentarios y usa medidas antispam.",
     "messages": {
-      "fail": "{count} enlaces externos del contenido generado por usuarios no tienen rel=\"ugc\" ni rel=\"nofollow\"."
+      "fail": "{count} enlace(s) externo(s) del contenido generado por usuarios no tienen rel=\"ugc\" ni rel=\"nofollow\"."
     }
   },
   "content-link-schemes-visible": {
@@ -360,8 +360,8 @@
     "fix": "Usa textos de enlace concisos y descriptivos que tengan sentido fuera de contexto, por ejemplo, «precios del diseño de logotipos» en lugar de «haz clic aquí».",
     "messages": {
       "fail": "Algunos textos de enlace no describen su destino.",
-      "fail:generic": "{count} enlaces del contenido principal usan texto genérico ({examples}) y no existe ningún enlace descriptivo a la misma página.",
-      "fail:too-long": "{count} enlaces tienen un texto de enlace de más de 100 caracteres.",
+      "fail:generic": "{count} enlace(s) del contenido principal usan texto genérico ({examples}) y no existe ningún enlace descriptivo a la misma página.",
+      "fail:too-long": "{count} enlace(s) tienen un texto de enlace de más de 100 caracteres.",
       "fail:repeated": "El texto de enlace «{anchor}» enlaza a la misma página {count} veces."
     }
   },
@@ -370,7 +370,7 @@
     "why": "Google señala que enlazar a las fuentes puede ayudar a los usuarios a verificar las afirmaciones y a generar confianza, y recomienda nofollow solo para los enlaces que el sitio no avala.",
     "fix": "Cita fuentes primarias con textos de enlace descriptivos. Usa nofollow solo para los enlaces que no son de confianza.",
     "messages": {
-      "fail": "Los {count} enlaces externos editoriales son todos nofollow; Google recomienda nofollow solo para los enlaces que el sitio no avala."
+      "fail": "Todos los enlaces externos editoriales ({count}) son nofollow; Google recomienda nofollow solo para los enlaces que el sitio no avala."
     }
   },
   "content-img-alt-missing": {
@@ -389,11 +389,11 @@
     "fix": "Escribe descripciones breves y ricas en información, por ejemplo, «cachorro de dálmata jugando a traer cosas» en lugar de «cachorro perro perrito cachorros».",
     "messages": {
       "fail": "Algunos textos alternativos no describen su imagen.",
-      "fail:filename": "{count} imágenes usan como texto alternativo su nombre de archivo o un nombre de cámara.",
-      "fail:generic": "{count} imágenes tienen un texto alternativo genérico de una sola palabra; el analista debería revisarlas en su contexto.",
-      "fail:keyword-list": "{count} imágenes tienen un texto alternativo formado por una lista de palabras clave; el analista debería revisarlas.",
+      "fail:filename": "{count} imagen(es) usan como texto alternativo su nombre de archivo o un nombre de cámara.",
+      "fail:generic": "{count} imagen(es) tienen un texto alternativo genérico de una sola palabra; el analista debería revisarlas en su contexto.",
+      "fail:keyword-list": "{count} imagen(es) tienen un texto alternativo formado por una lista de palabras clave; el analista debería revisarlas.",
       "fail:repeated": "{count} imágenes distintas comparten el texto alternativo «{alt}»; el analista debería revisarlas.",
-      "fail:too-long": "{count} imágenes tienen un texto alternativo de más de 250 caracteres; el analista debería revisarlas."
+      "fail:too-long": "{count} imagen(es) tienen un texto alternativo de más de 250 caracteres; el analista debería revisarlas."
     }
   },
   "content-img-filename": {
@@ -419,7 +419,7 @@
     "fix": "Sirve un formato admitido, por ejemplo, AVIF/WebP con una alternativa JPEG/PNG en el src del img.",
     "messages": {
       "fail": "Algunas imágenes usan un formato que Google Imágenes no indexa.",
-      "fail:unsupported-format": "{count} imágenes usan un formato que Google Imágenes no indexa.",
+      "fail:unsupported-format": "{count} imagen(es) usan un formato que Google Imágenes no indexa.",
       "fail:extension-mismatch": "{url} tiene una extensión .{extension}, pero sus bytes son {actual}."
     }
   },
@@ -428,7 +428,7 @@
     "why": "Google documenta que Googlebot no se desplaza ni hace clic, pero renderiza con un viewport alto, así que encuentra las imágenes que se cargan cuando entran en el viewport. Las que solo se cargan tras un evento de desplazamiento o un clic, no.",
     "fix": "Quita loading=lazy de las imágenes de la mitad superior de la página. Usa la carga en diferido nativa o IntersectionObserver, que cargan sin acciones del usuario.",
     "messages": {
-      "fail": "{count} imágenes solo cargan su fuente real tras desplazarse por la página, algo que Googlebot no hace."
+      "fail": "{count} imagen(es) solo cargan su fuente real tras desplazarse por la página, algo que Googlebot no hace."
     }
   },
   "content-preferred-image": {
@@ -490,7 +490,7 @@
     "why": "Google usa sistemas de actualidad cuando los usuarios esperan información reciente. El contenido atemporal no necesita actualizaciones frecuentes, y Google advierte contra los cambios de fecha cosméticos.",
     "fix": "Actualiza los datos y las cifras obsoletos y cambia la fecha en consecuencia, o etiqueta el contenido como histórico.",
     "messages": {
-      "fail": "{count} afirmaciones de la página están fechadas en años anteriores a {year}; el analista debería juzgar si el tema necesita información más reciente."
+      "fail": "{count} afirmación(es) de la página están fechadas en años anteriores a {year}; el analista debería juzgar si el tema necesita información más reciente."
     }
   },
   "content-intent-match": {

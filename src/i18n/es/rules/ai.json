@@ -5,7 +5,7 @@
     "fix": "Añade grupos explícitos que permitan el acceso a los rastreadores de búsqueda y de respuestas que quieras, o elimina la regla disallow global.",
     "messages": {
       "fail": "El grupo * de robots.txt bloquea todo el sitio, y los rastreadores de búsqueda o de respuestas con IA sin grupo propio heredan ese bloqueo.",
-      "fail:ai-search-inherits-block": "El grupo * bloquea /, así que {count} rastreadores de búsqueda o de respuestas con IA sin grupo propio heredan el bloqueo ({agents}), mientras que un buscador tiene su propio grupo que permite el rastreo."
+      "fail:ai-search-inherits-block": "El grupo * bloquea /, así que {count} rastreador(es) de búsqueda o de respuestas con IA sin grupo propio heredan el bloqueo ({agents}), mientras que un buscador tiene su propio grupo que permite el rastreo."
     }
   },
   "ai-robots-oai-searchbot": {
@@ -261,8 +261,8 @@
     "why": "Google incluye entre los aspectos fundamentales para las funciones de IA que el contenido importante esté disponible en texto. Los datos que solo se muestran en imágenes, vídeo, canvas o PDF sin un equivalente en texto son difíciles de usar para cualquier sistema.",
     "fix": "Ofrece esos datos como texto HTML, además de texto alternativo y transcripciones.",
     "messages": {
-      "fail": "{count} elementos multimedia ({kinds}) pueden contener datos que el texto de la página no indica; lo confirma el analista.",
-      "fail:media-only-facts": "{count} elementos multimedia ({kinds}) del contenido principal no tienen un equivalente en texto cerca y pueden contener datos que el texto de la página no indica; lo confirma el analista."
+      "fail": "{count} elemento(s) multimedia ({kinds}) pueden contener datos que el texto de la página no indica; lo confirma el analista.",
+      "fail:media-only-facts": "{count} elemento(s) multimedia ({kinds}) del contenido principal no tienen un equivalente en texto cerca y pueden contener datos que el texto de la página no indica; lo confirma el analista."
     }
   },
   "ai-llms-txt": {
@@ -281,8 +281,8 @@
     "why": "Las políticas de spam de Google abarcan los intentos de manipular las respuestas de IA generativa en la Búsqueda. Un texto con forma de instrucciones dirigido a sistemas de IA y colocado en texto oculto, comentarios o atributos es uno de esos intentos, y además puede secuestrar a los agentes que leen la página.",
     "fix": "Elimina el texto de prompt oculto; expón las afirmaciones de forma visible y veraz.",
     "messages": {
-      "fail": "Se han encontrado {count} textos ocultos con forma de instrucciones dirigidos a sistemas de IA; el analista confirma la intención.",
-      "fail:hidden-instructions": "Se han encontrado {count} textos ocultos con forma de instrucciones dirigidos a sistemas de IA en elementos ocultos, comentarios o atributos; el analista confirma si intentan dirigir las respuestas de IA."
+      "fail": "Textos ocultos con forma de instrucciones dirigidos a sistemas de IA: {count}; el analista confirma la intención.",
+      "fail:hidden-instructions": "Textos ocultos con forma de instrucciones dirigidos a sistemas de IA en elementos ocultos, comentarios o atributos: {count}; el analista confirma si intentan dirigir las respuestas de IA."
     }
   },
   "ai-answer-readiness": {
