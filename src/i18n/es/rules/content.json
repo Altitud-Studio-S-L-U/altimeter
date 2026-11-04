@@ -409,7 +409,8 @@
     "why": "Google documenta que no indexa las imágenes a las que solo se hace referencia en CSS y que extrae las imágenes de los elementos img. Las imágenes principales (hero), de producto y editoriales servidas como fondos CSS no son aptas para Google Imágenes.",
     "fix": "Usa <img> (o <picture>) con src y alt para las imágenes que deberían aparecer en Google Imágenes o que transmiten contenido.",
     "messages": {
-      "fail": "La imagen más grande ({url}) es un fondo CSS en un elemento {element}, que Google no indexa como imagen."
+      "fail": "La imagen más grande ({url}) es un fondo CSS en un elemento {element}, que Google no indexa como imagen.",
+      "fail:unknown-element": "La imagen más grande ({url}) es un fondo CSS, que Google no indexa como imagen."
     }
   },
   "content-img-format": {

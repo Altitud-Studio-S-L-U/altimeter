@@ -346,7 +346,7 @@
   },
   "perf-critical-request-chains": {
     "title": "Cadenas de solicitudes críticas profundas",
-    "why": "Las cadenas largas de solicitudes dependientes en la ruta crítica retrasan el primer renderizado y el LCP. Lighthouse 13.6 las indica en network-dependency-tree-insight, que sustituyó a critical-request-chains y network-dependency-tree-insight.",
+    "why": "Las cadenas largas de solicitudes dependientes en la ruta crítica retrasan el primer renderizado y el LCP. Lighthouse 13.6 las indica en network-dependency-tree-insight, que sustituyó a critical-request-chains y uses-rel-preconnect.",
     "fix": "Aplana las cadenas (@import de CSS, CSS o fuentes cargados por JS) y precarga los recursos críticos que se descubren tarde.",
     "messages": {
       "fail": "La cadena de solicitudes críticas más profunda tiene {depth} solicitudes después del documento (cadena más larga: {duration}, laboratorio)."

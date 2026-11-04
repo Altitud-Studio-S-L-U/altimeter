@@ -227,9 +227,9 @@
     "why": "Google llegeix hreflang de l'HTML, de les capçaleres HTTP i dels mapes del lloc. Es permet fer servir diversos mètodes; els valors contradictoris entre ells, no.",
     "fix": "Tria un sol mètode. Google els tracta com a equivalents, i fer-ne servir diversos no aporta cap avantatge i afegeix manteniment. Si en mantens diversos, genera'ls a partir de les mateixes dades.",
     "messages": {
-      "fail": "Les anotacions hreflang de les fonts {first} i {second} no coincideixen.",
-      "fail:conflicting-target": "Les fonts {first} i {second} donen URL diferents per als mateixos valors hreflang: {values}.",
-      "fail:incomplete-source": "Alguns valors hreflang apareixen a la font {first} o a la font {second}, però no a totes dues: {values}. Fer servir diversos mètodes és correcte; mantén-los idèntics."
+      "fail": "Les anotacions hreflang de dues fonts no coincideixen ({first}, {second}).",
+      "fail:conflicting-target": "Dues fonts d'hreflang ({first}, {second}) donen URL diferents per als mateixos valors: {values}.",
+      "fail:incomplete-source": "Alguns valors hreflang només apareixen en una de les dues fonts ({first}, {second}): {values}. Fer servir diversos mètodes és correcte; mantén-los idèntics."
     }
   },
   "intl-hreflang-sitemap-format": {

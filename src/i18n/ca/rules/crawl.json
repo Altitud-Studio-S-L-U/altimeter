@@ -271,9 +271,9 @@
     "why": "Google només fa servir rel=canonical d'un element link del head o d'una capçalera HTTP Link. Les canòniques del body, o combinades amb atributs com hreflang o media en el mateix element, no es fan servir.",
     "fix": "Posa un <link rel=canonical href> simple al head. Fes servir rel=alternate per a les variants mòbils, de llengua o de format.",
     "messages": {
-      "fail": "Google ignora un rel=canonical de {url} (motiu: {problem}).",
-      "fail:only-unusable": "Google ignora l'únic rel=canonical de {url} (motiu: {problem}).",
-      "fail:extra-unusable": "Google ignora un rel=canonical addicional de {url} (motiu: {problem})."
+      "fail": "Google ignora un rel=canonical de {url} ({problem}).",
+      "fail:only-unusable": "Google ignora l'únic rel=canonical de {url} ({problem}).",
+      "fail:extra-unusable": "Google ignora un rel=canonical addicional de {url} ({problem})."
     }
   },
   "crawl-canonical-target-health": {

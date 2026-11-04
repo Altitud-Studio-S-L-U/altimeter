@@ -346,7 +346,7 @@
   },
   "perf-critical-request-chains": {
     "title": "Cadenes de sol·licituds crítiques profundes",
-    "why": "Les cadenes llargues de sol·licituds dependents al camí crític endarrereixen la primera renderització i l'LCP. Lighthouse 13.6 les indica a network-dependency-tree-insight, que va substituir critical-request-chains i network-dependency-tree-insight.",
+    "why": "Les cadenes llargues de sol·licituds dependents al camí crític endarrereixen la primera renderització i l'LCP. Lighthouse 13.6 les indica a network-dependency-tree-insight, que va substituir critical-request-chains i uses-rel-preconnect.",
     "fix": "Aplana les cadenes (@import de CSS, CSS o fonts carregats per JS) i precarrega els recursos crítics que es descobreixen tard.",
     "messages": {
       "fail": "La cadena de sol·licituds crítiques més profunda és de {depth} sol·licituds després del document (cadena més llarga: {duration}, laboratori)."

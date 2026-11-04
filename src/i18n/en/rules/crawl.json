@@ -193,9 +193,9 @@
   },
   "crawl-canonical-ignored-attributes-placement": {
     "messages": {
-      "fail": "A rel=canonical on {url} is ignored by Google: it is {problem}.",
-      "fail:only-unusable": "The only rel=canonical on {url} is ignored by Google: it is {problem}.",
-      "fail:extra-unusable": "An extra rel=canonical on {url} is ignored by Google: it is {problem}."
+      "fail": "A rel=canonical on {url} is ignored by Google ({problem}).",
+      "fail:only-unusable": "The only rel=canonical on {url} is ignored by Google ({problem}).",
+      "fail:extra-unusable": "An extra rel=canonical on {url} is ignored by Google ({problem})."
     }
   },
   "crawl-canonical-target-health": {

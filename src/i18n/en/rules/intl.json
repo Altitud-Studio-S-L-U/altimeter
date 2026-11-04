@@ -127,9 +127,9 @@
   },
   "intl-hreflang-source-conflict": {
     "messages": {
-      "fail": "The {first} and {second} hreflang annotations disagree.",
-      "fail:conflicting-target": "The {first} and the {second} give different URLs for the same hreflang values: {values}.",
-      "fail:incomplete-source": "Some hreflang values appear in the {first} or the {second} but not in both: {values}. Using several methods is fine; keep them identical."
+      "fail": "The hreflang annotations of two sources disagree ({first}, {second}).",
+      "fail:conflicting-target": "Two hreflang sources ({first}, {second}) give different URLs for the same values: {values}.",
+      "fail:incomplete-source": "Some hreflang values appear in only one of two sources ({first}, {second}): {values}. Using several methods is fine; keep them identical."
     }
   },
   "intl-hreflang-sitemap-format": {
@@ -240,7 +240,7 @@
     "messages": {
       "fail": "The {field} of this page is not localized.",
       "fail:identical-to-other-locale": "The {field} is identical to the {field} of {other}, a version in another language.",
-      "fail:field-language": "The {field} reads as {detected} on a page in {expected}."
+      "fail:field-language": "The text of the {field} reads as {detected} on a page in {expected}."
     }
   },
   "intl-og-locale": {
@@ -295,7 +295,7 @@
   "intl-area-served-format": {
     "messages": {
       "fail": "areaServed is used incorrectly.",
-      "fail:invalid-parent": "areaServed is set on a {type} node, a type that does not take this property.",
+      "fail:invalid-parent": "areaServed is set on a node of type {type}, which does not take this property.",
       "fail:url-value": "areaServed is a URL of this site ({value}) instead of a place name or Place.",
       "fail:invalid-value-type": "areaServed holds a {value}, which is not a Place, AdministrativeArea or GeoShape."
     }

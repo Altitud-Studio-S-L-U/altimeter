@@ -227,9 +227,9 @@
     "why": "Google lee hreflang del HTML, de las cabeceras HTTP y de los sitemaps. Se permite usar varios métodos; los valores contradictorios entre ellos, no.",
     "fix": "Elige un método. Google los trata como equivalentes, y usar varios no aporta ninguna ventaja y añade mantenimiento. Si se mantienen varios, genéralos a partir de los mismos datos.",
     "messages": {
-      "fail": "Las anotaciones hreflang de {first} y de {second} no coinciden.",
-      "fail:conflicting-target": "{first} y {second} dan URLs distintas para los mismos valores hreflang: {values}.",
-      "fail:incomplete-source": "Algunos valores hreflang aparecen en {first} o en {second}, pero no en ambos: {values}. Usar varios métodos está bien; mantenlos idénticos."
+      "fail": "Las anotaciones hreflang de dos fuentes no coinciden ({first}, {second}).",
+      "fail:conflicting-target": "Dos fuentes de hreflang ({first}, {second}) dan URLs distintas para los mismos valores: {values}.",
+      "fail:incomplete-source": "Algunos valores hreflang solo aparecen en una de las dos fuentes ({first}, {second}): {values}. Usar varios métodos está bien; mantenlos idénticos."
     }
   },
   "intl-hreflang-sitemap-format": {

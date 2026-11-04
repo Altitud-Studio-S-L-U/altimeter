@@ -171,7 +171,7 @@ export const imgCssBackground: RuleImplementation = {
     if (!lcp) return notEvaluated('no-lcp-element');
     if (!lcp.url || ['img', 'image', 'video', 'picture', 'svg'].includes(lcp.tag ?? '')) return { outcome: 'pass' };
     if (imageUrls(render, page.fetch.finalUrl).some(url => sameAsset(url, lcp.url!))) return { outcome: 'pass' };
-    return { outcome: 'fail', severity: 'medium', params: { url: lcp.url, element: lcp.tag ?? 'element' },
+    return { outcome: 'fail', severity: 'medium', ...(lcp.tag ? { params: { url: lcp.url, element: lcp.tag } } : { reason: 'unknown-element', params: { url: lcp.url } }),
       evidence: [cite(context, 'render', evidenceLabel('largest image painted as a CSS background, with no img element for it'), { excerpt: lcp.url, ...(lcp.selector ? { path: lcp.selector } : {}) })] };
   },
 };

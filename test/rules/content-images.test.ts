@@ -118,6 +118,12 @@ describe('content-img-css-background', () => {
     assert.deepEqual(excerpts(at()), ['https://example.com/hero.jpg']);
   });
 
+  test('words the failure without an element name when the render reports none', () => {
+    const rendered = { html, lcp: { time: 900, size: 90000, url: 'https://example.com/hero.jpg' } };
+    const { at } = run(imgCssBackground, [page(url, { html, rendered })]);
+    assert.deepEqual([at()?.reason, at()?.params], ['unknown-element', { url: 'https://example.com/hero.jpg' }]);
+  });
+
   test('passes a background that also exists as an img', () => {
     const withImg = doc('<main><div class="hero"></div><img src="/hero.jpg" alt="Garden"></main>');
     const rendered = { html: withImg, lcp: { time: 900, size: 90000, tag: 'div', url: 'https://example.com/hero.jpg' } };

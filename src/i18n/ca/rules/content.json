@@ -409,7 +409,8 @@
     "why": "Google documenta que no indexa les imatges referenciades només al CSS i que extreu les imatges dels elements img. Les imatges destacades, de producte i editorials servides com a fons CSS no són aptes per a Google Imatges.",
     "fix": "Fes servir <img> (o <picture>) amb src i alt per a les imatges que haurien d'aparèixer a Google Imatges o que transmeten contingut.",
     "messages": {
-      "fail": "La imatge més gran ({url}) és un fons CSS d'un element {element}, que Google no indexa com a imatge."
+      "fail": "La imatge més gran ({url}) és un fons CSS d'un element {element}, que Google no indexa com a imatge.",
+      "fail:unknown-element": "La imatge més gran ({url}) és un fons CSS, que Google no indexa com a imatge."
     }
   },
   "content-img-format": {
