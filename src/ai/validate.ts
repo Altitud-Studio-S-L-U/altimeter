@@ -235,14 +235,13 @@ interface FindingAnswer {
 
 /**
  * The candidate an answer decides. A rule with one candidate on the scope takes the answer; with several, the
- * answer must cite more of one candidate's evidence than of any other's.
+ * candidate evidence the answer cites must all belong to exactly one of them.
  */
 function candidateFor(answer: FindingAnswer, candidates: readonly ReportFinding[]): ReportFinding | Rejection {
   if (candidates.length === 1) return candidates[0]!;
-  const shared = candidates.map(candidate => candidate.evidence.filter(id => answer.evidenceIds.includes(id)).length);
-  const most = Math.max(...shared);
-  const matched = candidates.filter((_, index) => shared[index] === most);
-  return most > 0 && matched.length === 1 ? matched[0]! : reject('ambiguous-candidate', answer.ruleId);
+  const cited = answer.evidenceIds.filter(id => candidates.some(candidate => candidate.evidence.includes(id)));
+  const matched = candidates.filter(candidate => cited.every(id => candidate.evidence.includes(id)));
+  return cited.length > 0 && matched.length === 1 ? matched[0]! : reject('ambiguous-candidate', answer.ruleId);
 }
 
 function deterministicConflict(answer: FindingAnswer, outcome: 'fail' | 'pass', absence: boolean, scope: FindingScope, page: PageInfo, context: ValidationContext): Rejection | ReportFinding | undefined {

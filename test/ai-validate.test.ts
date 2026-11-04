@@ -169,6 +169,30 @@ describe('validating findings', () => {
     assert.deepEqual(result.findings.map(entry => [entry.candidate?.id, entry.outcome]), [['F-too-long', 'fail'], [generic.id, 'pass']]);
   });
 
+  test('decides no candidate when an answer cites the evidence of several, however much of each', () => {
+    const generic = audit.report.findings.find(entry => entry.ruleId === 'content-img-alt-quality' && entry.needsJudgment === true)!;
+    const shared = ['E901', 'E902'];
+    const repeated: ReportFinding = { ...generic, id: 'F-repeated', reason: 'repeated', evidence: shared };
+    const report: Report = {
+      ...audit.report,
+      findings: [...audit.report.findings, repeated],
+      evidence: [...audit.report.evidence, ...shared.map(id => ({ id, kind: 'html' as const, url: roomsUrl, label: 'alt text shared by different images', excerpt: `<img src="/img/${id}.jpg" alt="Hotel Example">`, complete: true }))],
+    };
+    const base = planned('content');
+    const plan: PassPlan = { ...base, candidates: [...base.candidates, repeated] };
+    const both: ValidationContext = { ...context(plan), report, pack: buildPack({ trusted: 'x', sections: packSections(plan, strings, report), nonce: 'n' }) };
+    const cited = generic.evidence[0]!;
+    const result = validateAnswer({
+      findings: [
+        finding({ ruleId: 'content-img-alt-quality', evidenceIds: [cited, ...shared], quotes: [{ evidenceId: cited, text: 'Double room with a balcony' }] }),
+        finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', evidenceIds: [shared[0]!], quotes: [{ evidenceId: shared[0]!, text: '<img src="/img/E901.jpg" alt="Hotel Example">' }] }),
+      ],
+      assessments: emptyAssessments,
+    }, both);
+    assert.deepEqual(reasons(result), ['ambiguous-candidate'], 'citing the images of both candidates says neither which one was judged');
+    assert.deepEqual(result.findings.map(entry => [entry.candidate?.id, entry.outcome]), [['F-repeated', 'pass']], 'part of one candidate\'s evidence is enough');
+  });
+
   test('records rules the model could not assess and refuses partial answers as a whole', () => {
     const result = content([finding({ ruleId: 'content-intent-match', verdict: 'not_assessable', severity: 'info' })]);
     assert.deepEqual(result.notAssessable, ['content-intent-match']);
