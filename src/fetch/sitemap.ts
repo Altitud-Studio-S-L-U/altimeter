@@ -137,7 +137,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
   });
 
   try {
-    parser.write(decoded.xml.toString('utf8').replace(/^﻿/u, '')).close();
+    parser.write(decoded.xml.toString('utf8').replace(/^\uFEFF/u, '')).close();
   } catch (error) {
     errors.push({ line: parser.line, message: error instanceof Error ? error.message : 'Unreadable XML' });
   }

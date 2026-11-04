@@ -1,0 +1,104 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { after, before, describe, test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+
+const cli = fileURLToPath(new URL('../src/cli/main.ts', import.meta.url));
+let server: Server;
+let origin: string;
+let work: string;
+
+function run(args: string[], cwd = work): Promise<{ status: number | null; stdout: string; stderr: string }> {
+  return new Promise(resolve => {
+    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', chunk => (stdout += chunk));
+    child.stderr.on('data', chunk => (stderr += chunk));
+    child.on('close', status => resolve({ status, stdout, stderr }));
+  });
+}
+
+before(async () => {
+  server = createServer((req, res) => {
+    if (req.url === '/robots.txt') return void res.writeHead(200, { 'content-type': 'text/plain' }).end('User-agent: *\nAllow: /\n');
+    if (req.url === '/challenge') return void res.writeHead(403, { 'content-type': 'text/html', 'cf-mitigated': 'challenge' }).end('<title>Just a moment...</title>');
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><html lang="en"><head><title>Home</title></head><body><h1>Home</h1></body></html>');
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  work = await mkdtemp(join(tmpdir(), 'altimeter-cli-'));
+});
+
+after(async () => {
+  server.closeAllConnections();
+  await new Promise(resolve => server.close(resolve));
+  await rm(work, { recursive: true, force: true });
+});
+
+describe('altimeter audit', () => {
+  test('audits a page and writes the report folder', async () => {
+    const result = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--out', 'out', '--quiet']);
+    assert.equal(result.status, 0, result.stderr);
+    const folder = result.stdout.trim();
+    const files = await readdir(join(work, folder));
+    assert.ok(['report.json', 'report.md', 'FIXES.md', 'tasks'].every(name => files.includes(name)), files.join(','));
+    const report = JSON.parse(await readFile(join(work, folder, 'report.json'), 'utf8'));
+    assert.equal(report.target.origin, origin);
+    assert.equal(report.run.options.render, false);
+  });
+
+  test('refuses private addresses unless asked', async () => {
+    const result = await run(['audit', `${origin}/`, '--no-render', '--out', 'out', '--quiet']);
+    assert.equal(result.status, 3);
+  });
+
+  test('exits 3 when the page is a firewall challenge', async () => {
+    const result = await run(['audit', `${origin}/challenge`, '--no-render', '--allow-private-network', '--out', 'out', '--quiet']);
+    assert.equal(result.status, 3);
+  });
+
+  test('rejects bad options', async () => {
+    assert.equal((await run(['audit', 'not a url'])).status, 2);
+    assert.equal((await run(['audit', `${origin}/`, '--lang', 'fr'])).status, 2);
+    assert.equal((await run(['audit', `${origin}/`, '--fail-on', 'some'])).status, 2);
+  });
+});
+
+describe('other commands', () => {
+  test('render writes the report again in another language', async () => {
+    const audit = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--out', 'render-out', '--quiet']);
+    const folder = audit.stdout.trim();
+    const result = await run(['render', join(folder, 'report.json'), '--lang', 'ca']);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(await readFile(join(work, folder, 'report.md'), 'utf8'), /^# Auditoria SEO de/u);
+  });
+
+  test('compare refuses reports from different catalogs', async () => {
+    const audit = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--out', 'compare-out', '--quiet']);
+    const path = join(work, audit.stdout.trim(), 'report.json');
+    const other = JSON.parse(await readFile(path, 'utf8'));
+    other.catalog.hash = '0'.repeat(64);
+    await writeFile(join(work, 'other.json'), JSON.stringify(other));
+    const result = await run(['compare', path, join(work, 'other.json')]);
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /different rule catalogs/u);
+    assert.equal((await run(['compare', path, path])).status, 0);
+  });
+
+  test('rules, explain and doctor describe the catalog and the environment', async () => {
+    const rules = await run(['rules', '--category', 'crawl']);
+    assert.equal(rules.status, 0);
+    assert.match(rules.stdout, /^crawl-/mu);
+    assert.doesNotMatch(rules.stdout, /^content-/mu);
+    const explain = await run(['explain', 'crawl-meta-robots-noindex']);
+    assert.match(explain.stdout, /Source: https:\/\//u);
+    assert.equal((await run(['explain', 'no-such-rule'])).status, 2);
+    assert.match((await run(['doctor'])).stdout, /^Node\.js \d+/u);
+  });
+});

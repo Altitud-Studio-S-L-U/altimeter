@@ -4,6 +4,7 @@ import type { FetchResult } from '../fetch/http.ts';
 import type { RobotsAvailability } from '../fetch/robots.ts';
 import type { SitemapDocument } from '../fetch/sitemap.ts';
 import type { TlsFacts } from '../fetch/tls.ts';
+import type { GscData } from '../owner/gsc.ts';
 import type { ParsedHtml } from '../parse/html.ts';
 import type { StructuredData } from '../parse/structured-data.ts';
 import type { RenderResult } from '../render/chrome.ts';
@@ -34,6 +35,15 @@ export interface PageFacts {
   readonly crux?: Readonly<Record<'url' | 'origin', Readonly<Partial<Record<CruxFormFactor, CruxOutcome>>>>>;
   /** The raw page fetched again as Googlebot and as a browser, to compare what each receives. */
   readonly uaProbes?: readonly AgentProbe[];
+  /**
+   * Why the page cannot be audited, when the response is a firewall challenge, a login or a consent wall rather
+   * than the page. No page rule is evaluated on it.
+   */
+  readonly notAuditable?: string;
+}
+
+export interface OwnerData {
+  readonly gsc?: GscData;
 }
 
 export interface AgentProbe {
@@ -76,11 +86,17 @@ export interface SiteFacts {
   readonly pages: ReadonlyMap<string, PageFacts>;
   /** True when a crawl ran, so site-scope graph rules can be evaluated. */
   readonly crawled: boolean;
+  /** Internal URLs the crawl found but did not fetch because robots.txt disallows them for Googlebot. */
+  readonly crawlBlocked?: readonly string[];
+  /** Internal URLs left out because the page limit was reached. */
+  readonly crawlSkipped?: number;
   readonly homeUrl?: string;
   /** Certificate of the audited host, for https targets. */
   readonly tls?: TlsFacts;
   /** The home page fetched with the user agent of each crawler that decides search and AI-answer visibility. */
   readonly agentProbes: readonly AgentProbe[];
+  /** Data the site owner authorised: Search Console today, more sources later. */
+  readonly owner?: OwnerData;
   /** Favicons, Open Graph images, logos and /llms.txt, fetched once each. */
   readonly resources: readonly ResourceFacts[];
   /**

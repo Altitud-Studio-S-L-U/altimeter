@@ -1,0 +1,111 @@
+import { createHash } from 'node:crypto';
+import type { EvidenceStore } from '../core/evidence.ts';
+import type { Category, FixLocation, InputId, RuleMeta, RuleSource, Severity, Verification } from '../core/types.ts';
+import { findingMessage } from '../i18n/messages.ts';
+import type { Finding, FindingScope } from '../rules/engine.ts';
+import { severityWeights } from '../score/score.ts';
+
+export interface TaskCheck {
+  readonly ruleId: string;
+  readonly scope: FindingScope;
+}
+
+export interface Task {
+  /** Stable across runs while the same rule fails for the same reason with the same evidence: `T-<hash>`. */
+  readonly id: string;
+  readonly ruleId: string;
+  readonly category: Category;
+  readonly title: string;
+  readonly severity: Severity;
+  /** 1 is the first task to do. */
+  readonly priority: number;
+  /** Audited URLs the task covers, or the site origin for site-wide checks. */
+  readonly scopes: readonly FindingScope[];
+  /** What is wrong, in English, with the observed values. */
+  readonly problem: string;
+  /** The failure variant and message values, so the problem can be rendered in other languages. */
+  readonly reason?: string;
+  readonly params?: Readonly<Record<string, string | number>>;
+  /** What the fixed state looks like, from the catalog. */
+  readonly desired: string;
+  readonly evidence: readonly string[];
+  readonly fixLocation: FixLocation;
+  readonly verifiableBy: Verification;
+  /** True when a coding agent can make the fix in the site's code or content; never for accounts or owner decisions. */
+  readonly agentReady: boolean;
+  /** Checks that must pass once the task is done. */
+  readonly acceptance: readonly TaskCheck[];
+  /** Checks that pass today on the same scope and must keep passing, so the fix does not trade one problem for another. */
+  readonly mustRemainPassing: readonly TaskCheck[];
+  readonly sources: readonly RuleSource[];
+}
+
+const serverInputs: readonly InputId[] = ['http', 'redirects', 'variants', 'tls', 'robots', 'ua-probe', 'not-found-probe', 'sitemaps'];
+
+/** How a fix can be confirmed when the catalog does not say. */
+export function defaultVerification(rule: RuleMeta): Verification {
+  if (rule.verifiableBy) return rule.verifiableBy;
+  if (rule.inputs.includes('crux')) return 'field-28d';
+  if (rule.inputs.some(input => input === 'gsc' || input === 'bing' || input === 'bot-activity')) return 'owner-data';
+  if (rule.inputs.some(input => serverInputs.includes(input))) return 'deployed';
+  return 'local';
+}
+
+function groupKey(finding: Finding, evidence: EvidenceStore): string {
+  const facts = finding.evidence.map(id => evidence.get(id)).filter(Boolean).map(item => [item!.kind, item!.label, item!.excerpt ?? '', item!.path ?? '']);
+  facts.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  const site = finding.scope.kind === 'site' ? finding.scope.origin : '';
+  return JSON.stringify([finding.ruleId, finding.reason ?? '', site, facts]);
+}
+
+function scopeKey(scope: FindingScope): string {
+  return scope.kind === 'page' ? scope.url : scope.origin;
+}
+
+/**
+ * Turns failed checks into tasks for people and coding agents. Findings with the same rule, reason and evidence
+ * on several pages become one task, which usually means one template fix. Candidates that still need the
+ * analyst's judgment never become tasks.
+ */
+export function buildTasks(findings: readonly Finding[], rulesById: ReadonlyMap<string, RuleMeta>, evidence: EvidenceStore): Task[] {
+  const groups = new Map<string, Finding[]>();
+  for (const finding of findings) {
+    if (finding.outcome !== 'fail' || finding.needsJudgment || !rulesById.has(finding.ruleId)) continue;
+    const key = groupKey(finding, evidence);
+    groups.set(key, [...(groups.get(key) ?? []), finding]);
+  }
+  const passing = findings.filter(finding => finding.outcome === 'pass');
+  const tasks: Omit<Task, 'priority'>[] = [];
+  for (const [key, members] of groups) {
+    const first = members[0]!;
+    const rule = rulesById.get(first.ruleId)!;
+    const scopes = [...new Map(members.map(member => [scopeKey(member.scope), member.scope])).values()];
+    const scopeKeys = new Set(scopes.map(scopeKey));
+    const severity = members.map(member => member.severity ?? rule.maxSeverity).sort((a, b) => severityWeights[b] - severityWeights[a])[0]!;
+    const fixLocation = rule.fixLocation ?? 'repo';
+    tasks.push({
+      id: `T-${createHash('sha256').update(key).digest('hex').slice(0, 10)}`,
+      ruleId: rule.id,
+      category: rule.category,
+      title: rule.title,
+      severity,
+      scopes,
+      problem: findingMessage('en', rule.id, 'fail', first.reason, first.params) ?? rule.title,
+      ...(first.reason ? { reason: first.reason } : {}),
+      ...(first.params ? { params: first.params } : {}),
+      desired: rule.fix,
+      evidence: [...new Set(members.flatMap(member => member.evidence))],
+      fixLocation,
+      verifiableBy: defaultVerification(rule),
+      agentReady: fixLocation === 'repo' || fixLocation === 'platform-config' || fixLocation === 'content',
+      acceptance: scopes.map(scope => ({ ruleId: rule.id, scope })),
+      mustRemainPassing: passing
+        .filter(pass => rulesById.get(pass.ruleId)?.category === rule.category && scopeKeys.has(scopeKey(pass.scope)))
+        .slice(0, 12)
+        .map(pass => ({ ruleId: pass.ruleId, scope: pass.scope })),
+      sources: rule.sources,
+    });
+  }
+  tasks.sort((a, b) => severityWeights[b.severity] - severityWeights[a.severity] || b.scopes.length - a.scopes.length || a.ruleId.localeCompare(b.ruleId));
+  return tasks.map((task, index) => ({ ...task, priority: index + 1 }));
+}
