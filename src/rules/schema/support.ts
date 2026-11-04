@@ -1,3 +1,4 @@
+import { evidenceLabel, joinLabels, type EvidenceLabel } from '../../core/evidence.ts';
 import type { PageFacts, SiteFacts } from '../../core/facts.ts';
 import { severities, type Severity } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
@@ -8,12 +9,11 @@ import { excerptOf, graphOf, propertyPath, texts, topLevel, values, type GraphNo
 import { isA } from './vocabulary.ts';
 
 /** Records a structured data observation and returns its evidence id. */
-export function cite(context: RuleContext, graph: PageGraph, node: GraphNode, label: string, property?: string, excerpt?: string): string {
-  const where = graph.source === 'rendered' ? 'rendered DOM' : 'raw HTML';
+export function cite(context: RuleContext, graph: PageGraph, node: GraphNode, label: EvidenceLabel, property?: string, excerpt?: string): string {
   return context.evidence.add({
     kind: 'structured-data',
     url: graph.base,
-    label: `${label} (${where})`,
+    label: joinLabels(label, graph.source === 'rendered' ? evidenceLabel('(rendered DOM)') : evidenceLabel('(raw HTML)')),
     excerpt: excerpt ?? excerptOf(node, property),
     line: node.line,
     path: property === undefined ? node.path : propertyPath(node, property),
@@ -81,7 +81,7 @@ export function perNode(context: RuleContext, type: string | readonly string[], 
   const wanted = [type].flat();
   const nodes = [...new Set(wanted.flatMap(entry => nodesOfType(graph, entry, options)))].filter(node => options.select?.(graph, node) ?? true);
   if (nodes.length === 0) return { outcome: 'not_applicable', reason: reasonWhenNone };
-  return report(nodes.flatMap(node => check(graph, node)), nodes.slice(0, 3).map(node => cite(context, graph, node, `${node.types.join(', ')} node`)));
+  return report(nodes.flatMap(node => check(graph, node)), nodes.slice(0, 3).map(node => cite(context, graph, node, evidenceLabel('{type} node', { type: node.types.join(', ') }))));
 }
 
 /** A parsed ISO 8601 date or date-time, with how precise it is. */

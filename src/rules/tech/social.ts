@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import { metaContent, type ElementRef } from '../../parse/html.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -45,25 +46,25 @@ export const socialOgRequired: RuleImplementation = {
     const results: Array<{ severity: 'low' | 'info'; reason: string; evidence: string[]; params: Record<string, string | number> }> = [];
     const absent = missing.filter(tag => !renderedOnly.includes(tag));
     if (absent.length > 0) {
-      results.push({ severity: 'low', reason: 'missing', evidence: [cite({ kind: 'html', url, label: 'Open Graph tags absent or empty in the raw HTML', excerpt: absent.join(', ') })], params: { tags: absent.join(', ') } });
+      results.push({ severity: 'low', reason: 'missing', evidence: [cite({ kind: 'html', url, label: evidenceLabel('Open Graph tags absent or empty in the raw HTML'), excerpt: absent.join(', ') })], params: { tags: absent.join(', ') } });
     }
     if (renderedOnly.length > 0) {
-      const evidence = renderedOnly.map(tag => cite({ kind: 'render', url, label: 'Open Graph tag present only after rendering', excerpt: metaExcerpt(firstValue(rendered, tag)!.ref) }));
+      const evidence = renderedOnly.map(tag => cite({ kind: 'render', url, label: evidenceLabel('Open Graph tag present only after rendering'), excerpt: metaExcerpt(firstValue(rendered, tag)!.ref) }));
       results.push({ severity: 'low', reason: 'rendered-only', evidence, params: { tags: renderedOnly.join(', ') } });
     }
     const type = firstValue(raw, 'og:type');
     if (type && !ogTypes.has(type.value.toLowerCase()) && !type.value.includes(':')) {
-      results.push({ severity: 'low', reason: 'invalid-type', evidence: [cite({ kind: 'html', url, label: 'og:type value', excerpt: metaExcerpt(type.ref), line: type.ref.line })], params: { value: type.value } });
+      results.push({ severity: 'low', reason: 'invalid-type', evidence: [cite({ kind: 'html', url, label: evidenceLabel('og:type value'), excerpt: metaExcerpt(type.ref), line: type.ref.line })], params: { value: type.value } });
     }
     const relative = (['og:image', 'og:url'] as const).map(tag => firstValue(raw, tag)).filter(entry => entry && !/^https?:\/\//iu.test(entry.value));
     for (const entry of relative) {
-      results.push({ severity: 'low', reason: 'relative-url', evidence: [cite({ kind: 'html', url, label: 'Open Graph URL that is not absolute', excerpt: metaExcerpt(entry!.ref), line: entry!.ref.line })], params: { value: entry!.value } });
+      results.push({ severity: 'low', reason: 'relative-url', evidence: [cite({ kind: 'html', url, label: evidenceLabel('Open Graph URL that is not absolute'), excerpt: metaExcerpt(entry!.ref), line: entry!.ref.line })], params: { value: entry!.value } });
     }
     const headEnd = headEndBytes(raw.html);
     if (headEnd !== undefined && headEnd > headLimit) {
-      results.push({ severity: 'info', reason: 'late-head', evidence: [cite({ kind: 'html', url, label: 'byte offset where the head ends in the raw HTML', excerpt: String(headEnd) })], params: { bytes: headEnd } });
+      results.push({ severity: 'info', reason: 'late-head', evidence: [cite({ kind: 'html', url, label: evidenceLabel('byte offset where the head ends in the raw HTML'), excerpt: String(headEnd) })], params: { bytes: headEnd } });
     }
-    if (results.length === 0) return pass([cite({ kind: 'html', url, label: 'Open Graph tags in the raw HTML', excerpt: requiredTags.map(tag => `${tag}=${firstValue(raw, tag)!.value}`).join('\n') })]);
+    if (results.length === 0) return pass([cite({ kind: 'html', url, label: evidenceLabel('Open Graph tags in the raw HTML'), excerpt: requiredTags.map(tag => `${tag}=${firstValue(raw, tag)!.value}`).join('\n') })]);
     return results.map(result => fail(result.severity, result.evidence, result.reason, result.params));
   },
 };
@@ -90,7 +91,7 @@ export const socialOgImage: RuleImplementation = {
     const { fetch } = resource;
     const info = fetch.status === 200 ? imageInfo(fetch.body) : { format: undefined };
     const bytes = fetch.body.length;
-    const evidence = [cite({ kind: 'http', url: image.url, label: 'og:image response', excerpt: `${fetch.status ?? fetch.error?.code ?? 'no response'} ${firstHeader(fetch.headers, 'content-type') ?? ''} ${describeImage(info)} ${bytes} bytes${fetch.truncated ? ' (truncated)' : ''}`.replace(/\s+/gu, ' ').trim() })];
+    const evidence = [cite({ kind: 'http', url: image.url, label: evidenceLabel('og:image response'), excerpt: `${fetch.status ?? fetch.error?.code ?? 'no response'} ${firstHeader(fetch.headers, 'content-type') ?? ''} ${describeImage(info)} ${bytes} bytes${fetch.truncated ? ' (truncated)' : ''}`.replace(/\s+/gu, ' ').trim() })];
     const problems: Array<{ severity: 'low' | 'info'; reason: string }> = [];
     if (!isHttps(image.url)) problems.push({ severity: 'low', reason: 'not-https' });
     if (fetch.status !== 200) problems.push({ severity: 'low', reason: 'not-200' });
@@ -140,7 +141,7 @@ export const socialOgImageMeta: RuleImplementation = {
     if (!group) return notApplicable('no-og-image');
     const cite = citer(context);
     const url = page.fetch.finalUrl;
-    const declared = [...group.values()].map(ref => cite({ kind: 'html', url, label: 'og:image structured property', excerpt: metaExcerpt(ref), line: ref.line }));
+    const declared = [...group.values()].map(ref => cite({ kind: 'html', url, label: evidenceLabel('og:image structured property'), excerpt: metaExcerpt(ref), line: ref.line }));
     const missing = ['og:image:alt', 'og:image:width', 'og:image:height'].filter(key => (group.get(key)?.attrs.content ?? '').trim() === '');
     const image = firstOgImage(page);
     const resource = image ? ogImageResource(context.site, image.url) : undefined;
@@ -149,11 +150,11 @@ export const socialOgImageMeta: RuleImplementation = {
     const height = Number(group.get('og:image:height')?.attrs.content);
     if (info?.width !== undefined && info.height !== undefined && Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0
       && (Math.abs(info.width - width) > 1 || Math.abs(info.height - height) > 1)) {
-      const actual = cite({ kind: 'http', url: resource!.url, label: 'decoded size of the og:image file', excerpt: describeImage(info) });
+      const actual = cite({ kind: 'http', url: resource!.url, label: evidenceLabel('decoded size of the og:image file'), excerpt: describeImage(info) });
       return fail('low', [...declared, actual], 'dimension-mismatch', { declared: `${width}x${height}`, actual: `${info.width}x${info.height}` });
     }
     if (missing.length > 0) {
-      const evidence = declared.length > 0 ? declared : [cite({ kind: 'html', url, label: 'og:image without structured properties', excerpt: image ? metaExcerpt(image.ref) : 'og:image' })];
+      const evidence = declared.length > 0 ? declared : [cite({ kind: 'html', url, label: evidenceLabel('og:image without structured properties'), excerpt: image ? metaExcerpt(image.ref) : 'og:image' })];
       return fail('info', evidence, 'missing', { tags: summarizeList(missing, 3) });
     }
     return pass(declared);
@@ -197,10 +198,10 @@ export const socialOgUrlCanonical: RuleImplementation = {
     const target = normalizeUrl(canonicalLink?.attrs.href ?? base, base) ?? base;
     const cite = citer(context);
     const evidence = [
-      cite({ kind: 'html', url: base, label: 'og:url in the raw HTML', excerpt: metaExcerpt(og.ref), line: og.ref.line }),
+      cite({ kind: 'html', url: base, label: evidenceLabel('og:url in the raw HTML'), excerpt: metaExcerpt(og.ref), line: og.ref.line }),
       canonicalLink
-        ? cite({ kind: 'html', url: base, label: 'canonical link in the raw HTML', excerpt: `<link rel="canonical" href="${canonicalLink.attrs.href}">`, line: canonicalLink.line })
-        : cite({ kind: 'http', url: page.url, label: 'final URL of the page, which has no canonical link', excerpt: base }),
+        ? cite({ kind: 'html', url: base, label: evidenceLabel('canonical link in the raw HTML'), excerpt: `<link rel="canonical" href="${canonicalLink.attrs.href}">`, line: canonicalLink.line })
+        : cite({ kind: 'http', url: page.url, label: evidenceLabel('final URL of the page, which has no canonical link'), excerpt: base }),
     ];
     if (ogUrl === target) return pass(evidence);
     if (rootLocaleRedirect(context.site, page, ogUrl)) return pass(evidence);

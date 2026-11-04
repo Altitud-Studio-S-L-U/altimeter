@@ -1,4 +1,5 @@
 import type { DefaultTreeAdapterTypes } from 'parse5';
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts } from '../../core/facts.ts';
 import { attribute, isElement, textOf, type HtmlElement, type HtmlNode } from '../../parse/html.ts';
 import type { TextBlock } from '../../render/chrome.ts';
@@ -118,7 +119,7 @@ const hiddenInstructions: RuleImplementation = {
     if (candidates.length === 0) return { outcome: 'pass' };
     const ids = candidates.slice(0, 10).map(candidate => evidence.add({
       kind: candidate.where === 'rendered-hidden' ? 'render' : 'html', url,
-      label: `instruction-like text aimed at AI systems in ${candidate.where.replace('-', ' ')}`,
+      label: evidenceLabel('instruction-like text aimed at AI systems in {location}', { location: candidate.where.replace('-', ' ') }),
       excerpt: clip(candidate.text, 500), path: candidate.path, ...(candidate.line ? { line: candidate.line } : {}),
     }));
     // Intent decides whether this is manipulation or a quoted example, so the analyst confirms it.

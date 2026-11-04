@@ -256,7 +256,8 @@
   },
   "content-img-css-background": {
     "messages": {
-      "fail": "The largest image ({url}) is a CSS background on a {element} element, which Google does not index as an image."
+      "fail": "The largest image ({url}) is a CSS background on a {element} element, which Google does not index as an image.",
+      "fail:unknown-element": "The largest image ({url}) is a CSS background, which Google does not index as an image."
     }
   },
   "content-img-format": {

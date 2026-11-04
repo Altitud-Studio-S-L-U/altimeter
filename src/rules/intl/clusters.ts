@@ -1,4 +1,4 @@
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { SiteFacts } from '../../core/facts.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { absoluteUrl, linksWithRel } from '../helpers.ts';
@@ -12,7 +12,7 @@ function loose(url: string): string {
   return url.toLowerCase().replace(/^https?:\/\/(www\.)?/u, '').replace(/\/(index\.html?)?$/u, '');
 }
 
-function setEvidence(evidence: EvidenceStore, set: DeclaredSet, label: string): string {
+function setEvidence(evidence: EvidenceStore, set: DeclaredSet, label: EvidenceLabel): string {
   return evidence.add({
     kind: set.annotations[0]?.source === 'sitemap' ? 'sitemap' : 'html',
     url: set.url,
@@ -29,13 +29,13 @@ export const missingSelfReference: RuleImplementation = {
     if (page!.fetch.status !== 200) return notApplicable('page-not-200');
     const self = normalizeUrl(page!.fetch.finalUrl)!;
     const selfEntry = annotations.find(annotation => annotation.href === self);
-    if (selfEntry) return pass([annotationEvidence(evidence, selfEntry, 'hreflang entry for the page itself')]);
+    if (selfEntry) return pass([annotationEvidence(evidence, selfEntry, evidenceLabel('hreflang entry for the page itself'))]);
     const canonical = normalizeUrl(absoluteUrl(linksWithRel(page!.raw, 'canonical')[0]?.attrs.href, self));
     // A page that canonicalises elsewhere is reported by intl-hreflang-on-non-canonical-page instead.
     if (canonical && canonical !== self && annotations.some(annotation => annotation.href === canonical)) return notApplicable('page-not-canonical');
     const near = annotations.find(annotation => annotation.href && loose(annotation.href) === loose(self));
-    const ids = annotations.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, near === annotation ? 'hreflang entry that almost matches the page URL' : 'hreflang entry for another URL'));
-    ids.push(evidence.add({ kind: 'http', url: self, label: 'final URL of the page', excerpt: self }));
+    const ids = annotations.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, near === annotation ? evidenceLabel('hreflang entry that almost matches the page URL') : evidenceLabel('hreflang entry for another URL')));
+    ids.push(evidence.add({ kind: 'http', url: self, label: evidenceLabel('final URL of the page'), excerpt: self }));
     return near
       ? fail('medium', ids, { url: self, closest: near.href!, value: near.value }, 'near-miss')
       : fail('medium', ids, { url: self, count: annotations.length }, 'absent');
@@ -55,7 +55,7 @@ export const oneUrlManyLanguages: RuleImplementation = {
         if (language && !languages.some(known => sameLanguage(known, language))) languages.push(language);
       }
       if (languages.length < 2) continue;
-      results.push(fail('medium', group.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, 'hreflang entry for a URL that is declared in several languages')),
+      results.push(fail('medium', group.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang entry for a URL that is declared in several languages'))),
         { target: href, languages: list(languages, 5), count: languages.length }));
     }
     return results.length > 0 ? results : pass();
@@ -104,11 +104,11 @@ export const missingReturnLink: RuleImplementation = {
       if (missing.length === 0) continue;
       const ids: string[] = [];
       for (const { edge } of missing.slice(0, maxEvidence)) {
-        ids.push(annotationEvidence(evidence, edge.annotation, `hreflang entry pointing to ${edge.to}, which does not link back`));
+        ids.push(annotationEvidence(evidence, edge.annotation, evidenceLabel('hreflang entry pointing to {url}, which does not link back', { url: edge.to })));
         const target = sets.get(edge.to);
         ids.push(target
-          ? setEvidence(evidence, target, `hreflang set of ${edge.to}, without an entry for ${edge.from.url}`)
-          : evidence.add({ kind: 'html', url: edge.to, label: 'target page fetched without any hreflang annotation' }));
+          ? setEvidence(evidence, target, evidenceLabel('hreflang set of {url}, without an entry for {missing}', { url: edge.to, missing: edge.from.url }))
+          : evidence.add({ kind: 'html', url: edge.to, label: evidenceLabel('target page fetched without any hreflang annotation') }));
       }
       results.push(fail('high', ids, {
         count: missing.length,
@@ -138,7 +138,7 @@ export const duplicateLocaleInCluster: RuleImplementation = {
     for (const set of sets.values()) {
       for (const [value, group] of conflictingValues(set.annotations)) {
         reported.add(value);
-        results.push(fail('high', group.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, `hreflang "${value}" pointing to one of several URLs`)),
+        results.push(fail('high', group.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang "{value}" pointing to one of several URLs', { value }))),
           { value, count: new Set(group.map(annotation => annotation.href)).size, urls: list(group.map(annotation => annotation.href!), 3), declaredBy: set.url }, 'within-page'));
       }
     }
@@ -148,7 +148,7 @@ export const duplicateLocaleInCluster: RuleImplementation = {
       for (const [value, group] of conflictingValues(annotations)) {
         if (reported.has(value)) continue;
         const byTarget = [...groupBy(group, annotation => annotation.href!).values()].map(entries => entries[0]!);
-        results.push(fail('medium', byTarget.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, `hreflang "${value}" as declared by ${annotation.declaringUrl}`)),
+        results.push(fail('medium', byTarget.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang "{value}" as declared by {url}', { value, url: annotation.declaringUrl }))),
           { value, count: byTarget.length, urls: list(byTarget.map(annotation => annotation.href!), 3), declaredBy: list(byTarget.map(annotation => annotation.declaringUrl), 3) }, 'across-cluster'));
       }
     }
@@ -183,12 +183,12 @@ export const clusterInconsistentSets: RuleImplementation = {
       }
       if (conflicts.length > 0) {
         const unique = [...new Set(conflicts)];
-        results.push(fail('medium', unique.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, `hreflang value for ${annotation.href} as declared by ${annotation.declaringUrl}`)),
+        results.push(fail('medium', unique.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang value for {target} as declared by {url}', { target: annotation.href ?? '', url: annotation.declaringUrl }))),
           { count: conflictTargets.size, targets: list(conflictTargets, 3), members: members.length }, 'conflicting-values'));
       }
       const lacking = members.map(set => ({ set, missing: [...union].filter(href => valuesOf(set, href).size === 0) })).filter(entry => entry.missing.length > 0);
       if (lacking.length > 0) {
-        results.push(fail('low', lacking.slice(0, maxEvidence).map(entry => setEvidence(evidence, entry.set, `hreflang set of ${entry.set.url}, lacking ${entry.missing.length} URL(s) other members list`)),
+        results.push(fail('low', lacking.slice(0, maxEvidence).map(entry => setEvidence(evidence, entry.set, evidenceLabel('hreflang set of {url}, lacking {count} URL(s) other members list', { url: entry.set.url, count: entry.missing.length }))),
           { count: lacking.length, members: members.length, missing: list(lacking.flatMap(entry => entry.missing), 3) }, 'missing-entries'));
       }
     }
@@ -220,9 +220,9 @@ export const xDefaultMissing: RuleImplementation = {
       const annotations = cluster.flatMap(url => sets.get(url)?.annotations ?? []);
       if (annotations.length === 0 || annotations.some(isXDefault)) continue;
       const isHome = cluster.some(url => home.has(url));
-      const ids = [evidence.add({ kind: 'html', url: cluster[0]!, label: 'hreflang values declared in the cluster, none of them x-default', excerpt: list(annotations.map(annotation => annotation.value), 12) })];
+      const ids = [evidence.add({ kind: 'html', url: cluster[0]!, label: evidenceLabel('hreflang values declared in the cluster, none of them x-default'), excerpt: list(annotations.map(annotation => annotation.value), 12) })];
       if (isHome && redirect) {
-        ids.push(evidence.add({ kind: 'redirect', url: redirect.from, label: 'site root redirecting to a locale URL', excerpt: `${redirect.status} ${redirect.to}` }));
+        ids.push(evidence.add({ kind: 'redirect', url: redirect.from, label: evidenceLabel('site root redirecting to a locale URL'), excerpt: `${redirect.status} ${redirect.to}` }));
         results.push(fail('low', ids, { url: cluster[0]!, members: cluster.length, root: redirect.from }, 'redirecting-root'));
       } else results.push(fail('info', ids, { url: cluster[0]!, members: cluster.length }, 'no-x-default'));
     }
@@ -244,7 +244,7 @@ export const xDefaultInconsistent: RuleImplementation = {
       const byTarget = groupBy(defaults, annotation => annotation.href!);
       if (byTarget.size < 2) continue;
       const shown = [...byTarget.values()].map(group => group[0]!);
-      results.push(fail('medium', shown.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, `x-default as declared by ${annotation.declaringUrl}`)),
+      results.push(fail('medium', shown.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('x-default as declared by {url}', { url: annotation.declaringUrl }))),
         { count: byTarget.size, urls: list(byTarget.keys(), 3) }));
     }
     if (results.length > 0) return results;
@@ -265,7 +265,7 @@ export const noLanguageCatchall: RuleImplementation = {
         if (group.some(annotation => parseHreflang(annotation.value).region === undefined)) continue;
         const values = [...new Set(group.map(annotation => annotation.value))];
         results.push(fail('low', [...groupBy(group, annotation => annotation.value.toLowerCase()).values()].map(entries => entries[0]!).slice(0, maxEvidence)
-          .map(annotation => annotationEvidence(evidence, annotation, `region-specific hreflang for ${language} without a language-only value`)),
+          .map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('region-specific hreflang for {code} without a language-only value', { code: language }))),
         { language, values: list(values.map(value => `"${value}"`), 4) }));
       }
     }
@@ -300,11 +300,11 @@ export const sourceConflict: RuleImplementation = {
         }
         for (const [value, entries] of right) if (!left.has(value)) onlyOne.push(...entries);
         if (conflicts.length > 0) {
-          results.push(fail('medium', conflicts.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, 'hreflang target that another source contradicts')),
+          results.push(fail('medium', conflicts.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang target that another source contradicts'))),
             { first: a, second: b, values: list(conflicts.map(annotation => `"${annotation.value}"`)) }, 'conflicting-target'));
         }
         if (onlyOne.length > 0) {
-          results.push(fail('info', onlyOne.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, 'hreflang value present in only one source')),
+          results.push(fail('info', onlyOne.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang value present in only one source'))),
             { first: a, second: b, values: list(onlyOne.map(annotation => `"${annotation.value}"`)) }, 'incomplete-source'));
         }
       }

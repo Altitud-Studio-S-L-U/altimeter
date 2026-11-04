@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts } from '../../core/facts.ts';
 import { attribute, isElement, walk, type HtmlElement } from '../../parse/html.ts';
 import { directivesFor, pageDocument, robotsDirectives, summarizeList } from '../helpers.ts';
@@ -20,7 +21,7 @@ const bingPreviewControls: RuleImplementation = {
       .filter(entry => (entry.agent === 'all' || entry.agent === 'bingbot') && entry.directives.some(directive => directive === 'nocache' || directive === 'noarchive'))
       .map(entry => evidence.add({
         kind: entry.source === 'header' ? 'header' : 'html', url: page!.fetch.finalUrl,
-        label: entry.source === 'header' ? 'X-Robots-Tag header that applies to Bingbot' : 'robots meta element that applies to Bingbot',
+        label: entry.source === 'header' ? evidenceLabel('X-Robots-Tag header that applies to Bingbot') : evidenceLabel('robots meta element that applies to Bingbot'),
         excerpt: entry.raw, ...(entry.line ? { line: entry.line } : {}),
       }));
     // Bing documents noarchive alone as removing the page from Copilot answers, and nocache (alone or with noarchive)
@@ -50,7 +51,7 @@ const agentReadiness: RuleImplementation = {
       if (audit.score >= 1) continue;
       results.push({
         outcome: 'fail', severity: 'low', reason: id,
-        evidence: [evidence.add({ kind: 'lighthouse', url, label: `Lighthouse audit ${id}`, excerpt: `score ${audit.score}${audit.displayValue ? `; ${audit.displayValue}` : ''}` })],
+        evidence: [evidence.add({ kind: 'lighthouse', url, label: evidenceLabel('Lighthouse audit {audit}', { audit: id }), excerpt: `score ${audit.score}${audit.displayValue ? `; ${audit.displayValue}` : ''}` })],
         params: { audit: id, title: audit.title },
       });
     }
@@ -60,7 +61,7 @@ const agentReadiness: RuleImplementation = {
       if (cls.numericValue > 0.1) {
         results.push({
           outcome: 'fail', severity: 'low', reason: 'layout-shift',
-          evidence: [evidence.add({ kind: 'lighthouse', url, label: 'Lighthouse audit cumulative-layout-shift', excerpt: cls.displayValue ?? String(cls.numericValue) })],
+          evidence: [evidence.add({ kind: 'lighthouse', url, label: evidenceLabel('Lighthouse audit {audit}', { audit: 'cumulative-layout-shift' }), excerpt: cls.displayValue ?? String(cls.numericValue) })],
           params: { value: Math.round(cls.numericValue * 1000) / 1000 },
         });
       }
@@ -94,7 +95,7 @@ const webmcpContext: RuleImplementation = {
     const signals = docs.flatMap(webmcpSignals);
     if (signals.length === 0) return { outcome: 'not_applicable', reason: 'no-webmcp' };
     const ids = [...new Map(signals.map(signal => [signal.excerpt, signal])).values()].slice(0, 5).map(signal => evidence.add({
-      kind: 'html', url: page!.fetch.finalUrl, label: 'WebMCP tool declaration', excerpt: signal.excerpt, path: signal.path, ...(signal.line ? { line: signal.line } : {}),
+      kind: 'html', url: page!.fetch.finalUrl, label: evidenceLabel('WebMCP tool declaration'), excerpt: signal.excerpt, path: signal.path, ...(signal.line ? { line: signal.line } : {}),
     }));
     return { outcome: 'fail', severity: 'info', reason: 'declared', evidence: ids };
   },
@@ -170,7 +171,7 @@ const textualContentForMedia: RuleImplementation = {
     const kept = candidates.filter(candidate => candidate.kind === 'canvas' || (thin && !hasTranscript && (candidate.kind !== 'pdf' || main.words < 50)));
     if (kept.length === 0) return { outcome: 'pass' };
     const ids = kept.slice(0, 5).map(candidate => evidence.add({
-      kind: 'html', url: page!.fetch.finalUrl, label: `${candidate.kind} in the main content without a text equivalent nearby (${main.words} words of main text)`,
+      kind: 'html', url: page!.fetch.finalUrl, label: evidenceLabel('{kind} in the main content without a text equivalent nearby ({words} words of main text)', { kind: candidate.kind, words: main.words }),
       excerpt: clip(candidate.excerpt, 300), ...(candidate.line ? { line: candidate.line } : {}),
     }));
     return {

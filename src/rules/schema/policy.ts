@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import { isAllowed } from '../../fetch/robots.ts';
 import { attribute, isElement, type HtmlNode } from '../../parse/html.ts';
 import { fold, words } from '../content/common.ts';
@@ -17,13 +18,13 @@ export const mainEntityPageFit: RuleImplementation = {
     if (top.length === 0) return { outcome: 'not_applicable', reason: 'no-schema-org-markup' };
     const page = context.page!;
     const problems: Problem[] = [];
-    const candidate = (reason: string, subject: string, node: GraphNode, label: string) =>
+    const candidate = (reason: string, subject: string, node: GraphNode, label: EvidenceLabel) =>
       problems.push({ reason, severity: 'medium', subject, needsJudgment: true, evidence: cite(context, graph, node, label) });
     const products = top.filter(node => isA(node.types, 'Product') && !isA(node.types, 'ProductGroup'));
-    if (products.length >= 3) candidate('several-products', `${products.length} Product`, products[0]!, `${products.length} top-level Product items on one page`);
+    if (products.length >= 3) candidate('several-products', `${products.length} Product`, products[0]!, evidenceLabel('{count} top-level Product items on one page', { count: products.length }));
     if (page.pageType === 'home') {
-      for (const node of top.filter(entry => isA(entry.types, 'Article'))) candidate('article-on-home', node.types.join('+'), node, 'Article markup on the home page');
-      for (const node of top.filter(entry => isA(entry.types, 'ProfilePage'))) candidate('profile-page-on-home', 'ProfilePage', node, 'ProfilePage markup on the home page');
+      for (const node of top.filter(entry => isA(entry.types, 'Article'))) candidate('article-on-home', node.types.join('+'), node, evidenceLabel('Article markup on the home page'));
+      for (const node of top.filter(entry => isA(entry.types, 'ProfilePage'))) candidate('profile-page-on-home', 'ProfilePage', node, evidenceLabel('ProfilePage markup on the home page'));
     }
     return report(problems);
   },
@@ -81,12 +82,12 @@ export const visibleContentParity: RuleImplementation = {
     const numbers = numbersIn(visible);
     const problems: Problem[] = numeric.filter(entry => !numbers.some(number => Math.abs(number - plainNumber(entry.value)!) < 0.005)).map(entry => ({
       reason: 'value-not-on-page', severity: 'medium', subject: `${entry.property}: ${entry.value}`, needsJudgment: true,
-      evidence: cite(context, graph, entry.node, `${entry.property} not found in the page text`, entry.property, entry.value),
+      evidence: cite(context, graph, entry.node, evidenceLabel('{property} not found in the page text', { property: entry.property }), entry.property, entry.value),
     }));
     const visibleWords = wordsOf(visible);
     for (const entry of questions.filter(question => !visibleWords.includes(wordsOf(question.value)))) {
       problems.push({ reason: 'question-not-on-page', severity: 'medium', subject: entry.value, needsJudgment: true,
-        evidence: cite(context, graph, entry.node, 'question not found in the page text', 'name', entry.value) });
+        evidence: cite(context, graph, entry.node, evidenceLabel('question not found in the page text'), 'name', entry.value) });
     }
     return report(problems);
   },
@@ -123,14 +124,14 @@ export const blockedOrNonindexableCarrier: RuleImplementation = {
     const problems: Problem[] = [];
     const subject = first.types.join('+');
     if (page.fetch.status !== 200) {
-      problems.push({ reason: 'not-200', severity: 'medium', subject, also: [cite(context, graph, first, 'feature markup on the page')],
-        evidence: context.evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: 'final HTTP status of the page', excerpt: String(page.fetch.status ?? 'no response') }) });
+      problems.push({ reason: 'not-200', severity: 'medium', subject, also: [cite(context, graph, first, evidenceLabel('feature markup on the page'))],
+        evidence: context.evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: evidenceLabel('final HTTP status of the page'), excerpt: String(page.fetch.status ?? 'no response') }) });
     }
     const directives = robotsDirectives(page.fetch.headers, graph.doc);
     if (directivesFor(directives).has('noindex')) {
       const source = directives.find(entry => entry.directives.includes('noindex') || entry.directives.includes('none'));
-      problems.push({ reason: 'noindex', severity: 'medium', subject, also: [cite(context, graph, first, 'feature markup on the page')],
-        evidence: context.evidence.add({ kind: source?.source === 'header' ? 'header' : 'html', url: page.fetch.finalUrl, label: 'noindex directive for Googlebot',
+      problems.push({ reason: 'noindex', severity: 'medium', subject, also: [cite(context, graph, first, evidenceLabel('feature markup on the page'))],
+        evidence: context.evidence.add({ kind: source?.source === 'header' ? 'header' : 'html', url: page.fetch.finalUrl, label: evidenceLabel('noindex directive for Googlebot'),
           excerpt: source?.raw ?? 'noindex', ...(source?.line ? { line: source.line } : {}) }) });
     }
     const robots = context.site.robots?.availability;
@@ -138,8 +139,8 @@ export const blockedOrNonindexableCarrier: RuleImplementation = {
     if (robots?.kind === 'parsed' && url.origin === context.site.origin) {
       const decision = isAllowed(robots.file, ['googlebot'], `${url.pathname}${url.search}`);
       if (!decision.allowed) {
-        problems.push({ reason: 'disallowed', severity: 'medium', subject, also: [cite(context, graph, first, 'feature markup on the page')],
-          evidence: context.evidence.add({ kind: 'robots', url: context.site.robots!.url, label: 'robots.txt rule that disallows the page for Googlebot',
+        problems.push({ reason: 'disallowed', severity: 'medium', subject, also: [cite(context, graph, first, evidenceLabel('feature markup on the page'))],
+          evidence: context.evidence.add({ kind: 'robots', url: context.site.robots!.url, label: evidenceLabel('robots.txt rule that disallows the page for Googlebot'),
             excerpt: `${decision.rule?.type}: ${decision.rule?.pattern}`, ...(decision.rule ? { line: decision.rule.line } : {}) }) });
       }
     }
@@ -148,16 +149,16 @@ export const blockedOrNonindexableCarrier: RuleImplementation = {
       for (const image of imageUrls(graph, node, property)) {
         const rule = blockedForImages(context.site, image);
         if (rule) {
-          problems.push({ reason: 'image-blocked', severity: 'high', subject: image, also: [cite(context, graph, node, `${property} of a feature item`, property, image)],
-            evidence: context.evidence.add({ kind: 'robots', url: context.site.robots!.url, label: 'robots.txt rule that disallows the image for Googlebot-Image', excerpt: rule }) });
+          problems.push({ reason: 'image-blocked', severity: 'high', subject: image, also: [cite(context, graph, node, evidenceLabel('{property} of a feature item', { property }), property, image)],
+            evidence: context.evidence.add({ kind: 'robots', url: context.site.robots!.url, label: evidenceLabel('robots.txt rule that disallows the image for Googlebot-Image'), excerpt: rule }) });
         }
         const fetched = context.site.resources.find(resource => resource.url === image);
         if (fetched && (fetched.fetch.status !== 200 || !/^image\//iu.test(fetched.fetch.headers['content-type']?.[0] ?? 'image/'))) {
-          problems.push({ reason: 'image-unavailable', severity: 'high', subject: image, also: [cite(context, graph, node, `${property} of a feature item`, property, image)],
-            evidence: context.evidence.add({ kind: 'http', url: image, label: 'response for the image', excerpt: `${fetched.fetch.status ?? 'no response'} ${fetched.fetch.headers['content-type']?.[0] ?? ''}`.trim() }) });
+          problems.push({ reason: 'image-unavailable', severity: 'high', subject: image, also: [cite(context, graph, node, evidenceLabel('{property} of a feature item', { property }), property, image)],
+            evidence: context.evidence.add({ kind: 'http', url: image, label: evidenceLabel('response for the image'), excerpt: `${fetched.fetch.status ?? 'no response'} ${fetched.fetch.headers['content-type']?.[0] ?? ''}`.trim() }) });
         }
       }
     }
-    return report(problems, [cite(context, graph, first, 'feature markup on the page')]);
+    return report(problems, [cite(context, graph, first, evidenceLabel('feature markup on the page'))]);
   },
 };

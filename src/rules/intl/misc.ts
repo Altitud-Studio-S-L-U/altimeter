@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { absoluteUrl, directivesFor, pageDocument, robotsDirectives, sameSite } from '../helpers.ts';
 import { attribute, isElement, textOf, walk } from '../../parse/html.ts';
@@ -14,7 +15,7 @@ export const geoMetaTagsIgnored: RuleImplementation = {
     const doc = page!.raw!;
     const found = doc.parsed.metas.filter(meta => geoNames.has((meta.attrs.name ?? '').trim().toLowerCase()));
     if (found.length === 0) return pass();
-    return fail('info', found.slice(0, maxEvidence).map(meta => evidence.add({ kind: 'html', url: page!.fetch.finalUrl, label: 'locational meta element', excerpt: elementSource(doc.html, meta), line: meta.line })),
+    return fail('info', found.slice(0, maxEvidence).map(meta => evidence.add({ kind: 'html', url: page!.fetch.finalUrl, label: evidenceLabel('locational meta element'), excerpt: elementSource(doc.html, meta), line: meta.line })),
       { names: list(found.map(meta => (meta.attrs.name ?? '').trim()), 5), count: found.length });
   },
 };
@@ -31,7 +32,8 @@ export const tldGeotargetingClassification: RuleImplementation = {
     const tld = host.split('.').at(-1)!.toLowerCase();
     const country = tldCountry[tld] ?? tld.toUpperCase();
     const kind = tld.length !== 2 && tld !== 'asia' ? 'generic' : genericCcTlds.has(tld) ? 'generic-cctld' : 'cctld';
-    const id = evidence.add({ kind: 'http', url: site.origin, label: kind === 'cctld' ? `country-code TLD .${tld}, a signal for ${country}` : kind === 'generic-cctld' ? `.${tld}, which Google treats as generic` : `generic TLD .${tld}`, excerpt: host });
+    const id = evidence.add({ kind: 'http', url: site.origin, label: kind === 'cctld' ? evidenceLabel('country-code TLD .{tld}, a signal for {country}', { tld, country })
+      : kind === 'generic-cctld' ? evidenceLabel('.{tld}, which Google treats as generic', { tld }) : evidenceLabel('generic TLD .{tld}', { tld }), excerpt: host });
     if (kind !== 'cctld') return pass([id]);
     const foreign = [...declaredSets(site).values()].flatMap(set => set.annotations)
       .filter(annotation => annotation.href && new URL(annotation.href).hostname === host)
@@ -40,12 +42,20 @@ export const tldGeotargetingClassification: RuleImplementation = {
         return region !== undefined && region !== country && /^[A-Z]{2}$/u.test(region);
       });
     if (foreign.length === 0) return pass([id]);
-    return fail('info', [id, ...foreign.slice(0, maxEvidence - 1).map(annotation => annotationEvidence(evidence, annotation, 'hreflang region other than the TLD country'))],
+    return fail('info', [id, ...foreign.slice(0, maxEvidence - 1).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang region other than the TLD country')))],
       { tld, country, regions: list(foreign.map(annotation => parseHreflang(annotation.value).region!)) }, 'cctld-foreign-regions');
   },
 };
 
 type Structure = 'cctld' | 'subdomain' | 'subdirectory' | 'parameter' | 'same-path';
+
+const structureLabel: Readonly<Record<Structure, EvidenceLabel>> = {
+  cctld: evidenceLabel('locale URL classified as cctld'),
+  subdomain: evidenceLabel('locale URL classified as subdomain'),
+  subdirectory: evidenceLabel('locale URL classified as subdirectory'),
+  parameter: evidenceLabel('locale URL classified as parameter'),
+  'same-path': evidenceLabel('locale URL classified as same-path'),
+};
 
 function structureOf(href: string, base: URL, value: string): Structure {
   const url = new URL(href);
@@ -70,7 +80,7 @@ export const urlStructureAssessment: RuleImplementation = {
     const classified = annotations.map(annotation => ({ annotation, structure: structureOf(annotation.href!, base, annotation.value) }));
     // The default locale often lives at the unprefixed path; it does not make the scheme mixed.
     const schemes = groupBy(classified.filter(entry => entry.structure !== 'same-path'), entry => entry.structure);
-    const ids = [...schemes.values()].map(group => annotationEvidence(evidence, group[0]!.annotation, `locale URL classified as ${group[0]!.structure}`));
+    const ids = [...schemes.values()].map(group => annotationEvidence(evidence, group[0]!.annotation, structureLabel[group[0]!.structure]));
     if (schemes.size > 1) return fail('info', ids, { schemes: list(schemes.keys(), 4) }, 'mixed-schemes');
     return pass(ids);
   },
@@ -92,20 +102,20 @@ export const areaServedFormat: RuleImplementation = {
       const excerpt = JSON.stringify(node.properties.areaServed).slice(0, 400);
       const path = `${node.path}.areaServed`;
       if (node.types.length > 0 && node.types.every(type => invalidParents.has(type)) && !node.types.some(type => validParents.test(type))) {
-        results.push(fail('low', [evidence.add({ kind: 'structured-data', url, label: `areaServed on a ${node.types.join('/')} node, a type that does not take it`, excerpt, path, line: node.line })], { type: node.types.join('/') }, 'invalid-parent'));
+        results.push(fail('low', [evidence.add({ kind: 'structured-data', url, label: evidenceLabel('areaServed on a {type} node, a type that does not take it', { type: node.types.join('/') }), excerpt, path, line: node.line })], { type: node.types.join('/') }, 'invalid-parent'));
       }
       const values = Array.isArray(node.properties.areaServed) ? node.properties.areaServed : [node.properties.areaServed];
       for (const value of values) {
         if (typeof value === 'string') {
           const target = /^https?:\/\//iu.test(value.trim()) ? absoluteUrl(value, url) : undefined;
-          if (target && sameSite(target, url)) results.push(fail('low', [evidence.add({ kind: 'structured-data', url, label: 'areaServed given as a URL of this site', excerpt: value, path, line: node.line })], { value }, 'url-value'));
+          if (target && sameSite(target, url)) results.push(fail('low', [evidence.add({ kind: 'structured-data', url, label: evidenceLabel('areaServed given as a URL of this site'), excerpt: value, path, line: node.line })], { value }, 'url-value'));
           continue;
         }
         if (!value || typeof value !== 'object') continue;
         const type = (value as Record<string, unknown>)['@type'];
         const types = (Array.isArray(type) ? type : [type]).filter((entry): entry is string => typeof entry === 'string').map(entry => entry.replace(/^https?:\/\/schema\.org\//u, ''));
         if (types.length > 0 && types.every(entry => placeTypes.has(entry))) {
-          results.push(fail('low', [evidence.add({ kind: 'structured-data', url, label: `areaServed value of type ${types.join('/')}, which is not a Place, AdministrativeArea or GeoShape`, excerpt: JSON.stringify(value).slice(0, 400), path, line: node.line })], { value: types.join('/') }, 'invalid-value-type'));
+          results.push(fail('low', [evidence.add({ kind: 'structured-data', url, label: evidenceLabel('areaServed value of type {type}, which is not a Place, AdministrativeArea or GeoShape', { type: types.join('/') }), excerpt: JSON.stringify(value).slice(0, 400), path, line: node.line })], { value: types.join('/') }, 'invalid-value-type'));
         }
       }
     }
@@ -119,7 +129,7 @@ export const notranslateInUse: RuleImplementation = {
     const all = robotsDirectives(page!.fetch.headers, page!.raw);
     if (!directivesFor(all).has('notranslate')) return pass();
     const entry = all.find(directives => directives.directives.includes('notranslate') && (directives.agent === 'all' || directives.agent === 'googlebot'))!;
-    return fail('info', [evidence.add({ kind: entry.source === 'meta' ? 'html' : 'header', url: page!.fetch.finalUrl, label: 'robots directive with notranslate', excerpt: entry.raw, ...(entry.line ? { line: entry.line } : {}) })], { source: entry.source });
+    return fail('info', [evidence.add({ kind: entry.source === 'meta' ? 'html' : 'header', url: page!.fetch.finalUrl, label: evidenceLabel('robots directive with notranslate'), excerpt: entry.raw, ...(entry.line ? { line: entry.line } : {}) })], { source: entry.source });
   },
 };
 
@@ -141,7 +151,7 @@ export const languageSwitcherCrawlable: RuleImplementation = {
     const linked = alternates.find(annotation => hrefs.has(annotation.href!));
     if (linked) {
       const anchor = hrefs.get(linked.href!)!;
-      return pass([evidence.add({ kind: 'html', url: self, label: 'link to another language version of this page', excerpt: elementSource(doc.html, anchor), ...(anchor.line ? { line: anchor.line } : {}) })]);
+      return pass([evidence.add({ kind: 'html', url: self, label: evidenceLabel('link to another language version of this page'), excerpt: elementSource(doc.html, anchor), ...(anchor.line ? { line: anchor.line } : {}) })]);
     }
     const isHome = new URL(self).pathname === '/' || localeRoot.test(new URL(self).pathname);
     const hosts = new Set(alternates.map(annotation => new URL(annotation.href!).hostname));
@@ -150,7 +160,7 @@ export const languageSwitcherCrawlable: RuleImplementation = {
       return href !== self && (localeRoot.test(url.pathname) || (url.pathname === '/' && hosts.has(url.hostname) && url.hostname !== new URL(self).hostname));
     });
     if (homes.length > 0 && !isHome) {
-      return fail('info', homes.slice(0, 3).map(([, anchor]) => evidence.add({ kind: 'html', url: self, label: 'language link that goes to a locale home page instead of the equivalent page', excerpt: elementSource(doc.html, anchor), ...(anchor.line ? { line: anchor.line } : {}) })),
+      return fail('info', homes.slice(0, 3).map(([, anchor]) => evidence.add({ kind: 'html', url: self, label: evidenceLabel('language link that goes to a locale home page instead of the equivalent page'), excerpt: elementSource(doc.html, anchor), ...(anchor.line ? { line: anchor.line } : {}) })),
         { count: homes.length }, 'homepages-only');
     }
     // Buttons, selects or elements naming languages without an href suggest a script-driven switcher.
@@ -166,8 +176,8 @@ export const languageSwitcherCrawlable: RuleImplementation = {
       return undefined;
     });
     const ids = [
-      ...alternates.slice(0, 3).map(annotation => annotationEvidence(evidence, annotation, 'language version not linked from the page')),
-      ...widgets.map(widget => evidence.add({ kind: 'html', url: self, label: 'language control without a crawlable link', excerpt: widget })),
+      ...alternates.slice(0, 3).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('language version not linked from the page'))),
+      ...widgets.map(widget => evidence.add({ kind: 'html', url: self, label: evidenceLabel('language control without a crawlable link'), excerpt: widget })),
     ];
     return fail('medium', ids, { count: alternates.length, controls: widgets.length }, 'no-crawlable-links', true);
   },

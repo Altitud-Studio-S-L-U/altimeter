@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { attribute } from '../../parse/html.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -21,12 +22,12 @@ export const metaDescriptionMissing: RuleImplementation = {
     if (!state.indexable) return notApplicable(`not-indexable-${state.reason}`);
     const description = headDescription(doc);
     if (description && description.text !== '') {
-      return { outcome: 'pass', evidence: [cite(context, 'html', 'meta description', { excerpt: description.text, line: description.line })] };
+      return { outcome: 'pass', evidence: [cite(context, 'html', evidenceLabel('meta description'), { excerpt: description.text, line: description.line })] };
     }
     if (description) {
-      return { outcome: 'fail', severity: 'low', reason: 'empty', evidence: [cite(context, 'html', 'empty meta description', { excerpt: '<meta name="description" content="">', line: description.line })] };
+      return { outcome: 'fail', severity: 'low', reason: 'empty', evidence: [cite(context, 'html', evidenceLabel('empty meta description'), { excerpt: '<meta name="description" content="">', line: description.line })] };
     }
-    return { outcome: 'fail', severity: 'low', reason: 'absent', evidence: [cite(context, 'html', 'no meta description in the head')] };
+    return { outcome: 'fail', severity: 'low', reason: 'absent', evidence: [cite(context, 'html', evidenceLabel('no meta description in the head'))] };
   },
 };
 
@@ -60,7 +61,7 @@ export const metaDescriptionDuplicate: RuleImplementation = {
       if (group.length < 2) continue;
       results.push({
         outcome: 'fail', severity: 'medium',
-        evidence: group.map(member => cite(context, 'html', 'meta description', { url: member.page.fetch.finalUrl, excerpt: member.text, line: member.line })),
+        evidence: group.map(member => cite(context, 'html', evidenceLabel('meta description'), { url: member.page.fetch.finalUrl, excerpt: member.text, line: member.line })),
         params: { description: clip(group[0]!.text, 120), count: group.length, urls: summarizeList(group.map(member => member.page.fetch.finalUrl)) },
       });
     }
@@ -76,7 +77,7 @@ export const metaDescriptionQuality: RuleImplementation = {
     const doc = docOf(context.page!);
     const description = metaDescription(doc);
     if (!description || description.text === '') return notApplicable('no-description');
-    const evidence = [cite(context, 'html', 'meta description', { excerpt: description.text, line: description.line })];
+    const evidence = [cite(context, 'html', evidenceLabel('meta description'), { excerpt: description.text, line: description.line })];
     if (placeholderPattern.test(description.text)) return { outcome: 'fail', severity: 'low', reason: 'placeholder', evidence };
     const title = pageTitle(doc);
     if (title && normalizeText(title.text) === normalizeText(description.text)) return { outcome: 'fail', severity: 'low', reason: 'same-as-title', evidence };
@@ -113,7 +114,7 @@ export const dataNosnippetInvalid: RuleImplementation = {
     const unsupported = marked.filter(visit => !supportedNosnippet.has(visit.element.tagName));
     if (unsupported.length > 0) {
       results.push({ outcome: 'fail', severity: 'low', reason: 'unsupported-element', params: { count: unsupported.length, tags: summarizeList([...new Set(unsupported.map(visit => visit.element.tagName))]) },
-        evidence: unsupported.slice(0, 5).map(visit => cite(context, 'html', 'data-nosnippet on an unsupported element', { excerpt: sourceOf(doc, visit), line: lineOf(visit.element) })) });
+        evidence: unsupported.slice(0, 5).map(visit => cite(context, 'html', evidenceLabel('data-nosnippet on an unsupported element'), { excerpt: sourceOf(doc, visit), line: lineOf(visit.element) })) });
     }
     if (page.raw && page.rendered && doc === page.rendered) {
       const rawIds = new Map(elements(page.raw.parsed.document, element => attribute(element, 'id') !== undefined).map(visit => [attribute(visit.element, 'id')!, visit]));
@@ -124,13 +125,13 @@ export const dataNosnippetInvalid: RuleImplementation = {
       });
       if (added.length > 0) {
         results.push({ outcome: 'fail', severity: 'low', reason: 'added-by-javascript', params: { count: added.length },
-          evidence: added.slice(0, 5).map(visit => cite(context, 'render', 'data-nosnippet present only after rendering', { excerpt: sourceOf(doc, visit), path: `#${attribute(visit.element, 'id')}` })) });
+          evidence: added.slice(0, 5).map(visit => cite(context, 'render', evidenceLabel('data-nosnippet present only after rendering'), { excerpt: sourceOf(doc, visit), path: `#${attribute(visit.element, 'id')}` })) });
       }
     }
     const coverage = mainCoverage(doc, marked);
     if (coverage !== undefined && coverage >= 0.5) {
       results.push({ outcome: 'fail', severity: 'info', reason: 'covers-main-content', params: { share: Math.round(coverage * 100) },
-        evidence: marked.slice(0, 3).map(visit => cite(context, 'html', 'data-nosnippet element', { excerpt: sourceOf(doc, visit), line: lineOf(visit.element) })) });
+        evidence: marked.slice(0, 3).map(visit => cite(context, 'html', evidenceLabel('data-nosnippet element'), { excerpt: sourceOf(doc, visit), line: lineOf(visit.element) })) });
     }
     return results.length > 0 ? results : { outcome: 'pass' };
   },
@@ -157,9 +158,9 @@ export const imagePreviewLarge: RuleImplementation = {
     const directives = directivesFor(all);
     const preview = [...directives].find(directive => directive.startsWith('max-image-preview:'));
     const source = all.find(entry => entry.directives.some(directive => directive.startsWith('max-image-preview:')));
-    if (!preview || !source) return { outcome: 'fail', severity: 'low', reason: 'absent', evidence: [cite(context, 'html', 'no max-image-preview directive in robots meta tags or X-Robots-Tag')] };
+    if (!preview || !source) return { outcome: 'fail', severity: 'low', reason: 'absent', evidence: [cite(context, 'html', evidenceLabel('no max-image-preview directive in robots meta tags or X-Robots-Tag'))] };
     const value = preview.slice('max-image-preview:'.length);
-    const evidence = [cite(context, source.source === 'meta' ? 'html' : 'header', source.source === 'meta' ? 'robots meta tag' : 'X-Robots-Tag header', { excerpt: source.raw, line: source.line })];
+    const evidence = [cite(context, source.source === 'meta' ? 'html' : 'header', source.source === 'meta' ? evidenceLabel('robots meta tag') : evidenceLabel('X-Robots-Tag header'), { excerpt: source.raw, line: source.line })];
     if (value === 'large') return { outcome: 'pass', evidence };
     return { outcome: 'fail', severity: 'low', reason: 'restricted', evidence, params: { value } };
   },

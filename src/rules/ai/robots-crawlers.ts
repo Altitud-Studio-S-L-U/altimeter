@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { Severity } from '../../core/types.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
 import { aiCrawlers, crawlerAccess, isBlocked, samplePaths, type AiCrawler } from './crawlers.ts';
@@ -81,8 +82,8 @@ const googleExtended: RuleImplementation = {
         results.push({
           outcome: 'fail', severity: 'info', reason: 'usage-ai-training',
           evidence: [
-            context.evidence.add({ kind: 'robots', url: robots.url, label: 'robots.txt group for the shared AI training token', excerpt: (robots.lines[usage.line - 1] ?? '').trim(), line: usage.line }),
-            context.evidence.add({ kind: 'robots', url: robots.url, label: 'rule in the shared AI training group', excerpt: (robots.lines[decisive.line - 1] ?? '').trim(), line: decisive.line }),
+            context.evidence.add({ kind: 'robots', url: robots.url, label: evidenceLabel('robots.txt group for the shared AI training token'), excerpt: (robots.lines[usage.line - 1] ?? '').trim(), line: usage.line }),
+            context.evidence.add({ kind: 'robots', url: robots.url, label: evidenceLabel('rule in the shared AI training group'), excerpt: (robots.lines[decisive.line - 1] ?? '').trim(), line: decisive.line }),
           ],
         });
       }

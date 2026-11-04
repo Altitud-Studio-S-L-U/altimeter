@@ -1,3 +1,4 @@
+import { evidenceLabel, joinLabels } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { HtmlElement } from '../../parse/html.ts';
 import type { RuleImplementation } from '../engine.ts';
@@ -71,7 +72,8 @@ function report(cite: Cite, page: PageFacts, found: readonly Insecure[]): string
   return found.slice(0, 20).map(entry => cite({
     kind: entry.source === 'Lighthouse network request' ? 'lighthouse' : 'html',
     url: page.fetch.finalUrl,
-    label: `${entry.kind} loaded over an insecure scheme on an HTTPS page (${entry.source})`,
+    label: joinLabels(evidenceLabel('{resource} loaded over an insecure scheme on an HTTPS page', { resource: entry.kind }),
+      entry.source === 'raw HTML' ? evidenceLabel('(raw HTML)') : entry.source === 'rendered DOM' ? evidenceLabel('(rendered DOM)') : evidenceLabel('(Lighthouse network request)')),
     excerpt: entry.excerpt,
     line: entry.line,
   }));
@@ -91,7 +93,7 @@ export const mixedContentActive: RuleImplementation = {
     }
     if (found.length === 0) return pass();
     if (upgradesInsecureRequests(page, rendered ?? raw)) {
-      return pass([cite({ kind: 'header', url: page.fetch.finalUrl, label: 'Content-Security-Policy upgrades insecure requests', excerpt: 'upgrade-insecure-requests' })]);
+      return pass([cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('Content-Security-Policy upgrades insecure requests'), excerpt: 'upgrade-insecure-requests' })]);
     }
     const evidence = report(cite, page, found);
     const blocked = found.filter(entry => entry.kind !== 'form');
@@ -134,7 +136,7 @@ export const mixedContentPassive: RuleImplementation = {
     if (found.length === 0) return pass();
     const cite = citer(context);
     if (upgradesInsecureRequests(page, rendered ?? raw)) {
-      return pass([cite({ kind: 'header', url: page.fetch.finalUrl, label: 'Content-Security-Policy upgrades insecure requests', excerpt: 'upgrade-insecure-requests' })]);
+      return pass([cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('Content-Security-Policy upgrades insecure requests'), excerpt: 'upgrade-insecure-requests' })]);
     }
     const failedUpgrades = new Set((page.rendered?.result.failed ?? []).map(entry => entry.url.replace(/^https:/u, 'http:')));
     const missing = found.filter(entry => failedUpgrades.has(entry.url));
@@ -161,7 +163,7 @@ export const internalLinksToHttp: RuleImplementation = {
       }
     }
     if (found.length === 0) return pass();
-    const evidence = found.slice(0, 20).map(entry => cite({ kind: 'html', url: entry.source, label: `internal ${entry.kind === 'form' ? 'form action' : 'link'} that uses http://`, excerpt: entry.excerpt, line: entry.line }));
+    const evidence = found.slice(0, 20).map(entry => cite({ kind: 'html', url: entry.source, label: entry.kind === 'form' ? evidenceLabel('internal form action that uses http://') : evidenceLabel('internal link that uses http://'), excerpt: entry.excerpt, line: entry.line }));
     return fail('medium', evidence, undefined, { count: found.length, urls: summarizeUrls([...new Set(found.map(entry => entry.url))]) });
   },
 };

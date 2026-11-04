@@ -33,6 +33,22 @@ A rule describes behavior that a search engine or a web standard documents. Each
 
 Industry studies can inform severity but cannot be the only source for a rule. Claims that current guidance contradicts belong in the myths list instead of the catalog.
 
+## Translating reports
+
+Reports are written in English, Spanish or Catalan (`--lang`). Each language keeps its text under `src/i18n/<language>/`:
+
+- `rules/<category>.json`: the title, why, fix and messages of each rule.
+- `values.json`: the English words that code writes into message values and evidence labels, such as band names or Search Console states, by parameter name. A key with `{name}` parts is a pattern; each part is translated as a value of the parameter it names.
+- `evidence.json`: the evidence labels, keyed by their English template.
+
+The report interface is in `src/i18n/ui.ts`. `src/i18n/en/evidence.json` lists every evidence label of the sources: run `npm run i18n:labels` after adding or changing one. Whatever a Spanish or Catalan file lacks is shown in English. Follow `docs/glossary-es.md` and `docs/glossary-ca.md`, keep every `{placeholder}` and code span, and check a translation with:
+
+```sh
+node --test test/i18n-parity.test.ts test/i18n-values.test.ts test/evidence-labels.test.ts test/report-languages.test.ts
+```
+
+The parity tests compare a language's values and labels with English once its file has its first entry.
+
 ## Reporting a bug or a wrong finding
 
 Include the Altimeter version, operating system, Node.js version, expected behavior, actual behavior and a minimal reproduction with synthetic pages. For a false positive or a missed issue, use the issue form and include the rule id and the relevant excerpt of `report.json`. Do not post private reports or credentials.

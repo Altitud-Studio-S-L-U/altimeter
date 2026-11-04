@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
 import { hreflangLinks, summarizeList } from '../helpers.ts';
@@ -25,13 +26,13 @@ export const titleMissing: RuleImplementation = {
     const doc = docOf(page)!;
     const titles = documentTitles(doc).filter(title => title.inHead);
     const present = titles.find(title => title.text !== '');
-    const source = doc === page.raw ? 'raw HTML' : 'rendered DOM';
-    if (present) return { outcome: 'pass', evidence: [cite(context, 'html', `title element in the ${source}`, { excerpt: present.text, line: lineOf(present.element) })] };
+    const inRaw = doc === page.raw;
+    if (present) return { outcome: 'pass', evidence: [cite(context, 'html', inRaw ? evidenceLabel('title element in the raw HTML') : evidenceLabel('title element in the rendered DOM'), { excerpt: present.text, line: lineOf(present.element) })] };
     const severity = indexability(page, doc).indexable ? 'high' : 'info';
     if (titles.length === 0) {
-      return { outcome: 'fail', severity, reason: 'absent', evidence: [cite(context, 'html', `no title element in the head of the ${source}`)] };
+      return { outcome: 'fail', severity, reason: 'absent', evidence: [cite(context, 'html', inRaw ? evidenceLabel('no title element in the head of the raw HTML') : evidenceLabel('no title element in the head of the rendered DOM'))] };
     }
-    return { outcome: 'fail', severity, reason: 'empty', evidence: [cite(context, 'html', `empty title element in the ${source}`, { excerpt: '<title></title>', line: lineOf(titles[0]!.element) })] };
+    return { outcome: 'fail', severity, reason: 'empty', evidence: [cite(context, 'html', inRaw ? evidenceLabel('empty title element in the raw HTML') : evidenceLabel('empty title element in the rendered DOM'), { excerpt: '<title></title>', line: lineOf(titles[0]!.element) })] };
   },
 };
 
@@ -43,7 +44,7 @@ export const titleMultiple: RuleImplementation = {
     const inHead = titles.filter(title => title.inHead);
     const inBody = titles.filter(title => !title.inHead);
     if (inHead.length <= 1 && inBody.length === 0) return { outcome: 'pass' };
-    const evidence = titles.map(title => cite(context, 'html', title.inHead ? 'title element in the head' : 'title element outside the head',
+    const evidence = titles.map(title => cite(context, 'html', title.inHead ? evidenceLabel('title element in the head') : evidenceLabel('title element outside the head'),
       { excerpt: `<title>${title.text}</title>`, line: lineOf(title.element) }));
     return { outcome: 'fail', severity: 'medium', evidence, params: { count: titles.length } };
   },
@@ -61,9 +62,9 @@ export const titleRawRenderedMismatch: RuleImplementation = {
     const rendered = pageTitle(page.rendered);
     if (!rendered) return notApplicable('no-rendered-title');
     const raw = pageTitle(page.raw);
-    const renderedId = cite(context, 'render', 'title in the rendered DOM', { excerpt: rendered.text, line: rendered.line });
+    const renderedId = cite(context, 'render', evidenceLabel('title in the rendered DOM'), { excerpt: rendered.text, line: rendered.line });
     if (raw && comparable(raw.text) === comparable(rendered.text)) return { outcome: 'pass', evidence: [renderedId] };
-    const rawId = cite(context, 'html', raw ? 'title in the raw HTML' : 'no non-empty title in the raw HTML', raw ? { excerpt: raw.text, line: raw.line } : {});
+    const rawId = cite(context, 'html', raw ? evidenceLabel('title in the raw HTML') : evidenceLabel('no non-empty title in the raw HTML'), raw ? { excerpt: raw.text, line: raw.line } : {});
     const params = { raw: raw?.text ?? '', rendered: rendered.text };
     if (!raw) return { outcome: 'fail', severity: 'medium', reason: 'raw-missing', evidence: [rawId, renderedId], params };
     const siteName = new Set(siteNames(context.site).map(normalizeText));
@@ -88,7 +89,7 @@ export const titleWidth: RuleImplementation = {
     if (!title) return notApplicable('no-title');
     const characters = [...title.text].length;
     const width = arialWidth(title.text, desktopTitleFontSize);
-    const evidence = [cite(context, 'html', 'title element', { excerpt: title.text, line: title.line })];
+    const evidence = [cite(context, 'html', evidenceLabel('title element'), { excerpt: title.text, line: title.line })];
     if (characters <= 20) return { outcome: 'fail', severity: 'low', reason: 'short', evidence, params: { characters } };
     if (width > desktopTitleWidth) return { outcome: 'fail', severity: 'info', reason: 'likely-truncated', evidence, params: { width, characters } };
     return { outcome: 'pass', evidence };
@@ -103,7 +104,7 @@ export const titleStuffing: RuleImplementation = {
   evaluate(context) {
     const title = pageTitle(docOf(context.page!));
     if (!title) return notApplicable('no-title');
-    const evidence = [cite(context, 'html', 'title element', { excerpt: title.text, line: title.line })];
+    const evidence = [cite(context, 'html', evidenceLabel('title element'), { excerpt: title.text, line: title.line })];
     const counts = new Map<string, { count: number; word: string }>();
     for (const word of contentWords(title.text).filter(entry => !/^\d+$/u.test(entry))) {
       const key = stem(word);
@@ -156,8 +157,8 @@ export const titleH1Mismatch: RuleImplementation = {
     const jaccard = union === 0 ? 1 : shared / union;
     const entities = [...capitalised(topic)].some(entry => capitalised(heading.text).has(entry));
     const evidence = [
-      cite(context, 'html', 'title element', { excerpt: title.text, line: title.line }),
-      cite(context, 'html', 'main h1 heading', { excerpt: heading.text, line: heading.line }),
+      cite(context, 'html', evidenceLabel('title element'), { excerpt: title.text, line: title.line }),
+      cite(context, 'html', evidenceLabel('main h1 heading'), { excerpt: heading.text, line: heading.line }),
     ];
     if (jaccard >= 0.2 || entities) return { outcome: 'pass', evidence };
     return { outcome: 'fail', severity: 'low', needsJudgment: true, evidence, params: { title: title.text, heading: heading.text, overlap: Math.round(jaccard * 100) / 100 } };
@@ -178,12 +179,12 @@ export const titleObsoleteYear: RuleImplementation = {
     const heading = mainHeading(context);
     const headingYears = heading ? years(heading.text) : [];
     const titleYear = Math.max(...titleYears);
-    const titleId = cite(context, 'html', 'title element', { excerpt: title.text, line: title.line });
+    const titleId = cite(context, 'html', evidenceLabel('title element'), { excerpt: title.text, line: title.line });
     if (!heading || headingYears.length === 0) return { outcome: 'pass', evidence: [titleId] };
     const headingYear = Math.max(...headingYears);
     // A heading that also names the title's year is about that period (a retrospective), not a newer edition.
     if (headingYear <= titleYear || headingYears.includes(titleYear)) return { outcome: 'pass', evidence: [titleId] };
-    const headingId = cite(context, 'html', 'main h1 heading', { excerpt: heading.text, line: heading.line });
+    const headingId = cite(context, 'html', evidenceLabel('main h1 heading'), { excerpt: heading.text, line: heading.line });
     return { outcome: 'fail', severity: 'medium', evidence: [titleId, headingId], params: { titleYear, headingYear } };
   },
 };
@@ -213,7 +214,7 @@ export const titleBranding: RuleImplementation = {
     if (!title) return notApplicable('no-title');
     const names = siteNames(context.site).sort((a, b) => b.length - a.length);
     if (names.length === 0) return { outcome: 'not_evaluated', reason: 'no-site-name' };
-    const evidence = [cite(context, 'html', 'title element', { excerpt: title.text, line: title.line })];
+    const evidence = [cite(context, 'html', evidenceLabel('title element'), { excerpt: title.text, line: title.line })];
     const brand = names.find(name => occurrences(title.text, name).length > 0);
     if (!brand) return { outcome: 'fail', severity: 'info', reason: 'brand-absent', evidence, params: { brand: names[0]! } };
     const found = occurrences(title.text, brand);
@@ -267,7 +268,7 @@ function groupBy(pages: readonly TitledPage[], key: (page: TitledPage) => string
 }
 
 function citeGroup(context: RuleContext, group: readonly TitledPage[]): string[] {
-  return group.map(member => cite(context, 'html', 'title element', { url: member.page.fetch.finalUrl, excerpt: member.title.text, line: member.title.line }));
+  return group.map(member => cite(context, 'html', evidenceLabel('title element'), { url: member.page.fetch.finalUrl, excerpt: member.title.text, line: member.title.line }));
 }
 
 export const titleDuplicate: RuleImplementation = {
@@ -324,7 +325,7 @@ export const titleBoilerplate: RuleImplementation = {
       if (!halfEmpty) continue;
       flagged.add(entry);
       results.push({ outcome: 'fail', severity: 'medium', reason: 'half-empty', params: { title: entry.title.text },
-        evidence: [cite(context, 'html', 'title element', { url: entry.page.fetch.finalUrl, excerpt: entry.title.text, line: entry.title.line })] });
+        evidence: [cite(context, 'html', evidenceLabel('title element'), { url: entry.page.fetch.finalUrl, excerpt: entry.title.text, line: entry.title.line })] });
     }
     if (pages.length >= 3) {
       const parts = templateParts(pages.map(entry => entry.title.text));
@@ -341,7 +342,7 @@ export const titleBoilerplate: RuleImplementation = {
         if (unique === '' || words(templateText).length < 4) continue;
         if (arialWidth(templateText, desktopTitleFontSize) <= arialWidth(unique, desktopTitleFontSize)) continue;
         results.push({ outcome: 'fail', severity: 'low', reason: 'template-dominant', params: { title: entry.title.text, template: clip(templateText, 80) },
-          evidence: [cite(context, 'html', 'title element', { url: entry.page.fetch.finalUrl, excerpt: entry.title.text, line: entry.title.line })] });
+          evidence: [cite(context, 'html', evidenceLabel('title element'), { url: entry.page.fetch.finalUrl, excerpt: entry.title.text, line: entry.title.line })] });
       }
     }
     return results.length > 0 ? results : { outcome: 'pass' };

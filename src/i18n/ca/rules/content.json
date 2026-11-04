@@ -1,1 +1,556 @@
-{}
+{
+  "content-title-missing": {
+    "title": "La pàgina té exactament un <title> no buit al head",
+    "why": "Google documenta l'element <title> com la font principal de l'enllaç de títol que es mostra als resultats. Sense un títol no buit, Google en construeix un a partir d'altres textos de la pàgina, que pot ser que no la descrigui bé.",
+    "fix": "Dona a cada pàgina indexable un <title> únic i descriptiu al <head> renderitzat al servidor.",
+    "messages": {
+      "fail": "La pàgina no té cap element <title> utilitzable al head.",
+      "fail:absent": "La pàgina no té cap element <title> al head, de manera que Google construeix l'enllaç de títol a partir d'altres textos de la pàgina.",
+      "fail:empty": "L'element <title> de la pàgina està buit, de manera que Google construeix l'enllaç de títol a partir d'altres textos de la pàgina."
+    }
+  },
+  "content-title-multiple": {
+    "title": "Més d'un element <title>",
+    "why": "L'estàndard HTML permet un element title per document. Si n'hi ha diversos, els navegadors i els rastrejadors fan servir el primer, de manera que els altres són text mort que el pot contradir.",
+    "fix": "Deixa exactament un <title> al <head>. Revisa si el CMS i els connectors de SEO l'injecten duplicat.",
+    "messages": {
+      "fail": "El document té {count} elements <title>; els navegadors i els rastrejadors fan servir el primer i ignoren la resta."
+    }
+  },
+  "content-title-raw-rendered-mismatch": {
+    "title": "El títol és diferent a l'HTML en brut i al DOM renderitzat",
+    "why": "Google renderitza JavaScript i normalment agafa el títol renderitzat, però Bing, els bots de previsualització d'enllaços i la majoria d'agents d'obtenció d'IA llegeixen l'HTML del servidor. Un títol provisional a l'HTML en brut, com el valor per defecte del marc de treball, arriba a aquests clients.",
+    "fix": "Renderitza el títol final al servidor perquè tots els rastrejadors i extractors de xarxes socials vegin el mateix valor.",
+    "messages": {
+      "fail": "El títol de l'HTML en brut («{raw}») és diferent del títol renderitzat («{rendered}»).",
+      "fail:raw-missing": "L'HTML en brut no té títol; només JavaScript estableix «{rendered}», que els clients que llegeixen l'HTML del servidor no veuen.",
+      "fail:placeholder": "El títol de l'HTML en brut és provisional («{raw}»); només JavaScript estableix el títol real, «{rendered}».",
+      "fail:differs": "El títol de l'HTML en brut («{raw}») és diferent del títol renderitzat («{rendered}»); els clients que no executen JavaScript veuen el primer."
+    }
+  },
+  "content-title-duplicate": {
+    "title": "Títols idèntics en pàgines indexables",
+    "why": "Google documenta que els títols idèntics o gairebé idèntics en diverses pàgines dificulten que els usuaris distingeixin els resultats i són un motiu habitual de reescriptura de títols.",
+    "fix": "Fes que cada títol descrigui el contingut específic de la pàgina, per exemple afegint-hi l'entitat, la temporada, la variant de producte o la ubicació distintives que figuren a l'h1 de la pàgina.",
+    "messages": {
+      "fail": "{count} pàgines indexables comparteixen el títol «{title}»: {urls}.",
+      "fail:identical": "{count} pàgines indexables comparteixen el títol «{title}»: {urls}.",
+      "fail:same-without-brand": "{count} pàgines indexables tenen el mateix títol un cop se n'elimina el nom del lloc («{title}»): {urls}."
+    }
+  },
+  "content-title-boilerplate": {
+    "title": "Títol dominat per text de plantilla repetit",
+    "why": "Google inclou els títols mig buits i els títols dominats per text repetit a tot el lloc entre les causes de reescriptura dels enllaços de títol.",
+    "fix": "Redueix el text de plantilla a un segment de marca concís al principi o al final, separat per un delimitador. Posa primer el text específic de la pàgina.",
+    "messages": {
+      "fail": "El títol «{title}» és majoritàriament text de plantilla repetit.",
+      "fail:half-empty": "El títol «{title}» només conté el nom del lloc o un delimitador, un títol mig buit que Google pot reescriure.",
+      "fail:template-dominant": "Al títol «{title}», el text de plantilla repetit «{template}» és més ample que la part específica de la pàgina."
+    }
+  },
+  "content-title-width": {
+    "title": "Títol probablement truncat (amplada en píxels) o molt curt",
+    "why": "Google no estableix cap límit de longitud per als títols i trunca els enllaços de títol segons l'amplada del dispositiu. Els títols molt curts es reescriuen més sovint. Els límits en píxels que fan servir les eines provenen de mesures del sector, no de Google.",
+    "fix": "Posa primer les paraules més importants perquè el truncament només elimini la marca o les paraules secundàries.",
+    "messages": {
+      "fail": "La longitud del títol pot provocar-ne la reescriptura o el truncament.",
+      "fail:short": "El títol té {characters} caràcter(s); els títols molt curts es reescriuen més sovint.",
+      "fail:likely-truncated": "El títol fa uns {width} px d'amplada en Arial a 20 px, de manera que probablement es trunca als resultats d'ordinador (és una estimació, no un límit de Google)."
+    }
+  },
+  "content-title-stuffing": {
+    "title": "Títol farcit de paraules clau o en forma de llista",
+    "why": "Google esmenta els títols que repeteixen paraules clau o enumeren molts termes com a títols de baixa qualitat i com una causa de reescriptures, i el farciment de paraules clau figura a les polítiques contra el contingut brossa.",
+    "fix": "Fes servir una sola frase descriptiva i natural per al tema principal de la pàgina, més la marca. Elimina les variants de paraules clau.",
+    "messages": {
+      "fail": "Pot ser que el títol estigui farcit de paraules clau; l'analista ho hauria de confirmar.",
+      "fail:repeated-token": "El títol repeteix «{token}» {count} vegades, un candidat a farciment de paraules clau.",
+      "fail:list": "El títol és una llista de {segments} segments curts, un candidat a títol fet amb una llista de paraules clau."
+    }
+  },
+  "content-title-h1-mismatch": {
+    "title": "El títol i l'encapçalament visible principal no coincideixen",
+    "why": "Google documenta que pot reescriure un títol que no coincideix amb l'encapçalament visible principal, o quan diversos encapçalaments són igual de destacats i cap no és clarament el títol principal.",
+    "fix": "Fes que el títol i l'h1 descriguin el mateix; no cal que siguin idèntics. Fes que un encapçalament sigui clarament el títol principal.",
+    "messages": {
+      "fail": "El títol («{title}») i l'encapçalament principal («{heading}») comparteixen poques paraules (coincidència: {overlap}); l'analista hauria de confirmar si descriuen coses diferents."
+    }
+  },
+  "content-title-obsolete-year": {
+    "title": "L'any del títol és anterior al contingut de la pàgina",
+    "why": "Google documenta que reescriu els títols amb un any que contradiu un any més recent de la pàgina, amb un exemple d'un títol reescrit perquè coincideixi amb l'encapçalament visible.",
+    "fix": "Actualitza l'any del títol només quan el contingut s'hagi actualitzat realment per a aquest període. Si no, elimina l'any.",
+    "messages": {
+      "fail": "El títol esmenta {titleYear}, mentre que l'encapçalament principal esmenta {headingYear}; Google pot reescriure un títol amb un any anterior al de l'encapçalament."
+    }
+  },
+  "content-title-branding": {
+    "title": "Posició i repetició de la marca als títols",
+    "why": "Google pot mostrar el nom del lloc a part i pot eliminar una marca repetida de l'enllaç de títol. La posició de la marca és una decisió editorial; l'absència de la marca no és un error.",
+    "fix": "Inclou la marca de manera concisa, una sola vegada, al principi o al final, separada per un delimitador (per exemple, « – Marca»). Declara el nom del lloc amb dades estructurades WebSite a la pàgina d'inici.",
+    "messages": {
+      "fail": "La posició de la marca al títol es podria millorar.",
+      "fail:brand-absent": "El títol no esmenta el lloc («{brand}»); Google pot mostrar el nom del lloc a part, de manera que això és informatiu.",
+      "fail:repeated": "El títol esmenta «{brand}» {count} vegades.",
+      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadament un {share} % de l'amplada del títol.",
+      "fail:mid-title": "La marca «{brand}» és al mig del títol en lloc del principi o el final."
+    }
+  },
+  "content-title-sensational": {
+    "title": "Títol exagerat, impactant o enganyós",
+    "why": "Google pregunta si un títol evita exagerar o impactar, i les seves directrius de Discover adverteixen contra l'esquer de clics. Els avaluadors consideren de baixa qualitat els títols que prometen més del que ofereix el contingut.",
+    "fix": "Fes que el títol descrigui el que la pàgina ofereix realment. Elimina l'exageració i l'excés de majúscules o de signes d'exclamació.",
+    "messages": {}
+  },
+  "content-meta-description-missing": {
+    "title": "Sense metadescripció",
+    "why": "Google construeix els fragments principalment a partir del contingut de la pàgina i fa servir la metadescripció quan descriu millor la pàgina. L'absència de descripció no bloqueja mai la indexació, però deixa el fragment a la selecció automàtica.",
+    "fix": "Escriu primer un resum únic i llegible per a les persones per a les pàgines clau (la pàgina d'inici, les pàgines populars). Les descripcions generades automàticament són adequades per a llocs grans basats en bases de dades si són variades i llegibles.",
+    "messages": {
+      "fail": "La pàgina no té metadescripció, de manera que Google construeix el fragment només a partir del contingut de la pàgina.",
+      "fail:absent": "La pàgina no té metadescripció, de manera que Google construeix el fragment només a partir del contingut de la pàgina.",
+      "fail:empty": "La metadescripció de la pàgina està buida, de manera que Google construeix el fragment només a partir del contingut de la pàgina."
+    }
+  },
+  "content-meta-description-duplicate": {
+    "title": "Metadescripcions idèntiques en diverses pàgines",
+    "why": "Google documenta que les descripcions idèntiques o similars a totes les pàgines no són útils i recomana una descripció única per pàgina.",
+    "fix": "Fes servir descripcions generals del lloc només a la pàgina d'inici i a les pàgines d'agregació. A la resta, escriu descripcions específiques de cada pàgina, començant per les URL crítiques.",
+    "messages": {
+      "fail": "{count} pàgines indexables comparteixen la metadescripció «{description}»: {urls}."
+    }
+  },
+  "content-meta-description-quality": {
+    "title": "La metadescripció és una llista de paraules clau, és massa curta o no és un resum",
+    "why": "Google dona exemples de descripcions deficients: llistes de paraules clau, el mateix text a tot arreu, text que no resumeix la pàgina i descripcions molt curtes. No estableix cap límit de longitud.",
+    "fix": "Escriu una o dues frases que resumeixin la pàgina i incloguin detalls concrets, per exemple «Aprèn a cuinar ous amb aquesta guia completa en 1 hora o menys».",
+    "messages": {
+      "fail": "Pot ser que la metadescripció no resumeixi la pàgina.",
+      "fail:placeholder": "La metadescripció conté un marcador de posició de plantilla sense omplir.",
+      "fail:same-as-title": "La metadescripció repeteix el títol en lloc de resumir la pàgina.",
+      "fail:keyword-list": "La metadescripció sembla una llista de {segments} frases curtes; l'analista hauria de confirmar si és una llista de paraules clau.",
+      "fail:short": "La metadescripció té {words} paraula(es); l'analista hauria de confirmar si resumeix la pàgina."
+    }
+  },
+  "content-data-nosnippet-invalid": {
+    "title": "data-nosnippet és en elements no compatibles, l'afegeix tard JavaScript o cobreix el contingut principal",
+    "why": "Google només respecta data-nosnippet als elements span, div i section. El text que conté s'exclou dels fragments i de l'entrada directa a les AI Overviews i a l'AI Mode, de manera que cobrir el contingut principal té l'efecte de nosnippet en aquests espais.",
+    "fix": "Fes servir data-nosnippet només en elements span, div o section. Inclou-lo a l'HTML del servidor o en el moment en què JS insereix l'element per primera vegada.",
+    "messages": {
+      "fail": "data-nosnippet es fa servir d'una manera que Google no respecta tal com es pretén.",
+      "fail:unsupported-element": "{count} atribut(s) data-nosnippet són en elements que Google no respecta ({tags}); només s'admeten span, div i section.",
+      "fail:added-by-javascript": "JavaScript afegeix {count} atribut(s) data-nosnippet a elements que existeixen a l'HTML del servidor sense aquest atribut.",
+      "fail:covers-main-content": "Els elements amb data-nosnippet contenen aproximadament un {share} % del contingut principal, de manera que aquest text queda fora dels fragments i de l'entrada de les AI Overviews."
+    }
+  },
+  "content-image-preview-large": {
+    "title": "No es permeten previsualitzacions d'imatge grans per als articles i les pàgines aptes per a Discover",
+    "why": "Google recomana max-image-preview:large per a les pàgines que volen imatges grans a Discover, juntament amb imatges d'almenys 1200 px d'amplada. Google no documenta el valor per defecte quan la directiva no hi és.",
+    "fix": "Afegeix <meta name=\"robots\" content=\"max-image-preview:large\"> a les pàgines editorials i proporciona una imatge representativa d'almenys 1200 px d'amplada.",
+    "messages": {
+      "fail": "L'article no permet previsualitzacions d'imatge grans.",
+      "fail:absent": "L'article no té cap directiva max-image-preview; Google recomana max-image-preview:large per a les imatges grans de Discover.",
+      "fail:restricted": "L'article estableix max-image-preview:{value}, cosa que exclou les previsualitzacions d'imatge grans."
+    }
+  },
+  "content-h1-missing": {
+    "title": "No hi ha cap encapçalament principal (h1) al contingut renderitzat",
+    "why": "Google fa servir l'encapçalament visible principal com a títol principal clar, també quan genera enllaços de títol. Google afirma que el nombre i l'ordre dels encapçalaments no importen per al posicionament, de manera que tenir diversos elements h1 no és mai un error.",
+    "fix": "Marca el títol principal de la pàgina com un h1 que en descrigui el contingut.",
+    "messages": {
+      "fail": "La pàgina no té cap h1 ni cap títol visualment dominant, de manera que no hi ha cap encapçalament principal clar."
+    }
+  },
+  "content-h1-empty-or-image": {
+    "title": "L'h1 està buit, ocult o és una imatge sense alt",
+    "why": "Un h1 sense nom accessible, o un que està ocult, no dona cap títol principal a les tecnologies d'assistència ni als rastrejadors. Un h1 que és una imatge necessita text alternatiu per tenir nom.",
+    "fix": "Posa el text del títol a l'h1. Quan una imatge de logotip fa d'h1, dona-li un text alternatiu que anomeni la pàgina o la marca.",
+    "messages": {
+      "fail": "L'h1 de la pàgina no dona cap títol principal.",
+      "fail:empty": "{count} element(s) h1 no tenen text, alt d'imatge ni etiqueta, de manera que no tenen nom accessible.",
+      "fail:hidden": "Tots els h1 de la pàgina ({count}) queden fora de la vista a la renderització."
+    }
+  },
+  "content-heading-level-skips": {
+    "title": "Salts de nivell als encapçalaments (estructura d'accessibilitat)",
+    "why": "Els nivells d'encapçalament que se salten fan que l'esquema sigui més difícil de seguir amb tecnologies d'assistència. Google afirma que l'ordre dels encapçalaments no importa per al posicionament, de manera que això és una qüestió d'accessibilitat.",
+    "fix": "Fes servir els nivells d'encapçalament per reflectir l'estructura (h2 per a les seccions, h3 per a les subseccions). Dona estil amb CSS, no amb el nivell d'encapçalament.",
+    "messages": {
+      "fail": "Hi ha salts de nivell d'encapçalament ({count}); el primer, de {from} a {to}, és a «{heading}». Això afecta l'accessibilitat, no el posicionament."
+    }
+  },
+  "content-headings-descriptive": {
+    "title": "Els encapçalaments no resumeixen les seves seccions",
+    "why": "Google recomana encapçalaments que ajudin els usuaris a navegar pel contingut i descriu una organització clara com a útil per als lectors i els sistemes d'IA. No estableix cap nombre ideal d'encapçalaments.",
+    "fix": "Reescriu els encapçalaments perquè un lector que només repassi els encapçalaments entengui l'esquema de la pàgina.",
+    "messages": {}
+  },
+  "content-main-landmark": {
+    "title": "Contingut principal no identificable (sense punt de referència <main>)",
+    "why": "Google no requereix cap element <main>. Un únic punt de referència main ajuda les tecnologies d'assistència i permet que aquesta eina separi el contingut principal del contingut de plantilla; sense aquest punt de referència, l'eina recorre a l'extracció de contingut.",
+    "fix": "Embolcalla el contingut principal en un únic element <main> i deixa'n fora el header, el nav, el footer i les barres laterals.",
+    "messages": {
+      "fail": "La pàgina no té exactament un punt de referència main.",
+      "fail:none": "La pàgina no té cap element main ni role=main, de manera que les tecnologies d'assistència no poden saltar al contingut principal.",
+      "fail:multiple": "La pàgina té {count} punts de referència main visibles; un document n'hauria de tenir un."
+    }
+  },
+  "content-boilerplate-ratio": {
+    "title": "Poc contingut principal únic en relació amb la plantilla",
+    "why": "Google rebutja els nombres de paraules preferits, però pregunta si una pàgina aporta un valor substancial. Les pàgines en què el text de plantilla eclipsa el contingut únic sovint tenen poc valor, però molts tipus de pàgina són complets amb poques paraules.",
+    "fix": "Assegura't que cada pàgina indexable tingui contingut substancial específic del seu propòsit, o consolida les variants amb poc contingut o aplica-hi noindex.",
+    "messages": {
+      "fail": "{url} té {uniqueWords} paraules de text específic de la pàgina i un {share} % de text de plantilla; l'analista hauria de jutjar si el contingut compleix el propòsit de la pàgina."
+    }
+  },
+  "content-filler-before-mc": {
+    "title": "El farciment, els anuncis o el contingut secundari empenyen el contingut principal cap avall",
+    "why": "Les directrius per als avaluadors descriuen el farciment i els anuncis o el contingut complementari que distreuen, col·locats abans del contingut principal, com una mala experiència d'usuari. Les directrius de Google sobre l'experiència de pàgina pregunten si el contingut principal és fàcil de trobar.",
+    "fix": "Posa el contingut més útil a prop de la part superior. Mou més avall la informació de context complementària.",
+    "messages": {
+      "fail": "El primer paràgraf del contingut principal comença {viewports} pantalles de mòbil més avall ({top} px); l'analista hauria de comprovar si hi ha farciment abans."
+    }
+  },
+  "content-people-first": {
+    "title": "El contingut està centrat en les persones i aporta valor original (autoavaluació de contingut útil de Google)",
+    "why": "Les directrius de Google sobre contingut útil, fiable i centrat en les persones enumeren preguntes sobre originalitat, esforç, expertesa i propòsit, i senyals d'alerta de contingut creat principalment per als cercadors. Els seus sistemes de classificació pretenen recompensar el contingut que hi respon bé. L'analista avalua la pàgina amb aquestes preguntes.",
+    "fix": "Afegeix experiència de primera mà, dades o anàlisis originals, fonts clares i informació sobre l'autor. Elimina el contingut escrit principalment per obtenir trànsit de cerca.",
+    "messages": {}
+  },
+  "content-originality": {
+    "title": "Contingut principal copiat, parafrasejat o sense valor afegit",
+    "why": "Les polítiques de Google contra el contingut brossa i les directrius per als avaluadors consideren de baixa qualitat el contingut principal copiat o lleugerament parafrasejat sense valor afegit. El contingut amb llicència i el contingut sindicat no són còpia.",
+    "fix": "Afegeix anàlisi, dades, elements multimèdia o experiència originals. Canonicalitza o atribueix les còpies sindicades. Elimina les pàgines extretes automàticament d'altres llocs.",
+    "messages": {
+      "fail": "Un {overlap} % del text principal d'aquesta pàgina també apareix a {other}; l'analista hauria de jutjar si és copiat o compartit legítimament."
+    }
+  },
+  "content-scaled-doorway": {
+    "title": "Abús de contingut a gran escala o patró de pàgines porta",
+    "why": "Les polítiques de Google sobre l'abús de contingut a gran escala i les pàgines porta inclouen moltes pàgines generades principalment per posicionar-se, ja sigui per IA, per persones o per totes dues, incloses pàgines gairebé idèntiques que només canvien un lloc o una paraula clau i pàgines creades per captar variants de consultes. La regla informa d'un patró de risc, mai d'una penalització.",
+    "fix": "Fusiona-les en una pàgina útil per a cada oferta real, o afegeix contingut realment local o únic (personal, preus, casos, fotos de cada ubicació). Aplica noindex a les variants generades automàticament o elimina-les.",
+    "messages": {
+      "fail": "{count} pàgines tenen un text principal que difereix com a màxim en un 5 % de les paraules ({urls}); l'analista hauria de comprovar si hi ha un patró de pàgines porta."
+    }
+  },
+  "content-ai-artifacts": {
+    "title": "Restes d'IA o de plantilla al contingut publicat",
+    "why": "Les directrius de Google sobre el contingut creat amb IA generativa demanen exactitud i qualitat sigui quin sigui el mètode de producció. Les frases d'assistent que han quedat, els marcadors de posició de plantilla o les variables sense omplir mostren que el contingut es va publicar sense revisió.",
+    "fix": "Elimina les restes i revisa a mà tot el contingut per comprovar-ne l'exactitud; Google demana la verificació manual dels fets de tota la sortida d'IA, incloses les metadades.",
+    "messages": {
+      "fail": "S'han trobat restes de generació o de plantilla sense editar ({count}; ubicació: {where}).",
+      "fail:template-token": "S'han trobat marcadors de plantilla sense omplir o restes de generació ({count}; ubicació: {where}).",
+      "fail:assistant-phrase": "S'han trobat frases d'assistent sense editar ({count}; ubicació: {where})."
+    }
+  },
+  "content-ymyl-classification": {
+    "title": "Classificació YMYL del tema de la pàgina",
+    "why": "Les directrius per als avaluadors apliquen criteris més exigents als temes que poden afectar significativament la salut, les finances, la seguretat o la societat. La majoria de temes no són YMYL. La classificació estableix el context per a altres judicis.",
+    "fix": "A les pàgines YMYL, mostra l'autoria o la revisió d'experts, les fonts i una responsabilitat clara del lloc.",
+    "messages": {}
+  },
+  "content-eeat-signals": {
+    "title": "Evidències d'E-E-A-T a la pàgina i al lloc (primer, la confiança)",
+    "why": "Les directrius per als avaluadors descriuen l'experiència, l'expertesa, l'autoritat i la confiança, amb la confiança com la més important, i les directrius de Google sobre contingut útil pregunten si queda clar qui ha creat el contingut. E-E-A-T no és en si mateix un factor de posicionament.",
+    "fix": "Publica dades clares sobre la propietat i el contacte, biografies dels autors amb l'experiència pertinent i les polítiques editorials o de revisió. Cita les fonts.",
+    "messages": {}
+  },
+  "content-hidden-text": {
+    "title": "Text ocult (color, mida, opacitat, posicionament, darrere d'imatges)",
+    "why": "Les polítiques de Google contra el contingut brossa prohibeixen el text ocult per als usuaris però present per als cercadors, com el text del color del fons, darrere d'imatges o posicionat fora de la pantalla. Permeten explícitament pestanyes, acordions, controls lliscants, indicadors de funció i text per a lectors de pantalla.",
+    "fix": "Elimina el text ocult o fes-lo visible com a contingut útil.",
+    "messages": {
+      "fail": "{words} paraules estan ocultes per als usuaris en {blocks} bloc(s) de text ({reasons}); l'analista hauria de jutjar si això correspon a la política sobre text ocult."
+    }
+  },
+  "content-hidden-links": {
+    "title": "Enllaços ocults o dissimulats",
+    "why": "Les polítiques de Google contra el contingut brossa prohibeixen els enllaços ocults per als usuaris, com un enllaç en un sol caràcter o amb un estil que el fa invisible, quan existeixen per manipular el posicionament.",
+    "fix": "Elimina els enllaços ocults. Si el lloc pot estar compromès, investiga si hi ha codi injectat (consulta content-hacked-signals).",
+    "messages": {
+      "fail": "Enllaços externs que es poden seguir i que estan ocults o ocupen un sol caràcter: {count} (amfitrions: {hosts}). L'analista hauria de jutjar si són elements legítims de la interfície."
+    }
+  },
+  "content-keyword-stuffing": {
+    "title": "Farciment de paraules clau al contingut principal",
+    "why": "Les polítiques de Google contra el contingut brossa defineixen el farciment de paraules clau com omplir una pàgina de paraules clau o números per manipular el posicionament, com ara llistes de ciutats o frases repetides fora de context. Google no publica cap objectiu de densitat de paraules clau.",
+    "fix": "Reescriu el text de manera natural. Substitueix les llistes de llocs per informació real sobre l'àrea de servei o per una única llista estructurada on els usuaris la necessitin.",
+    "messages": {
+      "fail": "Pot ser que el contingut principal estigui farcit de paraules clau; l'analista ho hauria de confirmar.",
+      "fail:repeated-phrase": "«{phrase}» apareix {count} vegades en {words} paraules de contingut principal; l'analista hauria de jutjar si sona poc natural.",
+      "fail:number-list": "El contingut principal enumera {count} números de telèfon en {words} paraules; l'analista hauria de jutjar si la llista és útil per als usuaris."
+    }
+  },
+  "content-cloaking-ua": {
+    "title": "Contingut diferent servit a l'agent d'usuari de Googlebot (encobriment basat en l'agent d'usuari)",
+    "why": "Les polítiques de Google contra el contingut brossa prohibeixen l'encobriment: mostrar als cercadors un contingut diferent del que veuen els usuaris. L'eina compara les respostes per a un agent d'usuari de rastrejador i un agent d'usuari de navegador; l'encobriment basat en la IP no es pot detectar des de fora.",
+    "fix": "Serveix el mateix contingut als usuaris i als rastrejadors. Si el lloc està compromès, neteja el servidor i els connectors.",
+    "messages": {
+      "fail": "L'agent d'usuari de Googlebot rep un contingut diferent del que rep un agent d'usuari de navegador.",
+      "fail:googlebot-only-links": "Els enllaços que es poden seguir cap a {hosts} només se serveixen a l'agent d'usuari de Googlebot. L'encobriment basat en la IP no es pot observar des de fora.",
+      "fail:different-content": "L'agent d'usuari de Googlebot rep un títol o un h1 diferents i un text principal diferent (distància SimHash: {distance}) dels que rep un agent d'usuari de navegador.",
+      "fail:minor-divergence": "Els agents d'usuari de Googlebot i de navegador reben pàgines lleugerament diferents (distància SimHash: {distance})."
+    }
+  },
+  "content-sneaky-redirects": {
+    "title": "Redireccions enganyoses (condicionades pel dispositiu, el referent o l'agent d'usuari)",
+    "why": "Les polítiques de Google contra el contingut brossa prohibeixen les redireccions que envien els usuaris a una destinació diferent de la que veuen els cercadors, per exemple només per als visitants que arriben des de la cerca o des del mòbil.",
+    "fix": "Elimina les redireccions condicionals. Si no eren intencionades, comprova si hi ha scripts injectats.",
+    "messages": {
+      "fail": "L'agent d'usuari de Googlebot arriba a {googlebot}, mentre que un agent d'usuari de navegador arriba a {browser}, un lloc diferent."
+    }
+  },
+  "content-hacked-signals": {
+    "title": "Cap senyal de contingut piratejat o injectat, contingut brossa encobert o redireccions injectades",
+    "why": "Les polítiques de Google contra el contingut brossa inclouen el contingut piratejat: pàgines brossa, enllaços o redireccions injectats en un lloc sense el consentiment del propietari. El contingut piratejat sovint només es mostra als rastrejadors, i Google pot advertir els usuaris o eliminar pàgines.",
+    "fix": "Neteja la intrusió, aplica pedaços al CMS i als connectors, canvia les credencials i, després, sol·licita una revisió a Search Console si hi ha una acció manual.",
+    "messages": {
+      "fail": "S'han trobat senyals compatibles amb contingut brossa injectat; l'analista els hauria de contrastar amb el tema del lloc.",
+      "fail:spam-urls-in-sitemap": "URL del mapa del lloc amb vocabulari típic del contingut brossa injectat: {count}.",
+      "fail:spam-vocabulary": "Enllaços o passatges amb vocabulari típic del contingut brossa injectat: {count}.",
+      "fail:foreign-script-block": "Pàgines amb grans blocs de text en xinès, japonès o coreà, a diferència de la resta del lloc: {count}.",
+      "fail:cloaked-spam": "«{term}» se serveix a l'agent d'usuari de Googlebot però no a un agent d'usuari de navegador."
+    }
+  },
+  "content-thin-affiliate": {
+    "title": "Pàgines d'afiliats amb poc contingut",
+    "why": "Les polítiques de Google contra el contingut brossa inclouen les pàgines d'afiliats amb poc contingut que copien descripcions i ressenyes dels comerciants sense aportar valor original. Els enllaços d'afiliat en si mateixos són correctes.",
+    "fix": "Afegeix una avaluació original (evidències, mesures, comparacions). Enllaça a diversos venedors. Qualifica els enllaços amb rel=sponsored o nofollow.",
+    "messages": {
+      "fail": "La pàgina té {count} enllaç(os) d'afiliat ({networks}); l'analista hauria de jutjar si el contingut aporta una avaluació original."
+    }
+  },
+  "content-paid-links-unqualified": {
+    "title": "Enllaços de pagament, d'afiliat o patrocinats sense rel=sponsored/nofollow",
+    "why": "Google demana als llocs que qualifiquin els enllaços de pagament, patrocinats i d'afiliat amb rel=sponsored o rel=nofollow. Els enllaços de pagament sense qualificar entren dins de la política contra els enllaços brossa.",
+    "fix": "Afegeix rel=\"sponsored\" (o nofollow) als enllaços de pagament i d'afiliat.",
+    "messages": {
+      "fail": "Enllaços de pagament o d'afiliat sense rel=\"sponsored\" ni rel=\"nofollow\": {count} de {total}."
+    }
+  },
+  "content-ugc-link-qualifiers": {
+    "title": "Enllaços d'usuaris sense qualificar i contingut brossa generat per usuaris (UGC)",
+    "why": "Google recomana rel=ugc o rel=nofollow per als enllaços del contingut generat per usuaris i documenta com afecta un lloc el contingut brossa generat per usuaris que no es modera.",
+    "fix": "Afegeix rel=ugc o nofollow als enllaços dels usuaris, modera els comentaris i aplica mesures contra el contingut brossa.",
+    "messages": {
+      "fail": "Enllaços externs del contingut generat per usuaris sense rel=\"ugc\" ni rel=\"nofollow\": {count}."
+    }
+  },
+  "content-link-schemes-visible": {
+    "title": "Patrons visibles d'esquemes d'enllaços",
+    "why": "La política de Google contra els enllaços brossa inclou els intercanvis d'enllaços, els enllaços plens de paraules clau en ginys o peus de pàgina de diversos llocs i altres enllaços pensats per manipular el posicionament. Només es poden observar els enllaços de sortida del lloc auditat.",
+    "fix": "Elimina els enllaços o qualifica'ls amb rel=sponsored/nofollow. Suprimeix les pàgines d'intercanvi d'enllaços.",
+    "messages": {
+      "fail": "L'enllaç que es pot seguir «{anchor}» cap a {target} apareix a la plantilla de {pages} pàgines; l'analista hauria de jutjar si és un esquema d'enllaços."
+    }
+  },
+  "content-anchor-text-empty": {
+    "title": "Enllaços sense text d'ancoratge accessible",
+    "why": "Google fa servir el text d'ancoratge per entendre la pàgina enllaçada, i el text alternatiu d'una imatge fa de text d'ancoratge als enllaços d'imatge. Els enllaços sense text i sense alt no donen cap context.",
+    "fix": "Afegeix un text descriptiu. Als enllaços d'imatge, defineix un alt que descrigui la destinació.",
+    "messages": {
+      "fail": "Enllaços sense text, alt d'imatge ni etiqueta: {count}.",
+      "fail:internal": "Enllaços sense text, alt d'imatge ni etiqueta: {count} (cap a pàgines d'aquest lloc: {internal}).",
+      "fail:external": "Enllaços externs sense text, alt d'imatge ni etiqueta: {count}."
+    }
+  },
+  "content-anchor-text-quality": {
+    "title": "El text d'ancoratge és descriptiu, concís i no està farcit de paraules clau",
+    "why": "Google recomana un text d'ancoratge descriptiu i raonablement concís, i considera males pràctiques els ancoratges genèrics com «fes clic aquí» i els ancoratges molt llargs o farcits de paraules clau.",
+    "fix": "Fes servir ancoratges concisos i descriptius que tinguin sentit fora de context, per exemple «preus del disseny de logotips» en lloc de «fes clic aquí».",
+    "messages": {
+      "fail": "Alguns textos d'ancoratge no descriuen la seva destinació.",
+      "fail:generic": "{count} enllaç(os) del contingut principal fan servir text genèric ({examples}) i no hi ha cap enllaç descriptiu a la mateixa pàgina.",
+      "fail:too-long": "{count} enllaç(os) tenen un text d'ancoratge de més de 100 caràcters.",
+      "fail:repeated": "L'ancoratge «{anchor}» enllaça a la mateixa pàgina {count} vegades."
+    }
+  },
+  "content-outbound-citations": {
+    "title": "Fonts citades i política d'enllaços de sortida",
+    "why": "Google assenyala que enllaçar a les fonts pot ajudar els usuaris a verificar les afirmacions i generar confiança, i aconsella nofollow només per als enllaços que el lloc no avala.",
+    "fix": "Cita fonts primàries amb ancoratges descriptius. Fes servir nofollow només per als enllaços que no són de confiança.",
+    "messages": {
+      "fail": "Tots els enllaços externs editorials ({count}) són nofollow; Google aconsella nofollow només per als enllaços que el lloc no avala."
+    }
+  },
+  "content-img-alt-missing": {
+    "title": "Les imatges de contingut tenen atribut alt",
+    "why": "Google fa servir el text alternatiu, juntament amb la visió artificial i el text del voltant, per entendre les imatges, i el text alternatiu fa de text d'ancoratge a les imatges enllaçades. Si falta l'atribut alt, no hi ha cap alternativa textual; un alt buit és correcte per a les imatges decoratives.",
+    "fix": "Afegeix un text alternatiu que descrigui la imatge en el context de la pàgina. Fes servir alt=\"\" només per a les imatges purament decoratives.",
+    "messages": {
+      "fail": "Imatges sense atribut alt: {count} de {total} (amb alt=\"\", que és correcte per a les imatges decoratives: {emptyAlt}).",
+      "fail:content-image": "Imatges sense atribut alt: {count} de {total}, incloses imatges que formen part del contingut principal (amb alt=\"\", que és correcte per a les imatges decoratives: {emptyAlt}).",
+      "fail:other-image": "Imatges sense atribut alt: {count} de {total} (amb alt=\"\", que és correcte per a les imatges decoratives: {emptyAlt})."
+    }
+  },
+  "content-img-alt-quality": {
+    "title": "Text alternatiu de baixa qualitat (farcit de paraules clau, nom de fitxer, genèric)",
+    "why": "Google recomana un text alternatiu que descrigui la imatge en context i adverteix contra el farciment de paraules clau als atributs alt.",
+    "fix": "Escriu descripcions breus i riques en informació, per exemple «cadell de dàlmata jugant a buscar la pilota» en lloc de «cadell gos cadellet cadells».",
+    "messages": {
+      "fail": "Alguns textos alternatius no descriuen la seva imatge.",
+      "fail:filename": "{count} imatge(s) fan servir el nom del fitxer o un nom de càmera com a text alternatiu.",
+      "fail:generic": "{count} imatge(s) tenen un text alternatiu genèric d'una sola paraula; l'analista ho hauria de revisar en context.",
+      "fail:keyword-list": "{count} imatge(s) tenen un text alternatiu format per una llista de paraules clau; l'analista ho hauria de revisar.",
+      "fail:repeated": "{count} imatges diferents comparteixen el text alternatiu «{alt}»; l'analista les hauria de revisar.",
+      "fail:too-long": "{count} imatge(s) tenen un text alternatiu de més de 250 caràcters; l'analista ho hauria de revisar."
+    }
+  },
+  "content-img-filename": {
+    "title": "Noms de fitxer d'imatge no descriptius",
+    "why": "Google descriu els noms de fitxer descriptius com una pista molt lleu sobre el tema d'una imatge. Els noms amb hash generats per un CMS o un CDN són habituals i tenen poc impacte.",
+    "fix": "Fes servir noms de fitxer breus, descriptius i localitzats, per exemple el-meu-gatet-negre-nou.jpg, i codifica per a URL els caràcters no llatins.",
+    "messages": {
+      "fail": "Imatges de contingut de {url} amb noms de fitxer no descriptius: {count} de {total}, un senyal molt lleu."
+    }
+  },
+  "content-img-css-background": {
+    "title": "Imatges importants servides només com a fons CSS",
+    "why": "Google documenta que no indexa les imatges referenciades només al CSS i que extreu les imatges dels elements img. Les imatges destacades, de producte i editorials servides com a fons CSS no són aptes per a Google Imatges.",
+    "fix": "Fes servir <img> (o <picture>) amb src i alt per a les imatges que haurien d'aparèixer a Google Imatges o que transmeten contingut.",
+    "messages": {
+      "fail": "La imatge més gran ({url}) és un fons CSS d'un element {element}, que Google no indexa com a imatge.",
+      "fail:unknown-element": "La imatge més gran ({url}) és un fons CSS, que Google no indexa com a imatge."
+    }
+  },
+  "content-img-format": {
+    "title": "Format d'imatge no compatible o discrepància entre l'extensió i el tipus",
+    "why": "Google Imatges indexa BMP, GIF, JPEG, PNG, WebP, SVG i AVIF. Les imatges en altres formats sense una alternativa compatible no s'indexen.",
+    "fix": "Serveix un format compatible, per exemple AVIF/WebP amb una alternativa JPEG/PNG al src de l'img.",
+    "messages": {
+      "fail": "Algunes imatges fan servir un format que Google Imatges no indexa.",
+      "fail:unsupported-format": "{count} imatge(s) fan servir un format que Google Imatges no indexa.",
+      "fail:extension-mismatch": "{url} té l'extensió .{extension}, però els seus bytes corresponen a {actual}."
+    }
+  },
+  "content-img-lazy-misuse": {
+    "title": "Les imatges de contingut es carreguen sense interacció de l'usuari",
+    "why": "Google documenta que Googlebot no es desplaça ni fa clic, però renderitza amb una àrea de visualització alta, de manera que troba les imatges que es carreguen quan hi entren. Les imatges que només es carreguen després d'un esdeveniment de desplaçament o d'un clic no es troben.",
+    "fix": "Treu loading=lazy de les imatges de la part visible sense desplaçament. Fes servir la càrrega diferida nativa o IntersectionObserver, que carreguen sense accions de l'usuari.",
+    "messages": {
+      "fail": "{count} imatge(s) només carreguen la font real després d'un desplaçament, cosa que Googlebot no fa."
+    }
+  },
+  "content-preferred-image": {
+    "title": "Imatge preferida representativa (og:image / primaryImageOfPage)",
+    "why": "Google documenta og:image i primaryImageOfPage com a maneres d'indicar la imatge preferida d'una pàgina, i recomana imatges grans per a Discover.",
+    "fix": "Especifica una imatge pertinent i d'alta qualitat per a cada pàgina amb primaryImageOfPage o og:image, no el logotip. Per a Discover, fes servir imatges de ≥1200 px d'amplada i 16:9.",
+    "messages": {
+      "fail": "La imatge preferida de la pàgina es podria millorar.",
+      "fail:missing": "La pàgina no declara cap imatge preferida (og:image o primaryImageOfPage).",
+      "fail:logo": "La imatge preferida {url} és el logotip del lloc en lloc d'una imatge del contingut.",
+      "fail:unreachable": "La imatge preferida {url} ha respost {status}.",
+      "fail:narrow": "La imatge preferida {url} fa {width} px d'amplada; Discover recomana almenys 1200 px."
+    }
+  },
+  "content-byline-author": {
+    "title": "Signatura, pàgina d'autor i marcatge Person",
+    "why": "Les directrius de Google sobre contingut útil pregunten si queda clar qui ha escrit el contingut allà on s'esperaria, i la documentació sobre el marcatge d'articles descriu propietats d'autor que haurien de coincidir amb la signatura visible.",
+    "fix": "Mostra qui ha escrit cada article, enllaça a una pàgina d'autor amb la trajectòria pertinent i reflecteix-ho al marcatge Article.",
+    "messages": {
+      "fail": "No queda clar qui ha escrit aquest article.",
+      "fail:no-byline": "L'article no mostra cap signatura i el seu marcatge no esmenta cap autor.",
+      "fail:markup-not-visible": "El marcatge Article indica {author} com a autor, però la pàgina no mostra aquest nom."
+    }
+  },
+  "content-date-consistency": {
+    "title": "Les dates visibles coincideixen amb les dades estructurades i amb el lastmod del mapa del lloc",
+    "why": "Google recomana una data de publicació o d'actualització visible que coincideixi amb datePublished i dateModified a les dades estructurades, i les fa servir per mostrar dates als resultats. Les funcions de cerca amb IA també fan servir les dates per valorar l'actualitat.",
+    "fix": "Mostra una sola data clarament etiquetada, fes-la coincidir a datePublished/dateModified, inclou-hi un fus horari i redueix al mínim les altres dates a prop de la signatura.",
+    "messages": {
+      "fail": "Les dates de la pàgina no coincideixen.",
+      "fail:future-date": "La data estructurada {date} és futura respecte de la resposta.",
+      "fail:visible-mismatch": "La pàgina mostra {visible}, però les seves dates estructurades són {structured}.",
+      "fail:lastmod-differs": "El lastmod del mapa del lloc ({lastmod}) difereix de dateModified ({modified}) en més d'un dia."
+    }
+  },
+  "content-date-manipulation": {
+    "title": "Dates actualitzades sense canvis substancials",
+    "why": "Google inclou canviar les dates de les pàgines perquè semblin recents sense canvis substancials entre els senyals d'alerta de contingut pensat primer per als cercadors.",
+    "fix": "Actualitza les dates només quan el contingut canviï de manera substancial. Genera dateModified a partir de revisions reals del contingut.",
+    "messages": {
+      "fail": "dateModified no reflecteix els canvis del contingut.",
+      "fail:per-request": "El dateModified de {url} ha canviat de {first} a {second} entre dues obtencions fetes amb pocs moments de diferència, de manera que es genera a cada sol·licitud.",
+      "fail:crawl-date": "{count} de {total} pàgines tenen el dia del rastreig, {date}, com a dateModified.",
+      "fail:shared-date": "{count} de {total} pàgines comparteixen el dateModified {date}; l'analista hauria de comprovar si el contingut ha canviat."
+    }
+  },
+  "content-trust-pages": {
+    "title": "La informació «Qui som» i de contacte és fàcil de trobar",
+    "why": "Les directrius per als avaluadors consideren que la informació clara sobre qui gestiona un lloc i com contactar-hi forma part de la confiança; la quantitat esperada depèn del propòsit del lloc, i és més gran per a les botigues i els temes YMYL.",
+    "fix": "Enllaça les pàgines «Qui som», «Contacte» i de polítiques des del peu de pàgina. A la pàgina «Qui som», indica qui gestiona el lloc, amb la ubicació i els canals de contacte.",
+    "messages": {
+      "fail": "La pàgina d'inici no porta a informació sobre qui gestiona el lloc.",
+      "fail:no-contact": "La pàgina d'inici no té cap enllaç de contacte, secció de contacte, adreça electrònica ni enllaç de telèfon.",
+      "fail:no-about": "La pàgina d'inici no té cap enllaç a una pàgina o secció «Qui som»; l'analista hauria de comprovar si la mateixa pàgina d'inici diu qui gestiona el lloc."
+    }
+  },
+  "content-stale-content": {
+    "title": "Senyals de contingut desactualitzat en pàgines sensibles al temps",
+    "why": "Google fa servir sistemes d'actualitat quan els usuaris esperen informació recent. El contingut perenne no necessita actualitzacions freqüents, i Google adverteix contra els canvis de data merament estètics.",
+    "fix": "Actualitza els fets i les xifres obsolets i canvia la data en conseqüència, o etiqueta el contingut com a històric.",
+    "messages": {
+      "fail": "Afirmacions de la pàgina datades en anys anteriors a {year}: {count}. L'analista hauria de jutjar si el tema necessita informació més recent."
+    }
+  },
+  "content-intent-match": {
+    "title": "Adequació a la intenció de cerca",
+    "why": "Les directrius per als avaluadors valoren fins a quin punt un resultat satisfà les necessitats que hi ha darrere d'una consulta. Sense una consulta objectiu del propietari, l'analista n'infereix una i ho indica.",
+    "fix": "Alinea el format de la pàgina amb la intenció (una guia per a Know, una eina o una pàgina de producte per a Do, informació d'ubicació per a Visit-in-person). Respon aviat a la necessitat principal.",
+    "messages": {}
+  },
+  "content-subtopic-coverage": {
+    "title": "Cobertura i profunditat respecte de la necessitat de l'usuari",
+    "why": "Google pregunta si el contingut ofereix una descripció substancial i completa del tema. La completesa depèn del propòsit i no es recomana cap nombre de paraules.",
+    "fix": "Afegeix la informació essencial que falta. No l'omplis amb subtemes tangencials.",
+    "messages": {}
+  },
+  "content-gsc-low-ctr": {
+    "title": "Pàgines amb un percentatge de clics molt per sota de la norma del lloc",
+    "why": "Una pàgina que apareix sovint però que rep pocs clics en la seva posició sol tenir un títol o un fragment que no coincideix amb el que volen els usuaris que cerquen. La comparació fa servir el CTR del mateix lloc a cada posició, no una corba del sector.",
+    "fix": "Reescriu el títol i la metadescripció per a les consultes de la llista, de manera que continuïn sent fidels a la pàgina. Comprova si un resultat enriquit o una pàgina del lloc que s'hi adequa millor s'emporta els clics.",
+    "messages": {
+      "fail": "{page} ha obtingut {impressions} impressions a la posició {position} amb un CTR de {ctr}, enfront de {expected} per al lloc en aquesta posició."
+    }
+  },
+  "content-gsc-cannibalization": {
+    "title": "Diverses pàgines competeixen per la mateixa consulta",
+    "why": "Quan dues o més pàgines del lloc es reparteixen les impressions d'una consulta i cap no s'emporta la majoria dels clics, Google va alternant entre elles i cap no es posiciona tan bé com ho faria una sola pàgina.",
+    "fix": "Decideix quina pàgina hauria de respondre la consulta. Fes-la la més completa, enllaça-hi des de les altres amb les paraules de la consulta i diferencia o fusiona la resta.",
+    "messages": {
+      "fail": "{count} pàgines es reparteixen les impressions de la consulta «{query}»: {pages}."
+    }
+  },
+  "content-gsc-striking-distance": {
+    "title": "Consultes posicionades just per sota de la primera pàgina",
+    "why": "Les consultes per a les quals una pàgina ja es posiciona entre les posicions 11 i 20 són les que costa menys millorar: la pàgina és rellevant, i una resposta millor o uns enllaços interns més forts la poden portar a la primera pàgina.",
+    "fix": "Per a cada consulta, comprova que la pàgina la respon de manera completa i aviat, i enllaça-hi des de pàgines relacionades amb un text d'ancoratge descriptiu.",
+    "messages": {
+      "fail": "Consultes entre les posicions 11 i 20: {count}; per exemple, «{query}» per a {page} a la posició {position}."
+    }
+  },
+  "content-gsc-traffic-drop": {
+    "title": "Pàgines que han perdut clics respecte dels 28 dies anteriors",
+    "why": "Una caiguda significativa dels clics d'una pàgina apunta a una pèrdua de posicionament, a un problema d'indexació o a un canvi en la demanda, i val la pena revisar-la abans que s'estengui.",
+    "fix": "Inspecciona la pàgina per detectar canvis d'indexació i de canònica, compara'n les consultes entre els dos períodes a Search Console i revisa les edicions recents de la pàgina.",
+    "messages": {
+      "fail": "{page} ha baixat de {before} clics a {now} respecte dels 28 dies anteriors."
+    }
+  },
+  "content-bing-low-ctr": {
+    "title": "Pàgines amb un percentatge de clics a Bing molt per sota de la norma del lloc",
+    "why": "Una pàgina que Bing mostra sovint però a la qual els usuaris rarament fan clic sol tenir un títol o un fragment que no coincideix amb el que busquen. La comparació fa servir el CTR de les altres pàgines del lloc en una posició semblant a Bing, no una corba del sector.",
+    "fix": "Reescriu el títol i la metadescripció per a les consultes de la llista, de manera que continuïn sent fidels a la pàgina. Comprova a Bing si un resultat més complet o una altra pàgina del lloc s'emporta els clics.",
+    "messages": {
+      "fail": "{page} ha obtingut {impressions} impressions a Bing a la posició {position} amb un CTR de {ctr}, enfront de {expected} de les altres pàgines del lloc en aquesta posició, del {start} al {end}."
+    }
+  },
+  "content-bing-ai-performance": {
+    "title": "Les citacions a Copilot només són a Bing Webmaster Tools",
+    "why": "L'informe AI Performance de Bing Webmaster Tools mostra amb quina freqüència Microsoft Copilot, els resums generats amb IA de Bing i determinades integracions de socis citen les pàgines del lloc, i per a quines consultes de fonamentació. L'API de Bing Webmaster no té cap mètode per a aquest informe, de manera que una auditoria no el pot incloure.",
+    "fix": "Obre l'informe AI Performance del lloc a Bing Webmaster Tools per veure el total de citacions, les pàgines citades i les consultes de fonamentació. Bing indica que les consultes de fonamentació són una mostra de l'activitat de citació.",
+    "messages": {
+      "fail": "Les citacions de {site} a Microsoft Copilot i als resums generats amb IA de Bing només són a l'informe AI Performance de Bing Webmaster Tools (https://www.bing.com/webmasters); l'API de Bing Webmaster no té cap mètode per a aquest informe, de manera que aquesta auditoria no les inclou."
+    }
+  }
+}

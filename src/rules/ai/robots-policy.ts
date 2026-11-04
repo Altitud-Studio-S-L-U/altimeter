@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import { isAllowed } from '../../fetch/robots.ts';
 import { summarizeList } from '../helpers.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -25,7 +26,7 @@ const wildcardDisallowAll: RuleImplementation = {
     const evidence = accessEvidence(context, robots, inheriting[0]!);
     for (const engine of searchEngines) {
       const group = file.groups.find(entry => entry.userAgents.includes(engine.token));
-      if (group) evidence.push(robotsLineEvidence(context, robots, group.line, `robots.txt group that names ${engine.token}`));
+      if (group) evidence.push(robotsLineEvidence(context, robots, group.line, evidenceLabel('robots.txt group that names {token}', { token: engine.token })));
     }
     return {
       outcome: 'fail', severity: 'medium', reason: 'ai-search-inherits-block', evidence,
@@ -129,7 +130,7 @@ const legacyTokenRule: RuleImplementation = {
       seen.add(value.toLowerCase());
       results.push({
         outcome: 'fail', severity: 'low', reason: legacy ? 'legacy-token' : 'near-miss-token',
-        evidence: [robotsLineEvidence(context, robots, index + 1, 'user-agent line naming a token that no current crawler documentation lists')],
+        evidence: [robotsLineEvidence(context, robots, index + 1, evidenceLabel('user-agent line naming a token that no current crawler documentation lists'))],
         params: { token: value, current: currentNames.get(current) ?? current },
       });
     }

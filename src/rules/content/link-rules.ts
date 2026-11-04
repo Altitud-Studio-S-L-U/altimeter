@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { attribute } from '../../parse/html.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
@@ -9,7 +10,7 @@ import { affiliateNetwork, anchorSource, anchorsOf, followed, isProfileLink, typ
 
 const qualified = (anchor: Anchor) => anchor.rel.has('sponsored') || anchor.rel.has('nofollow');
 
-function citeLinks(context: RuleContext, doc: DocumentFacts, anchors: readonly Anchor[], label: string, url?: string): string[] {
+function citeLinks(context: RuleContext, doc: DocumentFacts, anchors: readonly Anchor[], label: EvidenceLabel, url?: string): string[] {
   return anchors.slice(0, 5).map(anchor => cite(context, 'html', label, { excerpt: anchorSource(doc, anchor), line: anchor.line, ...(url ? { url } : {}) }));
 }
 
@@ -28,7 +29,7 @@ export const thinAffiliate: RuleImplementation = {
     if (affiliate.length === 0) return { outcome: 'pass' };
     const networks = [...new Set(affiliate.map(anchor => affiliateNetwork(anchor.href)!))];
     return { outcome: 'fail', severity: 'medium', needsJudgment: true, params: { count: affiliate.length, networks: summarizeList(networks) },
-      evidence: citeLinks(context, doc, affiliate, 'affiliate link') };
+      evidence: citeLinks(context, doc, affiliate, evidenceLabel('affiliate link')) };
   },
 };
 
@@ -46,8 +47,8 @@ export const paidLinksUnqualified: RuleImplementation = {
     const paid = anchorsOf(doc, page.fetch.finalUrl).filter(anchor => anchor.external && (affiliateNetwork(anchor.href) !== undefined || inSponsoredBlock(anchor)));
     if (paid.length === 0) return notApplicable('no-paid-links');
     const bare = paid.filter(anchor => !qualified(anchor));
-    if (bare.length === 0) return { outcome: 'pass', evidence: citeLinks(context, doc, paid.slice(0, 2), 'qualified paid or affiliate link') };
-    return { outcome: 'fail', severity: 'medium', params: { count: bare.length, total: paid.length }, evidence: citeLinks(context, doc, bare, 'paid or affiliate link without rel=sponsored or nofollow') };
+    if (bare.length === 0) return { outcome: 'pass', evidence: citeLinks(context, doc, paid.slice(0, 2), evidenceLabel('qualified paid or affiliate link')) };
+    return { outcome: 'fail', severity: 'medium', params: { count: bare.length, total: paid.length }, evidence: citeLinks(context, doc, bare, evidenceLabel('paid or affiliate link without rel=sponsored or nofollow')) };
   },
 };
 
@@ -72,7 +73,7 @@ export const ugcLinkQualifiers: RuleImplementation = {
     const links = anchorsOf(doc, page.fetch.finalUrl).filter(anchor => anchor.external && anchor.ancestors.some(ugcRegion));
     const bare = links.filter(anchor => !['ugc', 'nofollow', 'sponsored'].some(token => anchor.rel.has(token)));
     if (bare.length === 0) return { outcome: 'pass' };
-    return { outcome: 'fail', severity: 'medium', params: { count: bare.length }, evidence: citeLinks(context, doc, bare, 'external link in user-generated content without rel=ugc or nofollow') };
+    return { outcome: 'fail', severity: 'medium', params: { count: bare.length }, evidence: citeLinks(context, doc, bare, evidenceLabel('external link in user-generated content without rel=ugc or nofollow')) };
   },
 };
 
@@ -98,7 +99,7 @@ export const linkSchemesVisible: RuleImplementation = {
     if (sitewide.length === 0) return { outcome: 'pass' };
     return sitewide.slice(0, 10).map((entry): RuleResult => ({
       outcome: 'fail', severity: 'medium', needsJudgment: true, params: { anchor: clip(entry.anchor.text, 80), target: entry.anchor.href, pages: entry.pages.size },
-      evidence: [cite(context, 'crawl', `followed keyword link in the template of ${entry.pages.size} of ${pages.length} pages`, { url: entry.page.fetch.finalUrl, excerpt: anchorSource(entry.doc, entry.anchor), line: entry.anchor.line })],
+      evidence: [cite(context, 'crawl', evidenceLabel('followed keyword link in the template of {count} of {total} pages', { count: entry.pages.size, total: pages.length }), { url: entry.page.fetch.finalUrl, excerpt: anchorSource(entry.doc, entry.anchor), line: entry.anchor.line })],
     }));
   },
 };
@@ -122,7 +123,7 @@ export const anchorTextEmpty: RuleImplementation = {
     if (empty.length === 0) return { outcome: 'pass' };
     const internal = empty.filter(anchor => !anchor.external);
     return { outcome: 'fail', severity: internal.length > 0 ? 'medium' : 'low', reason: internal.length > 0 ? 'internal' : 'external',
-      params: { count: empty.length, internal: internal.length }, evidence: citeLinks(context, doc, internal.length > 0 ? internal : empty, 'link without text, image alt or label') };
+      params: { count: empty.length, internal: internal.length }, evidence: citeLinks(context, doc, internal.length > 0 ? internal : empty, evidenceLabel('link without text, image alt or label')) };
   },
 };
 
@@ -150,10 +151,10 @@ export const anchorTextQuality: RuleImplementation = {
     const generic = anchors.filter(anchor => genericAnchors.has(anchorKey(anchor.text)) && !attribute(anchor.element, 'aria-label') && !described.has(target(anchor)));
     if (generic.length > 0) {
       results.push({ outcome: 'fail', severity: 'low', reason: 'generic', params: { count: generic.length, examples: summarizeList([...new Set(generic.map(anchor => anchor.text))]) },
-        evidence: citeLinks(context, doc, generic, 'generic anchor text') });
+        evidence: citeLinks(context, doc, generic, evidenceLabel('generic anchor text')) });
     }
     const long = anchors.filter(anchor => anchor.text.length > 100 && !elements(anchor.element, element => blockChildren.has(element.tagName)).length);
-    if (long.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'too-long', params: { count: long.length }, evidence: citeLinks(context, doc, long, 'anchor text over 100 characters') });
+    if (long.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'too-long', params: { count: long.length }, evidence: citeLinks(context, doc, long, evidenceLabel('anchor text over 100 characters')) });
     const repeats = new Map<string, Anchor[]>();
     for (const anchor of all.filter(entry => !entry.external && words(entry.text).length >= 2)) {
       const key = `${target(anchor)}|${anchorKey(anchor.text)}`;
@@ -162,7 +163,7 @@ export const anchorTextQuality: RuleImplementation = {
     const repeated = [...repeats.values()].filter(group => group.length >= 10).sort((a, b) => b.length - a.length)[0];
     if (repeated) {
       results.push({ outcome: 'fail', severity: 'low', reason: 'repeated', params: { count: repeated.length, anchor: clip(repeated[0]!.text, 80) },
-        evidence: citeLinks(context, doc, repeated.slice(0, 2), `same anchor text to the same page ${repeated.length} times`) });
+        evidence: citeLinks(context, doc, repeated.slice(0, 2), evidenceLabel('same anchor text to the same page {count} times', { count: repeated.length })) });
     }
     return results.length > 0 ? results : { outcome: 'pass' };
   },
@@ -182,6 +183,6 @@ export const outboundCitations: RuleImplementation = {
     const nofollow = editorial.filter(entry => entry.anchor.rel.has('nofollow'));
     if (nofollow.length < editorial.length) return { outcome: 'pass' };
     return { outcome: 'fail', severity: 'low', params: { count: editorial.length },
-      evidence: editorial.slice(0, 3).map(entry => cite(context, 'html', 'editorial external link with rel=nofollow', { url: entry.url, excerpt: anchorSource(entry.doc, entry.anchor), line: entry.anchor.line })) };
+      evidence: editorial.slice(0, 3).map(entry => cite(context, 'html', evidenceLabel('editorial external link with rel=nofollow'), { url: entry.url, excerpt: anchorSource(entry.doc, entry.anchor), line: entry.anchor.line })) };
   },
 };

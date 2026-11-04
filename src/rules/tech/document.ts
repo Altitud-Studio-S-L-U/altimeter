@@ -1,3 +1,4 @@
+import { evidenceLabel, joinLabels } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { headerValue } from '../../fetch/http.ts';
 import { parseHtml, textOf, type ElementRef } from '../../parse/html.ts';
@@ -45,7 +46,7 @@ export const duplicateConflictingHeadTags: RuleImplementation = {
         if (values.size < 2 || conflicts.includes(group.name)) continue;
         conflicts.push(group.name);
         for (const entry of group.entries.slice(0, 4)) {
-          evidence.push(cite({ kind: 'html', url: page.fetch.finalUrl, label: `${group.name} declared more than once with different values (${source})`, excerpt: tagExcerpt(entry.ref), line: entry.ref.line }));
+          evidence.push(cite({ kind: 'html', url: page.fetch.finalUrl, label: joinLabels(evidenceLabel('{name} declared more than once with different values', { name: group.name }), source === 'raw HTML' ? evidenceLabel('(raw HTML)') : evidenceLabel('(rendered DOM)')), excerpt: tagExcerpt(entry.ref), line: entry.ref.line }));
         }
       }
     }
@@ -64,7 +65,7 @@ export const doctypeStandardsMode: RuleImplementation = {
     const cite = citer(context);
     const node = raw.parsed.document.childNodes.find(child => child.nodeName === '#documentType') as { name?: string; publicId?: string; systemId?: string; sourceCodeLocation?: { startOffset: number; endOffset: number; startLine: number } } | undefined;
     const doctype = node?.sourceCodeLocation ? raw.html.slice(node.sourceCodeLocation.startOffset, node.sourceCodeLocation.endOffset) : undefined;
-    const evidence = [cite({ kind: 'html', url: page.fetch.finalUrl, label: 'document type declaration and parsing mode', excerpt: `${doctype ?? '(no doctype)'}; mode=${raw.parsed.mode}`, line: node?.sourceCodeLocation?.startLine })];
+    const evidence = [cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('document type declaration and parsing mode'), excerpt: `${doctype ?? '(no doctype)'}; mode=${raw.parsed.mode}`, line: node?.sourceCodeLocation?.startLine })];
     if (!node) return fail('low', evidence, 'missing', { mode: raw.parsed.mode });
     if (raw.parsed.mode !== 'no-quirks') return fail('low', evidence, raw.parsed.mode, { doctype: doctype ?? '' });
     // Lighthouse also fails a legacy doctype that still yields standards mode, such as HTML 4.01 Strict.
@@ -106,17 +107,17 @@ function charsetResult(page: PageFacts, cite: Cite): RuleResult {
   const body = page.fetch.body;
   const url = page.fetch.finalUrl;
   if (body.length >= 3 && body[0] === 0xef && body[1] === 0xbb && body[2] === 0xbf) {
-    return pass([cite({ kind: 'http', url, label: 'UTF-8 byte order mark at the start of the response', excerpt: 'EF BB BF' })]);
+    return pass([cite({ kind: 'http', url, label: evidenceLabel('UTF-8 byte order mark at the start of the response'), excerpt: 'EF BB BF' })]);
   }
   if (body.length >= 2 && ((body[0] === 0xff && body[1] === 0xfe) || (body[0] === 0xfe && body[1] === 0xff))) {
-    return fail('medium', [cite({ kind: 'http', url, label: 'UTF-16 byte order mark at the start of the response', excerpt: body.subarray(0, 2).toString('hex').toUpperCase() })], 'not-utf8', { label: 'utf-16' });
+    return fail('medium', [cite({ kind: 'http', url, label: evidenceLabel('UTF-16 byte order mark at the start of the response'), excerpt: body.subarray(0, 2).toString('hex').toUpperCase() })], 'not-utf8', { label: 'utf-16' });
   }
   const contentType = headerValue(page.fetch.headers, 'content-type') ?? '';
   const headerLabel = /charset\s*=\s*["']?([\w.:-]+)/iu.exec(contentType)?.[1];
   const header = headerLabel === undefined ? undefined : normalizeLabel(headerLabel);
   const metas = metaCharsets(body);
-  const headerEvidence = cite({ kind: 'header', url, label: 'Content-Type header of the HTML response', excerpt: `Content-Type: ${contentType || '(absent)'}` });
-  const metaEvidence = metas.slice(0, 3).map(meta => cite({ kind: 'html', url, label: meta.early ? 'meta charset within the first 1024 bytes' : 'meta charset after the first 1024 bytes', excerpt: meta.excerpt }));
+  const headerEvidence = cite({ kind: 'header', url, label: evidenceLabel('Content-Type header of the HTML response'), excerpt: `Content-Type: ${contentType || '(absent)'}` });
+  const metaEvidence = metas.slice(0, 3).map(meta => cite({ kind: 'html', url, label: meta.early ? evidenceLabel('meta charset within the first 1024 bytes') : evidenceLabel('meta charset after the first 1024 bytes'), excerpt: meta.excerpt }));
   const evidence = [headerEvidence, ...metaEvidence];
   const metaLabels = [...new Set(metas.map(meta => meta.label))];
   if (header !== undefined && header !== 'utf-8') return fail('medium', evidence, 'not-utf8', { label: header });
@@ -167,7 +168,7 @@ export const iframeMainContent: RuleImplementation = {
     const results: RuleResult[] = [];
     const untitled = frames.filter(frame => frameName(frame) === '');
     if (untitled.length > 0) {
-      const evidence = untitled.slice(0, 10).map(frame => cite({ kind: 'html', url: base, label: 'iframe without a title, aria-label or aria-labelledby', excerpt: startTag(doc, frame), line: lineOf(frame) }));
+      const evidence = untitled.slice(0, 10).map(frame => cite({ kind: 'html', url: base, label: evidenceLabel('iframe without a title, aria-label or aria-labelledby'), excerpt: startTag(doc, frame), line: lineOf(frame) }));
       results.push(fail('low', evidence, 'missing-title', { count: untitled.length }));
     }
     const words = wordCount(doc.parsed.bodyText);
@@ -179,8 +180,8 @@ export const iframeMainContent: RuleImplementation = {
     // A page whose own text is short while a non-embed frame is present may deliver its main content in the frame.
     if (content.length > 0 && words < 150) {
       const evidence = [
-        ...content.slice(0, 5).map(frame => cite({ kind: 'html', url: base, label: 'iframe that is not a common embed', excerpt: startTag(doc, frame), line: lineOf(frame) })),
-        cite({ kind: 'text', url: base, label: 'word count of the page text outside frames', excerpt: String(words) }),
+        ...content.slice(0, 5).map(frame => cite({ kind: 'html', url: base, label: evidenceLabel('iframe that is not a common embed'), excerpt: startTag(doc, frame), line: lineOf(frame) })),
+        cite({ kind: 'text', url: base, label: evidenceLabel('word count of the page text outside frames'), excerpt: String(words) }),
       ];
       results.push(fail('low', evidence, 'content-in-iframe', { count: content.length, words }, true));
     }
@@ -211,7 +212,7 @@ export const noscriptContent: RuleImplementation = {
       const sample = text.slice(0, 80).toLowerCase();
       const absent = renderedText === '' || (sample !== '' && !renderedText.includes(sample));
       if ((words >= 50 || links >= 3) && absent) {
-        candidates.push(cite({ kind: 'html', url: page.fetch.finalUrl, label: `noscript block with ${words} words and ${links} links not found in the rendered page`, excerpt: shorten(inner.trim(), 600), line: lineOf(block) }));
+        candidates.push(cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('noscript block with {words} words and {links} links not found in the rendered page', { words, links }), excerpt: shorten(inner.trim(), 600), line: lineOf(block) }));
       }
     }
     if (candidates.length === 0) return pass();

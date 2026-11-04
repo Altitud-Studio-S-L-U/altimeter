@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { EvidenceStore } from '../src/core/evidence.ts';
+import { evidenceLabel, EvidenceStore } from '../src/core/evidence.ts';
 import type { PageFacts, SiteFacts } from '../src/core/facts.ts';
 import type { RuleMeta } from '../src/core/types.ts';
 import type { FetchResult } from '../src/fetch/http.ts';
@@ -33,8 +33,8 @@ const titleRule: RuleImplementation = {
   id: 'content-test-title',
   evaluate({ page, evidence }) {
     const titles = page!.raw!.parsed.titles;
-    if (titles.length > 0) return { outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: page!.url, label: 'title element', excerpt: titles[0]!.text, line: titles[0]!.line })] };
-    return { outcome: 'fail', severity: 'critical', evidence: [evidence.add({ kind: 'html', url: page!.url, label: 'no title element in the raw HTML' })] };
+    if (titles.length > 0) return { outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('title element'), excerpt: titles[0]!.text, line: titles[0]!.line })] };
+    return { outcome: 'fail', severity: 'critical', evidence: [evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('no title element in the raw HTML') })] };
   },
 };
 
@@ -90,7 +90,7 @@ describe('runRules', () => {
 
   test('marks hybrid candidates as needing judgment with low confidence', () => {
     const candidate: RuleImplementation = { id: 'content-test-title', evaluate: ({ evidence, page }) => ({ outcome: 'fail', severity: 'medium', needsJudgment: true,
-      evidence: [evidence.add({ kind: 'html', url: page!.url, label: 'candidate' })] }) };
+      evidence: [evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('candidate') })] }) };
     const findings = runRules({ rules: [meta({})], implementations: new Map([[candidate.id, candidate]]), site: site(pages.slice(0, 1)), evidence: new EvidenceStore() });
     assert.deepEqual([findings[0]?.needsJudgment, findings[0]?.confidence], [true, 'low']);
   });

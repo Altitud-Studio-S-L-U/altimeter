@@ -1,14 +1,16 @@
 import { rule as catalogRule, rules as catalogRules } from '../../catalog/index.ts';
 import { EvidenceStore, type EvidenceItem } from '../../core/evidence.ts';
 import type { SiteFacts } from '../../core/facts.ts';
+import { evidenceLabelText } from '../../i18n/evidence.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../../i18n/messages.ts';
 import { ui } from '../../i18n/ui.ts';
+import { localizeValue } from '../../i18n/values.ts';
 import { runRules, type Finding } from '../../rules/engine.ts';
 import { implementations } from '../../rules/owner/bots.ts';
 import { cleanLine, untrustedBlock, untrustedInline } from '../../report/sanitize.ts';
 import { severityWeights } from '../../score/score.ts';
 import { version } from '../../version.ts';
-import type { BotActivity, BotPurpose, BotSummary } from './activity.ts';
+import type { BotActivity, BotPurpose, BotSummary, IpListStatus } from './activity.ts';
 
 /** bots.json: the activity, the findings of the crawler rules and the evidence they cite. */
 export interface BotsReport {
@@ -76,9 +78,12 @@ interface Labels {
   readonly discarded: string;
   readonly lists: string;
   readonly listLine: string;
+  readonly listSources: Readonly<Record<IpListStatus['from'], string>>;
   readonly dnsOn: string;
+  readonly dnsOnCapped: string;
   readonly dnsOff: string;
   readonly robots: string;
+  readonly robotsSources: Readonly<Record<NonNullable<NonNullable<BotActivity['site']>['robots']>['effectiveFromSource'], string>>;
   readonly untrusted: string;
 }
 
@@ -121,9 +126,12 @@ const labels: Readonly<Record<Language, Labels>> = {
     discarded: 'Set aside: {list}.',
     lists: 'Published address lists',
     listLine: '{id}: {prefixes} prefixes, created {created}, {from}',
-    dnsOn: 'Reverse DNS: {lookups} addresses looked up, {errors} failed{capped}.',
+    listSources: { network: 'network', cache: 'cache', 'stale-cache': 'stale-cache', unavailable: 'unavailable' },
+    dnsOn: 'Reverse DNS: {lookups} addresses looked up, {errors} failed.',
+    dnsOnCapped: 'Reverse DNS: {lookups} addresses looked up, {errors} failed (limit reached).',
     dnsOff: 'Reverse DNS: off.',
     robots: 'robots.txt is taken to apply from {date} ({source}).',
+    robotsSources: { owner: 'owner', 'last-modified': 'last-modified', assumed: 'assumed' },
     untrusted: 'Paths, user agents and file names come from the logs; they are shown as untrusted text.',
   },
   es: {
@@ -132,85 +140,91 @@ const labels: Readonly<Record<Language, Labels>> = {
     window: 'Ventana: del {start} al {end} ({days} días)',
     generated: 'Generado por Altimeter {version} el {date}',
     sources: 'Fuentes',
-    logSource: '{file}: {format}, {lines} líneas, {records} peticiones en la ventana, {malformed} líneas mal formadas',
+    logSource: '{file}: formato {format}, {lines} líneas, {records} solicitudes en la ventana, líneas mal formadas: {malformed}',
     cloudflareSource: 'Cloudflare GraphQL Analytics de {zone}: {queries} consultas, agrupadas por {dimensions}',
     sampled: 'Cloudflare muestrea estos datos, así que las cifras marcadas con ~ son estimaciones.',
     noFindings: 'Ninguna regla de rastreadores ha fallado.',
     crawlers: 'Rastreadores',
-    noCrawlers: 'Ninguna petición de un rastreador conocido en la ventana.',
-    columns: ['Rastreador', 'Operador', 'Uso', 'Verificadas', 'Sin verificar', 'Suplantadas', 'Última verificada', 'robots.txt', 'llms.txt'],
+    noCrawlers: 'No hay ninguna solicitud de un rastreador conocido en la ventana.',
+    columns: ['Rastreador', 'Operador', 'Finalidad', 'Verificadas', 'Sin verificar', 'Suplantadas', 'Última verificada', 'robots.txt', 'llms.txt'],
     purposes: { search: 'búsqueda', training: 'entrenamiento', 'user-triggered': 'a petición del usuario' },
     unverifiable: 'sin comprobación publicada',
     lowerBound: 'mínimo',
     answers: 'Respuestas e indicios de renderizado',
     answerColumns: ['Rastreador', 'Respuestas', 'Desafíos', 'Scripts', 'Hojas de estilo', 'Bytes'],
     coverage: 'Cobertura del sitemap',
-    coverageColumns: ['Rastreador', 'URLs del sitemap pedidas', 'Respondidas con 2xx o 304'],
+    coverageColumns: ['Rastreador', 'URLs del sitemap solicitadas', 'Respondidas con 2xx o 304'],
     notObservable: 'No observable en los registros',
-    notObservableLine: '{name} ({operator}) es un token de robots.txt que ninguna petición lleva, así que los registros no muestran si se respeta.',
+    notObservableLine: '{name} ({operator}) es un token de robots.txt que ninguna solicitud lleva, así que los registros no muestran si se respeta.',
     referrals: 'Visitas que llegan desde asistentes de IA',
-    referralsMissing: 'Los datos no registran el referente.',
-    referralsNone: 'Ninguna visita llegó desde un asistente de IA.',
+    referralsMissing: 'Los datos no registran la URL de referencia.',
+    referralsNone: 'Ninguna visita ha llegado desde un asistente de IA.',
     referralLine: '{host} ({assistant}): {visits}',
-    tagged: 'Peticiones con utm_source=chatgpt.com: {count}',
-    referralsCaveat: 'Los clics desde AI Overviews y AI Mode de Google llegan como Búsqueda de Google y no se pueden distinguir. Las apps y los enlaces noreferrer no envían referente, así que estas cifras son mínimos.',
+    tagged: 'Solicitudes con utm_source=chatgpt.com: {count}',
+    referralsCaveat: 'Los clics desde las Vistas creadas con IA y el Modo IA de Google llegan como Búsqueda de Google y no se pueden distinguir. Las apps y los enlaces noreferrer no envían la URL de referencia, así que estas cifras son mínimos.',
     definitions: [
-      'Verificada: la petición pasó una comprobación que publica su operador (lista de IP, DNS inverso con confirmación directa) o Cloudflare la marcó como bot verificado.',
-      'Sin verificar: no se pudo hacer la comprobación (sin dirección del cliente, dirección de un proxy, lista no disponible, DNS desactivado o con errores).',
-      'Suplantada: todas las comprobaciones publicadas se hicieron con datos actuales y fallaron.',
-      'Los operadores sin comprobación publicada (Meta, ByteDance, MistralAI-Training) solo tienen peticiones declaradas.',
+      'Verificada: la solicitud ha superado una comprobación que publica su operador (lista de IP, DNS inverso con confirmación directa) o Cloudflare la ha marcado como bot verificado.',
+      'Sin verificar: no se ha podido hacer la comprobación (sin dirección del cliente, dirección de un proxy, lista no disponible, DNS desactivado o con errores).',
+      'Suplantada: todas las comprobaciones publicadas se han hecho con datos actuales y han fallado.',
+      'Los operadores sin comprobación publicada (Meta, ByteDance, MistralAI-Training) solo tienen solicitudes declaradas.',
     ],
-    clientIp: 'Dirección del cliente: {source}; se pudieron comprobar {checkable} de {claims} peticiones de rastreadores.',
+    clientIp: 'Dirección del cliente: {source}; se han podido comprobar {checkable} de {claims} solicitudes de rastreadores.',
     discarded: 'Apartadas: {list}.',
     lists: 'Listas de direcciones publicadas',
     listLine: '{id}: {prefixes} prefijos, creada {created}, {from}',
-    dnsOn: 'DNS inverso: {lookups} direcciones consultadas, {errors} con error{capped}.',
+    listSources: { network: 'descargada ahora', cache: 'desde la caché', 'stale-cache': 'copia caducada de la caché', unavailable: 'no disponible' },
+    dnsOn: 'DNS inverso: {lookups} direcciones consultadas, {errors} con error.',
+    dnsOnCapped: 'DNS inverso: {lookups} direcciones consultadas, {errors} con error (se ha alcanzado el límite).',
     dnsOff: 'DNS inverso: desactivado.',
     robots: 'Se considera que el robots.txt actual se aplica desde el {date} ({source}).',
-    untrusted: 'Las rutas, los user agents y los nombres de archivo vienen de los registros y se muestran como texto no fiable.',
+    robotsSources: { owner: 'fecha indicada por el propietario', 'last-modified': 'cabecera Last-Modified', assumed: 'fecha supuesta' },
+    untrusted: 'Las rutas, los user-agents y los nombres de archivo vienen de los registros y se muestran como texto no fiable.',
   },
   ca: {
     title: 'Activitat de rastrejadors a {site}',
     titleNoSite: 'Activitat de rastrejadors',
-    window: 'Finestra: del {start} al {end} ({days} dies)',
+    window: 'Període: del {start} al {end} (dies: {days})',
     generated: 'Generat per Altimeter {version} el {date}',
     sources: 'Fonts',
-    logSource: '{file}: {format}, {lines} línies, {records} peticions a la finestra, {malformed} línies mal formades',
-    cloudflareSource: 'Cloudflare GraphQL Analytics de {zone}: {queries} consultes, agrupades per {dimensions}',
-    sampled: 'Cloudflare mostreja aquestes dades, per tant les xifres marcades amb ~ són estimacions.',
+    logSource: '{file}: format {format}; línies: {lines}; sol·licituds dins del període: {records}; línies mal formades: {malformed}',
+    cloudflareSource: 'Cloudflare GraphQL Analytics, zona {zone} (consultes: {queries}; agrupació per {dimensions})',
+    sampled: 'Cloudflare mostreja aquestes dades, de manera que les xifres marcades amb ~ són estimacions.',
     noFindings: 'Cap regla de rastrejadors no ha fallat.',
     crawlers: 'Rastrejadors',
-    noCrawlers: 'Cap petició d\'un rastrejador conegut a la finestra.',
-    columns: ['Rastrejador', 'Operador', 'Ús', 'Verificades', 'Sense verificar', 'Suplantades', 'Darrera verificada', 'robots.txt', 'llms.txt'],
+    noCrawlers: 'Cap sol·licitud de cap rastrejador conegut durant el període.',
+    columns: ['Rastrejador', 'Operador', 'Finalitat', 'Verificades', 'Sense verificar', 'Suplantades', 'Darrera verificació', 'robots.txt', 'llms.txt'],
     purposes: { search: 'cerca', training: 'entrenament', 'user-triggered': 'a petició de l\'usuari' },
     unverifiable: 'sense comprovació publicada',
-    lowerBound: 'mínim',
+    lowerBound: 'valor mínim',
     answers: 'Respostes i indicis de renderització',
-    answerColumns: ['Rastrejador', 'Respostes', 'Reptes', 'Scripts', 'Fulls d\'estil', 'Bytes'],
-    coverage: 'Cobertura del sitemap',
-    coverageColumns: ['Rastrejador', 'URL del sitemap demanades', 'Respostes 2xx o 304'],
+    answerColumns: ['Rastrejador', 'Respostes', 'Desafiaments', 'Scripts', 'Fulls d\'estil', 'Bytes'],
+    coverage: 'Cobertura del mapa del lloc',
+    coverageColumns: ['Rastrejador', 'URL del mapa del lloc sol·licitades', 'Amb resposta 2xx o 304'],
     notObservable: 'No observable als registres',
-    notObservableLine: '{name} ({operator}) és un token de robots.txt que cap petició no porta, per tant els registres no mostren si es respecta.',
+    notObservableLine: '{name} ({operator}) és un identificador del robots.txt que no porta cap sol·licitud, de manera que els registres no poden mostrar si es respecta.',
     referrals: 'Visites que arriben des d\'assistents d\'IA',
     referralsMissing: 'Les dades no registren el referent.',
-    referralsNone: 'Cap visita no va arribar des d\'un assistent d\'IA.',
+    referralsNone: 'Cap visita no ha arribat des d\'un assistent d\'IA.',
     referralLine: '{host} ({assistant}): {visits}',
-    tagged: 'Peticions amb utm_source=chatgpt.com: {count}',
-    referralsCaveat: 'Els clics des d\'AI Overviews i AI Mode de Google arriben com a Cerca de Google i no es poden distingir. Les apps i els enllaços noreferrer no envien referent, per tant aquestes xifres són mínims.',
+    tagged: 'Sol·licituds amb utm_source=chatgpt.com: {count}',
+    referralsCaveat: 'Els clics des de les AI Overviews i l\'AI Mode de Google arriben com a visites de la Cerca de Google i no es poden distingir. Les aplicacions i els enllaços noreferrer no envien referent, de manera que aquestes xifres són valors mínims.',
     definitions: [
-      'Verificada: la petició va passar una comprovació que publica el seu operador (llista d\'IP, DNS invers amb confirmació directa) o Cloudflare la va marcar com a bot verificat.',
-      'Sense verificar: no es va poder fer la comprovació (sense adreça del client, adreça d\'un proxy, llista no disponible, DNS desactivat o amb errors).',
-      'Suplantada: totes les comprovacions publicades es van fer amb dades actuals i van fallar.',
-      'Els operadors sense comprovació publicada (Meta, ByteDance, MistralAI-Training) només tenen peticions declarades.',
+      'Verificada: la sol·licitud ha superat una comprovació que publica el seu operador (llista d\'IP, DNS invers amb confirmació directa) o Cloudflare l\'ha marcada com a bot verificat.',
+      'Sense verificar: no s\'ha pogut fer la comprovació (sense adreça del client, adreça d\'un proxy, llista no disponible, DNS desactivat o amb errors).',
+      'Suplantada: totes les comprovacions publicades s\'han fet amb dades actuals i han fallat.',
+      'Els operadors sense comprovació publicada (Meta, ByteDance, MistralAI-Training) només tenen sol·licituds declarades.',
     ],
-    clientIp: 'Adreça del client: {source}; es van poder comprovar {checkable} de {claims} peticions de rastrejadors.',
-    discarded: 'Apartades: {list}.',
+    clientIp: 'Adreça del client: {source}; sol·licituds de rastrejadors que s\'han pogut comprovar: {checkable} de {claims}.',
+    discarded: 'Sol·licituds apartades: {list}.',
     lists: 'Llistes d\'adreces publicades',
-    listLine: '{id}: {prefixes} prefixos, creada {created}, {from}',
-    dnsOn: 'DNS invers: {lookups} adreces consultades, {errors} amb error{capped}.',
+    listLine: '{id}: prefixos: {prefixes}; data de creació: {created}; {from}',
+    listSources: { network: 'baixada ara', cache: 'de la memòria cau', 'stale-cache': 'còpia caducada de la memòria cau', unavailable: 'no disponible' },
+    dnsOn: 'DNS invers (adreces consultades: {lookups}; amb error: {errors}).',
+    dnsOnCapped: 'DNS invers (adreces consultades: {lookups}; amb error: {errors}; s\'ha arribat al límit).',
     dnsOff: 'DNS invers: desactivat.',
     robots: 'Es considera que el robots.txt actual s\'aplica des del {date} ({source}).',
-    untrusted: 'Els camins, els user agents i els noms de fitxer vénen dels registres i es mostren com a text no fiable.',
+    robotsSources: { owner: 'data indicada pel propietari', 'last-modified': 'capçalera Last-Modified', assumed: 'data suposada' },
+    untrusted: 'Els camins, els agents d\'usuari i els noms de fitxer venen dels registres i es mostren com a text no fiable.',
   },
 };
 
@@ -226,9 +240,9 @@ function statuses(values: Readonly<Record<string, number>>): string {
   return entries.length === 0 ? '-' : entries.map(([status, hits]) => `${status} x${Math.round(hits)}`).join(', ');
 }
 
-function evidenceLine(item: EvidenceItem): string {
-  const where = [item.url, item.line ? `line ${item.line}` : undefined].filter(Boolean).join(', ');
-  const head = `${cleanLine(item.label)}${where ? ` (${untrustedInline(where, 160)})` : ''}`;
+function evidenceLine(item: EvidenceItem, language: Language): string {
+  const where = [item.url, item.line ? format(ui(language).lineNumber, { line: item.line }) : undefined].filter(Boolean).join(', ');
+  const head = `${cleanLine(evidenceLabelText(language, item))}${where ? ` (${untrustedInline(where, 160)})` : ''}`;
   if (item.excerpt === undefined) return head;
   return item.excerpt.includes('\n') ? `${head}:\n\n${untrustedBlock(item.excerpt, 3000).split('\n').map(line => `    ${line}`).join('\n')}\n` : `${head}: ${untrustedInline(item.excerpt, 300)}`;
 }
@@ -271,7 +285,7 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
     if (text) lines.push(`  ${cleanLine(text, 600)}`);
     for (const id of finding.evidence.slice(0, 4)) {
       const item = evidence.get(id);
-      if (item) lines.push(`  - ${t.evidence}: ${evidenceLine(item)}`);
+      if (item) lines.push(`  - ${t.evidence}: ${evidenceLine(item, language)}`);
     }
     if (texts.fix) lines.push(`  - ${t.fix}: ${cleanLine(texts.fix, 700)}`);
   }
@@ -320,15 +334,15 @@ export function renderBotsMarkdown(report: BotsReport, language: Language): stri
   lines.push(format(l.clientIp, { source: `\`${activity.clientIp.source}\``, checkable: amount(activity, language, activity.clientIp.checkable), claims: amount(activity, language, activity.clientIp.claims) }));
   const discarded = Object.entries(activity.clientIp.discarded);
   if (discarded.length > 0) lines.push('', format(l.discarded, { list: discarded.map(([reason, hits]) => `\`${cleanLine(reason, 40)}\` ${amount(activity, language, hits)}`).join(', ') }));
-  lines.push('', activity.dns.enabled ? format(l.dnsOn, { lookups: activity.dns.lookups, errors: activity.dns.errors, capped: activity.dns.capped ? ' (limit reached)' : '' }) : l.dnsOff);
-  if (activity.site?.robots) lines.push('', format(l.robots, { date: day(activity.site.robots.effectiveFrom), source: activity.site.robots.effectiveFromSource }));
+  lines.push('', activity.dns.enabled ? format(activity.dns.capped ? l.dnsOnCapped : l.dnsOn, { lookups: activity.dns.lookups, errors: activity.dns.errors }) : l.dnsOff);
+  if (activity.site?.robots) lines.push('', format(l.robots, { date: day(activity.site.robots.effectiveFrom), source: l.robotsSources[activity.site.robots.effectiveFromSource] }));
   if (activity.ipLists.length > 0) {
     lines.push('', `### ${l.lists}`, '');
     for (const list of activity.ipLists) {
-      lines.push(`- ${format(l.listLine, { id: `\`${list.id}\``, prefixes: list.prefixes, created: untrustedInline(list.creationTime ?? '-', 40), from: list.from })} <${list.url}>`);
+      lines.push(`- ${format(l.listLine, { id: `\`${list.id}\``, prefixes: list.prefixes, created: untrustedInline(list.creationTime ?? '-', 40), from: l.listSources[list.from] })} <${list.url}>`);
     }
   }
-  if (activity.warnings.length > 0) lines.push('', `### ${t.warnings}`, '', ...activity.warnings.map(warning => `- ${cleanLine(warning, 400)}`));
+  if (activity.warnings.length > 0) lines.push('', `### ${t.warnings}`, '', ...activity.warnings.map(warning => `- ${cleanLine(localizeValue(language, 'warning', warning), 400)}`));
   lines.push('');
   return lines.join('\n');
 }

@@ -1,1 +1,556 @@
-{}
+{
+  "content-title-missing": {
+    "title": "La página tiene exactamente un <title> no vacío en el head",
+    "why": "Google documenta el elemento <title> como la fuente principal del enlace de título que se muestra en los resultados. Sin un título no vacío, Google genera uno a partir de otro texto de la página, que puede no describirla bien.",
+    "fix": "Da a cada página indexable un <title> único y descriptivo en el <head> renderizado en el servidor.",
+    "messages": {
+      "fail": "La página no tiene ningún elemento <title> utilizable en su head.",
+      "fail:absent": "La página no tiene ningún elemento <title> en su head, así que Google genera el enlace de título a partir de otro texto de la página.",
+      "fail:empty": "El elemento <title> de la página está vacío, así que Google genera el enlace de título a partir de otro texto de la página."
+    }
+  },
+  "content-title-multiple": {
+    "title": "Más de un elemento <title>",
+    "why": "El estándar HTML permite un elemento title por documento. Si hay varios, los navegadores y los rastreadores usan el primero, así que los demás son texto muerto que puede contradecirlo.",
+    "fix": "Deja exactamente un <title> en el <head>. Revisa el CMS y los plugins de SEO por si lo insertan por duplicado.",
+    "messages": {
+      "fail": "El documento tiene {count} elementos <title>; los navegadores y los rastreadores usan el primero e ignoran el resto."
+    }
+  },
+  "content-title-raw-rendered-mismatch": {
+    "title": "El título difiere entre el HTML original y el DOM renderizado",
+    "why": "Google renderiza JavaScript y suele tomar el título renderizado, pero Bing, los bots de vista previa de enlaces y la mayoría de los fetchers de IA leen el HTML del servidor. Un título provisional en el HTML original, como el predeterminado del framework, llega a esos clientes.",
+    "fix": "Renderiza el título definitivo en el servidor para que todos los rastreadores y los scrapers de redes sociales vean el mismo valor.",
+    "messages": {
+      "fail": "El título del HTML original («{raw}») difiere del título renderizado («{rendered}»).",
+      "fail:raw-missing": "El HTML original no tiene título; solo JavaScript establece «{rendered}», que no ven los clientes que leen el HTML del servidor.",
+      "fail:placeholder": "El título del HTML original es provisional («{raw}»); solo JavaScript establece el título real, «{rendered}».",
+      "fail:differs": "El título del HTML original («{raw}») difiere del título renderizado («{rendered}»); los clientes que no ejecutan JavaScript ven el primero."
+    }
+  },
+  "content-title-duplicate": {
+    "title": "Títulos idénticos en varias páginas indexables",
+    "why": "Google documenta que los títulos idénticos o casi idénticos en varias páginas dificultan que los usuarios distingan los resultados y son un motivo habitual de reescritura de títulos.",
+    "fix": "Haz que cada título describa el contenido específico de esa página, por ejemplo, añadiendo lo que la distingue según su h1: la entidad, la temporada, la variante de producto o la ubicación.",
+    "messages": {
+      "fail": "{count} páginas indexables comparten el título «{title}»: {urls}.",
+      "fail:identical": "{count} páginas indexables comparten el título «{title}»: {urls}.",
+      "fail:same-without-brand": "{count} páginas indexables tienen el mismo título al quitar el nombre del sitio («{title}»): {urls}."
+    }
+  },
+  "content-title-boilerplate": {
+    "title": "Título dominado por texto de plantilla repetido",
+    "why": "Google incluye los títulos medio vacíos y los dominados por texto repetido en todo el sitio entre las causas de reescritura de los enlaces de título.",
+    "fix": "Reduce el texto de plantilla a un segmento breve con la marca al principio o al final, separado por un delimitador. Pon primero el texto específico de la página.",
+    "messages": {
+      "fail": "El título «{title}» es sobre todo texto de plantilla repetido.",
+      "fail:half-empty": "El título «{title}» solo contiene el nombre del sitio o un delimitador, un título medio vacío que Google puede reescribir.",
+      "fail:template-dominant": "En el título «{title}», el texto de plantilla repetido «{template}» es más ancho que la parte específica de la página."
+    }
+  },
+  "content-title-width": {
+    "title": "Título probablemente truncado (ancho en píxeles) o muy corto",
+    "why": "Google no fija ningún límite de longitud para los títulos y trunca los enlaces de título al ancho del dispositivo. Los títulos muy cortos se reescriben con más frecuencia. Los límites en píxeles que usan las herramientas proceden de mediciones del sector, no de Google.",
+    "fix": "Pon primero las palabras más importantes para que el truncamiento solo elimine la marca o las palabras secundarias.",
+    "messages": {
+      "fail": "La longitud del título puede provocar una reescritura o un truncamiento.",
+      "fail:short": "El título tiene {characters} caracteres; los títulos muy cortos se reescriben con más frecuencia.",
+      "fail:likely-truncated": "El título mide unos {width} px de ancho en Arial a 20 px, así que probablemente se trunque en los resultados para ordenador (es una estimación, no un límite de Google)."
+    }
+  },
+  "content-title-stuffing": {
+    "title": "Título con exceso de palabras clave o en forma de lista",
+    "why": "Google cita los títulos que repiten palabras clave o enumeran muchos términos como de baja calidad y como causa de reescrituras, y el exceso de palabras clave es una de las políticas de spam.",
+    "fix": "Usa una frase descriptiva y natural sobre el tema principal de la página, más la marca. Elimina las variantes de palabras clave.",
+    "messages": {
+      "fail": "Es posible que el título tenga exceso de palabras clave; el analista debería confirmarlo.",
+      "fail:repeated-token": "El título repite «{token}» {count} veces, un candidato a exceso de palabras clave.",
+      "fail:list": "El título es una lista de {segments} segmentos cortos, un candidato a título en forma de lista de palabras clave."
+    }
+  },
+  "content-title-h1-mismatch": {
+    "title": "El título y el encabezado visible principal no coinciden",
+    "why": "Google documenta que puede reescribir un título que no coincide con el encabezado visible principal, o cuando varios encabezados son igual de destacados y ninguno es claramente el título principal.",
+    "fix": "Haz que el título y el h1 describan lo mismo; no hace falta que sean idénticos. Haz que un encabezado sea claramente el título principal.",
+    "messages": {
+      "fail": "El título («{title}») y el encabezado principal («{heading}») comparten pocas palabras (coincidencia {overlap}); el analista debería confirmar si describen cosas distintas."
+    }
+  },
+  "content-title-obsolete-year": {
+    "title": "El año del título es anterior al contenido de la página",
+    "why": "Google documenta que reescribe los títulos cuyo año contradice un año más reciente de la página, con un ejemplo de un título reescrito para que coincida con el encabezado visible.",
+    "fix": "Actualiza el año del título solo cuando el contenido se haya actualizado de verdad para ese periodo. Si no, elimina el año.",
+    "messages": {
+      "fail": "El título menciona {titleYear} y el encabezado principal, {headingYear}; Google puede reescribir un título cuyo año es anterior al del encabezado."
+    }
+  },
+  "content-title-branding": {
+    "title": "Posición y repetición de la marca en los títulos",
+    "why": "Google puede mostrar el nombre del sitio por separado y puede quitar del enlace de título una marca repetida. La posición de la marca es una decisión editorial; que falte la marca no es un error.",
+    "fix": "Incluye la marca de forma concisa, una vez, al principio o al final, separada por un delimitador (por ejemplo, « – Marca»). Declara el nombre del sitio con datos estructurados WebSite en la página de inicio.",
+    "messages": {
+      "fail": "La posición de la marca en el título se podría mejorar.",
+      "fail:brand-absent": "El título no menciona el sitio («{brand}»); Google puede mostrar el nombre del sitio por separado, así que esto es informativo.",
+      "fail:repeated": "El título menciona «{brand}» {count} veces.",
+      "fail:brand-dominant": "La marca «{brand}» ocupa aproximadamente el {share} % del ancho del título.",
+      "fail:mid-title": "La marca «{brand}» está en mitad del título en lugar de al principio o al final."
+    }
+  },
+  "content-title-sensational": {
+    "title": "Título exagerado, impactante o engañoso",
+    "why": "Google pregunta si un título evita exagerar o impactar, y su documentación sobre Discover advierte contra el clickbait. Los evaluadores consideran de baja calidad los títulos que prometen más de lo que ofrece el contenido.",
+    "fix": "Haz que el título describa lo que la página ofrece de verdad. Elimina el sensacionalismo y el exceso de mayúsculas o signos de exclamación.",
+    "messages": {}
+  },
+  "content-meta-description-missing": {
+    "title": "Sin metadescripción",
+    "why": "Google genera los fragmentos principalmente a partir del contenido de la página y usa la metadescripción cuando describe mejor la página. Que falte la descripción nunca bloquea la indexación, pero deja el fragmento a la selección automática.",
+    "fix": "Escribe primero un resumen único y legible para las páginas clave (página de inicio, páginas populares). Las descripciones generadas mediante programación son adecuadas para sitios grandes basados en bases de datos si son variadas y legibles.",
+    "messages": {
+      "fail": "La página no tiene metadescripción, así que Google genera el fragmento solo a partir del contenido de la página.",
+      "fail:absent": "La página no tiene metadescripción, así que Google genera el fragmento solo a partir del contenido de la página.",
+      "fail:empty": "La metadescripción de la página está vacía, así que Google genera el fragmento solo a partir del contenido de la página."
+    }
+  },
+  "content-meta-description-duplicate": {
+    "title": "Metadescripciones idénticas en varias páginas",
+    "why": "Google documenta que las descripciones idénticas o similares en todas las páginas no son útiles y recomienda una descripción única para cada página.",
+    "fix": "Usa descripciones a nivel de sitio solo en la página de inicio y en las páginas de agregación. En el resto, escribe descripciones propias de cada página, empezando por las URLs críticas.",
+    "messages": {
+      "fail": "{count} páginas indexables comparten la metadescripción «{description}»: {urls}."
+    }
+  },
+  "content-meta-description-quality": {
+    "title": "La metadescripción es una lista de palabras clave, es demasiado corta o no es un resumen",
+    "why": "Google da ejemplos de descripciones deficientes: listas de palabras clave, el mismo texto en todas partes, texto que no resume la página y descripciones muy cortas. No fija ningún límite de longitud.",
+    "fix": "Escribe una o dos frases que resuman la página e incluyan detalles concretos, por ejemplo: «Con esta guía completa, aprende a cocinar huevos en 1 hora o menos».",
+    "messages": {
+      "fail": "Es posible que la metadescripción no resuma la página.",
+      "fail:placeholder": "La metadescripción contiene un marcador de posición de plantilla sin rellenar.",
+      "fail:same-as-title": "La metadescripción repite el título en lugar de resumir la página.",
+      "fail:keyword-list": "La metadescripción parece una lista de {segments} frases cortas; el analista debería confirmar si es una lista de palabras clave.",
+      "fail:short": "La metadescripción tiene {words} palabras; el analista debería confirmar si resume la página."
+    }
+  },
+  "content-data-nosnippet-invalid": {
+    "title": "data-nosnippet está en elementos no admitidos, lo añade JavaScript tarde o cubre el contenido principal",
+    "why": "Google solo respeta data-nosnippet en los elementos span, div y section. El texto que contiene se excluye de los fragmentos y de la entrada directa a las Vistas creadas con IA y al Modo IA, así que cubrir el contenido principal tiene el efecto de nosnippet en esas superficies.",
+    "fix": "Usa data-nosnippet solo en elementos span, div o section. Inclúyelo en el HTML del servidor o cuando JS inserte el elemento por primera vez.",
+    "messages": {
+      "fail": "data-nosnippet se usa de una forma que Google no respeta como se pretende.",
+      "fail:unsupported-element": "{count} atributo(s) data-nosnippet están en elementos en los que Google no los respeta ({tags}); solo se admiten span, div y section.",
+      "fail:added-by-javascript": "JavaScript añade {count} atributo(s) data-nosnippet a elementos que existen sin ese atributo en el HTML del servidor.",
+      "fail:covers-main-content": "Los elementos con data-nosnippet contienen aproximadamente el {share} % del contenido principal, así que ese texto queda fuera de los fragmentos y de la entrada de las Vistas creadas con IA."
+    }
+  },
+  "content-image-preview-large": {
+    "title": "No se permiten vistas previas de imagen grandes en artículos y páginas aptas para Discover",
+    "why": "Google recomienda max-image-preview:large para las páginas que quieren imágenes grandes en Discover, junto con imágenes de al menos 1200 px de ancho. Google no documenta el valor predeterminado cuando falta la directiva.",
+    "fix": "Añade <meta name=\"robots\" content=\"max-image-preview:large\"> a las páginas editoriales y ofrece una imagen representativa de al menos 1200 px de ancho.",
+    "messages": {
+      "fail": "El artículo no permite vistas previas de imagen grandes.",
+      "fail:absent": "El artículo no tiene ninguna directiva max-image-preview; Google recomienda max-image-preview:large para las imágenes grandes de Discover.",
+      "fail:restricted": "El artículo establece max-image-preview:{value}, lo que descarta las vistas previas de imagen grandes."
+    }
+  },
+  "content-h1-missing": {
+    "title": "No hay encabezado principal (h1) en el contenido renderizado",
+    "why": "Google usa el encabezado visible principal como un título principal claro, también cuando genera enlaces de título. Google afirma que el número y el orden de los encabezados no importan para el posicionamiento, así que varios elementos h1 nunca son un error.",
+    "fix": "Marca el título principal de la página como un h1 que describa el contenido.",
+    "messages": {
+      "fail": "La página no tiene h1 ni un título visualmente dominante, así que no hay un encabezado principal claro."
+    }
+  },
+  "content-h1-empty-or-image": {
+    "title": "El h1 está vacío u oculto, o es una imagen sin alt",
+    "why": "Un h1 sin nombre accesible, u oculto, no ofrece un título principal a las tecnologías de apoyo ni a los rastreadores. Un h1 que es una imagen necesita texto alternativo para tener nombre.",
+    "fix": "Pon el texto del título en el h1. Cuando una imagen de logotipo haga de h1, dale un texto alternativo que nombre la página o la marca.",
+    "messages": {
+      "fail": "El h1 de la página no ofrece ningún título principal.",
+      "fail:empty": "{count} elemento(s) h1 no tienen texto, alt de imagen ni etiqueta, así que no tienen nombre accesible.",
+      "fail:hidden": "Todos los h1 de la página ({count}) quedan fuera de la vista en el renderizado."
+    }
+  },
+  "content-heading-level-skips": {
+    "title": "Saltos en los niveles de encabezado (estructura de accesibilidad)",
+    "why": "Saltarse niveles de encabezado hace que el esquema sea más difícil de seguir con tecnologías de apoyo. Google afirma que el orden de los encabezados no importa para el posicionamiento, así que esto es una cuestión de accesibilidad.",
+    "fix": "Usa los niveles de encabezado para reflejar la estructura (h2 para secciones, h3 para subsecciones). Aplica los estilos con CSS, no con el nivel de encabezado.",
+    "messages": {
+      "fail": "Saltos de nivel de encabezado: {count}; el primero, de {from} a {to} en «{heading}». Esto afecta a la accesibilidad, no al posicionamiento."
+    }
+  },
+  "content-headings-descriptive": {
+    "title": "Los encabezados no resumen sus secciones",
+    "why": "Google recomienda encabezados que ayuden a los usuarios a navegar por el contenido y describe una organización clara como útil para los lectores y los sistemas de IA. No fija un número ideal de encabezados.",
+    "fix": "Reescribe los encabezados para que un lector que solo eche un vistazo a los encabezados entienda el esquema de la página.",
+    "messages": {}
+  },
+  "content-main-landmark": {
+    "title": "Contenido principal no identificable (sin punto de referencia <main>)",
+    "why": "Google no exige un elemento <main>. Un único punto de referencia main ayuda a las tecnologías de apoyo y permite a esta herramienta separar el contenido principal del texto de plantilla; sin él, la herramienta recurre a la extracción de contenido.",
+    "fix": "Envuelve el contenido principal en un único elemento <main> y deja fuera de él el header, el nav, el footer y las barras laterales.",
+    "messages": {
+      "fail": "La página no tiene exactamente un punto de referencia main.",
+      "fail:none": "La página no tiene ningún elemento main ni role=main, así que las tecnologías de apoyo no pueden saltar al contenido principal.",
+      "fail:multiple": "La página tiene {count} puntos de referencia main visibles; un documento debería tener uno."
+    }
+  },
+  "content-boilerplate-ratio": {
+    "title": "Poco contenido principal único en relación con la plantilla",
+    "why": "Google rechaza la idea de un número de palabras preferido, pero pregunta si una página aporta un valor sustancial. Las páginas en las que el texto de plantilla eclipsa el contenido único suelen tener poco valor, pero muchos tipos de página están completos con pocas palabras.",
+    "fix": "Asegúrate de que cada página indexable tenga contenido sustancial específico para su propósito, o consolida las variantes con poco contenido o aplícales noindex.",
+    "messages": {
+      "fail": "{url} tiene {uniqueWords} palabras de texto específico de la página y un {share} % de texto de plantilla; el analista debería juzgar si el contenido cumple el propósito de la página."
+    }
+  },
+  "content-filler-before-mc": {
+    "title": "El relleno, los anuncios o el contenido secundario desplazan hacia abajo el contenido principal",
+    "why": "Las directrices para evaluadores describen el relleno y los anuncios o el contenido complementario que distraen y se colocan antes del contenido principal como una mala experiencia de usuario. La documentación de Google sobre la experiencia en la página pregunta si el contenido principal es fácil de encontrar.",
+    "fix": "Pon el contenido más útil cerca del principio. Mueve más abajo la información de contexto complementaria.",
+    "messages": {
+      "fail": "El primer párrafo del contenido principal empieza {viewports} pantallas de móvil más abajo ({top} px); el analista debería comprobar si hay relleno antes."
+    }
+  },
+  "content-people-first": {
+    "title": "El contenido está centrado en las personas y aporta valor original (autoevaluación de contenido útil de Google)",
+    "why": "La documentación de Google sobre contenido útil, fiable y centrado en las personas enumera preguntas sobre originalidad, esfuerzo, conocimientos y propósito, y señales de alerta de contenido creado principalmente para los buscadores. Sus sistemas de posicionamiento intentan premiar el contenido que responde bien a esas preguntas. El analista evalúa la página con esas preguntas.",
+    "fix": "Añade experiencia de primera mano, datos o análisis originales, fuentes claras e información sobre el autor. Elimina el contenido escrito principalmente para conseguir tráfico de búsqueda.",
+    "messages": {}
+  },
+  "content-originality": {
+    "title": "Contenido principal copiado, parafraseado o sin valor añadido",
+    "why": "Las políticas de spam de Google y las directrices para evaluadores consideran de baja calidad el contenido principal copiado o ligeramente parafraseado sin valor añadido. El contenido con licencia y el sindicado no son copias.",
+    "fix": "Añade análisis, datos, contenido multimedia o experiencia originales. Canonicaliza o atribuye las copias sindicadas. Elimina las páginas de contenido extraído.",
+    "messages": {
+      "fail": "El {overlap} % del texto principal de esta página también aparece en {other}; el analista debería juzgar si está copiado o compartido de forma legítima."
+    }
+  },
+  "content-scaled-doorway": {
+    "title": "Abuso de contenido a gran escala o patrón de páginas puerta",
+    "why": "Las políticas de Google sobre el abuso de contenido a gran escala y las páginas puerta abarcan muchas páginas generadas principalmente para posicionar, ya sea mediante IA, personas o ambas, incluidas páginas casi idénticas que solo cambian un lugar o una palabra clave y páginas creadas para captar variantes de consultas. La regla informa de un patrón de riesgo, nunca de una penalización.",
+    "fix": "Fusiónalas en una página útil por cada oferta real, o añade contenido realmente local o único (personal, precios, casos, fotos de cada ubicación). Aplica noindex a las variantes generadas automáticamente o elimínalas.",
+    "messages": {
+      "fail": "{count} páginas tienen un texto principal que difiere como mucho en un 5 % de sus palabras ({urls}); el analista debería comprobar si hay un patrón de páginas puerta."
+    }
+  },
+  "content-ai-artifacts": {
+    "title": "Restos de IA o de plantillas en el contenido publicado",
+    "why": "La documentación de Google sobre el contenido de IA generativa pide exactitud y calidad sea cual sea el método de producción. Las frases de asistente que quedan, los marcadores de posición de plantilla o las variables sin rellenar muestran que el contenido se publicó sin revisar.",
+    "fix": "Elimina esos restos y revisa a mano todo el texto para comprobar su exactitud; Google pide verificar manualmente los datos de todo lo generado con IA, incluidos los metadatos.",
+    "messages": {
+      "fail": "Se han encontrado {count} resto(s) sin editar de generación o de plantilla en {where}.",
+      "fail:template-token": "Se han encontrado {count} token(s) de plantilla sin rellenar o resto(s) de generación en {where}.",
+      "fail:assistant-phrase": "Se han encontrado {count} frase(s) de asistente sin editar en {where}."
+    }
+  },
+  "content-ymyl-classification": {
+    "title": "Clasificación YMYL del tema de la página",
+    "why": "Las directrices para evaluadores aplican estándares más exigentes a los temas que pueden afectar de forma significativa a la salud, las finanzas, la seguridad o la sociedad. La mayoría de los temas no son YMYL. La clasificación establece el contexto para otros juicios.",
+    "fix": "En las páginas YMYL, muestra la autoría o la revisión de expertos y las fuentes, y deja claro quién es el responsable del sitio.",
+    "messages": {}
+  },
+  "content-eeat-signals": {
+    "title": "Evidencias de E-E-A-T en la página y el sitio (primero la fiabilidad)",
+    "why": "Las directrices para evaluadores describen la experiencia, los conocimientos, la autoridad y la fiabilidad, siendo la fiabilidad lo más importante, y la documentación de Google sobre contenido útil pregunta si está claro quién ha creado el contenido. E-E-A-T no es en sí un factor de posicionamiento.",
+    "fix": "Publica datos claros sobre la titularidad y el contacto, biografías de los autores con su experiencia relevante y políticas editoriales o de revisión. Cita las fuentes.",
+    "messages": {}
+  },
+  "content-hidden-text": {
+    "title": "Texto oculto (color, tamaño, opacidad, posición, detrás de imágenes)",
+    "why": "Las políticas de spam de Google prohíben el texto oculto para los usuarios pero presente para los buscadores, como el texto del color del fondo, detrás de imágenes o colocado fuera de la pantalla. Permiten de forma explícita las pestañas, los acordeones, los controles deslizantes, las descripciones emergentes y el texto para lectores de pantalla.",
+    "fix": "Elimina el texto oculto o hazlo visible como contenido útil.",
+    "messages": {
+      "fail": "{words} palabras en {blocks} bloques de texto están ocultas para los usuarios ({reasons}); el analista debería juzgar si esto encaja en la política sobre texto oculto."
+    }
+  },
+  "content-hidden-links": {
+    "title": "Enlaces ocultos o disimulados",
+    "why": "Las políticas de spam de Google prohíben los enlaces ocultos para los usuarios, como un enlace en un solo carácter o con estilos que lo hacen invisible, cuando existen para manipular el posicionamiento.",
+    "fix": "Elimina los enlaces ocultos. Si el sitio puede estar comprometido, investiga si hay código inyectado (consulta content-hacked-signals).",
+    "messages": {
+      "fail": "{count} enlace(s) externo(s) follow están ocultos o en un solo carácter (hosts: {hosts}); el analista debería juzgar si forman parte legítima de la interfaz."
+    }
+  },
+  "content-keyword-stuffing": {
+    "title": "Exceso de palabras clave en el contenido principal",
+    "why": "Las políticas de spam de Google definen el exceso de palabras clave como llenar una página de palabras clave o números para manipular el posicionamiento, como listas de ciudades o frases repetidas fuera de contexto. Google no publica ningún objetivo de densidad de palabras clave.",
+    "fix": "Reescribe el texto con naturalidad. Sustituye las listas de lugares por información real sobre la zona de servicio o por una única lista estructurada donde los usuarios la necesiten.",
+    "messages": {
+      "fail": "Es posible que el contenido principal tenga exceso de palabras clave; el analista debería confirmarlo.",
+      "fail:repeated-phrase": "«{phrase}» aparece {count} veces en {words} palabras de contenido principal; el analista debería juzgar si resulta poco natural.",
+      "fail:number-list": "El contenido principal enumera {count} números de teléfono en {words} palabras; el analista debería juzgar si la lista es útil para los usuarios."
+    }
+  },
+  "content-cloaking-ua": {
+    "title": "Contenido distinto servido al user-agent de Googlebot (encubrimiento basado en el user-agent)",
+    "why": "Las políticas de spam de Google prohíben el encubrimiento: mostrar a los buscadores un contenido distinto del que ven los usuarios. La herramienta compara las respuestas para un user-agent de rastreador y un user-agent de navegador; el encubrimiento basado en la IP no se puede detectar desde fuera.",
+    "fix": "Sirve el mismo contenido a los usuarios y a los rastreadores. Si el sitio está comprometido, limpia el servidor y los plugins.",
+    "messages": {
+      "fail": "El user-agent de Googlebot recibe un contenido distinto del que recibe un user-agent de navegador.",
+      "fail:googlebot-only-links": "Los enlaces follow a {hosts} solo se sirven al user-agent de Googlebot. El encubrimiento basado en la IP no se puede observar desde fuera.",
+      "fail:different-content": "El user-agent de Googlebot recibe un título o un h1 distintos y un texto principal distinto (distancia SimHash {distance}) de los que recibe un user-agent de navegador.",
+      "fail:minor-divergence": "Los user-agents de Googlebot y de navegador reciben páginas ligeramente distintas (distancia SimHash {distance})."
+    }
+  },
+  "content-sneaky-redirects": {
+    "title": "Redirecciones engañosas (condicionadas al dispositivo, a la procedencia o al user-agent)",
+    "why": "Las políticas de spam de Google prohíben las redirecciones que envían a los usuarios a un destino distinto del que ven los buscadores, por ejemplo, solo para los visitantes que llegan desde la búsqueda o que usan el móvil.",
+    "fix": "Elimina las redirecciones condicionales. Si no eran intencionadas, comprueba si hay scripts inyectados.",
+    "messages": {
+      "fail": "El user-agent de Googlebot llega a {googlebot}, mientras que un user-agent de navegador llega a {browser}, un sitio distinto."
+    }
+  },
+  "content-hacked-signals": {
+    "title": "Sin indicios de contenido hackeado o inyectado, spam encubierto ni redirecciones inyectadas",
+    "why": "Las políticas de spam de Google abarcan el contenido hackeado: páginas, enlaces o redirecciones de spam inyectados en un sitio sin el consentimiento del propietario. El contenido hackeado a menudo solo se muestra a los rastreadores, y Google puede advertir a los usuarios o retirar páginas.",
+    "fix": "Limpia la intrusión, aplica los parches al CMS y a los plugins, cambia las credenciales y, si hay una acción manual, solicita una revisión en Search Console.",
+    "messages": {
+      "fail": "Se han encontrado indicios compatibles con spam inyectado; el analista debería contrastarlos con la temática del sitio.",
+      "fail:spam-urls-in-sitemap": "{count} URLs del sitemap contienen vocabulario típico del spam inyectado.",
+      "fail:spam-vocabulary": "{count} enlace(s) o pasaje(s) contienen vocabulario típico del spam inyectado.",
+      "fail:foreign-script-block": "{count} páginas contienen grandes bloques de texto en chino, japonés o coreano, a diferencia del resto del sitio.",
+      "fail:cloaked-spam": "«{term}» se sirve al user-agent de Googlebot, pero no a un user-agent de navegador."
+    }
+  },
+  "content-thin-affiliate": {
+    "title": "Páginas de afiliación sin valor",
+    "why": "Las políticas de spam de Google abarcan las páginas de afiliación sin valor que copian las descripciones y las reseñas del comercio sin aportar valor original. Los enlaces de afiliado en sí no son un problema.",
+    "fix": "Añade una evaluación original (evidencias, mediciones, comparativas). Enlaza a varios vendedores. Califica los enlaces con rel=sponsored o nofollow.",
+    "messages": {
+      "fail": "La página tiene {count} enlace(s) de afiliado ({networks}); el analista debería juzgar si el contenido aporta una evaluación original."
+    }
+  },
+  "content-paid-links-unqualified": {
+    "title": "Enlaces de pago, de afiliado o patrocinados sin rel=sponsored/nofollow",
+    "why": "Google pide a los sitios que califiquen los enlaces de pago, patrocinados y de afiliado con rel=sponsored o rel=nofollow. Los enlaces de pago sin calificar entran dentro de la política sobre spam de enlaces.",
+    "fix": "Añade rel=\"sponsored\" (o nofollow) a los enlaces de pago y de afiliado.",
+    "messages": {
+      "fail": "{count} de {total} enlaces de pago o de afiliado no tienen rel=\"sponsored\" ni rel=\"nofollow\"."
+    }
+  },
+  "content-ugc-link-qualifiers": {
+    "title": "Enlaces de usuarios sin calificar y spam generado por usuarios",
+    "why": "Google recomienda rel=ugc o rel=nofollow para los enlaces del contenido generado por usuarios y documenta cómo afecta a un sitio el spam generado por usuarios sin moderar.",
+    "fix": "Añade rel=ugc o nofollow a los enlaces de los usuarios, modera los comentarios y usa medidas antispam.",
+    "messages": {
+      "fail": "{count} enlace(s) externo(s) del contenido generado por usuarios no tienen rel=\"ugc\" ni rel=\"nofollow\"."
+    }
+  },
+  "content-link-schemes-visible": {
+    "title": "Patrones visibles de esquemas de enlaces",
+    "why": "La política de Google sobre spam de enlaces abarca los intercambios de enlaces, los enlaces con muchas palabras clave en widgets o pies de página de varios sitios y otros enlaces destinados a manipular el posicionamiento. Solo se pueden observar los enlaces salientes del sitio auditado.",
+    "fix": "Elimina los enlaces o califícalos con rel=sponsored/nofollow. Suprime las páginas de intercambio de enlaces.",
+    "messages": {
+      "fail": "El enlace follow «{anchor}» a {target} aparece en la plantilla de {pages} páginas; el analista debería juzgar si es un esquema de enlaces."
+    }
+  },
+  "content-anchor-text-empty": {
+    "title": "Enlaces sin texto de enlace accesible",
+    "why": "Google usa el texto del enlace para entender la página enlazada, y el texto alternativo de una imagen sirve como texto del enlace en los enlaces de imagen. Los enlaces sin texto ni alt no dan ningún contexto.",
+    "fix": "Añade texto descriptivo. En los enlaces de imagen, usa un alt que describa el destino.",
+    "messages": {
+      "fail": "Enlaces sin texto, alt de imagen ni etiqueta: {count}.",
+      "fail:internal": "Enlaces sin texto, alt de imagen ni etiqueta: {count} ({internal} de ellos a páginas de este sitio).",
+      "fail:external": "Enlaces externos sin texto, alt de imagen ni etiqueta: {count}."
+    }
+  },
+  "content-anchor-text-quality": {
+    "title": "El texto del enlace es descriptivo, conciso y sin exceso de palabras clave",
+    "why": "Google recomienda un texto del enlace descriptivo y razonablemente conciso, e incluye entre las malas prácticas los textos genéricos como «haz clic aquí» y los textos muy largos o con exceso de palabras clave.",
+    "fix": "Usa textos de enlace concisos y descriptivos que tengan sentido fuera de contexto, por ejemplo, «precios del diseño de logotipos» en lugar de «haz clic aquí».",
+    "messages": {
+      "fail": "Algunos textos de enlace no describen su destino.",
+      "fail:generic": "{count} enlace(s) del contenido principal usan texto genérico ({examples}) y no existe ningún enlace descriptivo a la misma página.",
+      "fail:too-long": "{count} enlace(s) tienen un texto de enlace de más de 100 caracteres.",
+      "fail:repeated": "El texto de enlace «{anchor}» enlaza a la misma página {count} veces."
+    }
+  },
+  "content-outbound-citations": {
+    "title": "Fuentes citadas y política de enlaces salientes",
+    "why": "Google señala que enlazar a las fuentes puede ayudar a los usuarios a verificar las afirmaciones y a generar confianza, y recomienda nofollow solo para los enlaces que el sitio no avala.",
+    "fix": "Cita fuentes primarias con textos de enlace descriptivos. Usa nofollow solo para los enlaces que no son de confianza.",
+    "messages": {
+      "fail": "Todos los enlaces externos editoriales ({count}) son nofollow; Google recomienda nofollow solo para los enlaces que el sitio no avala."
+    }
+  },
+  "content-img-alt-missing": {
+    "title": "Las imágenes de contenido tienen atributo alt",
+    "why": "Google usa el texto alternativo, junto con la visión artificial y el texto circundante, para entender las imágenes, y el texto alternativo sirve como texto del enlace en las imágenes enlazadas. Si falta el atributo alt, no queda ninguna alternativa textual; un alt vacío es correcto para las imágenes decorativas.",
+    "fix": "Añade un texto alternativo que describa la imagen en el contexto de la página. Usa alt=\"\" solo para imágenes puramente decorativas.",
+    "messages": {
+      "fail": "{count} de {total} imágenes no tienen atributo alt (imágenes con alt=\"\", lo que es correcto para las decorativas: {emptyAlt}).",
+      "fail:content-image": "{count} de {total} imágenes no tienen atributo alt, incluidas imágenes de contenido dentro del contenido principal (imágenes con alt=\"\", lo que es correcto para las decorativas: {emptyAlt}).",
+      "fail:other-image": "{count} de {total} imágenes no tienen atributo alt (imágenes con alt=\"\", lo que es correcto para las decorativas: {emptyAlt})."
+    }
+  },
+  "content-img-alt-quality": {
+    "title": "Texto alternativo de baja calidad (exceso de palabras clave, nombre de archivo, genérico)",
+    "why": "Google recomienda un texto alternativo que describa la imagen en su contexto y advierte contra el exceso de palabras clave en los atributos alt.",
+    "fix": "Escribe descripciones breves y ricas en información, por ejemplo, «cachorro de dálmata jugando a traer cosas» en lugar de «cachorro perro perrito cachorros».",
+    "messages": {
+      "fail": "Algunos textos alternativos no describen su imagen.",
+      "fail:filename": "{count} imagen(es) usan como texto alternativo su nombre de archivo o un nombre de cámara.",
+      "fail:generic": "{count} imagen(es) tienen un texto alternativo genérico de una sola palabra; el analista debería revisarlas en su contexto.",
+      "fail:keyword-list": "{count} imagen(es) tienen un texto alternativo formado por una lista de palabras clave; el analista debería revisarlas.",
+      "fail:repeated": "{count} imágenes distintas comparten el texto alternativo «{alt}»; el analista debería revisarlas.",
+      "fail:too-long": "{count} imagen(es) tienen un texto alternativo de más de 250 caracteres; el analista debería revisarlas."
+    }
+  },
+  "content-img-filename": {
+    "title": "Nombres de archivo de imagen no descriptivos",
+    "why": "Google describe los nombres de archivo descriptivos como una pista muy leve sobre el tema de una imagen. Los nombres con hash de un CMS o un CDN son habituales y tienen poco impacto.",
+    "fix": "Usa nombres de archivo cortos, descriptivos y localizados, por ejemplo, my-new-black-kitten.jpg, y codifica como URL los caracteres no latinos.",
+    "messages": {
+      "fail": "{count} de {total} imágenes de contenido de {url} tienen nombres de archivo no descriptivos, una señal muy leve."
+    }
+  },
+  "content-img-css-background": {
+    "title": "Imágenes importantes servidas solo como fondos CSS",
+    "why": "Google documenta que no indexa las imágenes a las que solo se hace referencia en CSS y que extrae las imágenes de los elementos img. Las imágenes principales (hero), de producto y editoriales servidas como fondos CSS no son aptas para Google Imágenes.",
+    "fix": "Usa <img> (o <picture>) con src y alt para las imágenes que deberían aparecer en Google Imágenes o que transmiten contenido.",
+    "messages": {
+      "fail": "La imagen más grande ({url}) es un fondo CSS en un elemento {element}, que Google no indexa como imagen.",
+      "fail:unknown-element": "La imagen más grande ({url}) es un fondo CSS, que Google no indexa como imagen."
+    }
+  },
+  "content-img-format": {
+    "title": "Formato de imagen no admitido o discrepancia entre la extensión y el tipo",
+    "why": "Google Imágenes indexa BMP, GIF, JPEG, PNG, WebP, SVG y AVIF. Las imágenes en otros formatos sin una alternativa admitida no se indexan.",
+    "fix": "Sirve un formato admitido, por ejemplo, AVIF/WebP con una alternativa JPEG/PNG en el src del img.",
+    "messages": {
+      "fail": "Algunas imágenes usan un formato que Google Imágenes no indexa.",
+      "fail:unsupported-format": "{count} imagen(es) usan un formato que Google Imágenes no indexa.",
+      "fail:extension-mismatch": "{url} tiene una extensión .{extension}, pero sus bytes son {actual}."
+    }
+  },
+  "content-img-lazy-misuse": {
+    "title": "Las imágenes de contenido se cargan sin interacción del usuario",
+    "why": "Google documenta que Googlebot no se desplaza ni hace clic, pero renderiza con un viewport alto, así que encuentra las imágenes que se cargan cuando entran en el viewport. Las que solo se cargan tras un evento de desplazamiento o un clic, no.",
+    "fix": "Quita loading=lazy de las imágenes de la mitad superior de la página. Usa la carga en diferido nativa o IntersectionObserver, que cargan sin acciones del usuario.",
+    "messages": {
+      "fail": "{count} imagen(es) solo cargan su fuente real tras desplazarse por la página, algo que Googlebot no hace."
+    }
+  },
+  "content-preferred-image": {
+    "title": "Imagen preferida representativa (og:image / primaryImageOfPage)",
+    "why": "Google documenta og:image y primaryImageOfPage como formas de indicar la imagen preferida de una página, y recomienda imágenes grandes para Discover.",
+    "fix": "Especifica una imagen relevante y de alta calidad para cada página mediante primaryImageOfPage u og:image, no el logotipo. Para Discover, usa imágenes de ≥1200 px de ancho en formato 16:9.",
+    "messages": {
+      "fail": "La imagen preferida de la página se podría mejorar.",
+      "fail:missing": "La página no declara ninguna imagen preferida (og:image ni primaryImageOfPage).",
+      "fail:logo": "La imagen preferida {url} es el logotipo del sitio en lugar de una imagen del contenido.",
+      "fail:unreachable": "La imagen preferida {url} ha respondido {status}.",
+      "fail:narrow": "La imagen preferida {url} mide {width} px de ancho; Discover recomienda al menos 1200 px."
+    }
+  },
+  "content-byline-author": {
+    "title": "Firma, página del autor y marcado Person",
+    "why": "La documentación de Google sobre contenido útil pregunta si está claro quién ha escrito el contenido cuando cabría esperarlo, y su documentación sobre el marcado de artículos describe propiedades de autor que deberían coincidir con la firma visible.",
+    "fix": "Muestra quién ha escrito cada artículo, enlaza a una página del autor con su trayectoria relevante y refléjalo en el marcado Article.",
+    "messages": {
+      "fail": "No está claro quién ha escrito este artículo.",
+      "fail:no-byline": "El artículo no muestra ninguna firma y su marcado no nombra a ningún autor.",
+      "fail:markup-not-visible": "El marcado Article nombra a {author} como autor, pero la página no muestra ese nombre."
+    }
+  },
+  "content-date-consistency": {
+    "title": "Las fechas visibles coinciden con los datos estructurados y el lastmod del sitemap",
+    "why": "Google recomienda una fecha visible de publicación o de actualización que coincida con datePublished y dateModified en los datos estructurados, y las usa para mostrar fechas en los resultados. Las funciones de búsqueda con IA también usan las fechas para valorar la actualidad.",
+    "fix": "Muestra una sola fecha claramente etiquetada, haz que coincida con datePublished/dateModified, incluye una zona horaria y reduce al mínimo otras fechas cerca de la firma.",
+    "messages": {
+      "fail": "Las fechas de la página no coinciden.",
+      "fail:future-date": "La fecha estructurada {date} es futura respecto a la respuesta.",
+      "fail:visible-mismatch": "La página muestra {visible}, pero sus fechas estructuradas son {structured}.",
+      "fail:lastmod-differs": "El lastmod del sitemap ({lastmod}) difiere de dateModified ({modified}) en más de un día."
+    }
+  },
+  "content-date-manipulation": {
+    "title": "Fechas actualizadas sin cambios sustanciales",
+    "why": "Google incluye cambiar las fechas de las páginas para que parezcan recientes sin cambios sustanciales entre las señales de alerta del contenido pensado primero para los buscadores.",
+    "fix": "Actualiza las fechas solo cuando el contenido cambie de forma sustancial. Genera dateModified a partir de las revisiones reales del contenido.",
+    "messages": {
+      "fail": "dateModified no refleja los cambios del contenido.",
+      "fail:per-request": "dateModified de {url} ha cambiado de {first} a {second} entre dos solicitudes separadas por unos instantes, así que se genera en cada solicitud.",
+      "fail:crawl-date": "{count} de {total} páginas llevan como dateModified el día del rastreo, {date}.",
+      "fail:shared-date": "{count} de {total} páginas comparten el dateModified {date}; el analista debería comprobar si el contenido ha cambiado."
+    }
+  },
+  "content-trust-pages": {
+    "title": "La información «Quiénes somos» y de contacto es fácil de encontrar",
+    "why": "Las directrices para evaluadores consideran parte de la fiabilidad la información clara sobre quién gestiona un sitio y cómo contactar con ellos; la cantidad esperada depende del propósito del sitio y es mayor en las tiendas y en los temas YMYL.",
+    "fix": "Enlaza desde el pie de página las páginas «Quiénes somos», «Contacto» y de políticas. En la página «Quiénes somos», indica quién gestiona el sitio, con su ubicación y sus canales de contacto.",
+    "messages": {
+      "fail": "La página de inicio no lleva a información sobre quién gestiona el sitio.",
+      "fail:no-contact": "La página de inicio no tiene enlace de contacto, sección de contacto, correo electrónico ni enlace de teléfono.",
+      "fail:no-about": "La página de inicio no tiene ningún enlace a una página o sección «Quiénes somos»; el analista debería comprobar si la propia página de inicio dice quién gestiona el sitio."
+    }
+  },
+  "content-stale-content": {
+    "title": "Señales de contenido desactualizado en páginas sensibles al paso del tiempo",
+    "why": "Google usa sistemas de actualidad cuando los usuarios esperan información reciente. El contenido atemporal no necesita actualizaciones frecuentes, y Google advierte contra los cambios de fecha cosméticos.",
+    "fix": "Actualiza los datos y las cifras obsoletos y cambia la fecha en consecuencia, o etiqueta el contenido como histórico.",
+    "messages": {
+      "fail": "{count} afirmación(es) de la página están fechadas en años anteriores a {year}; el analista debería juzgar si el tema necesita información más reciente."
+    }
+  },
+  "content-intent-match": {
+    "title": "Adecuación a la intención de búsqueda",
+    "why": "Las directrices para evaluadores valoran en qué medida un resultado satisface las necesidades que hay detrás de una consulta. Sin una consulta objetivo del propietario, el analista infiere una y lo indica.",
+    "fix": "Ajusta el formato de la página a la intención (una guía para Know, una herramienta o una página de producto para Do, información de ubicación para Visit-in-person). Responde pronto a la necesidad principal.",
+    "messages": {}
+  },
+  "content-subtopic-coverage": {
+    "title": "Cobertura y profundidad frente a la necesidad del usuario",
+    "why": "Google pregunta si el contenido ofrece una descripción sustancial y completa del tema. La completitud depende del propósito y no se recomienda ningún número de palabras.",
+    "fix": "Añade la información esencial que falta. No rellenes con subtemas tangenciales.",
+    "messages": {}
+  },
+  "content-gsc-low-ctr": {
+    "title": "Páginas cuyo porcentaje de clics (CTR) está muy por debajo de lo habitual en el sitio",
+    "why": "Una página que aparece a menudo, pero recibe pocos clics para su posición, suele tener un título o un fragmento que no se ajusta a lo que buscan los usuarios. La comparación usa el CTR propio del sitio en cada posición, no una curva del sector.",
+    "fix": "Reescribe el título y la metadescripción para las consultas indicadas, sin dejar de ser fiel a la página. Comprueba si un resultado enriquecido u otra página del sitio que se ajusta mejor se lleva los clics.",
+    "messages": {
+      "fail": "{page} ha obtenido {impressions} impresiones en la posición {position} con un CTR de {ctr}, frente a {expected} en el sitio para esa posición."
+    }
+  },
+  "content-gsc-cannibalization": {
+    "title": "Varias páginas compiten por la misma consulta",
+    "why": "Cuando dos o más páginas del sitio se reparten las impresiones de una consulta y ninguna se lleva la mayoría de los clics, Google va alternando entre ellas y ninguna se posiciona tan bien como lo haría una sola página.",
+    "fix": "Decide qué página debería responder a la consulta. Haz que sea la más completa, enlázala desde las demás con las palabras de la consulta y diferencia o fusiona el resto.",
+    "messages": {
+      "fail": "{count} páginas se reparten las impresiones de la consulta «{query}»: {pages}."
+    }
+  },
+  "content-gsc-striking-distance": {
+    "title": "Consultas posicionadas justo por debajo de la primera página",
+    "why": "Las consultas para las que una página ya se posiciona entre las posiciones 11 y 20 son las más baratas de mejorar: la página es relevante, y una respuesta mejor o unos enlaces internos más sólidos pueden llevarla a la primera página.",
+    "fix": "Para cada consulta, comprueba que la página la responde de forma completa y pronto, y enlázala desde páginas relacionadas con un texto del enlace descriptivo.",
+    "messages": {
+      "fail": "{count} consultas se posicionan entre las posiciones 11 y 20, por ejemplo, «{query}» para {page} en la posición {position}."
+    }
+  },
+  "content-gsc-traffic-drop": {
+    "title": "Páginas que han perdido clics respecto a los 28 días anteriores",
+    "why": "Una caída significativa de los clics de una página apunta a una pérdida de posicionamiento, un problema de indexación o un cambio en la demanda, y conviene comprobarla antes de que se extienda.",
+    "fix": "Inspecciona la página en busca de cambios de indexación y de URL canónica, compara sus consultas entre los dos periodos en Search Console y revisa las modificaciones recientes de la página.",
+    "messages": {
+      "fail": "{page} ha bajado de {before} a {now} clics respecto a los 28 días anteriores."
+    }
+  },
+  "content-bing-low-ctr": {
+    "title": "Páginas cuyo CTR en Bing está muy por debajo de lo habitual en el sitio",
+    "why": "Una página que Bing muestra a menudo pero en la que pocas personas hacen clic suele tener un título o un fragmento que no coincide con lo que buscan. La comparación usa el CTR de las demás páginas del sitio en una posición similar en Bing, no una curva del sector.",
+    "fix": "Reescribe el título y la metadescripción para las consultas indicadas, sin dejar de describir la página con exactitud. Comprueba en Bing si un resultado más completo u otra página del sitio se lleva los clics.",
+    "messages": {
+      "fail": "{page} ha obtenido {impressions} impresiones en Bing en la posición {position} con un CTR del {ctr}, frente al {expected} de las demás páginas del sitio en esa posición, del {start} al {end}."
+    }
+  },
+  "content-bing-ai-performance": {
+    "title": "Las citas en Copilot solo están en Bing Webmaster Tools",
+    "why": "El informe AI Performance de Bing Webmaster Tools muestra con qué frecuencia Microsoft Copilot, los resúmenes generados con IA de Bing y algunas integraciones de socios citan las páginas del sitio, y para qué consultas de fundamentación. La API de Bing Webmaster no tiene ningún método para ese informe, así que una auditoría no puede incluirlo.",
+    "fix": "Abre el informe AI Performance del sitio en Bing Webmaster Tools para ver el total de citas, las páginas citadas y las consultas de fundamentación. Bing indica que las consultas de fundamentación son una muestra de la actividad de citas.",
+    "messages": {
+      "fail": "Las citas de {site} en Microsoft Copilot y en los resúmenes generados con IA de Bing solo están en el informe AI Performance de Bing Webmaster Tools (https://www.bing.com/webmasters); la API de Bing Webmaster no tiene ningún método para él, así que esta auditoría no las incluye."
+    }
+  }
+}

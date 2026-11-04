@@ -2,9 +2,11 @@ import { createHash } from 'node:crypto';
 import type { AiFinding, ReportAnalysis } from '../ai/types.ts';
 import { rule as catalogRule, myths } from '../catalog/index.ts';
 import { categories } from '../core/types.ts';
+import { evidenceLabelText } from '../i18n/evidence.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
-import { analysisSummary, listedFailures, mythsListUrl, providerLabel } from './markdown.ts';
+import { localizeValue } from '../i18n/values.ts';
+import { analysisSummary, evidenceWhere, formulaText, listedFailures, mythsListUrl, pageTypeText, providerLabel, ruleTitle } from './markdown.ts';
 import type { Report, ReportFinding } from './model.ts';
 import { escapeHtml } from './sanitize.ts';
 
@@ -84,8 +86,8 @@ function findingHtml(finding: ReportFinding, language: Language, evidence: Map<s
   const where = finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin;
   const message = findingMessage(language, finding.ruleId, 'fail', finding.reason, finding.params) ?? finding.message ?? texts.title;
   const items = finding.evidence.slice(0, 6).map(id => evidence.get(id)).filter(Boolean).map(item => {
-    const location = [item!.url, item!.line ? `line ${item!.line}` : undefined, item!.path].filter(Boolean).join(', ');
-    return `<li>${escapeHtml(item!.label)}${location ? ` <span class="where">(${escapeHtml(location)})</span>` : ''}${item!.excerpt !== undefined ? `<br><code>${escapeHtml(item!.excerpt.slice(0, 400))}</code>` : ''}</li>`;
+    const location = evidenceWhere(item!, language);
+    return `<li>${escapeHtml(evidenceLabelText(language, item!))}${location ? ` <span class="where">(${escapeHtml(location)})</span>` : ''}${item!.excerpt !== undefined ? `<br><code>${escapeHtml(item!.excerpt.slice(0, 400))}</code>` : ''}</li>`;
   }).join('');
   const sources = (rule?.sources ?? []).slice(0, 3).map(source => `<li>${safeHttpsLink(source.url, source.url)} <span class="where">(${escapeHtml(format(t.verified, { date: source.verified }))})</span></li>`).join('');
   return `<details class="finding" data-finding data-category="${escapeHtml(finding.category)}" data-severity="${escapeHtml(severity)}">
@@ -134,7 +136,7 @@ function analysisHtml(analysis: ReportAnalysis, language: Language): string {
     parts.push(`<h3>${escapeHtml(a.proposals)}</h3><ul>${items}</ul>${analysis.proposals.some(proposal => proposal.placeholders > 0) ? `<p class="where">${escapeHtml(a.ownerToSupply)}</p>` : ''}`);
   }
   if (analysis.injectionCandidates.length > 0) {
-    parts.push(`<h3>${escapeHtml(a.injection)}</h3><p class="where">${escapeHtml(a.injectionIntro)}</p><ul>${analysis.injectionCandidates.map(candidate => `<li><span class="where">${escapeHtml(candidate.page)} · ${escapeHtml(candidate.where)}</span><br><code>${escapeHtml(candidate.excerpt.slice(0, 400))}</code></li>`).join('')}</ul>`);
+    parts.push(`<h3>${escapeHtml(a.injection)}</h3><p class="where">${escapeHtml(a.injectionIntro)}</p><ul>${analysis.injectionCandidates.map(candidate => `<li><span class="where">${escapeHtml(candidate.page)} · ${escapeHtml(localizeValue(language, 'aiItem', candidate.where))}</span><br><code>${escapeHtml(candidate.excerpt.slice(0, 400))}</code></li>`).join('')}</ul>`);
   }
   const unverified = analysis.unverified.filter(finding => finding.outcome === 'fail');
   if (unverified.length > 0) parts.push(`<h3>${escapeHtml(a.unverified)}</h3><p class="where">${escapeHtml(a.unverifiedIntro)}</p>${unverified.map(finding => aiFindingHtml(finding, language)).join('')}`);
@@ -144,7 +146,7 @@ function analysisHtml(analysis: ReportAnalysis, language: Language): string {
     parts.push(`<h3>${escapeHtml(a.dropped)}</h3><ul>${[...byReason].sort((x, y) => y[1] - x[1]).map(([reason, count]) => `<li><code>${escapeHtml(reason)}</code>: ${count}</li>`).join('')}</ul>`);
   }
   if (analysis.skipped.length > 0) parts.push(`<h3>${escapeHtml(a.skipped)}</h3><ul>${analysis.skipped.map(entry => `<li>${escapeHtml(entry.pass)} <span class="where">${escapeHtml(entry.page)}</span>: <code>${escapeHtml(entry.reason)}</code></li>`).join('')}</ul>`);
-  if (analysis.warnings.length > 0) parts.push(`<p class="where">${analysis.warnings.map(warning => escapeHtml(warning)).join('<br>')}</p>`);
+  if (analysis.warnings.length > 0) parts.push(`<p class="where">${analysis.warnings.map(warning => escapeHtml(localizeValue(language, 'warning', warning))).join('<br>')}</p>`);
   return parts.join('\n');
 }
 
@@ -163,10 +165,10 @@ export function renderHtml(report: Report, language: Language): string {
     return `<li><b class="sev-${escapeHtml(task.severity)}">${escapeHtml(t.severities[task.severity])}</b> ${escapeHtml(title)} <span class="where">· ${task.scopes.length} · ${escapeHtml(t.fixLocations[task.fixLocation])} · <code>${escapeHtml(task.id)}</code></span></li>`;
   }).join('');
   const filterButtons = [
-    `<button type="button" data-filter="category" data-value="all" aria-pressed="true">${escapeHtml(t.overall)}</button>`,
+    `<button type="button" data-filter="category" data-value="all" aria-pressed="true">${escapeHtml(t.all)}</button>`,
     ...categories.map(category => `<button type="button" data-filter="category" data-value="${category}" aria-pressed="false">${escapeHtml(t.categories[category])}</button>`),
   ].join('');
-  const severityButtons = [`<button type="button" data-filter="severity" data-value="all" aria-pressed="true">${escapeHtml(t.overall)}</button>`,
+  const severityButtons = [`<button type="button" data-filter="severity" data-value="all" aria-pressed="true">${escapeHtml(t.all)}</button>`,
     ...(['critical', 'high', 'medium', 'low', 'info'] as const).map(severity => `<button type="button" data-filter="severity" data-value="${severity}" aria-pressed="false">${escapeHtml(t.severities[severity])}</button>`)].join('');
   const sections = categories.map(category => {
     const inCategory = failures.filter(finding => finding.category === category);
@@ -175,7 +177,7 @@ export function renderHtml(report: Report, language: Language): string {
   const pending = report.findings.filter(finding => finding.needsJudgment && finding.judgment === undefined);
   const notEvaluated = new Map<string, number>();
   for (const finding of report.findings.filter(entry => entry.outcome === 'not_evaluated')) notEvaluated.set(finding.reason ?? 'unknown', (notEvaluated.get(finding.reason ?? 'unknown') ?? 0) + 1);
-  const pages = report.pages.map(page => `<tr><td>${escapeHtml(page.finalUrl)}</td><td>${page.status ?? '–'}</td><td>${escapeHtml(page.pageType)}</td><td>${page.rendered ? escapeHtml(t.yes) : escapeHtml(t.no)}</td></tr>`).join('');
+  const pages = report.pages.map(page => `<tr><td>${escapeHtml(page.finalUrl)}</td><td>${page.status ?? '–'}</td><td>${escapeHtml(pageTypeText(page.pageType, language))}</td><td>${page.rendered ? escapeHtml(t.yes) : escapeHtml(t.no)}</td></tr>`).join('');
   return `<!doctype html>
 <html lang="${language}">
 <head>
@@ -195,22 +197,22 @@ export function renderHtml(report: Report, language: Language): string {
 <div class="panel"><div class="summary"><div class="overall"><b>${report.score.overall ?? '–'}</b><span>${escapeHtml(t.overall)}</span></div><div class="bars">${bars}</div></div>
 <p class="gate"><span class="pill">${escapeHtml(t.indexability)}</span> ${escapeHtml(t.indexabilityStates[report.score.indexability])}</p>
 <p class="where">${escapeHtml(format(t.coverageLine, { evaluated: report.coverage.evaluated, notEvaluated: report.coverage.notEvaluated, notApplicable: report.coverage.notApplicable }))}</p>
-${report.run.warnings.length > 0 ? `<p class="where">${report.run.warnings.map(warning => escapeHtml(warning)).join('<br>')}</p>` : ''}</div>
+${report.run.warnings.length > 0 ? `<p class="where">${report.run.warnings.map(warning => escapeHtml(localizeValue(language, 'warning', warning))).join('<br>')}</p>` : ''}</div>
 <h2>${escapeHtml(t.topActions)}</h2>
 ${tasks ? `<ol class="tasks">${tasks}</ol>` : `<p>${escapeHtml(t.noActions)}</p>`}
 <h2>${escapeHtml(t.findings)}</h2>
 <div class="filters" role="group" aria-label="${escapeHtml(t.findings)}">${filterButtons}</div>
-<div class="filters" role="group" aria-label="${escapeHtml(t.score)}">${severityButtons}</div>
+<div class="filters" role="group" aria-label="${escapeHtml(t.severity)}">${severityButtons}</div>
 ${sections}
-${pending.length > 0 ? `<h2>${escapeHtml(t.pendingReview)}</h2><p class="where">${escapeHtml(t.pendingReviewIntro)}</p><ul>${pending.map(finding => `<li>${escapeHtml(finding.title)} <span class="where">${escapeHtml(finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin)}</span></li>`).join('')}</ul>` : ''}
+${pending.length > 0 ? `<h2>${escapeHtml(t.pendingReview)}</h2><p class="where">${escapeHtml(t.pendingReviewIntro)}</p><ul>${pending.map(finding => `<li>${escapeHtml(ruleTitle(language, finding.ruleId, finding.title))} <span class="where">${escapeHtml(finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin)}</span></li>`).join('')}</ul>` : ''}
 ${report.ai ? analysisHtml(report.ai, language) : ''}
 ${notEvaluated.size > 0 ? `<h2>${escapeHtml(t.notEvaluated)}</h2><ul>${[...notEvaluated].sort((a, b) => b[1] - a[1]).map(([reason, count]) => `<li><code>${escapeHtml(reason)}</code>: ${count}</li>`).join('')}</ul>` : ''}
 <h2>${escapeHtml(t.pages)}</h2>
 <div class="panel"><table><thead><tr><th>${escapeHtml(t.page)}</th><th>${escapeHtml(t.status)}</th><th>${escapeHtml(t.type)}</th><th>${escapeHtml(t.rendered)}</th></tr></thead><tbody>${pages}</tbody></table></div>
 <h2>${escapeHtml(t.method)}</h2>
-<p>${escapeHtml(t.methodIntro)}</p><p class="where">${escapeHtml(report.score.formula)}</p>
+<p>${escapeHtml(t.methodIntro)}</p><p class="where">${escapeHtml(formulaText(report, language))}</p>
 <p class="where">${escapeHtml(format(t.mythsLine, { count: myths.length }))} ${safeHttpsLink(mythsListUrl, mythsListUrl)}</p>
-<p class="where">Catalog <code>${escapeHtml(report.catalog.hash.slice(0, 12))}</code> · ${report.catalog.implemented}/${report.catalog.rules} · Node ${escapeHtml(report.run.versions.node)}${report.run.versions.chrome ? ` · ${escapeHtml(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${escapeHtml(report.run.versions.lighthouse)}` : ''}</p>
+<p class="where">${escapeHtml(format(t.catalogLine, { implemented: report.catalog.implemented, rules: report.catalog.rules })).replace('{hash}', () => `<code>${escapeHtml(report.catalog.hash.slice(0, 12))}</code>`)} · Node ${escapeHtml(report.run.versions.node)}${report.run.versions.chrome ? ` · ${escapeHtml(report.run.versions.chrome)}` : ''}${report.run.versions.lighthouse ? ` · Lighthouse ${escapeHtml(report.run.versions.lighthouse)}` : ''}</p>
 </main>
 <script>${script}</script>
 </body>

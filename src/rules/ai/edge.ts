@@ -1,4 +1,5 @@
 import { decodeHtml, isHtmlResponse } from '../../collect/page.ts';
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { AgentProbe } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
@@ -59,7 +60,7 @@ function similarity(a: Set<string>, b: Set<string>): number {
   return union === 0 ? 1 : shared / union;
 }
 
-function probeEvidence(context: RuleContext, probe: AgentProbe, label: string, excerpt: string): string {
+function probeEvidence(context: RuleContext, probe: AgentProbe, label: EvidenceLabel, excerpt: string): string {
   return context.evidence.add({ kind: 'probe', url: probe.url, label, excerpt });
 }
 
@@ -71,7 +72,7 @@ const edgeBlock: RuleImplementation = {
     const baselineHtml = bodyText(baseline);
     const baselineWords = baselineHtml === undefined ? undefined : wordSet(baselineHtml);
     const results: RuleResult[] = [];
-    const baselineId = probeEvidence(context, baseline, `response to a browser user agent (${baseline.agent.name})`, `HTTP ${baseline.fetch.status}`);
+    const baselineId = probeEvidence(context, baseline, evidenceLabel('response to a browser user agent ({agent})', { agent: baseline.agent.name }), `HTTP ${baseline.fetch.status}`);
     for (const probe of context.site.agentProbes) {
       if (probe.agent.purpose === 'baseline' || searchEngineTokens.has(probe.agent.token)) continue;
       const status = probe.fetch.status;
@@ -85,7 +86,7 @@ const edgeBlock: RuleImplementation = {
         const excerpt = challenge ? `HTTP ${status}; ${challenge}` : `HTTP ${status}`;
         results.push({
           outcome: 'fail', severity, reason: stance === 'disallow' ? 'blocked-as-robots-says' : 'ua-blocked',
-          evidence: [probeEvidence(context, probe, `response to the ${probe.agent.name} user agent`, excerpt), baselineId],
+          evidence: [probeEvidence(context, probe, evidenceLabel('response to the {agent} user agent', { agent: probe.agent.name }), excerpt), baselineId],
           params: { agent: probe.agent.name, status },
         });
         continue;
@@ -97,8 +98,8 @@ const edgeBlock: RuleImplementation = {
       results.push({
         outcome: 'fail', severity: stance === 'disallow' ? 'info' : 'low', reason: 'content-differs',
         evidence: [
-          probeEvidence(context, probe, `text served to the ${probe.agent.name} user agent (word overlap with the browser response ${Math.round(score * 100)}%)`, clip(parseHtml(html).bodyText, 300)),
-          probeEvidence(context, baseline, 'text served to a browser user agent', clip(parseHtml(baselineHtml!).bodyText, 300)),
+          probeEvidence(context, probe, evidenceLabel('text served to the {agent} user agent (word overlap with the browser response {similarity}%)', { agent: probe.agent.name, similarity: Math.round(score * 100) }), clip(parseHtml(html).bodyText, 300)),
+          probeEvidence(context, baseline, evidenceLabel('text served to a browser user agent'), clip(parseHtml(baselineHtml!).bodyText, 300)),
         ],
         params: { agent: probe.agent.name, similarity: Math.round(score * 100) },
       });
@@ -119,7 +120,7 @@ const payPerCrawl: RuleImplementation = {
       const deliberate = probe.agent.purpose === 'training' || robotsStance(context, probe) === 'disallow';
       results.push({
         outcome: 'fail', severity: deliberate ? 'info' : 'medium', reason: deliberate ? 'training-or-disallowed' : 'search-agent-charged',
-        evidence: [probeEvidence(context, probe, `response to the ${probe.agent.name} user agent`, ['HTTP 402', ...pricing].join('\n'))],
+        evidence: [probeEvidence(context, probe, evidenceLabel('response to the {agent} user agent', { agent: probe.agent.name }), ['HTTP 402', ...pricing].join('\n'))],
         params: { agent: probe.agent.name },
       });
     }
@@ -138,8 +139,8 @@ const cloudflareDetected: RuleImplementation = {
       if (byServer || ray) {
         // The cf-ray value changes on every request, so only its presence is recorded to keep the finding stable.
         const evidence = byServer
-          ? context.evidence.add({ kind: 'header', url, label: 'Server response header', excerpt: `server: ${server}` })
-          : context.evidence.add({ kind: 'header', url, label: 'cf-ray response header present' });
+          ? context.evidence.add({ kind: 'header', url, label: evidenceLabel('Server response header'), excerpt: `server: ${server}` })
+          : context.evidence.add({ kind: 'header', url, label: evidenceLabel('cf-ray response header present') });
         return { outcome: 'fail', severity: 'info', reason: 'cloudflare', evidence: [evidence] };
       }
     }

@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { LighthouseSummary } from '../../render/lighthouse.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { auditFailed, citer, fail, lighthouseSummary, notEvaluated, pass, type Cite } from './shared.ts';
@@ -19,14 +20,14 @@ function categoryResult(cite: Cite, url: string, summary: LighthouseSummary, cat
   const score = summary.categories[category];
   if (score === undefined || score === null) return notEvaluated(`no-${category}-category`);
   const percent = Math.round(score * 100);
-  const evidence = [cite({ kind: 'lighthouse', url, label: `Lighthouse ${summary.lighthouseVersion} ${category} category score`, excerpt: `${category}=${percent}` })];
+  const evidence = [cite({ kind: 'lighthouse', url, label: evidenceLabel('Lighthouse {version} {category} category score', { version: summary.lighthouseVersion, category }), excerpt: `${category}=${percent}` })];
   const params: Record<string, string | number> = { score: percent };
   let total = 0;
   for (const [name, ids] of groups) {
     const failed = failing(summary, ids);
     total += failed.length;
     params[name] = failed.length > 0 ? failed.join(', ') : 'none';
-    for (const id of failed) evidence.push(cite({ kind: 'lighthouse', url, label: `failing Lighthouse audit: ${summary.audits[id]!.title}`, excerpt: `${id} score=0` }));
+    for (const id of failed) evidence.push(cite({ kind: 'lighthouse', url, label: evidenceLabel('failing Lighthouse audit: {title}', { title: summary.audits[id]!.title }), excerpt: `${id} score=0` }));
   }
   if (total === 0) return pass(evidence);
   return fail('info', evidence, undefined, { ...params, count: total });

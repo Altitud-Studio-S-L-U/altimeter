@@ -1,6 +1,6 @@
 import { detectLanguage } from '../../analyze/language.ts';
 import { documentFacts, decodeHtml, isHtmlResponse } from '../../collect/page.ts';
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { ProbeFacts, SiteFacts } from '../../core/facts.ts';
 import { headerValue, type HeaderMap } from '../../fetch/http.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -20,9 +20,9 @@ const acceptLanguage = (probe: ProbeFacts) => probe.label.replace(/^accept-langu
 const finalOf = (probe: ProbeFacts) => normalizeUrl(probe.fetch.finalUrl) ?? probe.fetch.finalUrl;
 const isRoot = (url: string) => new URL(url).pathname === '/' && new URL(url).search === '';
 
-function probeEvidence(evidence: EvidenceStore, probe: ProbeFacts, label: string): string {
+function probeEvidence(evidence: EvidenceStore, probe: ProbeFacts, label: EvidenceLabel): string {
   const chain = probe.fetch.hops.map(hop => `${hop.status} ${hop.url}${hop.location ? ` -> ${hop.location}` : ''}`).join('\n');
-  return evidence.add({ kind: 'probe', url: probe.url, label: `${label} (Accept-Language: ${acceptLanguage(probe)})`, excerpt: chain });
+  return evidence.add({ kind: 'probe', url: probe.url, label: joinLabels(label, evidenceLabel('(Accept-Language: {value})', { value: acceptLanguage(probe) })), excerpt: chain });
 }
 
 export const autoRedirectByLanguage: RuleImplementation = {
@@ -36,10 +36,10 @@ export const autoRedirectByLanguage: RuleImplementation = {
     for (const [url, probes] of localized) {
       const finals = groupBy(probes, finalOf);
       if (finals.size < 2) continue;
-      results.push(fail('high', probes.slice(0, maxEvidence).map(probe => probeEvidence(evidence, probe, 'response to the same URL with a different Accept-Language')),
+      results.push(fail('high', probes.slice(0, maxEvidence).map(probe => probeEvidence(evidence, probe, evidenceLabel('response to the same URL with a different Accept-Language'))),
         { url, targets: list(finals.keys(), 3), count: finals.size }));
     }
-    return results.length > 0 ? results : pass(localized.map(([, probes]) => probeEvidence(evidence, probes[0]!, 'response that did not change with Accept-Language')));
+    return results.length > 0 ? results : pass(localized.map(([, probes]) => probeEvidence(evidence, probes[0]!, evidenceLabel('response that did not change with Accept-Language'))));
   },
 };
 
@@ -63,11 +63,11 @@ export const rootLocaleRedirector: RuleImplementation = {
     if (redirecting.length === 0) return notApplicable('root-does-not-redirect');
     const targets = groupBy(probes, finalOf);
     // One target whatever the language is an ordinary redirect of the root, not a locale redirector.
-    if (targets.size < 2) return pass([probeEvidence(evidence, probes[0]!, 'root response, the same for every Accept-Language')]);
+    if (targets.size < 2) return pass([probeEvidence(evidence, probes[0]!, evidenceLabel('root response, the same for every Accept-Language'))]);
     const results: RuleResult[] = [];
     const permanent = redirecting.filter(probe => (probe.fetch.hops[0]!.status === 301 || probe.fetch.hops[0]!.status === 308) && sharedCacheable(probe.fetch.hops[0]!.status, probe.fetch.hops[0]!.headers));
     if (permanent.length > 0) {
-      results.push(fail('low', permanent.slice(0, maxEvidence).map(probe => probeEvidence(evidence, probe, 'permanent, cacheable redirect of the root that depends on Accept-Language')),
+      results.push(fail('low', permanent.slice(0, maxEvidence).map(probe => probeEvidence(evidence, probe, evidenceLabel('permanent, cacheable redirect of the root that depends on Accept-Language'))),
         { status: permanent[0]!.fetch.hops[0]!.status, count: targets.size }, 'permanent-redirect'));
     }
     const unvaried = redirecting.filter(probe => {
@@ -76,11 +76,11 @@ export const rootLocaleRedirector: RuleImplementation = {
     });
     if (unvaried.length > 0) {
       results.push(fail('low', unvaried.slice(0, maxEvidence).map(probe => evidence.add({
-        kind: 'header', url: probe.url, label: `cacheable root redirect without Vary: Accept-Language (Accept-Language: ${acceptLanguage(probe)})`,
+        kind: 'header', url: probe.url, label: evidenceLabel('cacheable root redirect without Vary: Accept-Language (Accept-Language: {value})', { value: acceptLanguage(probe) }),
         excerpt: ['cache-control', 'vary', 'location'].map(name => `${name}: ${headerValue(probe.fetch.hops[0]!.headers, name) ?? '(absent)'}`).join('\n'),
       })), { count: unvaried.length }, 'missing-vary'));
     }
-    return results.length > 0 ? results : pass(redirecting.slice(0, 3).map(probe => probeEvidence(evidence, probe, 'temporary or uncacheable locale redirect of the root')));
+    return results.length > 0 ? results : pass(redirecting.slice(0, 3).map(probe => probeEvidence(evidence, probe, evidenceLabel('temporary or uncacheable locale redirect of the root'))));
   },
 };
 
@@ -111,10 +111,10 @@ export const localeAdaptiveSameUrl: RuleImplementation = {
       if (served.length < 2) continue;
       compared += 1;
       const detected = groupBy(served.filter(entry => entry.language), entry => entry.language!);
-      const label = (entry: ProbeLanguage, what: string) => evidence.add({ kind: 'probe', url, label: `${what} (Accept-Language: ${acceptLanguage(entry.probe)})`, excerpt: entry.text.slice(0, 300) });
+      const label = (entry: ProbeLanguage, what: EvidenceLabel) => evidence.add({ kind: 'probe', url, label: joinLabels(what, evidenceLabel('(Accept-Language: {value})', { value: acceptLanguage(entry.probe) })), excerpt: entry.text.slice(0, 300) });
       if (detected.size > 1) {
         const shown = [...detected.values()].map(group => group[0]!);
-        results.push(fail('high', shown.map(entry => label(entry, `main content served at this URL, detected as ${languageLabel(entry.language!)}`)),
+        results.push(fail('high', shown.map(entry => label(entry, evidenceLabel('main content served at this URL, detected as {language}', { language: languageLabel(entry.language!) }))),
           { url, languages: list(shown.map(entry => languageLabel(entry.language!))) }, 'content-language'));
         continue;
       }
@@ -124,7 +124,7 @@ export const localeAdaptiveSameUrl: RuleImplementation = {
       const shown = [...byLang.values()].map(group => group[0]!);
       const similarity = jaccard(shingles(shown[0]!.text), shingles(shown[1]!.text));
       if (similarity >= 0.5) continue;
-      results.push(fail('high', shown.map(entry => label(entry, `main content served at this URL with lang="${entry.lang}"`)),
+      results.push(fail('high', shown.map(entry => label(entry, evidenceLabel('main content served at this URL with lang="{lang}"', { lang: entry.lang! }))),
         { url, languages: list(shown.map(entry => entry.lang!)) }, 'lang-attribute'));
     }
     if (results.length > 0) return results;
@@ -153,7 +153,7 @@ export const separateUrlsPerLocale: RuleImplementation = {
       for (const annotation of set.annotations) {
         if (!annotation.href || !parameterLocale(annotation.href) || urls.has(annotation.href)) continue;
         urls.add(annotation.href);
-        if (ids.length < maxEvidence) ids.push(annotationEvidence(evidence, annotation, 'hreflang target that selects the locale with a URL parameter'));
+        if (ids.length < maxEvidence) ids.push(annotationEvidence(evidence, annotation, evidenceLabel('hreflang target that selects the locale with a URL parameter')));
       }
     }
     let switcherLinks = 0;
@@ -163,7 +163,7 @@ export const separateUrlsPerLocale: RuleImplementation = {
         if (!href || !sameSite(href, page.fetch.finalUrl) || !parameterLocale(href) || urls.has(href)) continue;
         urls.add(href);
         switcherLinks += 1;
-        if (ids.length < maxEvidence) ids.push(evidence.add({ kind: 'html', url: page.fetch.finalUrl, label: 'link that selects the locale with a URL parameter', excerpt: page.raw!.html.slice(anchor.offset, page.raw!.html.indexOf('>', anchor.offset) + 1), line: anchor.line }));
+        if (ids.length < maxEvidence) ids.push(evidence.add({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('link that selects the locale with a URL parameter'), excerpt: page.raw!.html.slice(anchor.offset, page.raw!.html.indexOf('>', anchor.offset) + 1), line: anchor.line }));
       }
     }
     if (urls.size > 0) return fail('medium', ids, { count: urls.size, urls: list(urls), links: switcherLinks }, 'locale-parameter');

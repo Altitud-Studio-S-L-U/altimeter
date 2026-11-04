@@ -1,4 +1,4 @@
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import type { ElementRef, LinkRef } from '../../parse/html.ts';
 import { linksWithRel } from '../helpers.ts';
@@ -253,13 +253,14 @@ export function effectiveAnnotations(page: PageFacts, site: SiteFacts): Annotati
 
 const sourceKind = { html: 'html', rendered: 'render', header: 'header', sitemap: 'sitemap' } as const;
 const sourceName = { html: 'raw HTML', rendered: 'rendered DOM', header: 'HTTP Link header', sitemap: 'sitemap' } as const;
+const sourceLabel = { html: evidenceLabel('(raw HTML)'), rendered: evidenceLabel('(rendered DOM)'), header: evidenceLabel('(HTTP Link header)') } as const;
 
 /** Records an annotation as evidence; `label` describes what is wrong or notable about it. */
-export function annotationEvidence(evidence: EvidenceStore, annotation: Annotation, label: string): string {
+export function annotationEvidence(evidence: EvidenceStore, annotation: Annotation, label: EvidenceLabel): string {
   return evidence.add({
     kind: sourceKind[annotation.source],
     url: annotation.source === 'sitemap' ? annotation.sitemapUrl ?? annotation.declaringUrl : annotation.declaringUrl,
-    label: `${label} (${sourceName[annotation.source]}${annotation.source === 'sitemap' ? ` entry for ${annotation.declaringUrl}` : ''})`,
+    label: joinLabels(label, annotation.source === 'sitemap' ? evidenceLabel('(sitemap entry for {url})', { url: annotation.declaringUrl }) : sourceLabel[annotation.source]),
     excerpt: annotation.excerpt,
     ...(annotation.line ? { line: annotation.line } : {}),
   });

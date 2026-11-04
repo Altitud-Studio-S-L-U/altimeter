@@ -1,5 +1,5 @@
 import { closelyRelated, detectLanguage, languageNames, type LanguageGuess } from '../../analyze/language.ts';
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { attribute, collapse, isElement, type HtmlElement, type HtmlNode } from '../../parse/html.ts';
 import { pageDocument } from '../helpers.ts';
@@ -134,11 +134,11 @@ export function needsConfirmation(detected: string, declared: string): boolean {
 
 const excerptLength = 300;
 
-export function languageEvidence(evidence: EvidenceStore, url: string, language: DocumentLanguage, what = 'main content'): string {
+export function languageEvidence(evidence: EvidenceStore, url: string, language: DocumentLanguage): string {
   const { guess } = language;
   const verdict = guess.language === 'und'
-    ? `language of the ${what} undetermined (${guess.words} words)`
-    : `${what} detected as ${languageLabel(guess.language)} (confidence ${guess.confidence.toFixed(2)}, ${guess.words} words)`;
+    ? evidenceLabel('language of the main content undetermined ({words} words)', { words: guess.words })
+    : evidenceLabel('main content detected as {language} (confidence {confidence}, {words} words)', { language: languageLabel(guess.language), confidence: guess.confidence.toFixed(2), words: guess.words });
   return evidence.add({ kind: 'text', url, label: verdict, excerpt: language.text.slice(0, excerptLength) });
 }
 

@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import { linkGraph } from '../../analyze/graph.ts';
 import { urlVariants } from '../../collect/probes.ts';
@@ -13,7 +14,8 @@ function renderedDoc(page: PageFacts): DocumentFacts | undefined {
 }
 
 function citeTarget(evidence: Parameters<RuleImplementation['evaluate']>[0]['evidence'], url: string, target: CanonicalTarget): string {
-  const label = target.source === 'header' ? 'canonical in the Link header' : `rel=canonical in the ${target.source === 'raw' ? 'raw HTML' : 'rendered DOM'}`;
+  const label = target.source === 'header' ? evidenceLabel('canonical in the Link header')
+    : target.source === 'raw' ? evidenceLabel('rel=canonical in the raw HTML') : evidenceLabel('rel=canonical in the rendered DOM');
   return evidence.add({ kind: target.source === 'header' ? 'header' : target.source === 'raw' ? 'html' : 'render', url, label, excerpt: target.href, ...(target.line ? { line: target.line } : {}) });
 }
 
@@ -25,12 +27,12 @@ const headInvalidElement: RuleImplementation = {
     if (!closure) return passed();
     const url = target.fetch.finalUrl;
     const cause = closure.cause.kind === 'element' ? `<${closure.cause.tag}>` : closure.cause.text;
-    const ids = [evidence.add({ kind: 'html', url, label: 'first content that ends the head early', excerpt: cause, line: closure.cause.line })];
+    const ids = [evidence.add({ kind: 'html', url, label: evidenceLabel('first content that ends the head early'), excerpt: cause, line: closure.cause.line })];
     const rel = (attrs: Readonly<Record<string, string>>) => (attrs.rel ?? '').toLowerCase().split(/\s+/u);
     const important = closure.displaced.filter(entry => entry.tag === 'link' && (rel(entry.attrs).includes('canonical') || (rel(entry.attrs).includes('alternate') && entry.attrs.hreflang !== undefined)));
     const shown = important.length > 0 ? important : closure.displaced;
     for (const entry of shown.slice(0, 5)) {
-      ids.push(evidence.add({ kind: 'html', url, label: 'head metadata that the parser placed in the body', excerpt: `<${entry.tag} ${Object.entries(entry.attrs).map(([key, value]) => `${key}="${value}"`).join(' ')}>`, line: entry.line }));
+      ids.push(evidence.add({ kind: 'html', url, label: evidenceLabel('head metadata that the parser placed in the body'), excerpt: `<${entry.tag} ${Object.entries(entry.attrs).map(([key, value]) => `${key}="${value}"`).join(' ')}>`, line: entry.line }));
     }
     return failure({
       severity: important.length > 0 ? 'high' : 'low', evidence: ids, reason: important.length > 0 ? 'canonical-or-hreflang-ignored' : 'metadata-displaced',
@@ -57,8 +59,8 @@ const canonicalPresence: RuleImplementation = {
     if (declared.length > 0) return passed([citeTarget(evidence, url, declared[0]!)]);
     const own = new Set(urlVariants(url).map(variant => variant.url));
     const duplicates = site.variants.filter(variant => own.has(variant.url) && variant.fetch.status === 200 && variant.fetch.hops.length === 1);
-    const ids = [evidence.add({ kind: 'html', url, label: 'canonical declarations found in the raw HTML, rendered DOM and Link header', excerpt: '(none)' })];
-    for (const variant of duplicates.slice(0, 3)) ids.push(evidence.add({ kind: 'probe', url: variant.url, label: `URL variant (${variant.label}) answering 200 without a redirect`, excerpt: `HTTP ${variant.fetch.status}` }));
+    const ids = [evidence.add({ kind: 'html', url, label: evidenceLabel('canonical declarations found in the raw HTML, rendered DOM and Link header'), excerpt: '(none)' })];
+    for (const variant of duplicates.slice(0, 3)) ids.push(evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('URL variant ({variant}) answering 200 without a redirect', { variant: variant.label }), excerpt: `HTTP ${variant.fetch.status}` }));
     return failure({ severity: duplicates.length > 0 ? 'medium' : 'low', evidence: ids, reason: duplicates.length > 0 ? 'duplicates-answer' : 'missing', params: { url, variants: duplicates.length } });
   },
 };
@@ -92,7 +94,7 @@ const canonicalJsChanged: RuleImplementation = {
     if (!raw && !rendered) return notApplicable('no-canonical');
     if (raw && rendered && (raw.url ?? raw.href) === (rendered.url ?? rendered.href)) return passed([citeTarget(evidence, url, raw)]);
     if (raw && !rendered) {
-      const none = evidence.add({ kind: 'render', url, label: 'rel=canonical in the rendered DOM', excerpt: '(none)' });
+      const none = evidence.add({ kind: 'render', url, label: evidenceLabel('rel=canonical in the rendered DOM'), excerpt: '(none)' });
       return failure({ severity: 'high', evidence: [citeTarget(evidence, url, raw), none], reason: 'removed', params: { url, raw: raw.href, rendered: '(none)' } });
     }
     if (!raw) return failure({ severity: 'low', evidence: [citeTarget(evidence, url, rendered!)], reason: 'added', params: { url, raw: '(none)', rendered: rendered!.href } });
@@ -142,8 +144,10 @@ const canonicalPlacement: RuleImplementation = {
     if (all.length === 0) return notApplicable('no-canonical');
     const unusable = all.filter(item => !usableCanonical(item.link) && !(!item.link.inHead && displaced.has(item.link.attrs.href)));
     if (unusable.length === 0) return passed();
-    const why = (item: (typeof unusable)[number]) => (item.link.inHead ? `carries ${['hreflang', 'lang', 'media', 'type'].filter(name => item.link.attrs[name] !== undefined).join(', ')}` : 'in the body');
-    const ids = unusable.slice(0, 4).map(item => evidence.add({ kind: item.kind, url, label: `rel=canonical that Google ignores (${why(item)})`,
+    const attributes = (item: (typeof unusable)[number]) => ['hreflang', 'lang', 'media', 'type'].filter(name => item.link.attrs[name] !== undefined).join(', ');
+    const why = (item: (typeof unusable)[number]) => (item.link.inHead ? `carries ${attributes(item)}` : 'in the body');
+    const ids = unusable.slice(0, 4).map(item => evidence.add({ kind: item.kind, url,
+      label: item.link.inHead ? evidenceLabel('rel=canonical that Google ignores (carries {attributes})', { attributes: attributes(item) }) : evidenceLabel('rel=canonical that Google ignores (in the body)'),
       excerpt: `<link rel="canonical" href="${item.link.attrs.href ?? ''}"${Object.entries(item.link.attrs).filter(([key]) => key !== 'rel' && key !== 'href').map(([key, value]) => ` ${key}="${value}"`).join('')}>`, line: item.link.line }));
     const usable = all.some(item => usableCanonical(item.link));
     return failure({ severity: usable ? 'low' : 'high', evidence: ids, reason: usable ? 'extra-unusable' : 'only-unusable', params: { url, problem: why(unusable[0]!) } });
@@ -163,7 +167,7 @@ const canonicalTargetHealth: RuleImplementation = {
     if (targetUrl === normalizeUrl(url)) return passed([declaredId]);
     const known = knownResponses(site).get(targetUrl);
     if (!known) return notEvaluated('target-not-fetched');
-    const statusId = evidence.add({ kind: 'http', url: known.url, label: 'canonical target response', excerpt: `HTTP ${known.status}${known.location ? ` -> ${known.location}` : ''}` });
+    const statusId = evidence.add({ kind: 'http', url: known.url, label: evidenceLabel('canonical target response'), excerpt: `HTTP ${known.status}${known.location ? ` -> ${known.location}` : ''}` });
     const params = { url, target: targetUrl, status: known.status };
     if (known.status >= 400) return failure({ severity: 'high', evidence: [declaredId, statusId], reason: 'target-error', params });
     if (known.status >= 300) {
@@ -172,12 +176,12 @@ const canonicalTargetHealth: RuleImplementation = {
     }
     const blocked = robotsDecision(site, targetUrl);
     if (blocked && !blocked.allowed) {
-      const rule = evidence.add({ kind: 'robots', url: site.robots!.url, label: 'rule that disallows the canonical target for Googlebot', excerpt: `${blocked.rule!.type}: ${blocked.rule!.pattern}`, line: blocked.rule!.line });
+      const rule = evidence.add({ kind: 'robots', url: site.robots!.url, label: evidenceLabel('rule that disallows the canonical target for Googlebot'), excerpt: `${blocked.rule!.type}: ${blocked.rule!.pattern}`, line: blocked.rule!.line });
       return failure({ severity: 'high', evidence: [declaredId, rule], reason: 'target-blocked', params });
     }
     const facts = factsAt(site, targetUrl);
     if (facts?.raw && effectiveDirectives(facts, facts.raw).has('noindex')) {
-      const id = evidence.add({ kind: 'html', url: facts.fetch.finalUrl, label: 'canonical target robots directives', excerpt: [...effectiveDirectives(facts, facts.raw)].join(', ') });
+      const id = evidence.add({ kind: 'html', url: facts.fetch.finalUrl, label: evidenceLabel('canonical target robots directives'), excerpt: [...effectiveDirectives(facts, facts.raw)].join(', ') });
       return failure({ severity: 'high', evidence: [declaredId, id], reason: 'target-noindex', params });
     }
     return passed([declaredId, statusId]);
@@ -192,7 +196,7 @@ const canonicalProtocolHost: RuleImplementation = {
     if (declared.length === 0) return notApplicable('no-canonical');
     for (const { page, target } of declared) {
       if (new URL(page.fetch.finalUrl).protocol === 'https:' && new URL(target).protocol === 'http:') {
-        const id = evidence.add({ kind: 'html', url: page.fetch.finalUrl, label: 'canonical target on an HTTPS page', excerpt: target });
+        const id = evidence.add({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('canonical target on an HTTPS page'), excerpt: target });
         return failure({ severity: 'high', evidence: [id], reason: 'canonical-to-http', params: { url: page.fetch.finalUrl, target } });
       }
     }
@@ -202,8 +206,8 @@ const canonicalProtocolHost: RuleImplementation = {
       const mismatch = declared.find(item => new URL(item.target).hostname !== preferred && sameSite(item.target, hostVariant.fetch.finalUrl));
       if (mismatch) {
         const ids = [
-          evidence.add({ kind: 'html', url: mismatch.page.fetch.finalUrl, label: 'canonical target', excerpt: mismatch.target }),
-          evidence.add({ kind: 'redirect', url: hostVariant.url, label: 'host variant redirect destination', excerpt: hostVariant.fetch.finalUrl }),
+          evidence.add({ kind: 'html', url: mismatch.page.fetch.finalUrl, label: evidenceLabel('canonical target'), excerpt: mismatch.target }),
+          evidence.add({ kind: 'redirect', url: hostVariant.url, label: evidenceLabel('host variant redirect destination'), excerpt: hostVariant.fetch.finalUrl }),
         ];
         return failure({ severity: 'high', evidence: ids, reason: 'canonical-host-mismatch', params: { url: mismatch.page.fetch.finalUrl, target: mismatch.target, host: preferred } });
       }
@@ -271,7 +275,7 @@ const canonicalPagination: RuleImplementation = {
       return target !== undefined && !viewAll.test(target) && firstVariants(item.series.first).has(normalizeUrl(target));
     });
     if (collapsed.length === 0) return passed();
-    const ids = collapsed.slice(0, 5).map(item => evidence.add({ kind: 'html', url: item.page.fetch.finalUrl, label: `canonical of page ${item.series.number} of a series`, excerpt: declaredCanonical(item.page)! }));
+    const ids = collapsed.slice(0, 5).map(item => evidence.add({ kind: 'html', url: item.page.fetch.finalUrl, label: evidenceLabel('canonical of page {number} of a series', { number: item.series.number }), excerpt: declaredCanonical(item.page)! }));
     return failure({ severity: 'medium', evidence: ids, params: { url: collapsed[0]!.page.fetch.finalUrl, count: collapsed.length } });
   },
 };
@@ -309,7 +313,7 @@ const canonicalChains: RuleImplementation = {
       if (path.length > 2 && (!worstChain || (loop && !worstChain.loop) || (loop === worstChain.loop && path.length > worstChain.path.length))) worstChain = { path, loop };
     }
     if (!worstChain) return passed();
-    const ids = worstChain.path.slice(0, -1).map((url, index) => evidence.add({ kind: 'crawl', url, label: `canonical hop ${index + 1}`, excerpt: worstChain!.path[index + 1]! }));
+    const ids = worstChain.path.slice(0, -1).map((url, index) => evidence.add({ kind: 'crawl', url, label: evidenceLabel('canonical hop {number}', { number: index + 1 }), excerpt: worstChain!.path[index + 1]! }));
     return failure({ severity: worstChain.loop ? 'medium' : 'low', evidence: ids, reason: worstChain.loop ? 'loop' : 'chain',
       params: { url: worstChain.path[0]!, hops: worstChain.path.length - 1, path: summarizeList(worstChain.path, 4) } });
   },
@@ -329,8 +333,8 @@ const canonicalSignalConsistency: RuleImplementation = {
       const target = map.get(from)!;
       if (target === from) continue;
       const ids = [
-        evidence.add({ kind: 'sitemap', url: listed.sitemap, label: 'sitemap entry', excerpt: listed.loc, line: listed.line }),
-        evidence.add({ kind: 'html', url: from, label: 'canonical of the listed URL', excerpt: target }),
+        evidence.add({ kind: 'sitemap', url: listed.sitemap, label: evidenceLabel('sitemap entry'), excerpt: listed.loc, line: listed.line }),
+        evidence.add({ kind: 'html', url: from, label: evidenceLabel('canonical of the listed URL'), excerpt: target }),
       ];
       results.push(failure({ severity: 'medium', evidence: ids, reason: 'sitemap-non-canonical', params: { url: from, target } }));
     }
@@ -343,7 +347,7 @@ const canonicalSignalConsistency: RuleImplementation = {
         const toCanonical = graph.inlinks.get(canonical)?.length ?? 0;
         const toMembers = members.reduce((sum, member) => sum + (graph.inlinks.get(member)?.length ?? 0), 0);
         if (toMembers > toCanonical) {
-          const ids = [evidence.add({ kind: 'crawl', url: canonical, label: 'internal links to the canonical URL and to the URLs that name it as canonical', excerpt: `${toCanonical} vs ${toMembers}` })];
+          const ids = [evidence.add({ kind: 'crawl', url: canonical, label: evidenceLabel('internal links to the canonical URL and to the URLs that name it as canonical'), excerpt: `${toCanonical} vs ${toMembers}` })];
           results.push(failure({ severity: 'medium', evidence: ids, reason: 'links-to-non-canonical', params: { url: canonical, canonicalLinks: toCanonical, otherLinks: toMembers } }));
         }
       }
@@ -368,7 +372,7 @@ const baseHref: RuleImplementation = {
     if (!element) return notApplicable('no-base');
     const url = target.fetch.finalUrl;
     const base = absoluteUrl(element.attrs.href, url);
-    const baseId = evidence.add({ kind: 'html', url, label: 'first base element', excerpt: element.attrs.href!, line: element.line });
+    const baseId = evidence.add({ kind: 'html', url, label: evidenceLabel('first base element'), excerpt: element.attrs.href!, line: element.line });
     if (!base) return failure({ severity: 'high', evidence: [baseId], reason: 'unparseable', params: { url, base: element.attrs.href! } });
     const relatives = [...doc.parsed.anchors, ...doc.parsed.links.filter(link => link.rel.includes('canonical') || link.rel.includes('alternate'))].filter(entry => relativeReference(entry.attrs.href));
     const baseHost = new URL(base).hostname;
@@ -382,7 +386,7 @@ const baseHref: RuleImplementation = {
     const broken = relatives.map(entry => ({ entry, resolved: normalizeUrl(absoluteUrl(entry.attrs.href, base)) }))
       .filter(item => item.resolved !== undefined && (known.get(item.resolved)?.status ?? 0) >= 400);
     if (broken.length > 0) {
-      const ids = [baseId, ...broken.slice(0, 4).map(item => evidence.add({ kind: 'http', url: item.resolved!, label: `relative link ${item.entry.attrs.href} resolved against the base`, excerpt: `HTTP ${known.get(item.resolved!)!.status}` }))];
+      const ids = [baseId, ...broken.slice(0, 4).map(item => evidence.add({ kind: 'http', url: item.resolved!, label: evidenceLabel('relative link {href} resolved against the base', { href: item.entry.attrs.href ?? '' }), excerpt: `HTTP ${known.get(item.resolved!)!.status}` }))];
       return failure({ severity: 'high', evidence: ids, reason: 'relative-links-broken', params: { url, base, count: broken.length } });
     }
     return passed([baseId]);

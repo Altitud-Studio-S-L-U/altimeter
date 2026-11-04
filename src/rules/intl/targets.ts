@@ -1,4 +1,4 @@
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { PageFacts, SiteFacts } from '../../core/facts.ts';
 import { isAllowed } from '../../fetch/robots.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -62,7 +62,7 @@ function hopEvidence(evidence: EvidenceStore, url: string, fetch: PageFacts['fet
   return evidence.add({
     kind: fetch.hops.length > 1 ? 'redirect' : 'http',
     url,
-    label: fetch.error ? `request for the hreflang target failed (${fetch.error.code})` : 'response to a request for the hreflang target without Accept-Language',
+    label: fetch.error ? evidenceLabel('request for the hreflang target failed ({code})', { code: fetch.error.code }) : evidenceLabel('response to a request for the hreflang target without Accept-Language'),
     excerpt: chain || fetch.error?.message || 'no response',
   });
 }
@@ -116,7 +116,7 @@ export const targetNot200: RuleImplementation = {
     if (flagged.length === 0) return verified === 0 ? notEvaluated('targets-not-fetched') : pass();
     return [...groupBy(flagged, entry => entry.reason)].map(([reason, group]) => fail(reason === 'redirect' ? 'medium' : 'high',
       group.slice(0, maxEvidence).flatMap(entry => [
-        annotationEvidence(evidence, entry.target.annotations[0]!, 'hreflang entry for a URL that does not answer 200'),
+        annotationEvidence(evidence, entry.target.annotations[0]!, evidenceLabel('hreflang entry for a URL that does not answer 200')),
         hopEvidence(evidence, entry.target.href, entry.fetch),
       ]),
       { count: group.length, urls: list(group.map(entry => entry.target.href)), status: list(group.map(entry => String(firstStatus(entry.fetch) ?? entry.fetch.error?.code ?? 'none'))) },
@@ -142,7 +142,7 @@ export const localizedUrlsUnreachable: RuleImplementation = {
       const final = normalizeUrl(fetch.finalUrl) ?? fetch.finalUrl;
       const away = (firstStatus(fetch) ?? 0) >= 300 && (firstStatus(fetch) ?? 0) < 400 && redirectsToOtherLocale(sets, target.href, final);
       if (!loop && !away) continue;
-      const ids = [annotationEvidence(evidence, target.annotations.find(annotation => !isXDefault(annotation))!, 'hreflang entry for a localized URL'), hopEvidence(evidence, target.href, fetch)];
+      const ids = [annotationEvidence(evidence, target.annotations.find(annotation => !isXDefault(annotation))!, evidenceLabel('hreflang entry for a localized URL')), hopEvidence(evidence, target.href, fetch)];
       results.push(fail('critical', ids, { url: target.href, final, language: list(languagesOf(sets, target.href)) }, loop ? 'redirect-loop' : 'redirected-away'));
     }
     if (results.length > 0) return results;
@@ -181,8 +181,8 @@ export const targetNoindex: RuleImplementation = {
     }
     if (flagged.length === 0) return verified === 0 ? notEvaluated('targets-not-fetched') : pass();
     return fail('high', flagged.slice(0, maxEvidence).flatMap(entry => [
-      annotationEvidence(evidence, entry.target.annotations.find(annotation => annotation.declaringUrl !== entry.target.href) ?? entry.target.annotations[0]!, 'hreflang entry for a noindex URL'),
-      evidence.add({ kind: 'html', url: entry.target.href, label: 'robots directive on the hreflang target', excerpt: entry.directive }),
+      annotationEvidence(evidence, entry.target.annotations.find(annotation => annotation.declaringUrl !== entry.target.href) ?? entry.target.annotations[0]!, evidenceLabel('hreflang entry for a noindex URL')),
+      evidence.add({ kind: 'html', url: entry.target.href, label: evidenceLabel('robots directive on the hreflang target'), excerpt: entry.directive }),
     ]), { count: flagged.length, urls: list(flagged.map(entry => entry.target.href)) });
   },
 };
@@ -206,8 +206,8 @@ export const targetBlockedByRobots: RuleImplementation = {
     });
     if (blocked.length === 0) return pass();
     return fail('high', blocked.slice(0, maxEvidence).flatMap(({ target, decision }) => [
-      annotationEvidence(evidence, target.annotations[0]!, 'hreflang entry for a URL that robots.txt disallows'),
-      evidence.add({ kind: 'robots', url: robots.url, label: `robots.txt rule that blocks ${target.href} for Googlebot`, excerpt: `${decision.rule?.type === 'disallow' ? 'Disallow' : 'Allow'}: ${decision.rule?.pattern ?? ''}`, ...(decision.rule ? { line: decision.rule.line } : {}) }),
+      annotationEvidence(evidence, target.annotations[0]!, evidenceLabel('hreflang entry for a URL that robots.txt disallows')),
+      evidence.add({ kind: 'robots', url: robots.url, label: evidenceLabel('robots.txt rule that blocks {url} for Googlebot', { url: target.href }), excerpt: `${decision.rule?.type === 'disallow' ? 'Disallow' : 'Allow'}: ${decision.rule?.pattern ?? ''}`, ...(decision.rule ? { line: decision.rule.line } : {}) }),
     ]), { count: blocked.length, urls: list(blocked.map(entry => entry.target.href)) });
   },
 };
@@ -223,7 +223,7 @@ export function declaredCanonical(page: PageFacts): { readonly url: string; read
   return header && fromHeader ? { url: fromHeader, excerpt: header.raw, source: 'header' } : undefined;
 }
 
-function canonicalEvidence(evidence: EvidenceStore, url: string, canonical: NonNullable<ReturnType<typeof declaredCanonical>>, label: string): string {
+function canonicalEvidence(evidence: EvidenceStore, url: string, canonical: NonNullable<ReturnType<typeof declaredCanonical>>, label: EvidenceLabel): string {
   return evidence.add({ kind: canonical.source === 'html' ? 'html' : 'header', url, label, excerpt: canonical.excerpt, ...(canonical.line ? { line: canonical.line } : {}) });
 }
 
@@ -246,8 +246,8 @@ export const targetNotCanonical: RuleImplementation = {
     }
     if (flagged.length === 0) return verified === 0 ? notEvaluated('targets-not-fetched') : pass();
     return fail('high', flagged.slice(0, maxEvidence).flatMap(entry => [
-      annotationEvidence(evidence, entry.annotation, 'hreflang entry for a URL that canonicalises elsewhere'),
-      canonicalEvidence(evidence, entry.target.href, entry.canonical, 'canonical declared by the hreflang target'),
+      annotationEvidence(evidence, entry.annotation, evidenceLabel('hreflang entry for a URL that canonicalises elsewhere')),
+      canonicalEvidence(evidence, entry.target.href, entry.canonical, evidenceLabel('canonical declared by the hreflang target')),
     ]), { count: flagged.length, urls: list(flagged.map(entry => entry.target.href)), canonicals: list(flagged.map(entry => entry.canonical.url)) });
   },
 };
@@ -263,7 +263,7 @@ export const mixedProtocolOrHost: RuleImplementation = {
     });
     if (flagged.length === 0) return pass();
     return [...groupBy(flagged, entry => entry.issue)].map(([issue, group]) => fail('medium',
-      group.slice(0, maxEvidence).map(entry => annotationEvidence(evidence, entry.target.annotations[0]!, issue === 'http-scheme' ? 'hreflang entry with an http URL on an https site' : 'hreflang entry on a host variant that redirects')),
+      group.slice(0, maxEvidence).map(entry => annotationEvidence(evidence, entry.target.annotations[0]!, issue === 'http-scheme' ? evidenceLabel('hreflang entry with an http URL on an https site') : evidenceLabel('hreflang entry on a host variant that redirects'))),
       { count: group.length, urls: list(group.map(entry => entry.target.href)), origin: site.origin }, issue));
   },
 };
@@ -274,20 +274,20 @@ export const onNonCanonicalPage: RuleImplementation = {
     const annotations = effectiveAnnotations(page!, site);
     if (annotations.length === 0) return notApplicable('no-hreflang');
     const self = normalizeUrl(page!.fetch.finalUrl)!;
-    const first = annotationEvidence(evidence, annotations[0]!, 'hreflang annotation on this page');
+    const first = annotationEvidence(evidence, annotations[0]!, evidenceLabel('hreflang annotation on this page'));
     if (page!.fetch.status !== 200) {
-      return fail('medium', [first, evidence.add({ kind: 'http', url: self, label: 'HTTP status of the page that declares hreflang', excerpt: String(page!.fetch.status ?? page!.fetch.error?.code ?? 'none') })],
+      return fail('medium', [first, evidence.add({ kind: 'http', url: self, label: evidenceLabel('HTTP status of the page that declares hreflang'), excerpt: String(page!.fetch.status ?? page!.fetch.error?.code ?? 'none') })],
         { status: String(page!.fetch.status ?? 'none'), url: self }, 'not-200');
     }
     const results: RuleResult[] = [];
     const canonical = declaredCanonical(page!);
     if (canonical && canonical.url !== self) {
-      results.push(fail('medium', [first, canonicalEvidence(evidence, self, canonical, 'canonical pointing to another URL')], { url: self, canonical: canonical.url }, 'canonical-elsewhere'));
+      results.push(fail('medium', [first, canonicalEvidence(evidence, self, canonical, evidenceLabel('canonical pointing to another URL'))], { url: self, canonical: canonical.url }, 'canonical-elsewhere'));
     }
     // Legal and utility pages are often noindex on purpose; their hreflang is then simply unused.
     const directive = page!.pageType === 'legal' || page!.pageType === 'utility' ? undefined : noindexDirective(page!);
     if (directive) {
-      results.push(fail('low', [first, evidence.add({ kind: 'html', url: self, label: 'robots directive on the page that declares hreflang', excerpt: directive })], { url: self, directive }, 'noindex'));
+      results.push(fail('low', [first, evidence.add({ kind: 'html', url: self, label: evidenceLabel('robots directive on the page that declares hreflang'), excerpt: directive })], { url: self, directive }, 'noindex'));
     }
     return results.length > 0 ? results : pass();
   },
@@ -308,13 +308,13 @@ export const canonicalCrossLanguage: RuleImplementation = {
       const own = languagesOf(sets, self);
       const target = languagesOf(sets, canonical.url);
       const language = pageLanguage(page);
-      const canonicalId = canonicalEvidence(evidence, self, canonical, 'canonical pointing to another URL');
+      const canonicalId = canonicalEvidence(evidence, self, canonical, evidenceLabel('canonical pointing to another URL'));
       if (disjoint(own, target)) {
         // A variant left untranslated may canonicalise to the original; then its hreflang label is what is wrong.
         if (language && isDecisive(language.guess, 100) && target.some(code => sameLanguage(code, language.guess.language))) continue;
         const labels = valuesFor(sets, self).filter(annotation => !isXDefault(annotation)).slice(0, 2)
           .concat(valuesFor(sets, canonical.url).filter(annotation => !isXDefault(annotation)).slice(0, 2));
-        results.push(fail('high', [canonicalId, ...labels.map(annotation => annotationEvidence(evidence, annotation, `hreflang value assigned to ${annotation.href}`))],
+        results.push(fail('high', [canonicalId, ...labels.map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang value assigned to {url}', { url: annotation.href ?? '' })))],
           { url: self, canonical: canonical.url, language: list(own.map(languageLabel)), canonicalLanguage: list(target.map(languageLabel)) }, 'hreflang-languages'));
         continue;
       }

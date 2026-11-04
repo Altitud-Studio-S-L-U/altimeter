@@ -1,4 +1,5 @@
 import type { DefaultTreeAdapterTypes } from 'parse5';
+import { evidenceLabel, joinLabels, type EvidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts } from '../../core/facts.ts';
 import { attribute, isElement, type HtmlNode } from '../../parse/html.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
@@ -27,8 +28,10 @@ export const extractInventory: RuleImplementation = {
       for (const node of topLevel(graph)) {
         const key = signature(node.types, node.id, node.path);
         if (graph === rendered && rawKeys.has(key)) continue;
-        const where = graph === raw ? (renderedKeys.has(key) || !rendered ? 'raw' : 'raw only') : 'rendered only';
-        evidence.push(cite(context, graph, node, `${node.syntax} item ${node.types.join(', ') || '(untyped)'}, ${where}`, undefined, node.path));
+        const presence = graph === raw ? (renderedKeys.has(key) || !rendered ? 'raw' : 'raw only') : 'rendered only';
+        const types = node.types.join(', ');
+        const label = types ? evidenceLabel('{syntax} item {types}, {presence}', { syntax: node.syntax, types, presence }) : evidenceLabel('{syntax} item (untyped), {presence}', { syntax: node.syntax, presence });
+        evidence.push(cite(context, graph, node, label, undefined, node.path));
       }
     }
     const blocks = (raw?.data.jsonLd.length ?? 0) + (rendered?.data.jsonLd.length ?? 0);
@@ -64,7 +67,7 @@ export const jsonLdSyntaxError: RuleImplementation = {
     if (blocks === 0) return { outcome: 'not_applicable', reason: 'no-jsonld' };
     if (broken.length === 0) return { outcome: 'pass' };
     const evidence = broken.map(entry => context.evidence.add({
-      kind: 'structured-data', url: context.page!.fetch.finalUrl, label: `JSON-LD block that does not parse as JSON (${entry.source === 'raw' ? 'raw HTML' : 'rendered DOM'})`,
+      kind: 'structured-data', url: context.page!.fetch.finalUrl, label: entry.source === 'raw' ? evidenceLabel('JSON-LD block that does not parse as JSON (raw HTML)') : evidenceLabel('JSON-LD block that does not parse as JSON (rendered DOM)'),
       excerpt: entry.raw, line: entry.line, path: `jsonld[${entry.index}]`,
     }));
     return { outcome: 'fail', severity: 'high', evidence, params: { count: broken.length, error: broken[0]!.error.slice(0, 160) } };
@@ -87,7 +90,7 @@ export const jsonLdContext: RuleImplementation = {
         reason: declared ? 'not-schema-org' : 'missing-context',
         severity: 'high',
         subject: node.types.join(', '),
-        evidence: cite(context, graph, node, declared ? 'JSON-LD item whose @context is not schema.org' : 'JSON-LD item without @context', undefined,
+        evidence: cite(context, graph, node, declared ? evidenceLabel('JSON-LD item whose @context is not schema.org') : evidenceLabel('JSON-LD item without @context'), undefined,
           contextValue ?? JSON.stringify(node.raw)),
       });
     }
@@ -172,20 +175,20 @@ export const microdataRdfaStructure: RuleImplementation = {
     const doc = pageDocument(page)!;
     const { issues, found } = scanAttributes(doc.parsed.document);
     if (!found) return { outcome: 'not_applicable', reason: 'no-microdata-or-rdfa' };
-    const where = doc === page.raw ? 'raw HTML' : 'rendered DOM';
-    const labels: Record<MicrodataIssue['reason'], string> = {
-      'orphan-itemprop': 'itemprop outside any itemscope',
-      'invalid-itemtype': 'itemtype that is not an absolute URL',
-      'missing-itemtype': 'top-level itemscope without itemtype',
-      'missing-itemref': 'itemref naming an id that is not in the document',
-      'unresolved-typeof': 'RDFa typeof with no vocab in scope',
+    const where = doc === page.raw ? evidenceLabel('(raw HTML)') : evidenceLabel('(rendered DOM)');
+    const labels: Record<MicrodataIssue['reason'], EvidenceLabel> = {
+      'orphan-itemprop': evidenceLabel('itemprop outside any itemscope'),
+      'invalid-itemtype': evidenceLabel('itemtype that is not an absolute URL'),
+      'missing-itemtype': evidenceLabel('top-level itemscope without itemtype'),
+      'missing-itemref': evidenceLabel('itemref naming an id that is not in the document'),
+      'unresolved-typeof': evidenceLabel('RDFa typeof with no vocab in scope'),
     };
     return report(issues.map(issue => ({
       reason: issue.reason,
       severity: issue.featureType ? 'medium' : 'low',
       subject: issue.subject,
       evidence: context.evidence.add({
-        kind: 'html', url: page.fetch.finalUrl, label: `${labels[issue.reason]} (${where})`, excerpt: elementLabel(issue.element),
+        kind: 'html', url: page.fetch.finalUrl, label: joinLabels(labels[issue.reason], where), excerpt: elementLabel(issue.element),
         line: issue.element.sourceCodeLocation?.startLine ?? 0,
       }),
     })));

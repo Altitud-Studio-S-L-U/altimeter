@@ -1,1 +1,375 @@
-{}
+{
+  "tech-https-final-url": {
+    "title": "La página se sirve mediante HTTPS",
+    "why": "Google prefiere las URLs HTTPS como canónicas e incluye la entrega segura en su documentación sobre la experiencia en la página, aunque afirma que HTTPS no mejora el posicionamiento más allá de eso. Los navegadores marcan las páginas HTTP como no seguras.",
+    "fix": "Sirve todas las páginas mediante HTTPS con un certificado válido y redirige HTTP a HTTPS con un 301/308. Desde Chrome 154 (octubre de 2026), Chrome avisa de forma predeterminada antes de cargar sitios HTTP públicos.",
+    "messages": {
+      "fail": "{count} página(s) auditadas terminan en una URL http://, por ejemplo, {url}.",
+      "fail:served-over-http": "{count} página(s) auditadas terminan en una URL http://, por ejemplo, {url}."
+    }
+  },
+  "tech-tls-certificate-valid": {
+    "title": "El certificado TLS es válido, no ha caducado, coincide con el nombre de host y se sirve con la cadena completa",
+    "why": "Google documenta que un certificado no válido hace que prefiera claramente la versión HTTP como canónica, y los navegadores bloquean la página con un aviso a pantalla completa.",
+    "fix": "Instala un certificado que cubra todos los nombres de host que se sirven, sirve la cadena intermedia completa y automatiza la renovación (ACME).",
+    "messages": {
+      "fail": "El certificado TLS de {host} no se ha podido verificar ({code}).",
+      "fail:expired": "El certificado TLS de {host} ha caducado ({code}).",
+      "fail:not-yet-valid": "El certificado TLS de {host} todavía no es válido ({code}).",
+      "fail:hostname-mismatch": "El certificado TLS no cubre el host {host} ({code}).",
+      "fail:self-signed": "{host} sirve un certificado autofirmado ({code}).",
+      "fail:revoked": "El certificado TLS de {host} está revocado ({code}).",
+      "fail:incomplete-chain": "{host} no envía los certificados intermedios necesarios para verificar su certificado ({code}). Los clientes que no obtienen los intermedios que faltan rechazan la conexión.",
+      "fail:untrusted-root": "La cadena de certificados de {host} termina en una raíz que no es de confianza ({code}, emisor {issuer}). Un proxy de interceptación en la red desde la que se audita produce el mismo resultado.",
+      "fail:verification-failed": "El certificado TLS de {host} no ha superado la verificación ({code}).",
+      "fail:expires-soon": "El certificado TLS de {host} caduca dentro de {days} día(s), el {validTo}, lo que es tarde en su vida útil para una renovación automatizada."
+    }
+  },
+  "tech-http-to-https-redirect": {
+    "title": "HTTP redirige a HTTPS en un solo salto permanente",
+    "why": "Google recomienda redirecciones permanentes del lado del servidor de HTTP a HTTPS para que las señales se consoliden en la URL HTTPS. Un 200 en HTTP deja un duplicado; una redirección temporal es una señal más débil.",
+    "fix": "Configura en el servidor un 301 o un 308 de http://host/* a https://host/* que conserve la ruta y la consulta.",
+    "messages": {
+      "fail": "La versión http:// de {url} no pasa a HTTPS con una sola redirección permanente.",
+      "fail:served-over-http": "{url} responde {status} mediante HTTP sin cifrar en lugar de redirigir a HTTPS, así que la URL HTTP es un duplicado.",
+      "fail:path-dropped": "{url} redirige a {target} y pierde la ruta en lugar de conservarla en HTTPS.",
+      "fail:temporary-redirect": "{url} pasa a HTTPS con una redirección temporal {status} en lugar de un 301 o un 308.",
+      "fail:indirect-upgrade": "{url} redirige primero a {target} en lugar de pasar la misma URL a HTTPS.",
+      "fail:long-chain": "{url} necesita {hops} redirecciones para llegar a la página HTTPS."
+    }
+  },
+  "tech-https-to-http-downgrade": {
+    "title": "Ninguna redirección va de HTTPS a HTTP",
+    "why": "Google documenta que las redirecciones de HTTPS a HTTP hacen que prefiera claramente la URL HTTP como canónica. La causa suele ser un proxy que termina el TLS mientras la aplicación cree que funciona sobre HTTP.",
+    "fix": "Corrige las redirecciones del servidor y de la aplicación para que emitan cabeceras Location https absolutas (revisa cómo se gestiona X-Forwarded-Proto detrás de proxies y CDN).",
+    "messages": {
+      "fail": "{count} redirección(es) van de HTTPS a HTTP, por ejemplo, de {from} a {to}."
+    }
+  },
+  "tech-mixed-content-active": {
+    "title": "No hay contenido mixto bloqueable (activo) en las páginas HTTPS",
+    "why": "Los navegadores bloquean los scripts, las hojas de estilos y los iframes cargados mediante HTTP en páginas HTTPS, lo que puede romper el renderizado para los usuarios y para el renderizador de Google. Google incluye las dependencias no seguras distintas de las imágenes entre los motivos por los que puede preferir HTTP como canónica.",
+    "fix": "Carga cada recurso mediante https o alójalo tú mismo. Como solución provisional, una directiva CSP upgrade-insecure-requests.",
+    "messages": {
+      "fail": "Esta página HTTPS carga {count} recurso(s) bloqueable(s) (scripts, hojas de estilos, marcos u otros) mediante un esquema no seguro, que los navegadores bloquean: {urls}.",
+      "fail:insecure-form": "Esta página HTTPS tiene {count} formulario(s) que envían los datos a una URL no segura de otro sitio: {urls}."
+    }
+  },
+  "tech-mixed-content-passive": {
+    "title": "No hay contenido mixto opcionalmente bloqueable (pasivo)",
+    "why": "Los navegadores pasan a HTTPS las imágenes, el audio y el vídeo solicitados mediante HTTP en páginas HTTPS y los descartan cuando no existe una versión HTTPS. Google excluye las imágenes de las dependencias no seguras que afectan a la elección de la URL canónica.",
+    "fix": "Cambia las URLs de los elementos multimedia a https o a URLs relativas.",
+    "messages": {
+      "fail": "Esta página HTTPS hace referencia a {count} URL(s) de imagen, audio o vídeo mediante http:, que los navegadores pasan a HTTPS o descartan: {urls}.",
+      "fail:upgrade-failed": "Esta página HTTPS hace referencia a {count} URL(s) multimedia mediante http:, y al menos una ha fallado cuando el navegador la ha pasado a HTTPS: {urls}."
+    }
+  },
+  "tech-hsts-header": {
+    "title": "Cabecera HSTS presente en las respuestas HTTPS (información de confianza, no un factor de posicionamiento)",
+    "why": "Google incluye HSTS como una forma de reforzar la preferencia por la URL canónica HTTPS; Google también ha dicho que la cabecera no afecta a la Búsqueda. Se registra como contexto de seguridad.",
+    "fix": "Añade Strict-Transport-Security y aumenta max-age por etapas (300 → 604800 → 2592000 → 31536000) después de comprobar que todos los subdominios funcionan mediante HTTPS.",
+    "messages": {
+      "fail": "La cabecera Strict-Transport-Security no es sólida (max-age {maxAge}).",
+      "fail:missing": "La respuesta HTTPS no tiene cabecera Strict-Transport-Security. Es contexto de seguridad, no un factor de la Búsqueda.",
+      "fail:invalid": "La cabecera Strict-Transport-Security no tiene un max-age válido, así que los navegadores la ignoran.",
+      "fail:disabled": "La cabecera Strict-Transport-Security establece max-age=0, lo que elimina la política.",
+      "fail:short-max-age": "El max-age de Strict-Transport-Security es de {maxAge} segundos, menos de un año (includeSubDomains: {includeSubDomains}, preload: {preload})."
+    }
+  },
+  "tech-hsts-preload-eligibility": {
+    "title": "Preparación para la lista de precarga de HSTS (solo si el propietario opta por ella)",
+    "why": "La lista de precarga de HSTS fija HTTPS para un dominio en el código de los navegadores. Es difícil de deshacer y rompe los subdominios que solo funcionan con HTTP, así que solo se comprueba cuando el sitio ya declara preload.",
+    "fix": "Cumple todos los requisitos de la lista antes de enviar la solicitud, o quita «preload» si no pretendes asumir ese compromiso.",
+    "messages": {
+      "fail": "La cabecera declara preload, pero no se cumplen {count} requisito(s) de la lista de precarga de HSTS: {unmet}."
+    }
+  },
+  "tech-security-headers-info": {
+    "title": "Inventario de cabeceras de seguridad (solo informativo, sin impacto en la Búsqueda)",
+    "why": "Las cabeceras de seguridad como Content-Security-Policy protegen a los usuarios, pero no están documentadas como señales de la Búsqueda. El inventario es contexto; una política que bloquea recursos propios se indica mediante tech-console-errors.",
+    "fix": "Añade estas cabeceras por la seguridad de los usuarios. No esperes ningún cambio en la Búsqueda.",
+    "messages": {
+      "fail": "Una cabecera de seguridad de la respuesta HTML tiene un valor inesperado.",
+      "fail:invalid-nosniff": "X-Content-Type-Options es «{value}»; los navegadores solo reconocen nosniff.",
+      "fail:csp-inline-scripts": "La Content-Security-Policy permite ejecutar scripts inline ({directive} permite 'unsafe-inline' sin nonce ni hash), así que no protege la página frente al cross-site scripting. Lighthouse lo muestra como diagnóstico de buenas prácticas; no es una señal de la Búsqueda de Google."
+    }
+  },
+  "tech-framing-protection": {
+    "title": "La inserción en marcos por otros sitios está restringida (X-Frame-Options o CSP frame-ancestors)",
+    "why": "X-Frame-Options y CSP frame-ancestors impiden que otros sitios inserten páginas en marcos, lo que protege a los usuarios del clickjacking. Es un control de seguridad; ninguna documentación de la Búsqueda lo trata.",
+    "fix": "Envía Content-Security-Policy: frame-ancestors 'self' (o X-Frame-Options: SAMEORIGIN) y permite orígenes de socios concretos donde sea necesario.",
+    "messages": {
+      "fail": "Otros sitios pueden insertar esta página en un marco.",
+      "fail:missing": "La respuesta HTML no envía ni X-Frame-Options ni una directiva CSP frame-ancestors, así que otros sitios pueden insertar la página en un marco.",
+      "fail:permissive-frame-ancestors": "La directiva CSP «{value}» permite que cualquier sitio inserte la página en un marco.",
+      "fail:unsupported-x-frame-options": "X-Frame-Options es «{value}», un valor que los navegadores actuales no aplican; usa DENY, SAMEORIGIN o CSP frame-ancestors."
+    }
+  },
+  "tech-intrusive-interstitial": {
+    "title": "Ningún intersticial ni cuadro de diálogo intrusivo oculta el contenido principal al cargar en móvil",
+    "why": "La documentación de Google sobre la experiencia en la página pide a los sitios que eviten los intersticiales y los cuadros de diálogo que dificultan el acceso al contenido, sobre todo en móvil. Los intersticiales obligatorios por ley, como el consentimiento de cookies y la verificación de edad, están exentos.",
+    "fix": "Sustituye las promociones a pantalla completa por banners pequeños. Superpón los avisos obligatorios por ley al contenido en lugar de redirigir a una página aparte.",
+    "messages": {
+      "fail": "Una capa superpuesta cubre el {coverage} % de la pantalla del móvil mientras se carga la página.",
+      "fail:promotion": "Una capa promocional cubre el {coverage} % de la pantalla del móvil mientras se carga la página. Google pide que los banners ocupen una pequeña parte de la pantalla.",
+      "fail:access-dialog": "Una capa de inicio de sesión o de suscripción cubre el {coverage} % de la pantalla del móvil al cargar. Es aceptable para contenido que no es público; confirma que no oculta contenido que deba indexarse.",
+      "fail:overlay": "Una capa superpuesta cubre el {coverage} % de la pantalla del móvil al cargar. Confirma si es un aviso que exige la ley, que Google exime, o un intersticial que oculta el contenido."
+    }
+  },
+  "tech-cmp-blocks-content": {
+    "title": "El banner de consentimiento no oculta ni retiene el contenido principal a los rastreadores",
+    "why": "Googlebot no hace clic en los botones de consentimiento. El contenido que solo está presente después del consentimiento, o una redirección a una página de consentimiento, no se indexa. El contenido que un banner tapa visualmente, pero que está en el DOM, sí se indexa.",
+    "fix": "Renderiza el contenido en el servidor y superpón el banner. No condiciones nunca el contenido del DOM al consentimiento.",
+    "messages": {
+      "fail": "El banner de consentimiento retiene el contenido de la página a un visitante que no ha dado su consentimiento.",
+      "fail:consent-redirect": "La página redirige a una página de consentimiento ({target}) antes de mostrar su contenido, así que los rastreadores que no dan su consentimiento nunca llegan a él.",
+      "fail:content-withheld": "Antes del consentimiento, el renderizado contiene {renderedWords} palabras frente a {rawWords} en el HTML servido, mientras se muestra un contenedor de consentimiento."
+    }
+  },
+  "tech-consent-mode-ordering": {
+    "title": "Los valores predeterminados del modo de consentimiento se establecen antes de las etiquetas de Google (informativo)",
+    "why": "La documentación de Google sobre el modo de consentimiento pide que los estados de consentimiento predeterminados se establezcan antes de que se carguen las etiquetas de Google. Es una cuestión de medición y de cumplimiento normativo, no una señal de la Búsqueda.",
+    "fix": "Establece los valores predeterminados de consentimiento antes de que se carguen las etiquetas y elige de forma deliberada el modo básico o el avanzado.",
+    "messages": {
+      "fail": "Las etiquetas de Google se ejecutan sin que se hayan establecido antes los valores predeterminados de consentimiento.",
+      "fail:no-consent-default": "Hay una etiqueta de Google en el HTML, pero no se ha encontrado ningún comando de consentimiento predeterminado.",
+      "fail:default-after-tags": "El comando de consentimiento predeterminado va después de la primera etiqueta de Google; debería ejecutarse antes."
+    }
+  },
+  "tech-viewport-meta": {
+    "title": "La etiqueta meta viewport para móviles está configurada (width e initial-scale)",
+    "why": "Sin una etiqueta meta viewport, los navegadores móviles maquetan las páginas con el ancho de un ordenador, y Google indexa el renderizado para móviles. Lighthouse 13.6 indica el problema como viewport-insight.",
+    "fix": "Añade <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> en el head.",
+    "messages": {
+      "fail": "La página no tiene un viewport optimizado para móviles.",
+      "fail:missing": "La página no tiene ningún elemento meta viewport, así que los navegadores móviles la maquetan con el ancho de un ordenador.",
+      "fail:fixed-width": "El viewport establece un ancho fijo («{content}») en lugar de width=device-width.",
+      "fail:not-mobile-optimized": "El viewport «{content}» no tiene ni width=device-width ni un initial-scale de al menos 1."
+    }
+  },
+  "tech-viewport-zoom-allowed": {
+    "title": "El viewport no desactiva el zoom",
+    "why": "Desactivar el zoom con user-scalable=no o con un maximum-scale bajo incumple los requisitos de cambio de tamaño de las WCAG y la auditoría de accesibilidad meta-viewport de Lighthouse. No es una señal de la Búsqueda.",
+    "fix": "Elimina user-scalable=no y las restricciones de maximum-scale.",
+    "messages": {
+      "fail": "El viewport restringe el zoom («{content}»).",
+      "fail:user-scalable-no": "El viewport desactiva el zoom («{content}»), lo que incumple el requisito de accesibilidad de permitir cambiar el tamaño.",
+      "fail:maximum-scale": "El viewport limita el zoom a {maximum}x («{content}»); la accesibilidad exige al menos 2x.",
+      "fail:maximum-scale-below-5": "El viewport limita el zoom a {maximum}x («{content}»); axe recomienda permitir hasta 5x."
+    }
+  },
+  "tech-content-fits-viewport": {
+    "title": "El contenido no es más ancho que el viewport del móvil",
+    "why": "El contenido más ancho que el viewport del móvil obliga a desplazarse en horizontal. Google indexa el renderizado para móviles y su documentación sobre la experiencia en la página abarca la usabilidad en móviles.",
+    "fix": "Limita los elementos anchos (max-width:100%, overflow-x:auto en tablas y código, imágenes adaptables).",
+    "messages": {
+      "fail": "En el renderizado para móvil, el documento mide {scrollWidth} px de ancho en un viewport de {innerWidth} px, así que se desplaza lateralmente {overflow} px."
+    }
+  },
+  "tech-legible-font-size": {
+    "title": "El texto es legible en móvil",
+    "why": "El texto pequeño es difícil de leer en los móviles. Lighthouse eliminó su auditoría font-size en la versión 13 y Search Console ya no informa sobre la usabilidad en móviles, así que esto es solo contexto de experiencia de usuario.",
+    "fix": "Usa un tamaño de fuente base de al menos 16 px para el texto del cuerpo en móvil.",
+    "messages": {
+      "fail": "Solo el {share} % del texto visible en el renderizado para móvil tiene 12 px o más."
+    }
+  },
+  "tech-tap-target-size": {
+    "title": "Los objetivos táctiles cumplen el mínimo de 24×24 px CSS (WCAG 2.2 / target-size de Lighthouse)",
+    "why": "WCAG 2.2 fija un tamaño mínimo de objetivo de 24 por 24 píxeles CSS. Lo comprueba la auditoría de accesibilidad target-size de Lighthouse, que en Lighthouse 12 sustituyó a la auditoría SEO de los objetivos táctiles.",
+    "fix": "Amplía las zonas táctiles (padding) o separa más los controles.",
+    "messages": {
+      "fail": "Lighthouse ha encontrado {count} objetivo(s) táctil(es) de menos de 24 por 24 píxeles CSS sin suficiente separación."
+    }
+  },
+  "tech-favicon-declared": {
+    "title": "La página de inicio declara un favicon que Google puede usar",
+    "why": "Google muestra un favicon junto a los resultados y lo lee de un elemento link de la página de inicio de cada dominio o subdominio. Sin un valor rel admitido, los resultados muestran un icono genérico.",
+    "fix": "Añade <link rel=\"icon\" href=\"/favicon.png\"> (un PNG cuadrado de 48 px o más) al head de la página de inicio.",
+    "messages": {
+      "fail": "La página de inicio no declara un favicon que Google pueda usar.",
+      "fail:missing": "La página de inicio no tiene ningún elemento link con rel icon, shortcut icon o apple-touch-icon, así que Google no tiene ningún favicon declarado que mostrar.",
+      "fail:outside-head": "Los elementos link del favicon de la página de inicio están fuera del head, donde es posible que Google no los lea.",
+      "fail:favicon-ico-only": "La página de inicio no declara ningún enlace de favicon; solo responde /favicon.ico, una alternativa que Google no documenta."
+    }
+  },
+  "tech-favicon-file-valid": {
+    "title": "El archivo del favicon se puede rastrear, es cuadrado, mide al menos 8 px y tiene un formato admitido",
+    "why": "Google exige un favicon cuadrado de al menos 8 por 8 píxeles, que Googlebot-Image pueda rastrear, en uno de los formatos que enumera: BMP, GIF, ICO, PNG, JPEG, PPM o TIFF. Recomienda que sea mayor de 48 por 48 píxeles.",
+    "fix": "Proporciona un PNG o un ICO cuadrado de más de 48×48 (por ejemplo, de 96 o 192 px) en una URL estable que Googlebot-Image pueda obtener.",
+    "messages": {
+      "fail": "Google no puede usar ninguno de los favicons declarados ({url}).",
+      "fail:not-200": "El favicon declarado {url} no responde 200.",
+      "fail:not-an-image": "El favicon declarado {url} no es un archivo de imagen.",
+      "fail:svg-only": "La página de inicio solo declara favicons SVG, un formato que no figura en las directrices de Google sobre favicons; añade un PNG o un ICO como alternativa.",
+      "fail:unsupported-format": "El favicon declarado {url} está en {format}, un formato que no figura en las directrices de Google sobre favicons.",
+      "fail:not-square": "El favicon declarado {url} no es cuadrado.",
+      "fail:too-small": "El favicon declarado {url} es más pequeño de 8 por 8 píxeles.",
+      "fail:noindex": "El favicon declarado {url} se envía con noindex o noimageindex.",
+      "fail:blocked-for-googlebot-image": "robots.txt bloquea el favicon declarado {url} para Googlebot-Image.",
+      "fail:small": "El favicon utilizable más grande mide {size} ({url}); Google recomienda que sea mayor de 48 por 48 píxeles.",
+      "fail:broken-alternate": "Existe un favicon utilizable, pero el icono declarado {url} no se puede usar ({problem})."
+    }
+  },
+  "tech-duplicate-conflicting-head-tags": {
+    "title": "No hay metadatos del head duplicados ni contradictorios (canonical, robots, description, Open Graph)",
+    "why": "Cuando los metadatos del head están duplicados con valores distintos, los rastreadores eligen uno y la elección no es previsible; en las reglas robots, Google aplica la más restrictiva.",
+    "fix": "Incluye cada etiqueta de metadatos una sola vez. Normalmente, esto significa eliminar el duplicado que inserta un plugin o un tema.",
+    "messages": {
+      "fail": "{count} etiqueta(s) de metadatos se declaran más de una vez con valores distintos: {tags}."
+    }
+  },
+  "tech-doctype-standards-mode": {
+    "title": "El documento usa <!DOCTYPE html> (sin modo quirks ni limited-quirks)",
+    "why": "Sin <!DOCTYPE html>, los navegadores renderizan en modo quirks, que cambia las reglas de maquetación y puede romper el renderizado para móviles. Lo comprueba la auditoría doctype de Lighthouse. Por sí solo, no afecta a la indexación.",
+    "fix": "Empieza todas las páginas con <!DOCTYPE html>.",
+    "messages": {
+      "fail": "El documento no se renderiza en modo estándar.",
+      "fail:missing": "El documento no tiene doctype, así que los navegadores lo renderizan en modo {mode}.",
+      "fail:quirks": "El doctype «{doctype}» pone a los navegadores en modo quirks.",
+      "fail:limited-quirks": "El doctype «{doctype}» pone a los navegadores en modo limited-quirks.",
+      "fail:legacy-doctype": "El doctype «{doctype}» es una declaración antigua; usa <!DOCTYPE html>."
+    }
+  },
+  "tech-charset-declared-early": {
+    "title": "Codificación UTF-8 declarada en los primeros 1024 bytes, en una cabecera o mediante un BOM",
+    "why": "El estándar HTML exige que la codificación de caracteres se declare mediante un BOM, la cabecera Content-Type o un elemento meta dentro de los primeros 1024 bytes. Una declaración tardía o contradictoria puede corromper el texto.",
+    "fix": "Pon <meta charset=\"utf-8\"> como primer hijo del head y envía Content-Type: text/html; charset=utf-8.",
+    "messages": {
+      "fail": "La codificación de caracteres no se declara como UTF-8 con la suficiente antelación.",
+      "fail:missing": "Ni una marca de orden de bytes, ni la cabecera Content-Type ni un elemento meta declaran la codificación de caracteres.",
+      "fail:late-meta": "La única declaración de codificación ({label}) es un elemento meta posterior a los primeros 1024 bytes, demasiado tarde para el preanálisis del navegador.",
+      "fail:not-utf8": "El documento declara la codificación {label}; los documentos HTML deberían usar UTF-8.",
+      "fail:header-meta-conflict": "Content-Type declara {header}, mientras que un elemento meta declara {meta}.",
+      "fail:conflicting-meta": "Los elementos meta declaran codificaciones distintas: {meta}."
+    }
+  },
+  "tech-iframe-main-content": {
+    "title": "El contenido principal no se sirve dentro de iframes; los iframes tienen título",
+    "why": "El contenido de los iframes pertenece a la URL del marco, así que es posible que el contenido principal servido de esa forma no se atribuya a la página. Los marcos necesitan un título por accesibilidad (frame-title de Lighthouse).",
+    "fix": "Renderiza el contenido principal en la propia página y da a los iframes un título descriptivo.",
+    "messages": {
+      "fail": "Hay que revisar los iframes de esta página.",
+      "fail:missing-title": "{count} iframe(s) visibles no tienen title, aria-label ni aria-labelledby.",
+      "fail:content-in-iframe": "La página tiene {words} palabras de texto propio y {count} iframe(s) que no son elementos insertados habituales; es posible que el contenido principal esté en un marco. Pendiente de que lo confirme el analista."
+    }
+  },
+  "tech-noscript-content": {
+    "title": "El contenido de noscript es una alternativa razonable, no un contenido divergente",
+    "why": "Google renderiza JavaScript, así que el contenido de noscript no es una vía de indexación fiable. El contenido extenso o divergente que solo está en noscript se indica como contexto.",
+    "fix": "Renderiza el contenido real en el HTML y deja noscript para los píxeles de seguimiento o los avisos alternativos del tipo «activa JS».",
+    "messages": {
+      "fail": "{count} bloque(s) noscript contienen texto o enlaces sustanciales que la página renderizada no muestra. Pendiente de que lo confirme el analista."
+    }
+  },
+  "tech-lighthouse-seo-category": {
+    "title": "Resultado de la categoría SEO de Lighthouse 13.6 (contexto)",
+    "why": "Lighthouse 13.6 ejecuta un pequeño conjunto de auditorías SEO: is-crawlable, document-title, meta-description, http-status-code, link-text, crawlable-anchors, robots-txt, image-alt, hreflang, canonical y structured-data. Una puntuación de 100 solo significa que se superan estas comprobaciones básicas. Cada auditoría corresponde a una regla del catálogo que informa del hallazgo.",
+    "fix": "Corrige el problema de fondo mediante la regla correspondiente de la herramienta.",
+    "messages": {
+      "fail": "Puntuación SEO de Lighthouse: {score}; fallan {count} auditoría(s): {audits}. Cada una se contabiliza en su propia regla."
+    }
+  },
+  "tech-lighthouse-a11y-overlap": {
+    "title": "Auditorías de accesibilidad de Lighthouse que se solapan con el SEO (contexto)",
+    "why": "Algunas auditorías de accesibilidad de Lighthouse comprueban los mismos elementos que leen los rastreadores, como document-title, image-alt, html-has-lang, link-name y frame-title. La accesibilidad no es un factor de posicionamiento documentado de Google.",
+    "fix": "Corrígelas como defectos de accesibilidad. El texto alternativo y los nombres de los enlaces también aportan a Google contexto de los textos de enlace y de las imágenes.",
+    "messages": {
+      "fail": "Puntuación de accesibilidad de Lighthouse: {score}; auditorías que fallan y que también leen los rastreadores: {searchAudits}; otras: {otherAudits}."
+    }
+  },
+  "tech-maintenance-503": {
+    "title": "Las respuestas de mantenimiento o de caída usan 503 con Retry-After; robots.txt nunca responde 503",
+    "why": "Google recomienda 503 con Retry-After para las caídas temporales y el mantenimiento. Una página de mantenimiento servida con 200 puede sustituir al contenido indexado, y un 503 en robots.txt detiene temporalmente el rastreo de todo el sitio.",
+    "fix": "Sirve 503 + Retry-After para caídas de 1-2 días como máximo. Para cierres más largos, mantén una página de inicio provisional indexable. Haz que robots.txt siga respondiendo 200.",
+    "messages": {
+      "fail": "Hay que revisar una respuesta de mantenimiento o de caída ({url}).",
+      "fail:missing-retry-after": "{url} responde 503 sin cabecera Retry-After.",
+      "fail:invalid-retry-after": "{url} responde 503 con un valor de Retry-After que no es ni una fecha ni un número de segundos.",
+      "fail:maintenance-page-200": "{url} responde 200 con una página de {words} palabras cuyo título o encabezado anuncia un mantenimiento; una página de caída debería responder 503. Pendiente de que lo confirme el analista."
+    }
+  },
+  "tech-internal-links-to-http": {
+    "title": "Los enlaces internos de un sitio HTTPS no usan http://",
+    "why": "En un sitio HTTPS, los enlaces internos con http:// cuestan una redirección en cada rastreo y envían una señal canónica mixta. HSTS oculta el problema a los usuarios que vuelven con su navegador.",
+    "fix": "Usa https:// o URLs relativas a la raíz.",
+    "messages": {
+      "fail": "{count} enlace(s) o formulario(s) internos de páginas HTTPS usan http://, por ejemplo, {urls}."
+    }
+  },
+  "tech-social-og-required": {
+    "title": "Etiquetas básicas de Open Graph presentes en el HTML del servidor",
+    "why": "El protocolo Open Graph define og:title, og:type, og:image y og:url para las vistas previas de enlaces en las plataformas sociales y de mensajería, que leen el HTML del servidor. Google puede usar og:title y og:site_name como datos para los enlaces de título y los nombres de sitio.",
+    "fix": "Incluye og:title, og:type, og:url, og:image y og:description en el HTML del servidor de todas las páginas que se puedan compartir.",
+    "messages": {
+      "fail": "Las etiquetas básicas de Open Graph están incompletas en el HTML servido.",
+      "fail:missing": "En el HTML servido faltan o están vacías estas etiquetas: {tags}.",
+      "fail:rendered-only": "{tags} solo aparecen después de que se ejecute JavaScript; los rastreadores de vistas previas leen el HTML servido.",
+      "fail:invalid-type": "og:type es «{value}», que no es un tipo de objeto de Open Graph.",
+      "fail:relative-url": "La URL de Open Graph «{value}» no es absoluta.",
+      "fail:late-head": "El head termina después de {bytes} bytes; WhatsApp solo lee las etiquetas de Open Graph de los primeros 300 KB."
+    }
+  },
+  "tech-social-og-image": {
+    "title": "og:image se puede obtener y cumple los límites de tamaño de las plataformas",
+    "why": "Facebook, LinkedIn y WhatsApp documentan límites de tamaño y de formato para las imágenes de vista previa; las imágenes demasiado pequeñas, demasiado grandes, en SVG o inaccesibles para sus bots producen vistas previas pequeñas o ninguna vista previa.",
+    "fix": "Sirve un JPEG o un PNG de 1200×630 de menos de 600 KB en una URL HTTPS absoluta a la que puedan acceder los bots.",
+    "messages": {
+      "fail": "La og:image {url} no cumple los requisitos de las vistas previas ({problems}).",
+      "fail:not-https": "La og:image {url} no se sirve mediante HTTPS.",
+      "fail:not-200": "La og:image {url} responde {status} en lugar de 200.",
+      "fail:svg": "La og:image {url} es un SVG, que las plataformas de vistas previas no muestran.",
+      "fail:unsupported-format": "La og:image {url} no es un archivo JPEG, PNG, WebP ni GIF.",
+      "fail:too-large": "La og:image {url} ocupa {bytes} bytes, por encima del límite de 5 MB de LinkedIn y X.",
+      "fail:too-small": "La og:image {url} mide {size}, por debajo del mínimo de 200 por 200 píxeles.",
+      "fail:over-600kb": "La og:image {url} ocupa {bytes} bytes; WhatsApp necesita 600 KB o menos.",
+      "fail:below-recommended": "La og:image {url} mide {size}; Facebook recomienda al menos 1200 por 630 píxeles.",
+      "fail:aspect-ratio": "La og:image {url} mide {size}, fuera de la relación 1,91:1 que usan las vistas previas."
+    }
+  },
+  "tech-social-og-image-meta": {
+    "title": "og:image:alt y og:image:width/height declarados y exactos",
+    "why": "og:image:width, og:image:height y og:image:alt permiten a las plataformas renderizar la vista previa la primera vez que se comparte y describirla a los usuarios de lectores de pantalla.",
+    "fix": "Añade og:image:alt, og:image:width y og:image:height después de cada og:image.",
+    "messages": {
+      "fail": "Las propiedades estructuradas de og:image están incompletas.",
+      "fail:missing": "La primera og:image no tiene {tags}.",
+      "fail:dimension-mismatch": "og:image:width y og:image:height declaran {declared}, pero la imagen mide {actual}."
+    }
+  },
+  "tech-social-og-url-canonical": {
+    "title": "og:url coincide con la URL canónica",
+    "why": "Las plataformas almacenan en caché las vistas previas y agregan las veces que se comparte por og:url. Un og:url que difiere de la URL canónica, como una plantilla que siempre apunta a la página de inicio, fusiona páginas distintas.",
+    "fix": "Genera og:url a partir de la misma fuente que la URL canónica.",
+    "messages": {
+      "fail": "og:url es {ogUrl}, pero la URL canónica es {canonical}."
+    }
+  },
+  "tech-console-errors": {
+    "title": "No hay errores de JavaScript que rompan el renderizado",
+    "why": "Google renderiza las páginas con una versión reciente de Chrome. Los errores de JavaScript que impiden que se rendericen el contenido principal o los enlaces afectan a lo que Google indexa. Los errores con un renderizado intacto son menores.",
+    "fix": "Corrige los scripts que fallan y renderiza el contenido crítico en el servidor para que un fallo de JS no deje la página vacía.",
+    "messages": {
+      "fail": "{count} error(es) de JavaScript durante el renderizado, con el contenido intacto. Primero: {first}",
+      "fail:content-missing": "{count} error(es) de JavaScript durante el renderizado, y la página renderizada ha perdido la mayor parte de su contenido. Primero: {first}",
+      "fail:csp-blocks-first-party": "La Content Security Policy ha rechazado un recurso propio durante el renderizado. Primero: {first}"
+    }
+  },
+  "tech-failed-render-requests": {
+    "title": "No hay subrecursos necesarios para el renderizado que fallen o estén bloqueados",
+    "why": "Google necesita las mismas respuestas de CSS, JavaScript y API que los usuarios para renderizar una página. Las solicitudes imprescindibles para el renderizado que fallan o están bloqueadas hacen que Google vea una página rota o vacía.",
+    "fix": "Corrige los recursos que fallan y permite que Googlebot rastree el CSS, el JS y las API que necesita la página.",
+    "messages": {
+      "fail": "{count} solicitud(es) de subrecursos han fallado durante el renderizado, incluidas algunas imprescindibles para el renderizado: {urls}.",
+      "fail:non-critical": "{count} solicitud(es) de subrecursos no críticos han fallado durante el renderizado: {urls}."
+    }
+  },
+  "tech-chrome-best-practices-trust": {
+    "title": "Auditorías de confianza y compatibilidad de prácticas recomendadas de Lighthouse (contexto)",
+    "why": "Las auditorías de prácticas recomendadas de Lighthouse abarcan HTTPS, las API obsoletas, los errores de la consola y la compatibilidad con navegadores. La puntuación de la categoría no es una métrica de la Búsqueda y se indica como contexto.",
+    "fix": "Consulta la regla correspondiente de la herramienta.",
+    "messages": {
+      "fail": "Puntuación de prácticas recomendadas de Lighthouse: {score}; fallan {count} auditoría(s): {audits}. La puntuación no es una métrica de la Búsqueda."
+    }
+  }
+}

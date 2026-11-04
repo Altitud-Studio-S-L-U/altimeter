@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { hreflangLinks, summarizeList } from '../helpers.ts';
@@ -25,7 +26,7 @@ export const boilerplateRatio: RuleImplementation = {
       const share = total === 0 ? 1 : 1 - uniqueWords / total;
       if (uniqueWords >= 100 && share <= 0.8) return;
       results.push({ outcome: 'fail', severity: 'medium', needsJudgment: true, params: { url: entry.page.fetch.finalUrl, uniqueWords, share: Math.round(share * 100) },
-        evidence: [cite(context, 'crawl', `${uniqueWords} words of page-specific text; ${Math.round(share * 100)}% of the text repeats on at least half of the pages`,
+        evidence: [cite(context, 'crawl', evidenceLabel('{words} words of page-specific text; {share}% of the text repeats on at least half of the pages', { words: uniqueWords, share: Math.round(share * 100) }),
           { url: entry.page.fetch.finalUrl, excerpt: clip(unique.join(' ') || '(no page-specific text)', 200) })] });
     });
     return results.length > 0 ? results : { outcome: 'pass' };
@@ -41,7 +42,7 @@ export const fillerBeforeMc: RuleImplementation = {
     if (scoped.length === 0) return notApplicable('no-paragraph-text');
     const first = scoped.reduce((best, block) => (block.top < best.top ? block : best));
     const viewports = first.top / render.result.viewport.height;
-    const evidence = [cite(context, 'render', `first paragraph of main content, ${Math.round(first.top)}px from the top of the phone render`, { excerpt: clip(first.text, 160), path: first.selector })];
+    const evidence = [cite(context, 'render', evidenceLabel('first paragraph of main content, {top}px from the top of the phone render', { top: Math.round(first.top) }), { excerpt: clip(first.text, 160), path: first.selector })];
     if (viewports <= 2) return { outcome: 'pass', evidence };
     return { outcome: 'fail', severity: 'medium', needsJudgment: true, params: { top: Math.round(first.top), viewports: Math.round(viewports * 10) / 10 }, evidence };
   },
@@ -81,8 +82,8 @@ export const originality: RuleImplementation = {
     if (best.overlap < 0.8) return { outcome: 'pass' };
     return { outcome: 'fail', severity: 'medium', needsJudgment: true, params: { other: best.url, overlap: Math.round(best.overlap * 100) },
       evidence: [
-        cite(context, 'crawl', `${Math.round(best.overlap * 100)}% of this page's five-word sequences also appear on another crawled page`, { excerpt: best.url }),
-        cite(context, 'text', 'opening of the main content', { excerpt: clip(contentText(self.doc), 200) }),
+        cite(context, 'crawl', evidenceLabel("{overlap}% of this page's five-word sequences also appear on another crawled page", { overlap: Math.round(best.overlap * 100) }), { excerpt: best.url }),
+        cite(context, 'text', evidenceLabel('opening of the main content'), { excerpt: clip(contentText(self.doc), 200) }),
       ] };
   },
 };
@@ -120,7 +121,7 @@ export const scaledDoorway: RuleImplementation = {
     pages.forEach((entry, index) => clusters.set(root(index), [...(clusters.get(root(index)) ?? []), entry]));
     const results: RuleResult[] = [...clusters.values()].filter(cluster => cluster.length >= 10).map(cluster => ({
       outcome: 'fail', severity: 'medium', needsJudgment: true, params: { count: cluster.length, urls: summarizeList(cluster.map(entry => entry.page.fetch.finalUrl)) },
-      evidence: cluster.slice(0, 3).map(entry => cite(context, 'crawl', `one of ${cluster.length} pages whose main text differs by at most 5% of its words`, { url: entry.page.fetch.finalUrl, excerpt: clip(entry.tokens.join(' '), 200) })),
+      evidence: cluster.slice(0, 3).map(entry => cite(context, 'crawl', evidenceLabel('one of {count} pages whose main text differs by at most 5% of its words', { count: cluster.length }), { url: entry.page.fetch.finalUrl, excerpt: clip(entry.tokens.join(' '), 200) })),
     }));
     return results.length > 0 ? results : { outcome: 'pass' };
   },

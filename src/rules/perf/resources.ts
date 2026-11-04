@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { absoluteUrl, pageDocument, summarizeList } from '../helpers.ts';
 import {
@@ -12,8 +13,8 @@ export const fontDisplay: RuleImplementation = {
     const audit = auditOf(summary, 'font-display-insight');
     if (!auditRan(audit)) return notEvaluated('no-font-display-insight');
     const items = rows(audit.details).filter(row => (num(row.wastedMs) ?? 0) > 0);
-    if (audit.score !== 0 || items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'font-display-insight', 'Lighthouse font display insight')] };
-    const cited = items.slice(0, 5).map(row => labEvidence(evidence, page!, summary, 'font-display-insight', 'web font whose text stays invisible while it loads', `${str(row.url)}: ${Math.round(num(row.wastedMs)!)} ms`));
+    if (audit.score !== 0 || items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'font-display-insight', evidenceLabel('Lighthouse font display insight'))] };
+    const cited = items.slice(0, 5).map(row => labEvidence(evidence, page!, summary, 'font-display-insight', evidenceLabel('web font whose text stays invisible while it loads'), `${str(row.url)}: ${Math.round(num(row.wastedMs)!)} ms`));
     return { outcome: 'fail', severity: 'low', evidence: cited, params: { count: items.length, fonts: summarizeList(items.map(row => str(row.url) ?? '')) } };
   },
 };
@@ -36,7 +37,7 @@ export const fontPreloadCrossorigin: RuleImplementation = {
       ...preconnects.filter(link => link.attrs.crossorigin === undefined && !corsOrigins.has(originOf(absoluteUrl(link.attrs.href, base) ?? ''))),
     ];
     if (missing.length === 0) return { outcome: 'pass' };
-    const cited = missing.slice(0, 5).map(link => evidence.add({ kind: 'html', url: page!.url, label: 'font hint without the crossorigin attribute', excerpt: openingTag(link), line: link.line }));
+    const cited = missing.slice(0, 5).map(link => evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('font hint without the crossorigin attribute'), excerpt: openingTag(link), line: link.line }));
     return { outcome: 'fail', severity: 'low', evidence: cited, params: { count: missing.length } };
   },
 };
@@ -52,7 +53,7 @@ export const fontFormat: RuleImplementation = {
     if (fonts.length === 0) return notApplicable('no-web-fonts');
     const results: RuleResult[] = [];
     const legacy = fonts.filter(font => !/woff2/iu.test(font.mimeType ?? '') && !/\.woff2(?:$|[?#])/iu.test(font.url));
-    const describe = (font: (typeof fonts)[number]) => labEvidence(evidence, page!, summary, 'network-requests', 'web font request', `${font.url} (${font.mimeType ?? 'no type'}, ${font.transferSize ?? 0} bytes)`);
+    const describe = (font: (typeof fonts)[number]) => labEvidence(evidence, page!, summary, 'network-requests', evidenceLabel('web font request'), `${font.url} (${font.mimeType ?? 'no type'}, ${font.transferSize ?? 0} bytes)`);
     if (legacy.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'not-woff2', evidence: legacy.slice(0, 5).map(describe), params: { count: legacy.length, fonts: summarizeList(legacy.map(font => font.url)) } });
     if (fonts.length > fontFileLimit) {
       const bytes = fonts.reduce((sum, font) => sum + (font.transferSize ?? 0), 0);
@@ -78,13 +79,13 @@ export const preconnectHints: RuleImplementation = {
     const doc = pageDocument(page!)!;
     const base = page!.fetch.finalUrl;
     const preconnects = doc.parsed.links.filter(link => link.rel.includes('preconnect'));
-    const cite = (link: (typeof preconnects)[number], label: string) => evidence.add({ kind: 'html', url: page!.url, label, excerpt: openingTag(link), line: link.line });
+    const cite = (link: (typeof preconnects)[number], label: EvidenceLabel) => evidence.add({ kind: 'html', url: page!.url, label, excerpt: openingTag(link), line: link.line });
     const results: RuleResult[] = [];
     if (preconnects.length > preconnectLimit) {
-      results.push({ outcome: 'fail', severity: 'low', reason: 'too-many', evidence: preconnects.slice(0, 6).map(link => cite(link, 'preconnect hint')), params: { count: preconnects.length } });
+      results.push({ outcome: 'fail', severity: 'low', reason: 'too-many', evidence: preconnects.slice(0, 6).map(link => cite(link, evidenceLabel('preconnect hint'))), params: { count: preconnects.length } });
     }
     const combined = preconnects.filter(link => link.rel.includes('dns-prefetch'));
-    if (combined.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'combined-rel', evidence: combined.map(link => cite(link, 'preconnect combined with dns-prefetch in one rel')), params: { count: combined.length } });
+    if (combined.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'combined-rel', evidence: combined.map(link => cite(link, evidenceLabel('preconnect combined with dns-prefetch in one rel'))), params: { count: combined.length } });
     const summary = labOf(page);
     if (summary) {
       const requests = networkRequests(summary);
@@ -92,15 +93,15 @@ export const preconnectHints: RuleImplementation = {
         const origin = originOf(absoluteUrl(link.attrs.href, base) ?? '');
         return origin !== undefined && !requests.some(request => originOf(request.url) === origin && (request.networkRequestTime ?? 0) <= preconnectWindowMs);
       });
-      if (unused.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'unused', evidence: unused.map(link => cite(link, 'preconnected origin with no lab request in the first 10 s')), params: { origins: summarizeList(unused.map(link => link.attrs.href ?? '')) } });
+      if (unused.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'unused', evidence: unused.map(link => cite(link, evidenceLabel('preconnected origin with no lab request in the first 10 s'))), params: { origins: summarizeList(unused.map(link => link.attrs.href ?? '')) } });
       const candidates = preconnectCandidates(auditOf(summary, 'network-dependency-tree-insight')?.details);
       if (candidates.length > 0) {
-        const cited = candidates.slice(0, 3).map(row => labEvidence(evidence, page!, summary, 'network-dependency-tree-insight', 'origin Lighthouse estimates a preconnect would speed up', `${str(row.origin)}: ${Math.round(num(row.wastedMs)!)} ms`));
+        const cited = candidates.slice(0, 3).map(row => labEvidence(evidence, page!, summary, 'network-dependency-tree-insight', evidenceLabel('origin Lighthouse estimates a preconnect would speed up'), `${str(row.origin)}: ${Math.round(num(row.wastedMs)!)} ms`));
         results.push({ outcome: 'fail', severity: 'low', reason: 'missing', evidence: cited, params: { origins: summarizeList(candidates.map(row => str(row.origin)!)) } });
       }
     }
     if (results.length > 0) return results;
-    return preconnects.length === 0 ? [notApplicable('no-preconnect')] : [{ outcome: 'pass', evidence: preconnects.slice(0, 4).map(link => cite(link, 'preconnect hint')) }];
+    return preconnects.length === 0 ? [notApplicable('no-preconnect')] : [{ outcome: 'pass', evidence: preconnects.slice(0, 4).map(link => cite(link, evidenceLabel('preconnect hint'))) }];
   },
 };
 
@@ -137,7 +138,7 @@ export const criticalRequestChains: RuleImplementation = {
     const path = deepest(chainNodes(tree.chains));
     const depth = Math.max(0, path.length - 1);
     const longest = isRecord(tree.longestChain) ? num(tree.longestChain.duration) : undefined;
-    const cited = labEvidence(evidence, page!, summary, 'network-dependency-tree-insight', 'deepest critical request chain',
+    const cited = labEvidence(evidence, page!, summary, 'network-dependency-tree-insight', evidenceLabel('deepest critical request chain'),
       `${path.map(node => node.url).join(' -> ')}${longest === undefined ? '' : `; longest chain ${longest} ms`}`);
     if (depth <= chainDepthLimit) return { outcome: 'pass', evidence: [cited] };
     return { outcome: 'fail', severity: 'low', evidence: [cited], params: { depth, duration: longest === undefined ? 'unknown' : `${longest} ms` } };
@@ -154,25 +155,25 @@ export const imageDelivery: RuleImplementation = {
     const audit = auditOf(summary, 'image-delivery-insight');
     if (!auditRan(audit)) return notEvaluated('no-image-delivery-insight');
     const items = rows(audit.details).filter(row => str(row.url) !== undefined && (num(row.wastedBytes) ?? 0) > 0);
-    if (items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'image-delivery-insight', 'Lighthouse image delivery insight')] };
+    if (items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'image-delivery-insight', evidenceLabel('Lighthouse image delivery insight'))] };
     const base = page!.fetch.finalUrl;
     const target = lcpTarget(page!);
     const lcp = target?.url === undefined ? undefined : comparableUrl(target.url, base);
-    const describe = (row: Row, label: string) => {
+    const describe = (row: Row, label: EvidenceLabel) => {
       const reasons = isRecord(row.subItems) && Array.isArray(row.subItems.items) ? row.subItems.items.filter(isRecord).map(item => str(item.reason)).filter(Boolean).join('; ') : '';
       return labEvidence(evidence, page!, summary, 'image-delivery-insight', label, `${str(row.url)}: estimated savings ${formatKib(num(row.wastedBytes)!)}${reasons ? ` (${reasons})` : ''}`);
     };
     const results: RuleResult[] = [];
     const lcpItem = lcp === undefined ? undefined : items.find(row => comparableUrl(str(row.url), base) === lcp);
     if (lcpItem && num(lcpItem.wastedBytes)! >= lcpSavingsBytes) {
-      results.push({ outcome: 'fail', severity: 'medium', reason: 'lcp-image', evidence: [describe(lcpItem, 'LCP image with estimated byte savings')], params: { url: str(lcpItem.url)!, savings: formatKib(num(lcpItem.wastedBytes)!) } });
+      results.push({ outcome: 'fail', severity: 'medium', reason: 'lcp-image', evidence: [describe(lcpItem, evidenceLabel('LCP image with estimated byte savings'))], params: { url: str(lcpItem.url)!, savings: formatKib(num(lcpItem.wastedBytes)!) } });
     }
     const others = items.filter(row => row !== lcpItem);
     const total = others.reduce((sum, row) => sum + num(row.wastedBytes)!, 0);
     if (total >= totalSavingsBytes) {
-      results.push({ outcome: 'fail', severity: 'low', reason: 'images', evidence: others.slice(0, 5).map(row => describe(row, 'image with estimated byte savings')), params: { count: others.length, savings: formatKib(total) } });
+      results.push({ outcome: 'fail', severity: 'low', reason: 'images', evidence: others.slice(0, 5).map(row => describe(row, evidenceLabel('image with estimated byte savings'))), params: { count: others.length, savings: formatKib(total) } });
     }
-    return results.length > 0 ? results : [{ outcome: 'pass', evidence: items.slice(0, 3).map(row => describe(row, 'image with estimated byte savings')) }];
+    return results.length > 0 ? results : [{ outcome: 'pass', evidence: items.slice(0, 3).map(row => describe(row, evidenceLabel('image with estimated byte savings'))) }];
   },
 };
 

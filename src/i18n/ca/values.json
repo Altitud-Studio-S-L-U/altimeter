@@ -1,0 +1,371 @@
+{
+  "aiItem": {
+    "title element": "element title",
+    "title element outside the head": "element title fora del head",
+    "meta description": "metadescripció",
+    "{property} meta property": "propietat meta {property}",
+    "html lang attribute": "atribut lang de l'element html",
+    "canonical link": "enllaç canonical",
+    "{tag} text": "text de l'element {tag}",
+    "text hidden by {method}": "text ocult mitjançant {method}",
+    "text hidden by {method} inside main": "text ocult mitjançant {method} dins de main",
+    "img without an alt attribute": "img sense atribut alt",
+    "img with empty alt (decorative)": "img amb alt buit (decorativa)",
+    "img alt text": "text alternatiu d'img",
+    "{direction} link": "enllaç {direction}",
+    "{direction} link (rel {rel})": "enllaç {direction} (rel {rel})",
+    "JSON-LD block that does not parse": "bloc JSON-LD que no es pot analitzar",
+    "JSON-LD block": "bloc JSON-LD",
+    "microdata item": "element de microdades",
+    "response header {name}": "capçalera de resposta {name}",
+    "h{level} heading": "encapçalament h{level}",
+    "hreflang link": "enllaç hreflang"
+  },
+  "assistants": {
+    "none by referrer": "cap identificat pel referent"
+  },
+  "band": {
+    "good": "bona",
+    "needs improvement": "cal millorar",
+    "poor": "deficient"
+  },
+  "caller": {
+    "analyst": "analista",
+    "verifier": "verificador"
+  },
+  "causes": {
+    "none attributed": "cap"
+  },
+  "collector": {
+    "not measured": "sense mesurar"
+  },
+  "conditions": {
+    "lab, Lighthouse {version}, {formFactor}, {throttling} throttling": "laboratori, Lighthouse {version}, {formFactor}, limitació {throttling}"
+  },
+  "contentType": {
+    "(none)": "(cap)"
+  },
+  "crawl-js-content-dependency/share": {
+    "title": "títol",
+    "meta description": "metadescripció",
+    "structured data types": "tipus de dades estructurades"
+  },
+  "crawlers": {
+    "none": "cap"
+  },
+  "detail": {
+    "HTTP error": "error HTTP",
+    "{count} URLs": "{count} URL",
+    "{count} lines": "{count} línies",
+    "{count} entries": "{count} entrades",
+    "{entries} entries, {bytes} bytes": "{entries} entrades, {bytes} bytes",
+    "not a sitemap": "no és un mapa del lloc",
+    "index inside an index": "índex dins d'un altre índex",
+    "(none)": "(cap)"
+  },
+  "direction": {
+    "internal": "intern",
+    "outbound": "sortint"
+  },
+  "duration": {
+    "unknown": "desconeguda"
+  },
+  "embeds": {
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} sol·licituds, {size}, fil principal {time}"
+  },
+  "entities": {
+    "{entity}: main thread {time}, transfer {size}": "{entity}: fil principal {time}, transferència {size}"
+  },
+  "error": {
+    "no answer": "sense resposta",
+    "unknown error": "error desconegut"
+  },
+  "field": {
+    "title": "títol",
+    "meta description": "metadescripció",
+    "image alt texts": "textos alternatius de les imatges"
+  },
+  "fileReason": {
+    "contains {token}": "conté {token}",
+    "contains the observed text": "conté el text observat",
+    "named after .{name}": "té el nom de .{name}",
+    "uses {name}": "fa servir {name}",
+    "configures how the platform answers": "configura com respon la plataforma"
+  },
+  "files": {
+    "not listed": "sense detallar"
+  },
+  "first": {
+    "html": "HTML",
+    "header": "capçalera HTTP Link",
+    "sitemap": "mapa del lloc"
+  },
+  "formFactor": {
+    "PHONE": "telèfon",
+    "DESKTOP": "ordinador",
+    "mobile": "mòbil",
+    "desktop": "ordinador"
+  },
+  "formFactors": {
+    "PHONE": "telèfon",
+    "DESKTOP": "ordinador"
+  },
+  "includeSubDomains": {
+    "yes": "sí",
+    "no": "no"
+  },
+  "issuer": {
+    "unknown": "desconegut"
+  },
+  "issues": {
+    "HTTP {status} in its index details": "HTTP {status} als detalls del seu índex"
+  },
+  "kind": {
+    "canvas": "canvas",
+    "video": "vídeo",
+    "embed": "element incrustat",
+    "pdf": "PDF"
+  },
+  "kinds": {
+    "canvas": "canvas",
+    "video": "vídeo",
+    "embed": "element incrustat",
+    "pdf": "PDF"
+  },
+  "lastCrawl": {
+    "never": "mai"
+  },
+  "live": {
+    "no response": "sense resposta"
+  },
+  "location": {
+    "hidden element": "element ocult",
+    "comment": "comentari",
+    "attribute": "atribut",
+    "meta": "meta",
+    "rendered hidden": "bloc ocult de la pàgina renderitzada"
+  },
+  "maxAge": {
+    "invalid": "no vàlid"
+  },
+  "method": {
+    "display-none": "display: none",
+    "visibility-hidden": "visibility: hidden",
+    "opacity-zero": "opacitat 0",
+    "visually-hidden": "ocultació visual",
+    "zero-size": "mida zero",
+    "offscreen": "posició fora de la pantalla",
+    "tiny-font": "lletra diminuta",
+    "same-color": "el mateix color que el fons"
+  },
+  "metrics": {
+    "{metric} {value} ({band})": "{metric} {value} ({band})",
+    "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} enfront de {withSoftnavs} amb navegacions suaus"
+  },
+  "operators": {
+    "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloquejat, {training} permès)"
+  },
+  "outcome": {
+    "failed": "fallida",
+    "skipped": "omesa"
+  },
+  "preload": {
+    "yes": "sí",
+    "no": "no"
+  },
+  "presence": {
+    "raw": "a l'HTML en brut",
+    "raw only": "només a l'HTML en brut",
+    "rendered only": "només al DOM renderitzat"
+  },
+  "problem": {
+    "in the body": "al body",
+    "carries {attributes}": "porta {attributes}"
+  },
+  "problems": {
+    "the file is empty": "el fitxer és buit",
+    "the first line is not an H1 heading": "la primera línia no és un encapçalament H1",
+    "it has {count} H1 headings": "té {count} encapçalaments H1",
+    "empty member": "membre buit",
+    "invalid key \"{key}\"": "clau «{key}» no vàlida",
+    "{key} needs y or n": "{key} necessita y o n"
+  },
+  "query": {
+    "query {number}": "consulta {number}"
+  },
+  "raw": {
+    "(none)": "(cap)"
+  },
+  "reasons": {
+    "not stated": "sense especificar",
+    "display-none": "display: none",
+    "visibility-hidden": "visibility: hidden",
+    "opacity-zero": "opacitat 0",
+    "visually-hidden": "ocultació visual",
+    "zero-size": "mida zero",
+    "offscreen": "posició fora de la pantalla",
+    "tiny-font": "lletra diminuta",
+    "same-color": "el mateix color que el fons"
+  },
+  "rendered": {
+    "(none)": "(cap)"
+  },
+  "resource": {
+    "script": "script",
+    "stylesheet": "full d'estil",
+    "image": "imatge",
+    "img": "imatge",
+    "font": "font web",
+    "media": "contingut multimèdia",
+    "audio": "àudio",
+    "video": "vídeo",
+    "frame": "marc",
+    "object": "object",
+    "embed": "embed",
+    "form": "formulari",
+    "document": "document",
+    "fetch": "fetch",
+    "xhr": "XHR",
+    "other": "altre recurs"
+  },
+  "role": {
+    "stylesheet": "full d'estil",
+    "script": "script",
+    "fetch": "fetch",
+    "font": "font web",
+    "image": "imatge",
+    "document": "document",
+    "other": "altre recurs"
+  },
+  "schemes": {
+    "cctld": "ccTLD",
+    "subdomain": "subdomini",
+    "subdirectory": "subdirectori",
+    "parameter": "paràmetre",
+    "same-path": "mateix camí"
+  },
+  "scope": {
+    "URL-level": "nivell d'URL",
+    "origin-level": "nivell d'origen"
+  },
+  "scripts": {
+    "not attributed": "sense atribuir"
+  },
+  "second": {
+    "html": "HTML",
+    "header": "capçalera HTTP Link",
+    "sitemap": "mapa del lloc"
+  },
+  "snippet": {
+    "async-hide class": "classe async-hide",
+    "Adobe Target pre-hiding snippet": "fragment d'ocultació prèvia d'Adobe Target",
+    "Kameleoon loading style sheet": "full d'estil de càrrega de Kameleoon",
+    "style rule that hides the page": "regla d'estil que oculta la pàgina",
+    "{tag} element hidden in the server HTML": "element {tag} ocult a l'HTML del servidor"
+  },
+  "sources": {
+    "not attributed": "sense atribuir",
+    "html": "HTML",
+    "rendered": "DOM renderitzat",
+    "header": "capçalera HTTP Link",
+    "sitemap": "mapa del lloc"
+  },
+  "state": {
+    "Crawled - currently not indexed": "Rastrejada: actualment sense indexar",
+    "Discovered - currently not indexed": "Descoberta: actualment sense indexar",
+    "Excluded by ‘noindex’ tag": "Exclosa per l'etiqueta «noindex»",
+    "Excluded by 'noindex' tag": "Exclosa per l'etiqueta «noindex»",
+    "Blocked by robots.txt": "Bloquejada pel robots.txt",
+    "Indexed, though blocked by robots.txt": "Indexada tot i que el robots.txt la bloqueja",
+    "Not found (404)": "No s'ha trobat (404)",
+    "Soft 404": "Soft 404",
+    "Server error (5xx)": "Error del servidor (5xx)",
+    "Redirect error": "Error de redirecció",
+    "Duplicate without user-selected canonical": "Duplicada: l'usuari no ha indicat cap versió canònica",
+    "URL is unknown to Google": "URL desconeguda per a Google",
+    "Blocked due to unauthorized request (401)": "Bloquejada a causa d'una sol·licitud no autoritzada (401)",
+    "Blocked due to access forbidden (403)": "Bloquejada a causa d'un accés prohibit (403)",
+    "Blocked due to other 4xx issue": "Bloquejada per un altre problema de tipus 4xx",
+    "Page indexed without content": "Pàgina indexada sense contingut"
+  },
+  "status": {
+    "none": "sense resposta",
+    "unknown": "desconegut"
+  },
+  "subparts": {
+    "time to first byte {share}": "temps fins al primer byte {share}",
+    "resource load delay {share}": "retard de càrrega del recurs {share}",
+    "element render delay {share}": "retard de renderització de l'element {share}"
+  },
+  "tech-favicon-file-valid/problem": {
+    "not-200": "no respon 200",
+    "not-an-image": "no és una imatge",
+    "svg": "és un SVG",
+    "unsupported-format": "format no admès",
+    "not-square": "no és quadrat",
+    "too-small": "massa petit",
+    "noindex": "porta noindex o noimageindex",
+    "blocked-for-googlebot-image": "el robots.txt el bloqueja per a Googlebot-Image"
+  },
+  "throttling": {
+    "simulate": "simulada",
+    "devtools": "de DevTools",
+    "provided": "de l'entorn"
+  },
+  "url": {
+    "unknown": "URL desconeguda"
+  },
+  "warning": {
+    "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "S'han demanat dades de Search Console, però no s'ha trobat cap credencial. Executa «altimeter gsc login --client <client_secret.json> --remember <dpapi|file>» o defineix ALTIMETER_GSC_ACCESS_TOKEN.",
+    "Search Console data was not used: {error}": "No s'han fet servir les dades de Search Console: {error}",
+    "Crawler activity: {warning}": "Activitat de rastrejadors: {warning}",
+    "Crawler activity was not read: {error}": "No s'ha llegit l'activitat de rastrejadors: {error}",
+    "Chrome was not found, so rendered checks were not evaluated.": "No s'ha trobat Chrome, de manera que no s'han avaluat les comprovacions que necessiten la renderització.",
+    "Lighthouse did not complete: {error}": "Lighthouse no ha acabat: {error}",
+    "Bing Webmaster Tools data was requested but BING_WEBMASTER_API_KEY is not set. Generate a key in Bing Webmaster Tools under Settings > API Access.": "S'han demanat dades de Bing Webmaster Tools, però BING_WEBMASTER_API_KEY no està definida. Genera una clau a Bing Webmaster Tools, a Settings > API Access.",
+    "Bing Webmaster Tools data is incomplete. {warning}": "Les dades de Bing Webmaster Tools estan incompletes. {warning}",
+    "Bing Webmaster Tools data was not used: {error}": "No s'han fet servir les dades de Bing Webmaster Tools: {error}",
+    "The crawl issues could not be read: {error}": "No s'han pogut llegir els problemes de rastreig: {error}",
+    "The page traffic could not be read: {error}": "No s'ha pogut llegir el trànsit de les pàgines: {error}",
+    "The queries of {page} could not be read: {error}": "No s'han pogut llegir les consultes de {page}: {error}",
+    "The index details of {url} could not be read: {error}": "No s'han pogut llegir els detalls de l'índex de {url}: {error}",
+    "{count} later request was not sent after Bing Webmaster Tools throttled the requests.": "{count} sol·licitud posterior no s'ha enviat perquè Bing Webmaster Tools ha limitat les sol·licituds.",
+    "{count} later requests were not sent after Bing Webmaster Tools throttled the requests.": "{count} sol·licituds posteriors no s'han enviat perquè Bing Webmaster Tools ha limitat les sol·licituds.",
+    "Cloudflare keeps {days} days of this data for the zone, so the window starts on {date}.": "Cloudflare conserva {days} dies d'aquestes dades per a la zona, de manera que el període comença el {date}.",
+    "Cloudflare allows {hours} hours per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare permet {hours} hores per consulta i Altimeter fa com a màxim {queries} consultes per execució, de manera que només s'han llegit les dades des del {date}.",
+    "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.": "Algunes consultes a Cloudflare han retornat el màxim de files, de manera que poden faltar rastrejadors o camins poc freqüents i les xifres són valors mínims.",
+    "{name}: reading stopped early ({error}).": "{name}: la lectura s'ha aturat abans d'hora ({error}).",
+    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: un {share} % de les seves sol·licituds venen d'una o dues adreces, cosa que sembla un proxy o un balancejador de càrrega, de manera que les seves adreces no s'han fet servir per verificar rastrejadors. Registra l'adreça del client i fes servir --ip-source.",
+    "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} fa servir el Common Log Format, que no té agent d'usuari, de manera que no s'hi poden identificar els rastrejadors.",
+    "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} no registra l'agent d'usuari (Netlify elimina client_ip i user_agent quan s'exclouen les dades personals), de manera que no s'hi poden identificar els rastrejadors.",
+    "{name} records no user agent, so crawlers cannot be identified in it.": "{name} no registra l'agent d'usuari, de manera que no s'hi poden identificar els rastrejadors.",
+    "{name} ({format}) records the client address itself; --ip-source applies to server logs only.": "{name} ({format}) ja registra l'adreça del client; --ip-source només s'aplica als registres del servidor.",
+    "Cloudflare analytics and access logs may count the same requests twice.": "L'analítica de Cloudflare i els registres d'accés poden comptar dues vegades les mateixes sol·licituds.",
+    "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.": "No s'ha pogut llegir la llista d'adreces {id} ({error}); no es pot reconèixer un registre que anota les adreces de Cloudflare.",
+    "The address list {id} could not be read ({error}); requests it would verify stay unverified.": "No s'ha pogut llegir la llista d'adreces {id} ({error}); les sol·licituds que verificaria queden sense verificar.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.": "No s'ha pogut actualitzar la llista d'adreces {id} ({error}); s'ha fet servir la còpia de la memòria cau del {date}.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.": "No s'ha pogut actualitzar la llista d'adreces {id} ({error}); s'ha fet servir la còpia de la memòria cau d'una execució anterior.",
+    "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.": "El DNS invers s'ha limitat a les {limit} adreces amb més activitat; les sol·licituds de les altres queden sense verificar quan les seves llistes no les verifiquen.",
+    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} sol·licitud(s) de rastrejadors porten adreces privades o de loopback, de manera que els registres anoten un proxy o un balancejador de càrrega; registra l'adreça del client i fes servir --ip-source.",
+    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} sol·licitud(s) de rastrejadors venen de les adreces pròpies de Cloudflare, de manera que els registres anoten Cloudflare en lloc del client; registra CF-Connecting-IP i fes servir --ip-source.",
+    "No request falls within the window ({start} to {end}); check the dates of {files}.": "Cap sol·licitud no cau dins del període (del {start} al {end}); comprova les dates dels fitxers {files}.",
+    "No request falls within the window ({start} to {end}).": "Cap sol·licitud no cau dins del període (del {start} al {end}).",
+    "Cloudflare reported no request from a known crawler in the window.": "Cloudflare no ha indicat cap sol·licitud de cap rastrejador conegut durant el període.",
+    "The analysis did not run because no provider CLI is available.": "L'anàlisi no s'ha executat perquè no hi ha cap CLI de proveïdor disponible.",
+    "Verification was turned off, so every analysis finding stays unverified.": "La verificació estava desactivada, de manera que totes les troballes de l'anàlisi queden sense verificar.",
+    "{error} Findings stay unverified.": "{error} Les troballes queden sense verificar.",
+    "{count} analysis calls were left out to stay within the call limit.": "S'han omès {count} crida(es) de l'anàlisi per no superar el límit de crides.",
+    "{caller} call {id} ({pass}) {outcome}: {error}": "Crida {id} ({caller}, {pass}) {outcome}: {error}",
+    "{name} {version} is not a verified version; it runs with {flags}.": "{name} {version} no és una versió verificada; s'executa amb {flags}.",
+    "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.": "Es declaren {declared} mapes del lloc i només se n'han llegit els {read} primers, de manera que les comprovacions que fan servir les URL dels mapes del lloc només en veuen una part.",
+    "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.": "Els índexs de mapes del lloc enumeren {listed} mapes del lloc secundaris i només se n'han llegit {read}, de manera que les comprovacions que fan servir les URL dels mapes del lloc només en veuen una part.",
+    "{file} is empty, so it was skipped.": "{file} és buit, de manera que s'ha omès.",
+    "The format of {file} was not recognised, so it was skipped.": "No s'ha reconegut el format de {file}, de manera que s'ha omès."
+  },
+  "where": {
+    "title": "títol",
+    "meta description": "metadescripció",
+    "page text": "text de la pàgina",
+    "image alt text": "text alternatiu de les imatges"
+  }
+}

@@ -31,10 +31,9 @@ export async function collectSitemaps(client: HttpClient, origin: string, declar
   }
   // Rules that compare pages or owner data with sitemap URLs would otherwise take part of the list for all of it.
   const warnings: string[] = [];
-  const partial = 'so checks that use sitemap URLs see only part of them';
-  if (declared.length > maxDeclaredSitemaps) warnings.push(`${declared.length} sitemaps are declared and only the first ${maxDeclaredSitemaps} were read, ${partial}.`);
+  if (declared.length > maxDeclaredSitemaps) warnings.push(`${declared.length} sitemaps are declared and only the first ${maxDeclaredSitemaps} were read, so checks that use sitemap URLs see only part of them.`);
   const unread = [...listed].filter(url => !seen.has(url)).length;
   const read = results.filter(entry => entry.source === 'index').length;
-  if (unread > 0) warnings.push(`The sitemap indexes list ${read + unread} child sitemaps and only ${read} were read, ${partial}.`);
+  if (unread > 0) warnings.push(`The sitemap indexes list ${read + unread} child sitemaps and only ${read} were read, so checks that use sitemap URLs see only part of them.`);
   return { sitemaps: results, warnings };
 }

@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import type { RuleImplementation } from '../engine.ts';
@@ -59,13 +60,13 @@ export const consoleErrors: RuleImplementation = {
     if (errors.length === 0) return pass();
     const cite = citer(context);
     const url = page.fetch.finalUrl;
-    const evidence = errors.slice(0, 10).map(error => cite({ kind: 'render', url, label: error.kind === 'csp-first-party' ? 'Content Security Policy refused a first-party resource during the render' : 'JavaScript error during the Googlebot-like render', excerpt: shorten(error.text, 500) }));
+    const evidence = errors.slice(0, 10).map(error => cite({ kind: 'render', url, label: error.kind === 'csp-first-party' ? evidenceLabel('Content Security Policy refused a first-party resource during the render') : evidenceLabel('JavaScript error during the Googlebot-like render'), excerpt: shorten(error.text, 500) }));
     const lighthouse = detailItems(lighthouseSummary(page)?.audits['errors-in-console']);
-    for (const item of lighthouse.slice(0, 3)) evidence.push(cite({ kind: 'lighthouse', url, label: 'error reported by the Lighthouse errors-in-console audit', excerpt: shorten(String(item.description ?? ''), 500) }));
+    for (const item of lighthouse.slice(0, 3)) evidence.push(cite({ kind: 'lighthouse', url, label: evidenceLabel('error reported by the Lighthouse errors-in-console audit'), excerpt: shorten(String(item.description ?? ''), 500) }));
     const content = contentMissing(page.raw, page.rendered!);
     const params = { count: errors.length, first: shorten(errors[0]!.text, 160) };
     if (content.missing) {
-      evidence.push(cite({ kind: 'text', url, label: 'body word count in the raw HTML and in the render', excerpt: content.excerpt }));
+      evidence.push(cite({ kind: 'text', url, label: evidenceLabel('body word count in the raw HTML and in the render'), excerpt: content.excerpt }));
       return fail('medium', evidence, 'content-missing', params);
     }
     if (errors.some(error => error.kind === 'csp-first-party')) return fail('medium', evidence, 'csp-blocks-first-party', params);
@@ -161,7 +162,8 @@ function citeRequest(cite: Cite, page: PageFacts, request: FailedRequest): strin
   return cite({
     kind: request.source === 'lighthouse' ? 'lighthouse' : 'render',
     url: page.fetch.finalUrl,
-    label: `${request.role} request that failed during ${request.source === 'lighthouse' ? 'the Lighthouse run' : 'the Googlebot-like render'}`,
+    label: request.source === 'lighthouse' ? evidenceLabel('{role} request that failed during the Lighthouse run', { role: request.role })
+      : evidenceLabel('{role} request that failed during the Googlebot-like render', { role: request.role }),
     excerpt: `${request.url} (${request.error})`,
   });
 }

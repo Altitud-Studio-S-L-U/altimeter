@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
-import { EvidenceStore } from '../src/core/evidence.ts';
+import { evidenceLabel, EvidenceStore } from '../src/core/evidence.ts';
 import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
 import { renderHtml } from '../src/report/html.ts';
 import { buildReport } from '../src/report/model.ts';
@@ -12,7 +12,7 @@ import { page, site } from './support/facts.ts';
 const hostile = '<script>alert(1)</script><img src=x onerror=alert(2)>';
 const rule: RuleImplementation = {
   id: 'content-title-missing',
-  evaluate: ({ page: current, evidence }) => ({ outcome: 'fail', severity: 'high', evidence: [evidence.add({ kind: 'html', url: current!.url, label: 'title element', excerpt: hostile })] }),
+  evaluate: ({ page: current, evidence }) => ({ outcome: 'fail', severity: 'high', evidence: [evidence.add({ kind: 'html', url: current!.url, label: evidenceLabel('title element'), excerpt: hostile })] }),
 };
 const rules = catalogRules.map(entry => entry.id === rule.id ? { ...entry, inputs: ['raw-html' as const] } : entry);
 

@@ -1,5 +1,5 @@
 import type { DefaultTreeAdapterTypes } from 'parse5';
-import type { EvidenceKind } from '../../core/evidence.ts';
+import type { EvidenceKind, EvidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import { headerValue } from '../../fetch/http.ts';
 import { attribute, collapse, isElement, type HtmlElement, type HtmlNode } from '../../parse/html.ts';
@@ -15,7 +15,7 @@ export interface CiteDetails {
 }
 
 /** Records one observation for the page (or site) under evaluation and returns its evidence id. */
-export function cite(context: RuleContext, kind: EvidenceKind, label: string, details: CiteDetails = {}): string {
+export function cite(context: RuleContext, kind: EvidenceKind, label: EvidenceLabel, details: CiteDetails = {}): string {
   const url = details.url ?? context.page?.fetch.finalUrl ?? context.site.origin;
   return context.evidence.add({
     kind,

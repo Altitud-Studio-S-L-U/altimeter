@@ -1,1 +1,468 @@
-{}
+{
+  "intl-hreflang-invalid-language-code": {
+    "title": "La subetiqueta de idioma de hreflang no es un código ISO 639-1 válido",
+    "why": "Google solo admite códigos de idioma ISO 639-1 en hreflang, seguidos opcionalmente de un sistema de escritura y de una región ISO 3166-1 alfa-2. Los valores con códigos de idioma no admitidos se ignoran.",
+    "fix": "Usa el código ISO 639-1 de dos letras (por ejemplo, «ca» para el catalán, «es» para el español, «fr» para el francés y «en» para el inglés), seguido opcionalmente de una región ISO 3166-1 alfa-2.",
+    "messages": {
+      "fail": "{count} valor(es) hreflang no empiezan por un código de idioma ISO 639-1: {values} ({sources}). Google ignora estas anotaciones.",
+      "fail:empty": "{count} atributo(s) hreflang están vacíos ({sources}). Google ignora estas anotaciones.",
+      "fail:language-not-two-letters": "{count} valor(es) hreflang usan una subetiqueta de idioma que no tiene dos letras: {values} ({sources}). Google solo admite códigos ISO 639-1, así que estas anotaciones se ignoran.",
+      "fail:unknown-language": "{count} valor(es) hreflang empiezan por un código que no está en la norma ISO 639-1: {values} ({sources}). Google ignora estas anotaciones.",
+      "fail:withdrawn-language": "{count} valor(es) hreflang usan un código de idioma retirado de la norma ISO 639-1: {values} ({sources}). Usa en su lugar el código actual: {replacement}.",
+      "fail:private-use": "{count} valor(es) hreflang son etiquetas de uso privado o heredadas: {values} ({sources}). El único valor que no es un idioma que admite Google es x-default."
+    }
+  },
+  "intl-hreflang-region-only-value": {
+    "title": "hreflang usa un código de país donde corresponde un código de idioma",
+    "why": "Los valores hreflang empiezan por un código de idioma. Un código de país usado solo, como «uk» para el Reino Unido, se interpreta como un idioma o se rechaza, así que la página queda anotada para un público equivocado.",
+    "fix": "Google no deduce un idioma a partir de un país. Usa pares de idioma y región: en-GB, no uk; de-AT, no at; fr-CA/en-CA, no ca, para Canadá; nl-BE/fr-BE/de-BE, no be.",
+    "messages": {
+      "fail": "{count} valor(es) hreflang son códigos de país usados donde corresponde un código de idioma: {values} ({sources}). Usa en su lugar un par de idioma y región.",
+      "fail:country-as-language": "{count} valor(es) hreflang son códigos de país, no de idioma: {values} ({sources}). Usa en su lugar un par de idioma y región, como en-GB en lugar de uk.",
+      "fail:possible-country": "hreflang {values} indica {language}, pero el contenido de {target} parece estar en {detected}. Si el valor pretendía indicar un país, usa en su lugar un par de idioma y región."
+    }
+  },
+  "intl-hreflang-invalid-region-code": {
+    "title": "La subetiqueta de región de hreflang está reservada, sin asignar o no es alfa-2",
+    "why": "Google solo admite códigos de región ISO 3166-1 alfa-2 en hreflang e ignora las subetiquetas de región que no reconoce, como «uk» en «en-uk», así que la variante pierde su segmentación por región.",
+    "fix": "Usa GB para el Reino Unido (en-GB). Google no admite es-419: incluye variantes por país (es-MX, es-AR...), un «es» genérico solo de idioma, o ambas cosas.",
+    "messages": {
+      "fail": "{count} valor(es) hreflang tienen una subetiqueta de región que no es un código ISO 3166-1 alfa-2 asignado: {values} ({sources}). Google ignora la parte de la región.",
+      "fail:reserved-region": "{count} valor(es) hreflang usan un código de región reservado: {values} ({sources}). Google ignora la parte de la región, así que la variante pierde su segmentación por país. Usa {replacement}.",
+      "fail:unassigned-region": "{count} valor(es) hreflang usan un código de región que no está asignado en la norma ISO 3166-1: {values} ({sources}). Google ignora la parte de la región.",
+      "fail:numeric-region": "{count} valor(es) hreflang usan una región numérica UN M.49: {values} ({sources}). Google no la admite; incluye en su lugar valores por país o un valor genérico solo de idioma.",
+      "fail:three-letter-region": "{count} valor(es) hreflang usan una región de tres letras: {values} ({sources}). Google solo admite regiones ISO 3166-1 alfa-2."
+    }
+  },
+  "intl-hreflang-invalid-script-or-syntax": {
+    "title": "El valor hreflang tiene una estructura mal formada (guion bajo, subetiqueta de escritura incorrecta, orden erróneo, subetiquetas de más)",
+    "why": "Google documenta hreflang como idioma, sistema de escritura opcional y región opcional separados por guiones. Los guiones bajos, el orden erróneo o las subetiquetas de más no se ajustan al formato documentado.",
+    "fix": "Usa guiones y el orden idioma-Escritura-REGIÓN (zh-Hant, zh-Hans-US). Para el contenido en valenciano, el formato documentado por Google no tiene subetiqueta de variante. Usa «ca» o «ca-ES» y haz que el propio contenido sea distinto.",
+    "messages": {
+      "fail": "{count} valor(es) hreflang no siguen el formato idioma-Escritura-REGIÓN: {values} ({sources}).",
+      "fail:whitespace": "{count} valor(es) hreflang contienen espacios en blanco: {values} ({sources}).",
+      "fail:underscore": "{count} valor(es) hreflang usan un guion bajo como separador: {values} ({sources}). El formato de Google usa guiones, por ejemplo, en-GB.",
+      "fail:empty-subtag": "{count} valor(es) hreflang tienen una subetiqueta vacía: {values} ({sources}).",
+      "fail:unknown-script": "{count} valor(es) hreflang tienen una subetiqueta de escritura que no es un código ISO 15924: {values} ({sources}).",
+      "fail:script-after-region": "{count} valor(es) hreflang colocan el sistema de escritura después de la región: {values} ({sources}). Usa idioma-Escritura-REGIÓN, por ejemplo, zh-Hant-TW.",
+      "fail:variant": "{count} valor(es) hreflang usan una subetiqueta de variante, que es válida en BCP 47, pero que Google no documenta para hreflang: {values} ({sources}).",
+      "fail:extension": "{count} valor(es) hreflang usan una subetiqueta de extensión, que Google no documenta para hreflang: {values} ({sources}).",
+      "fail:too-many-subtags": "{count} valor(es) hreflang tienen más de tres subetiquetas: {values} ({sources}).",
+      "fail:malformed": "{count} valor(es) hreflang contienen caracteres o subetiquetas fuera del formato idioma-Escritura-REGIÓN: {values} ({sources})."
+    }
+  },
+  "intl-hreflang-relative-url": {
+    "title": "El href de hreflang no es una URL absoluta completa",
+    "why": "Google exige URLs completas, incluido el esquema, en las anotaciones hreflang del HTML, de las cabeceras HTTP y de los sitemaps.",
+    "fix": "Usa URLs completas, con el protocolo y el host, por ejemplo, https://www.example.com/ca/.",
+    "messages": {
+      "fail": "{count} anotación(es) hreflang no usan una URL completa: {hrefs}.",
+      "fail:empty-href": "{count} anotación(es) hreflang no tienen URL.",
+      "fail:protocol-relative": "{count} anotación(es) hreflang usan URLs relativas al protocolo: {hrefs}. Google pide URLs completas, incluido el esquema.",
+      "fail:relative": "{count} anotación(es) hreflang usan URLs relativas: {hrefs}. Google exige URLs completas, incluido el esquema.",
+      "fail:unsupported-scheme": "{count} anotación(es) hreflang usan un esquema distinto de http o https: {hrefs}."
+    }
+  },
+  "intl-hreflang-outside-head": {
+    "title": "Los elementos link de hreflang acaban fuera del <head>",
+    "why": "Google exige que los elementos link de hreflang estén dentro de un head bien formado. Los enlaces que un analizador traslada al body, por ejemplo, después de un elemento no válido en el head, se ignoran.",
+    "fix": "Mueve los enlaces hreflang (y los demás metadatos del head) por encima de cualquier elemento propio del body. Asegúrate de que los gestores de etiquetas y los scripts de consentimiento no insertan elementos del body al principio del <head>.",
+    "messages": {
+      "fail": "{count} elemento(s) link de hreflang acaban en el body, donde Google los ignora.",
+      "fail:raw-body": "{count} elemento(s) link de hreflang se analizan como parte del body porque el head se cierra antes de tiempo en la línea {line} ({cause}). Google ignora los enlaces fuera del head.",
+      "fail:rendered-body": "{count} elemento(s) link de hreflang están en el body del DOM renderizado, adonde los ha movido un script. Google ignora los enlaces fuera del head."
+    }
+  },
+  "intl-hreflang-rendered-only": {
+    "title": "hreflang solo existe después del renderizado de JavaScript",
+    "why": "La documentación de Google sobre hreflang no dice si se procesan las anotaciones insertadas por JavaScript, y los rastreadores que no renderizan nunca las ven. Las anotaciones del lado del servidor evitan esa incertidumbre.",
+    "fix": "Renderiza los enlaces hreflang en el servidor o envíalos en la cabecera HTTP Link o en el sitemap, para que todos los rastreadores, incluidos los que no renderizan, como el de Bing, vean el mismo conjunto.",
+    "messages": {
+      "fail": "Los enlaces hreflang del DOM renderizado difieren de los del HTML tal como se sirve.",
+      "fail:rendered-only": "Los {count} elemento(s) link de hreflang solo existen después de que se ejecute JavaScript. Los rastreadores que no renderizan nunca los ven, y Google no documenta si lee el hreflang insertado.",
+      "fail:differs": "El renderizado cambia los enlaces hreflang: {added} añadidos y {removed} eliminados respecto al HTML tal como se sirve."
+    }
+  },
+  "intl-hreflang-combined-link-attributes": {
+    "title": "hreflang combinado con media u otra semántica alternate en una misma etiqueta link",
+    "why": "Google aclaró en 2024 que los elementos link alternate no deben combinarse, por ejemplo, hreflang con media, y que un rel=canonical con un atributo hreflang no se usa para la canonicalización.",
+    "fix": "Usa elementos link separados: un rel=alternate hreflang por cada versión de idioma y un rel=alternate media=... aparte para las URLs móviles.",
+    "messages": {
+      "fail": "{count} elemento(s) link combinan hreflang con otra semántica alternate.",
+      "fail:media": "{count} elemento(s) link combinan hreflang con un atributo media. Usa elementos link separados para las versiones de idioma y para las URLs móviles.",
+      "fail:canonical": "{count} enlace(s) rel=canonical llevan un atributo hreflang. Google no usa esos enlaces para la canonicalización; declara la URL canónica y las versiones de idioma por separado.",
+      "fail:type": "{count} elemento(s) link combinan hreflang con un tipo que no es HTML. Declara las versiones de idioma en sus propios enlaces rel=alternate hreflang."
+    }
+  },
+  "intl-hreflang-missing-self-reference": {
+    "title": "El conjunto hreflang de la página no incluye la propia página",
+    "why": "Google exige que cada versión de idioma se incluya a sí misma y a todas las demás versiones. Una entrada propia que difiere en una barra final o en el protocolo no coincide.",
+    "fix": "Añade una entrada para el idioma y la región de la propia página que apunte a su propia URL canónica. Cada versión debe incluirse a sí misma y a todas las demás versiones.",
+    "messages": {
+      "fail": "El conjunto hreflang de {url} no incluye la propia página.",
+      "fail:near-miss": "El conjunto hreflang no incluye {url} exactamente; la entrada más parecida ({value}) apunta a {closest}. Una entrada propia debe coincidir con la URL de la página, incluidos el esquema y la barra final.",
+      "fail:absent": "Ninguna de las entradas hreflang ({count}) apunta a la propia página, {url}. Cada versión debe incluirse a sí misma y a las demás versiones."
+    }
+  },
+  "intl-hreflang-missing-return-link": {
+    "title": "El enlace hreflang no tiene enlace recíproco",
+    "why": "Google ignora las anotaciones hreflang entre dos páginas salvo que cada una enlace a la otra. Los pares recíprocos siguen funcionando aunque otros no lo sean.",
+    "fix": "Genera el mismo conjunto completo de entradas hreflang en todos los miembros del grupo a partir de una única fuente de verdad (la correspondencia de traducciones del CMS).",
+    "messages": {
+      "fail": "{count} enlace(s) hreflang no son recíprocos, por ejemplo, {pairs}. Google ignora las anotaciones entre páginas que no se enlazan entre sí; {working} par(es) sí son recíprocos y {unverified} no se han podido comprobar."
+    }
+  },
+  "intl-hreflang-target-not-200": {
+    "title": "El destino de hreflang no devuelve HTTP 200",
+    "why": "Un destino de hreflang que redirige o devuelve un error no puede devolver la anotación en la URL indicada, así que no se puede confirmar el par. La documentación de Google pide URLs canónicas y accesibles en las anotaciones.",
+    "fix": "Haz que hreflang apunte directamente a la URL canónica, final y activa de cada versión. Actualiza las anotaciones después de las migraciones.",
+    "messages": {
+      "fail": "{count} destino(s) de hreflang no responden 200: {urls} ({status}).",
+      "fail:redirect": "{count} destino(s) de hreflang redirigen ({status}): {urls}. Haz que las anotaciones apunten a las URLs finales.",
+      "fail:error": "{count} destino(s) de hreflang responden con un estado de error ({status}): {urls}.",
+      "fail:unreachable": "{count} destino(s) de hreflang no han dado respuesta ({status}): {urls}."
+    }
+  },
+  "intl-hreflang-target-noindex": {
+    "title": "El destino de hreflang lleva noindex",
+    "why": "Un destino de hreflang con noindex no puede aparecer en la Búsqueda para su configuración regional, así que la alternativa no sirve. Google aplica las reglas robots por URL.",
+    "fix": "Haz que esa configuración regional sea indexable o quítala del conjunto hreflang de todas las páginas.",
+    "messages": {
+      "fail": "{count} destino(s) de hreflang llevan noindex: {urls}. Estas versiones no se pueden mostrar en la Búsqueda, así que las alternativas no se usan."
+    }
+  },
+  "intl-hreflang-target-blocked-by-robots": {
+    "title": "El destino de hreflang está bloqueado en robots.txt",
+    "why": "Google no puede obtener un destino bloqueado por robots.txt, así que no puede leer sus enlaces recíprocos ni indexar su contenido.",
+    "fix": "Permite el rastreo de todas las secciones localizadas. Aplica las reglas robots de forma coherente en todas las configuraciones regionales.",
+    "messages": {
+      "fail": "{count} destino(s) de hreflang están bloqueados para Googlebot en robots.txt: {urls}. Google no puede leer sus enlaces recíprocos ni su contenido."
+    }
+  },
+  "intl-hreflang-target-not-canonical": {
+    "title": "hreflang apunta a una URL que se canonicaliza a otra",
+    "why": "La documentación de Google sobre canonicalización pide URLs canónicas en hreflang e indica que prefiere las URLs que forman parte de grupos hreflang. Un destino que se canonicaliza a otra URL rompe el emparejamiento.",
+    "fix": "hreflang solo debe conectar URLs canónicas. Cada página localizada debería tener una URL canónica autorreferenciada y ser la URL incluida en el grupo.",
+    "messages": {
+      "fail": "{count} destino(s) de hreflang se canonicalizan a otras URLs: {urls} -> {canonicals}. hreflang debería conectar URLs canónicas."
+    }
+  },
+  "intl-canonical-cross-language": {
+    "title": "Una página localizada se canonicaliza a una página en otro idioma",
+    "why": "Google documenta que las distintas versiones de idioma no son duplicados. Una página localizada que se canonicaliza a otro idioma pide a Google que retire del índice la versión localizada.",
+    "fix": "Da a cada página traducida una URL canónica autorreferenciada. Usa hreflang, no canonical, para relacionar las versiones de idioma. Google indica que se especifique una URL canónica en el mismo idioma o en el mejor idioma sustituto posible.",
+    "messages": {
+      "fail": "{url} ({language}) se canonicaliza a {canonical} ({canonicalLanguage}), una página en otro idioma.",
+      "fail:hreflang-languages": "{url} es una versión en {language}, pero se canonicaliza a {canonical}, la versión en {canonicalLanguage}. Esto pide a Google que retire la versión en {language} en favor de la otra.",
+      "fail:detected-languages": "{url} parece estar en {language}, pero se canonicaliza a {canonical}, que parece estar en {canonicalLanguage}. Esto pide a Google que retire la página en {language} en favor de la otra."
+    }
+  },
+  "intl-hreflang-on-non-canonical-page": {
+    "title": "La página que declara hreflang no es canónica, lleva noindex o no responde 200",
+    "why": "Las anotaciones de una página que lleva noindex, no responde 200 o se canonicaliza a otra URL no pueden formar un par válido. Este patrón es habitual en URLs paginadas o filtradas que heredan el bloque hreflang de la plantilla.",
+    "fix": "Pon el conjunto hreflang solo en la versión canónica e indexable de cada página, o corrige la URL canónica.",
+    "messages": {
+      "fail": "{url} declara hreflang, pero no es una página canónica indexable.",
+      "fail:not-200": "{url} declara hreflang, pero responde con el estado {status}.",
+      "fail:canonical-elsewhere": "{url} declara hreflang, pero su URL canónica apunta a {canonical}. Solo las URLs canónicas deberían llevar y recibir anotaciones hreflang.",
+      "fail:noindex": "{url} declara hreflang, pero lleva noindex ({directive}), así que sus anotaciones no se usan."
+    }
+  },
+  "intl-hreflang-duplicate-locale-in-cluster": {
+    "title": "Un mismo valor de idioma y región corresponde a más de una URL",
+    "why": "Cada valor de idioma y región, incluido x-default, debería corresponder a una sola URL en un grupo. Cuando un valor apunta a varias URLs, Google no puede saber cuál mostrar.",
+    "fix": "Mantén exactamente una URL por cada valor de idioma y región y un x-default por grupo.",
+    "messages": {
+      "fail": "hreflang {value} corresponde a {count} URLs distintas: {urls}.",
+      "fail:within-page": "{declaredBy} asigna hreflang {value} a {count} URLs distintas: {urls}.",
+      "fail:across-cluster": "Los miembros de un grupo hreflang asignan {value} a {count} URLs distintas ({urls}), según lo declarado por {declaredBy}."
+    }
+  },
+  "intl-hreflang-one-url-many-languages": {
+    "title": "Una URL se declara en varios idiomas distintos",
+    "why": "Una URL puede dirigirse a varias regiones de un mismo idioma, pero declarar una URL en varios idiomas distintos contradice el modelo de Google de una versión de idioma por URL.",
+    "fix": "Cada idioma necesita su propia URL. Si un idioma no está traducido, omítelo en hreflang.",
+    "messages": {
+      "fail": "{target} se declara en {count} idiomas distintos ({languages}). Una URL debería tener un solo idioma."
+    }
+  },
+  "intl-hreflang-cluster-inconsistent-sets": {
+    "title": "Los miembros de un grupo hreflang declaran conjuntos distintos",
+    "why": "Google espera el mismo conjunto hreflang en todos los miembros de un grupo. Los valores contradictorios para una misma URL son un problema; las entradas que faltan se toleran porque los pares recíprocos siguen funcionando.",
+    "fix": "Genera un conjunto idéntico en todas las versiones a partir de una única correspondencia de traducciones.",
+    "messages": {
+      "fail": "Los miembros de un grupo hreflang declaran conjuntos distintos.",
+      "fail:conflicting-values": "Los miembros de un grupo hreflang asignan valores distintos a {count} URL(s), como {targets}.",
+      "fail:missing-entries": "{count} de {members} miembros del grupo omiten URLs que los demás incluyen ({missing}). Los conjuntos parciales siguen funcionando para los pares recíprocos."
+    }
+  },
+  "intl-hreflang-x-default-missing": {
+    "title": "El grupo no tiene x-default",
+    "why": "Google recomienda x-default para la página de respaldo que se muestra cuando no coincide ningún idioma, sobre todo en los selectores de idioma y en las páginas de inicio que redirigen automáticamente. Es recomendable, no obligatorio.",
+    "fix": "Haz que x-default apunte al selector de idioma o a la raíz que redirige, o a la mejor versión de respaldo (a menudo, la inglesa).",
+    "messages": {
+      "fail": "El grupo hreflang de {url} ({members} URLs) no tiene x-default.",
+      "fail:no-x-default": "El grupo hreflang de {url} ({members} URLs) no tiene x-default. Google recomienda uno como respaldo para los visitantes cuyo idioma no figura en la lista.",
+      "fail:redirecting-root": "El grupo de la página de inicio ({members} URLs) no tiene x-default, mientras que la raíz {root} redirige a una URL de una configuración regional. Google recomienda x-default sobre todo para las páginas de inicio que redirigen automáticamente; puede apuntar a la raíz o a la página de una configuración regional predeterminada."
+    }
+  },
+  "intl-hreflang-x-default-inconsistent": {
+    "title": "x-default difiere entre los miembros del grupo",
+    "why": "Los miembros de un grupo que indican URLs x-default distintas dan a Google páginas de respaldo contradictorias.",
+    "fix": "Usa un solo x-default por grupo, el mismo en todos los miembros. Debe devolver los enlaces como cualquier otro miembro.",
+    "messages": {
+      "fail": "Los miembros de un grupo hreflang declaran {count} URLs x-default distintas: {urls}."
+    }
+  },
+  "intl-hreflang-no-language-catchall": {
+    "title": "Para un idioma solo hay variantes específicas de región, sin una alternativa genérica",
+    "why": "Google recomienda una anotación solo de idioma, como «de», además de las regionales, para que coincidan los usuarios de ese idioma de otras regiones.",
+    "fix": "Añade un valor solo de idioma (por ejemplo, hreflang='es') que apunte a una de las páginas regionales para cubrir a los hablantes de otros países (México, EE. UU.).",
+    "messages": {
+      "fail": "Todos los valores de {language} llevan región ({values}) y el grupo no tiene un valor {language} solo de idioma ni x-default, así que los hablantes de {language} de otros países no tienen ninguna versión que les corresponda."
+    }
+  },
+  "intl-hreflang-source-conflict": {
+    "title": "Las anotaciones hreflang del HTML, de la cabecera HTTP y del sitemap no coinciden",
+    "why": "Google lee hreflang del HTML, de las cabeceras HTTP y de los sitemaps. Se permite usar varios métodos; los valores contradictorios entre ellos, no.",
+    "fix": "Elige un método. Google los trata como equivalentes, y usar varios no aporta ninguna ventaja y añade mantenimiento. Si se mantienen varios, genéralos a partir de los mismos datos.",
+    "messages": {
+      "fail": "Las anotaciones hreflang de dos fuentes no coinciden ({first}, {second}).",
+      "fail:conflicting-target": "Dos fuentes de hreflang ({first}, {second}) dan URLs distintas para los mismos valores: {values}.",
+      "fail:incomplete-source": "Algunos valores hreflang solo aparecen en una de las dos fuentes ({first}, {second}): {values}. Usar varios métodos está bien; mantenlos idénticos."
+    }
+  },
+  "intl-hreflang-sitemap-format": {
+    "title": "Las anotaciones hreflang del sitemap están mal formadas",
+    "why": "Google documenta el formato xhtml:link para hreflang en los sitemaps: cada <url> incluye todas las alternativas, incluida ella misma, dentro de los límites de tamaño del sitemap.",
+    "fix": "Declara el espacio de nombres, repite el conjunto completo dentro de cada <url>, incluido el enlace a la propia URL, y divide los sitemaps que superen los límites.",
+    "messages": {
+      "fail": "{count} anotación(es) hreflang del sitemap están mal formadas ({sitemaps}).",
+      "fail:namespace": "{count} sitemap(s) contienen enlaces hreflang que no están en el espacio de nombres xhtml (xmlns:xhtml=\"http://www.w3.org/1999/xhtml\"), así que no se leen: {sitemaps}.",
+      "fail:missing-self": "{count} entrada(s) del sitemap incluyen alternativas, pero ningún xhtml:link a su propio loc ({sitemaps}).",
+      "fail:relative-href": "{count} URL(s) de xhtml:link del sitemap no son completas ({sitemaps}).",
+      "fail:invalid-value": "{count} valor(es) de xhtml:link del sitemap no siguen el formato hreflang de Google ({sitemaps}).",
+      "fail:alternate-not-listed": "{count} URL(s) alternativas de los sitemaps no tienen una entrada <url> propia ({sitemaps}).",
+      "fail:not-reciprocal": "{count} entrada(s) del sitemap no incluyen a su vez las URLs que las indican como alternativas ({sitemaps})."
+    }
+  },
+  "intl-hreflang-http-header-format": {
+    "title": "El hreflang de la cabecera HTTP Link está mal formado o incompleto",
+    "why": "Google documenta hreflang en cabeceras Link para archivos que no son HTML. Una cabecera que no se puede analizar o a la que le falta la entrada propia se ignora.",
+    "fix": "Envía una cabecera Link que incluya todas las versiones, incluida la solicitada, idéntica en todas las versiones.",
+    "messages": {
+      "fail": "Las entradas hreflang de la cabecera HTTP Link están mal formadas o incompletas.",
+      "fail:parse-error": "{count} valor(es) de la cabecera Link con hreflang no se pueden analizar como link-values del RFC 8288.",
+      "fail:missing-self": "La cabecera Link incluye {count} entrada(s) hreflang, pero ninguna para la propia URL de la respuesta, {url}."
+    }
+  },
+  "intl-hreflang-mixed-protocol-or-host": {
+    "title": "Los destinos de hreflang usan http o un host no preferido",
+    "why": "La documentación de Google sobre canonicalización indica que no se incluyan URLs HTTP o de un host no preferido en hreflang ni en los sitemaps de un sitio HTTPS.",
+    "fix": "Usa la URL final HTTPS del host preferido en todas las anotaciones.",
+    "messages": {
+      "fail": "{count} destino(s) de hreflang usan un protocolo o un host distintos de los del sitio: {urls}.",
+      "fail:http-scheme": "{count} destino(s) de hreflang usan http:// aunque el sitio sirve {origin}: {urls}.",
+      "fail:host-variant": "{count} destino(s) de hreflang usan una variante de host que redirige: {urls}. Usa el host que sirve el sitio, {origin}."
+    }
+  },
+  "intl-hreflang-value-vs-content-language": {
+    "title": "El idioma de hreflang no coincide con el idioma real del contenido de la página",
+    "why": "Google detecta el idioma de la página a partir del contenido visible. Un valor hreflang que indica un idioma distinto al del contenido solo induce a error en la anotación, y la página se ofrece a los usuarios equivocados.",
+    "fix": "Corrige la correspondencia (a menudo el CMS intercambia las configuraciones regionales) o traduce la página.",
+    "messages": {
+      "fail": "hreflang declara esta página como {declared}, pero su contenido principal parece estar en {detected} ({words} palabras).",
+      "fail:short-content": "hreflang declara esta página como {declared}, pero su contenido principal parece estar en {detected}. Con solo {words} palabras, la detección no es concluyente."
+    }
+  },
+  "intl-html-lang-missing-or-invalid": {
+    "title": "<html lang> falta, está vacío o no es BCP 47 válido",
+    "why": "El estándar HTML usa el atributo lang con una etiqueta BCP 47 para la accesibilidad, la separación silábica y las sugerencias de traducción. Google afirma que detecta el idioma a partir del contenido, no de lang.",
+    "fix": "Establece <html lang> en el idioma de la página (por ejemplo, lang='ca', lang='es-ES').",
+    "messages": {
+      "fail": "Falta el atributo lang del elemento html o no es válido.",
+      "fail:missing": "El elemento html no tiene atributo lang. Los lectores de pantalla, la separación silábica y las sugerencias de traducción dependen de él; Google no lo usa para detectar el idioma.",
+      "fail:set-by-script": "El atributo lang ({value}) solo lo establece JavaScript; el HTML tal como se sirve no lo tiene.",
+      "fail:empty": "El atributo lang del elemento html está vacío.",
+      "fail:malformed": "El atributo lang «{value}» no es una etiqueta de idioma BCP 47 bien formada.",
+      "fail:unknown-language": "El atributo lang «{value}» empieza por un código de dos letras que no es un idioma ISO 639-1."
+    }
+  },
+  "intl-html-lang-vs-content": {
+    "title": "<html lang> no coincide con el idioma detectado del contenido",
+    "why": "Un atributo lang que no coincide con el idioma del contenido confunde a los lectores de pantalla y a las herramientas de traducción. Google afirma que no usa lang para detectar el idioma.",
+    "fix": "Genera lang a partir de la configuración regional activa, no de un valor predeterminado fijo en la plantilla (lang='en' en todas las configuraciones regionales es el error habitual).",
+    "messages": {
+      "fail": "lang=\"{lang}\" declara {declared}, pero el contenido principal parece estar en {detected}. Google detecta el idioma a partir del contenido; las tecnologías de apoyo y otros buscadores leen el atributo."
+    }
+  },
+  "intl-content-language-signal-conflict": {
+    "title": "La cabecera Content-Language o el meta http-equiv contradice lang o el contenido",
+    "why": "El estándar HTML marca el pragma content-language como no conforme. Una cabecera o un meta Content-Language que contradice lang y el contenido envía señales contradictorias a los buscadores que lo leen.",
+    "fix": "Mantén Content-Language (cabecera) coherente con lang y con el contenido real. Es preferible el atributo lang en el HTML.",
+    "messages": {
+      "fail": "Content-Language declara {declared}, que no coincide con {other}.",
+      "fail:meta-pragma": "La página usa <meta http-equiv=\"content-language\"> ({value}), que HTML marca como no conforme. Usa en su lugar el atributo lang.",
+      "fail:conflicts-with-lang": "Content-Language declara {declared}, pero el atributo lang indica {other}.",
+      "fail:conflicts-with-content": "Content-Language declara {declared}, pero el contenido principal parece estar en {other}."
+    }
+  },
+  "intl-mixed-language-page": {
+    "title": "La página mezcla idiomas en el contenido principal o en la navegación",
+    "why": "Google recomienda un solo idioma por página para el contenido principal y la navegación, porque detecta el idioma de la página a partir del contenido visible y las páginas mixtas son más difíciles de emparejar con los usuarios.",
+    "fix": "Usa un solo idioma para el contenido y la navegación de cada página. Pon las traducciones en URLs separadas.",
+    "messages": {
+      "fail": "Aproximadamente el {share} % del contenido principal parece estar en {secondary} en una página que está mayoritariamente en {primary}. Confirma si es intencionado, como una cita o un texto legal bilingüe."
+    }
+  },
+  "intl-untranslated-variant": {
+    "title": "Variante de configuración regional cuyo contenido principal no está traducido o es casi idéntico al de otra configuración regional",
+    "why": "Google solo trata las versiones localizadas como duplicados cuando el contenido principal sigue sin traducir. Una variante de configuración regional cuyo contenido está en el idioma de otra configuración regional no ofrece nada nuevo a los usuarios.",
+    "fix": "Traduce el contenido principal, o quita la configuración regional sin traducir de hreflang y canonicalízala al original.",
+    "messages": {
+      "fail": "{url} y {other} se declaran en idiomas distintos ({languages}), pero parecen sin traducir.",
+      "fail:near-identical": "{url} y {other} se declaran en idiomas distintos ({languages}), pero su contenido principal es idéntico en un {similarity} %.",
+      "fail:same-language": "{url} y {other} se declaran en idiomas distintos ({languages}), pero ambas parecen estar en {detected}."
+    }
+  },
+  "intl-machine-translation-quality": {
+    "title": "Las traducciones muestran indicios de traducción automática sin revisar",
+    "why": "Google no prohíbe la traducción automática, pero su política sobre el abuso de contenido a gran escala abarca grandes volúmenes de páginas de poco valor producidas mediante traducción automatizada, y su documentación sobre IA generativa pide una revisión.",
+    "fix": "Haz que una persona con dominio del idioma revise las traducciones, incluidos los títulos, las metadescripciones, los datos estructurados y el texto alternativo. No publiques configuraciones regionales cuyas páginas no aporten valor.",
+    "messages": {}
+  },
+  "intl-metadata-translation-parity": {
+    "title": "Títulos, descripciones, etiquetas OG, texto alternativo o datos estructurados sin localizar",
+    "why": "Google recomienda traducir toda la página, incluidos los títulos, las descripciones y otros metadatos. Los metadatos que quedan en otro idioma se muestran a los usuarios de la versión localizada.",
+    "fix": "Localiza todos los metadatos visibles para los usuarios en cada configuración regional, no solo el texto del cuerpo.",
+    "messages": {
+      "fail": "El campo {field} de esta página no está localizado.",
+      "fail:identical-to-other-locale": "El campo {field} es idéntico al {field} de {other}, una versión en otro idioma.",
+      "fail:field-language": "El campo {field} parece estar en {detected} en una página en {expected}."
+    }
+  },
+  "intl-og-locale": {
+    "title": "og:locale tiene el formato correcto y es coherente con lang y hreflang",
+    "why": "El protocolo Open Graph define og:locale con la forma idioma_TERRITORIO, con en_US como valor predeterminado. Solo afecta a las vistas previas en redes sociales, no al posicionamiento en Google.",
+    "fix": "Escribe og:locale con un guion bajo (ca_AD) y usa og:locale:alternate para las demás configuraciones regionales.",
+    "messages": {
+      "fail": "og:locale está mal formado o no coincide con el idioma de la página.",
+      "fail:missing-non-english": "La página está en {language}, pero no tiene og:locale, así que las vistas previas en redes sociales suponen en_US.",
+      "fail:malformed": "og:locale tiene valor(es) {value} que no siguen la forma idioma_TERRITORIO, como es_ES.",
+      "fail:language-mismatch": "og:locale {value} no coincide con el idioma de la página, {language}."
+    }
+  },
+  "intl-separate-urls-per-locale": {
+    "title": "Configuración regional elegida por cookie, sesión, estado de JavaScript o parámetro de URL en lugar de una URL propia",
+    "why": "Google recomienda URLs distintas para cada versión de idioma en lugar de cookies o de la configuración del navegador, porque Googlebot ve una versión por URL y no conserva las cookies.",
+    "fix": "Da a cada versión de idioma o de país su propia URL (subdirectorios como /en/ /de/ /fr/, subdominios o ccTLD) y usa cualquier cookie solo como una preferencia que nunca cambie lo que sirve una URL.",
+    "messages": {
+      "fail": "{count} URL(s) de configuración regional eligen el idioma con un parámetro de URL, por ejemplo, {urls}. Google recomienda URLs distintas para cada versión de idioma, no parámetros."
+    }
+  },
+  "intl-language-switcher-crawlable": {
+    "title": "El selector de idioma no está hecho con enlaces rastreables",
+    "why": "Google sugiere enlazar las versiones de idioma entre sí para que los usuarios puedan cambiar. Los selectores hechos sin enlaces rastreables también dejan a los rastreadores sin una vía entre versiones.",
+    "fix": "Renderiza una lista visible de enlaces <a href> a la misma página en cada idioma, con el nombre del idioma escrito en ese idioma (Català, Español, Français, English).",
+    "messages": {
+      "fail": "La página no enlaza a sus otras versiones de idioma con enlaces rastreables.",
+      "fail:homepages-only": "Los enlaces de idioma van a las páginas de inicio de cada configuración regional ({count}) en lugar de a la página equivalente en cada idioma.",
+      "fail:no-crawlable-links": "Ninguna de las otras versiones de idioma de esta página ({count}) está enlazada con un <a href>; se han encontrado {controls} control(es) de idioma sin enlaces. Confirma cómo cambian de idioma los visitantes."
+    }
+  },
+  "intl-auto-redirect-by-language": {
+    "title": "Las URLs localizadas redirigen o cambian el contenido según Accept-Language o la IP",
+    "why": "Google desaconseja redirigir automáticamente a los usuarios de una versión de idioma a otra y señala que Googlebot no envía la cabecera Accept-Language y suele rastrear desde direcciones de EE. UU., así que un comportamiento adaptativo puede ocultarle versiones.",
+    "fix": "No redirijas nunca automáticamente las URLs localizadas. Sugiere el idioma del usuario con un banner que se pueda cerrar y haz que las URLs explícitas sirvan siempre su propio idioma.",
+    "messages": {
+      "fail": "{url} redirige a {count} URLs distintas según Accept-Language ({targets}). Las URLs localizadas deberían servir el mismo contenido a todos los visitantes; no se ha probado el comportamiento basado en la IP."
+    }
+  },
+  "intl-localized-urls-unreachable": {
+    "title": "No se puede acceder directamente a las URLs localizadas sin que redirijan a otra parte",
+    "why": "Si una URL de una configuración regional no se puede obtener directamente sin que redirija a otra parte, por ejemplo, porque todos los rastreadores se envían a la configuración regional predeterminada, Google nunca ve esa versión.",
+    "fix": "Cada URL localizada debe servir su propio idioma a cualquier cliente, incluidos los clientes sin Accept-Language y de cualquier país.",
+    "messages": {
+      "fail": "No se puede acceder directamente a la URL localizada {url}.",
+      "fail:redirected-away": "La URL en {language} {url}, solicitada sin Accept-Language ni cookies, redirige a {final}. Los rastreadores que la solicitan así nunca llegan a esta versión.",
+      "fail:redirect-loop": "La URL en {language} {url} redirige en bucle cuando se solicita sin Accept-Language ni cookies."
+    }
+  },
+  "intl-root-locale-redirector": {
+    "title": "El redireccionador de configuración regional de la raíz o la página de inicio está configurado de forma poco segura",
+    "why": "Google reconoce las páginas de inicio que redirigen automáticamente y recomienda para ellas una alternativa x-default. Una raíz que redirige a las páginas de inicio de cada configuración regional es segura cuando todas las URLs de configuración regional son accesibles directamente y la redirección no se almacena en caché como permanente para todos los usuarios.",
+    "fix": "Es preferible una raíz que no redirija (idioma predeterminado o selector) con hreflang. Si rediriges, usa una redirección temporal, solo en la raíz, declara la raíz como x-default y envía Vary para las cabeceras de solicitud que se usen.",
+    "messages": {
+      "fail": "La redirección por configuración regional de la raíz está configurada de una forma que las cachés pueden gestionar mal.",
+      "fail:permanent-redirect": "La raíz redirige según Accept-Language con un {status} almacenable en caché a {count} destinos distintos. Los navegadores y las cachés pueden conservar el primer destino de forma permanente; una redirección temporal lo evita.",
+      "fail:missing-vary": "Las cachés compartidas pueden almacenar {count} redirección(es) por configuración regional de la raíz sin Vary: Accept-Language, así que una caché puede enviar a los visitantes a una configuración regional equivocada."
+    }
+  },
+  "intl-locale-adaptive-same-url": {
+    "title": "La misma URL sirve distintos idiomas según la IP o Accept-Language (sin redirección)",
+    "why": "Google documenta que, en las páginas adaptadas a la configuración regional, que sirven distintos idiomas en una URL según la IP o Accept-Language, es posible que no todas las versiones se rastreen, indexen o posicionen.",
+    "fix": "Lleva cada configuración regional a su propia URL con hreflang. Si la adaptación es inevitable en la raíz, márcala como x-default y envía Vary.",
+    "messages": {
+      "fail": "{url} sirve distintos idiomas ({languages}) en la misma URL según Accept-Language.",
+      "fail:content-language": "{url} sirve el contenido principal en distintos idiomas ({languages}) en la misma URL según Accept-Language. Es posible que los rastreadores que no envían Accept-Language nunca vean las demás versiones.",
+      "fail:lang-attribute": "{url} sirve documentos distintos (lang {languages}) en la misma URL según Accept-Language."
+    }
+  },
+  "intl-geo-meta-tags-ignored": {
+    "title": "Etiquetas meta geográficas usadas como mecanismo de segmentación",
+    "why": "Google afirma que ignora las etiquetas meta de ubicación como geo.position y geo.region. Su presencia no es ni una señal ni un error.",
+    "fix": "No hace falta hacer nada para Google. No confíes en estas etiquetas. Usa hreflang, URLs distintas y señales locales.",
+    "messages": {
+      "fail": "La página usa {count} elemento(s) meta de ubicación ({names}). Google los ignora para la segmentación; no son ni una señal ni un error."
+    }
+  },
+  "intl-tld-geotargeting-classification": {
+    "title": "Clasificar lo que implica el dominio para la segmentación geográfica (ccTLD frente a genérico)",
+    "why": "Google trata los dominios de nivel superior geográficos como una señal del país y algunos ccTLD como genéricos. Registrar la clasificación aporta contexto a los hallazgos internacionales.",
+    "fix": "La clasificación no requiere ningún cambio. En un ccTLD que Google trata como genérico (como .io o .co), la segmentación por país procede de los valores de idioma y región de hreflang y de las señales locales; en otros ccTLD, el propio dominio implica el país.",
+    "messages": {
+      "fail": "El dominio usa el TLD geográfico .{tld}, que Google asocia con {country}, mientras que hreflang se dirige a otras regiones ({regions}).",
+      "fail:cctld-foreign-regions": "El dominio usa el TLD geográfico .{tld}, que Google asocia con {country}, mientras que hreflang también se dirige a {regions}. Solo como contexto."
+    }
+  },
+  "intl-url-structure-assessment": {
+    "title": "Evaluar la estructura de URLs multirregional",
+    "why": "Google enumera las ventajas y los inconvenientes de los ccTLD, los subdominios, los subdirectorios y los parámetros para los sitios multirregionales y no los ordena por preferencia, salvo que no recomienda los parámetros de URL.",
+    "fix": "Es preferible un esquema coherente. Los subdirectorios en un solo host son la opción que requiere menos mantenimiento. Evita los parámetros.",
+    "messages": {
+      "fail": "Las versiones de configuración regional usan más de una estructura de URL ({schemes}).",
+      "fail:mixed-schemes": "Las versiones de configuración regional usan más de una estructura de URL ({schemes}). Google documenta cada estructura sin ordenarlas por preferencia; esto es contexto para el mantenimiento, no un defecto."
+    }
+  },
+  "intl-locale-formats": {
+    "title": "Los formatos de fecha, número, moneda y teléfono no coinciden con la configuración regional",
+    "why": "Las fechas, los números, las monedas y los números de teléfono en un formato que no coincide con la configuración regional hacen que las páginas localizadas inspiren menos confianza y sean más difíciles de usar. Ningún buscador documenta esto como factor de posicionamiento.",
+    "fix": "Da formato con las API Intl (Intl.NumberFormat, Intl.DateTimeFormat) usando la configuración regional de la página.",
+    "messages": {}
+  },
+  "intl-area-served-format": {
+    "title": "areaServed usado de forma incorrecta",
+    "why": "schema.org define areaServed como un Place, un área administrativa, un GeoShape o texto. La documentación de Google sobre LocalBusiness no la incluye, y la zona de servicio para Maps se configura en el Perfil de Empresa.",
+    "fix": "Usa objetos AdministrativeArea o Country con nombres (por ejemplo, {\"@type\":\"Country\",\"name\":\"Spain\"}).",
+    "messages": {
+      "fail": "areaServed se usa de forma incorrecta.",
+      "fail:invalid-parent": "areaServed está en un nodo {type}, un tipo que no admite esta propiedad.",
+      "fail:url-value": "areaServed es una URL de este sitio ({value}) en lugar de un nombre de lugar o un Place.",
+      "fail:invalid-value-type": "areaServed contiene un {value}, que no es un Place, un AdministrativeArea ni un GeoShape."
+    }
+  },
+  "intl-review-solicitation-policy": {
+    "title": "El sitio ofrece incentivos por las reseñas o filtra las solicitudes de reseñas",
+    "why": "La política de contribuciones de Google prohíbe los incentivos por reseñas, pedir selectivamente reseñas positivas y disuadir de las negativas. Las solicitudes de reseñas neutrales son aceptables.",
+    "fix": "Pide a todos los clientes reseñas sinceras, sin incentivos ni filtros.",
+    "messages": {}
+  },
+  "intl-notranslate-in-use": {
+    "title": "La regla notranslate suprime los resultados traducidos de Google",
+    "why": "Google documenta que la regla notranslate excluye una página de los resultados traducidos y de otras funciones de traducción de la Búsqueda, que solo existen para algunos pares de idiomas.",
+    "fix": "Elimina notranslate salvo que la traducción fuera a estropear la página. Mejor aún, publica configuraciones regionales revisadas por personas.",
+    "messages": {
+      "fail": "La página envía notranslate en sus directivas robots de {source}, así que Google no ofrece una versión traducida de ella en los resultados."
+    }
+  }
+}

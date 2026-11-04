@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { PageFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import type { LighthouseSummary } from '../../render/lighthouse.ts';
@@ -14,13 +15,13 @@ export const labRunProtocol: RuleImplementation = {
     const summary = labOf(page)!;
     const range = summary.lcpRangeMs ? `; lab LCP across valid runs ${Math.round(summary.lcpRangeMs[0])}-${Math.round(summary.lcpRangeMs[1])} ms` : '';
     const benchmark = summary.benchmarkIndex === undefined ? '' : `; benchmarkIndex=${Math.round(summary.benchmarkIndex)}`;
-    const run = labEvidence(evidence, page!, summary, 'runs', 'Lighthouse run protocol', `runs=${summary.runs}; validRuns=${summary.validRuns}${range}${benchmark}`, 'runs');
+    const run = labEvidence(evidence, page!, summary, 'runs', evidenceLabel('Lighthouse run protocol'), `runs=${summary.runs}; validRuns=${summary.validRuns}${range}${benchmark}`, 'runs');
     const results: RuleResult[] = [];
     if (summary.validRuns < recommendedRuns) {
       results.push({ outcome: 'fail', severity: 'info', reason: 'few-runs', evidence: [run], params: { validRuns: summary.validRuns, runs: summary.runs, recommended: recommendedRuns } });
     }
     if (summary.runWarnings.length > 0) {
-      const warnings = labEvidence(evidence, page!, summary, 'runWarnings', 'Lighthouse run warnings', summary.runWarnings.join(' | '), 'runWarnings');
+      const warnings = labEvidence(evidence, page!, summary, 'runWarnings', evidenceLabel('Lighthouse run warnings'), summary.runWarnings.join(' | '), 'runWarnings');
       results.push({ outcome: 'fail', severity: 'info', reason: 'run-warnings', evidence: [warnings], params: { count: summary.runWarnings.length } });
     }
     return results.length > 0 ? results : [{ outcome: 'pass', evidence: [run] }];
@@ -34,7 +35,7 @@ export const labPerformanceScore: RuleImplementation = {
     const score = summary.categories.performance;
     if (score === null || score === undefined) return notEvaluated('no-performance-score');
     const value = Math.round(score * 100);
-    const cited = labEvidence(evidence, page!, summary, 'performance', 'Lighthouse performance category score', `score=${value}`, 'categories.performance');
+    const cited = labEvidence(evidence, page!, summary, 'performance', evidenceLabel('Lighthouse performance category score'), `score=${value}`, 'categories.performance');
     if (value >= 90) return { outcome: 'pass', evidence: [cited] };
     return { outcome: 'fail', severity: 'info', reason: value < 50 ? 'poor' : 'needs-improvement', evidence: [cited], params: { score: value, conditions: labConditions(summary) } };
   },
@@ -62,7 +63,7 @@ function labMetricRule(spec: LabMetric): RuleImplementation {
       const summary = labOf(page)!;
       const value = auditOf(summary, spec.audit)?.numericValue;
       if (value === undefined) return notEvaluated('no-lab-value');
-      const cited = auditEvidence(evidence, page!, summary, spec.audit, `Lighthouse lab ${spec.label}`);
+      const cited = auditEvidence(evidence, page!, summary, spec.audit, evidenceLabel('Lighthouse lab {metric}', { metric: spec.label }));
       const severity = spec.grade(value, summary);
       if (severity === undefined) return { outcome: 'pass', evidence: [cited] };
       const params = { value: spec.format(value), conditions: labConditions(summary) };

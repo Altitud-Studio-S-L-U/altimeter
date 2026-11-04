@@ -1,0 +1,371 @@
+{
+  "aiItem": {
+    "title element": "elemento title",
+    "title element outside the head": "elemento title fuera del head",
+    "meta description": "metadescripción",
+    "{property} meta property": "propiedad meta {property}",
+    "html lang attribute": "atributo lang del elemento html",
+    "canonical link": "enlace canonical",
+    "{tag} text": "texto de {tag}",
+    "text hidden by {method}": "texto oculto mediante {method}",
+    "text hidden by {method} inside main": "texto oculto mediante {method} dentro de main",
+    "img without an alt attribute": "img sin atributo alt",
+    "img with empty alt (decorative)": "img con alt vacío (decorativa)",
+    "img alt text": "texto alternativo de img",
+    "{direction} link": "enlace {direction}",
+    "{direction} link (rel {rel})": "enlace {direction} (rel {rel})",
+    "JSON-LD block that does not parse": "bloque JSON-LD que no se puede analizar",
+    "JSON-LD block": "bloque JSON-LD",
+    "microdata item": "elemento de microdatos",
+    "response header {name}": "cabecera de respuesta {name}",
+    "h{level} heading": "encabezado h{level}",
+    "hreflang link": "enlace hreflang"
+  },
+  "assistants": {
+    "none by referrer": "ninguna identificada por la URL de referencia"
+  },
+  "band": {
+    "good": "«buena»",
+    "needs improvement": "«necesita mejorar»",
+    "poor": "«deficiente»"
+  },
+  "caller": {
+    "analyst": "analista",
+    "verifier": "verificador"
+  },
+  "causes": {
+    "none attributed": "ninguna"
+  },
+  "collector": {
+    "not measured": "sin medir"
+  },
+  "conditions": {
+    "lab, Lighthouse {version}, {formFactor}, {throttling} throttling": "laboratorio, Lighthouse {version}, {formFactor}, limitación {throttling}"
+  },
+  "contentType": {
+    "(none)": "(ninguno)"
+  },
+  "crawl-js-content-dependency/share": {
+    "title": "título",
+    "meta description": "metadescripción",
+    "structured data types": "tipos de datos estructurados"
+  },
+  "crawlers": {
+    "none": "ninguno"
+  },
+  "detail": {
+    "HTTP error": "error HTTP",
+    "{count} URLs": "{count} URLs",
+    "{count} lines": "{count} líneas",
+    "{count} entries": "{count} entradas",
+    "{entries} entries, {bytes} bytes": "{entries} entradas, {bytes} bytes",
+    "not a sitemap": "no es un sitemap",
+    "index inside an index": "índice dentro de otro índice",
+    "(none)": "(ninguno)"
+  },
+  "direction": {
+    "internal": "interno",
+    "outbound": "saliente"
+  },
+  "duration": {
+    "unknown": "desconocida"
+  },
+  "embeds": {
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} solicitudes, {size}, hilo principal {time}"
+  },
+  "entities": {
+    "{entity}: main thread {time}, transfer {size}": "{entity}: hilo principal {time}, transferencia {size}"
+  },
+  "error": {
+    "no answer": "sin respuesta",
+    "unknown error": "error desconocido"
+  },
+  "field": {
+    "title": "título",
+    "meta description": "metadescripción",
+    "image alt texts": "textos alternativos de las imágenes"
+  },
+  "fileReason": {
+    "contains {token}": "contiene {token}",
+    "contains the observed text": "contiene el texto observado",
+    "named after .{name}": "se llama como .{name}",
+    "uses {name}": "usa {name}",
+    "configures how the platform answers": "configura cómo responde la plataforma"
+  },
+  "files": {
+    "not listed": "sin detallar"
+  },
+  "first": {
+    "html": "HTML",
+    "header": "cabecera HTTP Link",
+    "sitemap": "sitemap"
+  },
+  "formFactor": {
+    "PHONE": "móvil",
+    "DESKTOP": "ordenador",
+    "mobile": "móvil",
+    "desktop": "ordenador"
+  },
+  "formFactors": {
+    "PHONE": "móvil",
+    "DESKTOP": "ordenador"
+  },
+  "includeSubDomains": {
+    "yes": "sí",
+    "no": "no"
+  },
+  "issuer": {
+    "unknown": "desconocido"
+  },
+  "issues": {
+    "HTTP {status} in its index details": "HTTP {status} en los detalles de su índice"
+  },
+  "kind": {
+    "canvas": "canvas",
+    "video": "vídeo",
+    "embed": "elemento insertado",
+    "pdf": "PDF"
+  },
+  "kinds": {
+    "canvas": "canvas",
+    "video": "vídeo",
+    "embed": "elemento insertado",
+    "pdf": "PDF"
+  },
+  "lastCrawl": {
+    "never": "nunca"
+  },
+  "live": {
+    "no response": "sin respuesta"
+  },
+  "location": {
+    "hidden element": "elemento oculto",
+    "comment": "comentario",
+    "attribute": "atributo",
+    "meta": "meta",
+    "rendered hidden": "texto oculto tras renderizar"
+  },
+  "maxAge": {
+    "invalid": "no válido"
+  },
+  "method": {
+    "display-none": "display: none",
+    "visibility-hidden": "visibility: hidden",
+    "opacity-zero": "opacidad 0",
+    "visually-hidden": "ocultación visual",
+    "zero-size": "tamaño cero",
+    "offscreen": "fuera de la pantalla",
+    "tiny-font": "letra diminuta",
+    "same-color": "mismo color que el fondo"
+  },
+  "metrics": {
+    "{metric} {value} ({band})": "{metric} {value} ({band})",
+    "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} frente a {withSoftnavs} con navegaciones suaves"
+  },
+  "operators": {
+    "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloqueado, {training} permitido)"
+  },
+  "outcome": {
+    "failed": "fallida",
+    "skipped": "omitida"
+  },
+  "preload": {
+    "yes": "sí",
+    "no": "no"
+  },
+  "presence": {
+    "raw": "HTML original",
+    "raw only": "solo en el HTML original",
+    "rendered only": "solo en el DOM renderizado"
+  },
+  "problem": {
+    "in the body": "en el body",
+    "carries {attributes}": "lleva {attributes}"
+  },
+  "problems": {
+    "the file is empty": "el archivo está vacío",
+    "the first line is not an H1 heading": "la primera línea no es un encabezado H1",
+    "it has {count} H1 headings": "tiene {count} encabezados H1",
+    "empty member": "miembro vacío",
+    "invalid key \"{key}\"": "clave «{key}» no válida",
+    "{key} needs y or n": "{key} necesita «y» o «n»"
+  },
+  "query": {
+    "query {number}": "consulta {number}"
+  },
+  "raw": {
+    "(none)": "(ninguna)"
+  },
+  "reasons": {
+    "not stated": "sin especificar",
+    "display-none": "display: none",
+    "visibility-hidden": "visibility: hidden",
+    "opacity-zero": "opacidad 0",
+    "visually-hidden": "ocultación visual",
+    "zero-size": "tamaño cero",
+    "offscreen": "fuera de la pantalla",
+    "tiny-font": "letra diminuta",
+    "same-color": "mismo color que el fondo"
+  },
+  "rendered": {
+    "(none)": "(ninguna)"
+  },
+  "resource": {
+    "script": "script",
+    "stylesheet": "hoja de estilos",
+    "image": "imagen",
+    "img": "imagen",
+    "font": "fuente",
+    "media": "contenido multimedia",
+    "audio": "audio",
+    "video": "vídeo",
+    "frame": "marco",
+    "object": "object",
+    "embed": "embed",
+    "form": "formulario",
+    "document": "documento",
+    "fetch": "fetch",
+    "xhr": "XHR",
+    "other": "otro recurso"
+  },
+  "role": {
+    "stylesheet": "hoja de estilos",
+    "script": "script",
+    "fetch": "fetch",
+    "font": "fuente",
+    "image": "imagen",
+    "document": "documento",
+    "other": "otro recurso"
+  },
+  "schemes": {
+    "cctld": "ccTLD",
+    "subdomain": "subdominio",
+    "subdirectory": "subdirectorio",
+    "parameter": "parámetro",
+    "same-path": "misma ruta"
+  },
+  "scope": {
+    "URL-level": "nivel de URL",
+    "origin-level": "nivel de origen"
+  },
+  "scripts": {
+    "not attributed": "sin atribuir"
+  },
+  "second": {
+    "html": "HTML",
+    "header": "cabecera HTTP Link",
+    "sitemap": "sitemap"
+  },
+  "snippet": {
+    "async-hide class": "clase async-hide",
+    "Adobe Target pre-hiding snippet": "fragmento de ocultación previa de Adobe Target",
+    "Kameleoon loading style sheet": "hoja de estilos de carga de Kameleoon",
+    "style rule that hides the page": "regla de estilo que oculta la página",
+    "{tag} element hidden in the server HTML": "elemento {tag} oculto en el HTML del servidor"
+  },
+  "sources": {
+    "not attributed": "sin atribuir",
+    "html": "HTML",
+    "rendered": "DOM renderizado",
+    "header": "cabecera HTTP Link",
+    "sitemap": "sitemap"
+  },
+  "state": {
+    "Crawled - currently not indexed": "Rastreada: actualmente sin indexar",
+    "Discovered - currently not indexed": "Descubierta: actualmente sin indexar",
+    "Excluded by ‘noindex’ tag": "Excluida por una etiqueta «noindex»",
+    "Excluded by 'noindex' tag": "Excluida por una etiqueta «noindex»",
+    "Blocked by robots.txt": "Bloqueada por robots.txt",
+    "Indexed, though blocked by robots.txt": "Indexada, aunque un archivo robots.txt la haya bloqueado",
+    "Not found (404)": "No se ha encontrado (404)",
+    "Soft 404": "Soft 404",
+    "Server error (5xx)": "Error de servidor (5xx)",
+    "Redirect error": "Error de redirección",
+    "Duplicate without user-selected canonical": "Duplicada: el usuario no ha indicado ninguna versión canónica",
+    "URL is unknown to Google": "URL desconocida para Google",
+    "Blocked due to unauthorized request (401)": "Bloqueada debido a una solicitud no autorizada (401)",
+    "Blocked due to access forbidden (403)": "Bloqueada debido a un acceso prohibido (403)",
+    "Blocked due to other 4xx issue": "Bloqueada debido a otro problema 4xx",
+    "Page indexed without content": "Página indexada sin contenido"
+  },
+  "status": {
+    "none": "sin respuesta",
+    "unknown": "desconocido"
+  },
+  "subparts": {
+    "time to first byte {share}": "tiempo hasta el primer byte {share}",
+    "resource load delay {share}": "retraso de carga del recurso {share}",
+    "element render delay {share}": "retraso de renderizado del elemento {share}"
+  },
+  "tech-favicon-file-valid/problem": {
+    "not-200": "no responde 200",
+    "not-an-image": "no es una imagen",
+    "svg": "es un SVG",
+    "unsupported-format": "formato no admitido",
+    "not-square": "no es cuadrado",
+    "too-small": "demasiado pequeño",
+    "noindex": "lleva noindex o noimageindex",
+    "blocked-for-googlebot-image": "robots.txt lo bloquea para Googlebot-Image"
+  },
+  "throttling": {
+    "simulate": "simulada",
+    "devtools": "de DevTools",
+    "provided": "proporcionada"
+  },
+  "url": {
+    "unknown": "URL desconocida"
+  },
+  "warning": {
+    "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "Se han pedido datos de Search Console, pero no se ha encontrado ninguna credencial. Ejecuta \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" o define ALTIMETER_GSC_ACCESS_TOKEN.",
+    "Search Console data was not used: {error}": "No se han usado los datos de Search Console: {error}",
+    "Crawler activity: {warning}": "Actividad de rastreadores: {warning}",
+    "Crawler activity was not read: {error}": "No se ha leído la actividad de rastreadores: {error}",
+    "Chrome was not found, so rendered checks were not evaluated.": "No se ha encontrado Chrome, así que no se han evaluado las comprobaciones que necesitan el renderizado.",
+    "Lighthouse did not complete: {error}": "Lighthouse no ha terminado: {error}",
+    "Bing Webmaster Tools data was requested but BING_WEBMASTER_API_KEY is not set. Generate a key in Bing Webmaster Tools under Settings > API Access.": "Se han pedido datos de Bing Webmaster Tools, pero BING_WEBMASTER_API_KEY no está definida. Genera una clave en Bing Webmaster Tools, en Settings > API Access.",
+    "Bing Webmaster Tools data is incomplete. {warning}": "Los datos de Bing Webmaster Tools están incompletos. {warning}",
+    "Bing Webmaster Tools data was not used: {error}": "No se han usado los datos de Bing Webmaster Tools: {error}",
+    "The crawl issues could not be read: {error}": "No se han podido leer los problemas de rastreo: {error}",
+    "The page traffic could not be read: {error}": "No se ha podido leer el tráfico de las páginas: {error}",
+    "The queries of {page} could not be read: {error}": "No se han podido leer las consultas de {page}: {error}",
+    "The index details of {url} could not be read: {error}": "No se han podido leer los detalles del índice de {url}: {error}",
+    "{count} later request was not sent after Bing Webmaster Tools throttled the requests.": "{count} solicitud posterior no se ha enviado porque Bing Webmaster Tools ha limitado las solicitudes.",
+    "{count} later requests were not sent after Bing Webmaster Tools throttled the requests.": "{count} solicitudes posteriores no se han enviado porque Bing Webmaster Tools ha limitado las solicitudes.",
+    "Cloudflare keeps {days} days of this data for the zone, so the window starts on {date}.": "Cloudflare conserva {days} días de estos datos para la zona, así que la ventana empieza el {date}.",
+    "Cloudflare allows {hours} hours per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare permite {hours} horas por consulta y Altimeter hace como máximo {queries} consultas por ejecución, así que solo se han leído los datos desde el {date}.",
+    "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.": "Algunas consultas a Cloudflare han devuelto el máximo de filas, así que pueden faltar rastreadores o rutas poco frecuentes y las cifras son mínimos.",
+    "{name}: reading stopped early ({error}).": "{name}: la lectura se ha detenido antes de tiempo ({error}).",
+    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: el {share} % de sus solicitudes vienen de una o dos direcciones, lo que parece un proxy o un balanceador de carga, así que sus direcciones no se han usado para verificar rastreadores. Registra la dirección del cliente y usa --ip-source.",
+    "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} usa el Common Log Format, que no tiene user-agent, así que no se pueden identificar los rastreadores.",
+    "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} no registra el user-agent (Netlify elimina client_ip y user_agent cuando se excluyen los datos personales), así que no se pueden identificar los rastreadores.",
+    "{name} records no user agent, so crawlers cannot be identified in it.": "{name} no registra el user-agent, así que no se pueden identificar los rastreadores.",
+    "{name} ({format}) records the client address itself; --ip-source applies to server logs only.": "{name} ({format}) ya registra la dirección del cliente; --ip-source solo se aplica a los registros del servidor.",
+    "Cloudflare analytics and access logs may count the same requests twice.": "Las analíticas de Cloudflare y los registros de acceso pueden contar dos veces las mismas solicitudes.",
+    "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.": "No se ha podido leer la lista de direcciones {id} ({error}); no se puede reconocer un registro que recoge las direcciones de Cloudflare.",
+    "The address list {id} could not be read ({error}); requests it would verify stay unverified.": "No se ha podido leer la lista de direcciones {id} ({error}); las solicitudes que verificaría quedan sin verificar.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.": "No se ha podido actualizar la lista de direcciones {id} ({error}); se ha usado la copia en caché del {date}.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.": "No se ha podido actualizar la lista de direcciones {id} ({error}); se ha usado la copia en caché de una ejecución anterior.",
+    "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.": "El DNS inverso se ha limitado a las {limit} direcciones con más actividad; las solicitudes de las demás quedan sin verificar cuando sus listas no las verifican.",
+    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} solicitudes de rastreadores llevan direcciones privadas o de loopback, así que los registros recogen la dirección de un proxy o de un balanceador de carga; registra la dirección del cliente y usa --ip-source.",
+    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} solicitudes de rastreadores vienen de direcciones de Cloudflare, así que los registros recogen la dirección de Cloudflare en lugar de la del cliente; registra CF-Connecting-IP y usa --ip-source.",
+    "No request falls within the window ({start} to {end}); check the dates of {files}.": "Ninguna solicitud cae dentro de la ventana (del {start} al {end}); comprueba las fechas de {files}.",
+    "No request falls within the window ({start} to {end}).": "Ninguna solicitud cae dentro de la ventana (del {start} al {end}).",
+    "Cloudflare reported no request from a known crawler in the window.": "Cloudflare no ha indicado ninguna solicitud de un rastreador conocido en la ventana.",
+    "The analysis did not run because no provider CLI is available.": "El análisis no se ha ejecutado porque no hay ninguna CLI de proveedor disponible.",
+    "Verification was turned off, so every analysis finding stays unverified.": "La verificación estaba desactivada, así que todos los hallazgos del análisis quedan sin verificar.",
+    "{error} Findings stay unverified.": "{error} Los hallazgos quedan sin verificar.",
+    "{count} analysis calls were left out to stay within the call limit.": "Se han omitido {count} llamadas del análisis para no superar el límite de llamadas.",
+    "{caller} call {id} ({pass}) {outcome}: {error}": "Llamada {id} ({caller}, {pass}) {outcome}: {error}",
+    "{name} {version} is not a verified version; it runs with {flags}.": "{name} {version} no es una versión verificada; se ejecuta con {flags}.",
+    "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.": "Se declaran {declared} sitemaps y solo se han leído los {read} primeros, así que las comprobaciones que usan las URLs de los sitemaps solo ven una parte.",
+    "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.": "Los índices de sitemaps enumeran {listed} sitemaps secundarios y solo se han leído {read}, así que las comprobaciones que usan las URLs de los sitemaps solo ven una parte.",
+    "{file} is empty, so it was skipped.": "{file} está vacío, así que se ha omitido.",
+    "The format of {file} was not recognised, so it was skipped.": "No se ha reconocido el formato de {file}, así que se ha omitido."
+  },
+  "where": {
+    "title": "el título",
+    "meta description": "la metadescripción",
+    "page text": "el texto de la página",
+    "image alt text": "el texto alternativo de las imágenes"
+  }
+}

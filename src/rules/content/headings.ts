@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { RuleImplementation } from '../engine.ts';
 import {
@@ -43,11 +44,11 @@ export const h1Missing: RuleImplementation = {
     const doc = docOf(page)!;
     const h1s = headingsOf(doc).filter(heading => heading.level === 1);
     if (h1s.length > 0) {
-      return { outcome: 'pass', evidence: [cite(context, 'html', h1s.length === 1 ? 'h1 element' : `first of ${h1s.length} h1 elements (several are allowed)`, { excerpt: h1s[0]!.name, line: lineOf(h1s[0]!.element) })] };
+      return { outcome: 'pass', evidence: [cite(context, 'html', h1s.length === 1 ? evidenceLabel('h1 element') : evidenceLabel('first of {count} h1 elements (several are allowed)', { count: h1s.length }), { excerpt: h1s[0]!.name, line: lineOf(h1s[0]!.element) })] };
     }
     const dominant = dominantTitle(page);
-    if (dominant) return { outcome: 'pass', evidence: [cite(context, 'render', 'large text in the first viewport serving as the visual title', { excerpt: dominant.text, path: dominant.selector })] };
-    return { outcome: 'fail', severity: 'low', evidence: [cite(context, 'html', 'no h1 element in the document')] };
+    if (dominant) return { outcome: 'pass', evidence: [cite(context, 'render', evidenceLabel('large text in the first viewport serving as the visual title'), { excerpt: dominant.text, path: dominant.selector })] };
+    return { outcome: 'fail', severity: 'low', evidence: [cite(context, 'html', evidenceLabel('no h1 element in the document'))] };
   },
 };
 
@@ -70,14 +71,14 @@ export const h1EmptyOrImage: RuleImplementation = {
     const empty = h1s.filter(heading => heading.name === '');
     if (empty.length > 0) {
       return { outcome: 'fail', severity: 'low', reason: 'empty', params: { count: empty.length },
-        evidence: empty.slice(0, 3).map(heading => cite(context, 'html', 'h1 without an accessible name', { excerpt: sourceOf(doc, heading), line: lineOf(heading.element) })) };
+        evidence: empty.slice(0, 3).map(heading => cite(context, 'html', evidenceLabel('h1 without an accessible name'), { excerpt: sourceOf(doc, heading), line: lineOf(heading.element) })) };
     }
     const states = h1s.map(heading => removedHeading(page, heading));
     if (states.every(state => state === true)) {
       return { outcome: 'fail', severity: 'low', reason: 'hidden', params: { count: h1s.length },
-        evidence: h1s.slice(0, 3).map(heading => cite(context, 'render', 'h1 not displayed in the render', { excerpt: heading.name, line: lineOf(heading.element) })) };
+        evidence: h1s.slice(0, 3).map(heading => cite(context, 'render', evidenceLabel('h1 not displayed in the render'), { excerpt: heading.name, line: lineOf(heading.element) })) };
     }
-    return { outcome: 'pass', evidence: [cite(context, 'html', 'h1 element', { excerpt: h1s[0]!.name, line: lineOf(h1s[0]!.element) })] };
+    return { outcome: 'pass', evidence: [cite(context, 'html', evidenceLabel('h1 element'), { excerpt: h1s[0]!.name, line: lineOf(h1s[0]!.element) })] };
   },
 };
 
@@ -101,7 +102,7 @@ export const headingLevelSkips: RuleImplementation = {
     const first = skips[0]!;
     return {
       outcome: 'fail', severity: 'low', params: { count: skips.length, from: `h${first.from.level}`, to: `h${first.to.level}`, heading: clip(first.to.name, 80) },
-      evidence: skips.slice(0, 5).map(skip => cite(context, 'html', `h${skip.to.level} after h${skip.from.level}`, { excerpt: `<h${skip.to.level}>${clip(skip.to.name, 120)}`, line: lineOf(skip.to.element) })),
+      evidence: skips.slice(0, 5).map(skip => cite(context, 'html', evidenceLabel('h{to} after h{from}', { to: skip.to.level, from: skip.from.level }), { excerpt: `<h${skip.to.level}>${clip(skip.to.name, 120)}`, line: lineOf(skip.to.element) })),
     };
   },
 };
@@ -111,9 +112,9 @@ export const mainLandmark: RuleImplementation = {
   evaluate(context) {
     const doc = docOf(context.page!)!;
     const mains = mainLandmarks(doc);
-    if (mains.length === 1) return { outcome: 'pass', evidence: [cite(context, 'html', 'main landmark', { excerpt: sourceOf(doc, mains[0]!, 'start-tag'), line: lineOf(mains[0]!.element) })] };
-    if (mains.length === 0) return { outcome: 'fail', severity: 'low', reason: 'none', evidence: [cite(context, 'html', 'no visible main or role=main element')] };
+    if (mains.length === 1) return { outcome: 'pass', evidence: [cite(context, 'html', evidenceLabel('main landmark'), { excerpt: sourceOf(doc, mains[0]!, 'start-tag'), line: lineOf(mains[0]!.element) })] };
+    if (mains.length === 0) return { outcome: 'fail', severity: 'low', reason: 'none', evidence: [cite(context, 'html', evidenceLabel('no visible main or role=main element'))] };
     return { outcome: 'fail', severity: 'low', reason: 'multiple', params: { count: mains.length },
-      evidence: mains.slice(0, 3).map(visit => cite(context, 'html', 'main landmark', { excerpt: sourceOf(doc, visit, 'start-tag'), line: lineOf(visit.element) })) };
+      evidence: mains.slice(0, 3).map(visit => cite(context, 'html', evidenceLabel('main landmark'), { excerpt: sourceOf(doc, visit, 'start-tag'), line: lineOf(visit.element) })) };
   },
 };

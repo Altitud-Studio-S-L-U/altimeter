@@ -6,7 +6,7 @@ import { describe, test } from 'node:test';
 import type { ReportAnalysis } from '../src/ai/types.ts';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
-import { EvidenceStore, type NewEvidence } from '../src/core/evidence.ts';
+import { evidenceLabel, EvidenceStore, type NewEvidence } from '../src/core/evidence.ts';
 import { runRules, type Finding, type RuleImplementation } from '../src/rules/engine.ts';
 import { implementations as registered } from '../src/rules/registry.ts';
 import { compareReports } from '../src/report/compare.ts';
@@ -21,8 +21,8 @@ const titleRule: RuleImplementation = {
   id: 'content-title-missing',
   evaluate({ page: current, evidence }) {
     const title = current!.raw!.parsed.titles.find(entry => entry.inHead && entry.text.trim() !== '');
-    if (title) return { outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: current!.url, label: 'title element', excerpt: title.text, line: title.line })] };
-    return { outcome: 'fail', severity: 'high', evidence: [evidence.add({ kind: 'html', label: 'no non-empty title element in the head' })] };
+    if (title) return { outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: current!.url, label: evidenceLabel('title element'), excerpt: title.text, line: title.line })] };
+    return { outcome: 'fail', severity: 'high', evidence: [evidence.add({ kind: 'html', label: evidenceLabel('no non-empty title element in the head') })] };
   },
 };
 
@@ -62,12 +62,12 @@ describe('buildReport', () => {
   test('groups one defect seen on several pages with different values into one task, but keeps site findings apart', () => {
     const rule = catalogRules.find(entry => entry.id === 'content-title-width')!;
     const evidence = new EvidenceStore();
-    const cite = (url: string, title: string) => [evidence.add({ kind: 'html', url, label: 'title element', excerpt: title, line: 3 })];
+    const cite = (url: string, title: string) => [evidence.add({ kind: 'html', url, label: evidenceLabel('title element'), excerpt: title, line: 3 })];
     const pageFinding = (url: string, title: string) => ({ ruleId: rule.id, scope: { kind: 'page' as const, url }, outcome: 'fail' as const, severity: 'low' as const,
       reason: 'short', evidence: cite(url, title), evidenceSignature: url, confidence: 'high' as const, origin: 'deterministic' as const });
     const siteRule = catalogRules.find(entry => entry.id === 'crawl-host-variant-consolidation')!;
     const siteFinding = (variant: string) => ({ ruleId: siteRule.id, scope: { kind: 'site' as const, origin: 'https://example.com' }, outcome: 'fail' as const, severity: 'low' as const,
-      reason: 'temporary-redirect', evidence: [evidence.add({ kind: 'redirect', url: variant, label: 'hop 1', excerpt: `307 ${variant}` })], evidenceSignature: variant, confidence: 'high' as const, origin: 'deterministic' as const });
+      reason: 'temporary-redirect', evidence: [evidence.add({ kind: 'redirect', url: variant, label: evidenceLabel('hop 1'), excerpt: `307 ${variant}` })], evidenceSignature: variant, confidence: 'high' as const, origin: 'deterministic' as const });
     const findings = [pageFinding('https://example.com/a', 'Shop'), pageFinding('https://example.com/b', 'Blog'), siteFinding('https://example.com/a/index.html'), siteFinding('https://example.com/a')];
     const collected: CollectResult = { site: site({ pages: [] }), versions: {}, warnings: [], durationMs: 1 };
     const report = buildReport({ collected, findings, evidence, implemented: 2, language: 'en', startedAt: new Date('2026-11-04T10:00:00Z'), targetUrl: 'https://example.com/a', options: {} });
@@ -118,33 +118,33 @@ describe('tasks', () => {
 
   test('keeps the task id of a site finding when only the reporting window, the figures or the probe path change', () => {
     const blocked = (window: string, requests: number, paths: string) => siteTaskIds(['crawl-bots-blocked-at-edge', 'refused', [
-      { kind: 'owner-data', label: `verified Googlebot requests for paths robots.txt allows, from ${window}`, excerpt: `Googlebot: ${requests} requests; answers 403 x${requests - 2}, 200 x2` },
-      { kind: 'owner-data', label: 'paths where Googlebot got errors or refusals', excerpt: paths },
+      { kind: 'owner-data', label: evidenceLabel(`verified Googlebot requests for paths robots.txt allows, from ${window}`), excerpt: `Googlebot: ${requests} requests; answers 403 x${requests - 2}, 200 x2` },
+      { kind: 'owner-data', label: evidenceLabel('paths where Googlebot got errors or refusals'), excerpt: paths },
     ]]);
     assert.deepEqual(blocked('2026-10-05 to 2026-11-04', 40, '/a 403 x20\n/b 403 x18'), blocked('2026-10-06 to 2026-11-05', 52, '/a 403 x30\n/c 403 x20'));
     const dropped = (period: string, clicks: number) => siteTaskIds(['content-gsc-traffic-drop', undefined, [
-      { kind: 'owner-data', url: 'https://example.com/a', label: `clicks from ${period}`, excerpt: `clicks ${clicks} -> 4; z=-2.9` },
+      { kind: 'owner-data', url: 'https://example.com/a', label: evidenceLabel(`clicks from ${period}`), excerpt: `clicks ${clicks} -> 4; z=-2.9` },
     ]]);
     assert.deepEqual(dropped('2026-08-08 to 2026-09-04 and from 2026-09-05 to 2026-10-02', 40), dropped('2026-08-09 to 2026-09-05 and from 2026-09-06 to 2026-10-03', 38));
     const soft = (token: string) => siteTaskIds(['crawl-soft-404', 'probe-200', [
-      { kind: 'probe', url: `https://example.com/altimeter-probe-${token}/`, label: 'response to a random unknown path', excerpt: 'HTTP 200' },
+      { kind: 'probe', url: `https://example.com/altimeter-probe-${token}/`, label: evidenceLabel('response to a random unknown path'), excerpt: 'HTTP 200' },
     ]]);
     assert.deepEqual(soft('0a1b2c3d4e5f'), soft('f00dbabe1234'));
     const generated = (lastmod: string, date: string) => siteTaskIds(['crawl-sitemap-lastmod', 'generation-time', [
-      { kind: 'sitemap', url: 'https://example.com/sitemap.xml', label: 'lastmod value shared by most URLs, with its count', excerpt: `${lastmod} (40 of 41)` },
-      { kind: 'header', url: 'https://example.com/sitemap.xml', label: 'Date header of the sitemap response', excerpt: date },
+      { kind: 'sitemap', url: 'https://example.com/sitemap.xml', label: evidenceLabel('lastmod value shared by most URLs, with its count'), excerpt: `${lastmod} (40 of 41)` },
+      { kind: 'header', url: 'https://example.com/sitemap.xml', label: evidenceLabel('Date header of the sitemap response'), excerpt: date },
     ]]);
     assert.deepEqual(generated('2026-11-04T10:00:00Z', 'Wed, 04 Nov 2026 10:00:00 GMT'), generated('2026-11-05T09:30:12Z', 'Thu, 05 Nov 2026 09:30:12 GMT'));
   });
 
   test('keeps site findings about different crawlers, pages, lines or variants apart', () => {
-    const blockedBot = (bot: string) => ['crawl-bots-blocked-at-edge', 'refused', [{ kind: 'owner-data', label: `verified ${bot} requests for paths robots.txt allows, from 2026-10-05 to 2026-11-04`, excerpt: `${bot}: 40 requests` }]] as const;
+    const blockedBot = (bot: string) => ['crawl-bots-blocked-at-edge', 'refused', [{ kind: 'owner-data', label: evidenceLabel(`verified ${bot} requests for paths robots.txt allows, from 2026-10-05 to 2026-11-04`), excerpt: `${bot}: 40 requests` }]] as const;
     assert.equal(new Set(siteTaskIds(blockedBot('Googlebot'), blockedBot('Bingbot'))).size, 2);
-    const lowCtr = (url: string) => ['content-gsc-low-ctr', undefined, [{ kind: 'owner-data', url, label: 'Search Console performance of the page from 2026-10-05 to 2026-11-04', excerpt: 'impressions=900; clicks=3' }]] as const;
+    const lowCtr = (url: string) => ['content-gsc-low-ctr', undefined, [{ kind: 'owner-data', url, label: evidenceLabel('Search Console performance of the page from 2026-10-05 to 2026-11-04'), excerpt: 'impressions=900; clicks=3' }]] as const;
     assert.equal(new Set(siteTaskIds(lowCtr('https://example.com/a'), lowCtr('https://example.com/b'))).size, 2);
-    const token = (line: string) => ['ai-robots-legacy-tokens', 'legacy-token', [{ kind: 'robots', url: 'https://example.com/robots.txt', label: 'user-agent line naming a token that no current crawler documentation lists', excerpt: line }]] as const;
+    const token = (line: string) => ['ai-robots-legacy-tokens', 'legacy-token', [{ kind: 'robots', url: 'https://example.com/robots.txt', label: evidenceLabel('user-agent line naming a token that no current crawler documentation lists'), excerpt: line }]] as const;
     assert.equal(new Set(siteTaskIds(token('User-agent: anthropic-ai'), token('User-agent: Claude-Web'))).size, 2);
-    const variant = (url: string) => ['crawl-host-variant-consolidation', 'temporary-redirect', [{ kind: 'redirect', url, label: 'redirect hop 1', excerpt: '302 -> https://example.com/a' }]] as const;
+    const variant = (url: string) => ['crawl-host-variant-consolidation', 'temporary-redirect', [{ kind: 'redirect', url, label: evidenceLabel('redirect hop 1'), excerpt: '302 -> https://example.com/a' }]] as const;
     assert.equal(new Set(siteTaskIds(variant('https://example.com/a/'), variant('https://example.com/a/index.html'))).size, 2);
   });
 });

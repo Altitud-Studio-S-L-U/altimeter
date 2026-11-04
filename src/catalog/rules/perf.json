@@ -827,7 +827,7 @@
       }
     ],
     "status": "v1",
-    "notes": "Read lhr.audits['lcp-breakdown-insight'] details (TTFB, load delay, load duration, render delay) plus its LCP element node. Report the largest phase and its share of LCP. In Lighthouse 13 the id is lcp-breakdown-insight. It was announced as lcp-breakdown-insight, and the old lcp-breakdown-insight audit was replaced. Text LCP has no load delay/duration. When field subparts exist, prefer them.",
+    "notes": "Read lhr.audits['lcp-breakdown-insight'] details (TTFB, load delay, load duration, render delay) plus its LCP element node. Report the largest phase and its share of LCP. In Lighthouse 13 the id is lcp-breakdown-insight, which replaced the largest-contentful-paint-element audit. Text LCP has no load delay/duration. When field subparts exist, prefer them.",
     "optionalInputs": [
       "crux"
     ],
@@ -1579,7 +1579,7 @@
     "id": "perf-critical-request-chains",
     "category": "perf",
     "title": "Deep critical request chains",
-    "why": "Long chains of dependent requests on the critical path delay the first render and LCP. Lighthouse 13.6 reports them in network-dependency-tree-insight, which replaced critical-request-chains and network-dependency-tree-insight.",
+    "why": "Long chains of dependent requests on the critical path delay the first render and LCP. Lighthouse 13.6 reports them in network-dependency-tree-insight, which replaced critical-request-chains and uses-rel-preconnect.",
     "fix": "Flatten chains (CSS @import, JS-loaded CSS/fonts), preload late-discovered critical resources.",
     "maxSeverity": "low",
     "method": "deterministic",
@@ -1604,7 +1604,7 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['network-dependency-tree-insight'] details: maximum critical path latency and chain depth. Replaces the legacy critical-request-chains and network-dependency-tree-insight audits. The depth cut-off is a heuristic.",
+    "notes": "lhr.audits['network-dependency-tree-insight'] details: maximum critical path latency and chain depth. Replaces the legacy critical-request-chains and uses-rel-preconnect audits. The depth cut-off is a heuristic.",
     "fixLocation": "repo",
     "verifiableBy": "local"
   },
