@@ -102,15 +102,15 @@ const canonicalJsChanged: RuleImplementation = {
 
 const placeholder = /\{\{|\}\}|\$\{|%7B%7B|^(?:undefined|null|about:blank|#)$|\[\[|<%/iu;
 
-function formatProblem(href: string, base: string): { severity: 'high' | 'medium'; reason: string } | undefined {
+function formatProblem(href: string, base: string): { severity: 'medium' | 'low'; reason: string } | undefined {
   const value = href.trim();
-  if (value === '') return { severity: 'high', reason: 'empty' };
-  if (placeholder.test(value)) return { severity: 'high', reason: 'placeholder' };
+  if (value === '') return { severity: 'medium', reason: 'empty' };
+  if (placeholder.test(value)) return { severity: 'medium', reason: 'placeholder' };
   const resolved = absoluteUrl(value, base);
-  if (!resolved) return { severity: 'high', reason: 'unparseable' };
-  if (!/^https?:$/u.test(new URL(resolved).protocol)) return { severity: 'high', reason: 'not-http' };
-  if (value.includes('#')) return { severity: 'high', reason: 'fragment' };
-  if (!/^https?:\/\//iu.test(value)) return { severity: 'medium', reason: 'relative' };
+  if (!resolved) return { severity: 'medium', reason: 'unparseable' };
+  if (!/^https?:$/u.test(new URL(resolved).protocol)) return { severity: 'medium', reason: 'not-http' };
+  if (value.includes('#')) return { severity: 'medium', reason: 'fragment' };
+  if (!/^https?:\/\//iu.test(value)) return { severity: 'low', reason: 'relative' };
   return undefined;
 }
 
@@ -125,7 +125,7 @@ const canonicalFormat: RuleImplementation = {
     const problems = declared.map(entry => ({ entry, problem: formatProblem(entry.href, entry.source === 'header' ? url : base) }))
       .filter((item): item is typeof item & { problem: NonNullable<ReturnType<typeof formatProblem>> } => item.problem !== undefined);
     if (problems.length === 0) return passed([citeTarget(evidence, url, declared[0]!)]);
-    const chosen = problems.find(item => item.problem.severity === 'high') ?? problems[0]!;
+    const chosen = problems.find(item => item.problem.severity === 'medium') ?? problems[0]!;
     return failure({ severity: chosen.problem.severity, evidence: problems.map(item => citeTarget(evidence, url, item.entry)), reason: chosen.problem.reason, params: { url, href: chosen.entry.href } });
   },
 };

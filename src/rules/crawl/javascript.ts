@@ -196,6 +196,8 @@ const jsLazyContent: RuleImplementation = {
   },
 };
 
+const challengeMarkers = /just a moment\.\.\.|cf-chl-|challenge-platform|attention required|g-recaptcha|h-captcha|captcha-delivery|px-captcha/iu;
+
 const dynamicRendering: RuleImplementation = {
   id: 'crawl-dynamic-rendering',
   evaluate({ site, evidence }) {
@@ -204,6 +206,8 @@ const dynamicRendering: RuleImplementation = {
     if (!bot || !browser) return notEvaluated('missing-probe');
     if (bot.fetch.status !== 200 || browser.fetch.status !== 200) return notEvaluated('probe-not-200');
     if (bot.fetch.body.equals(browser.fetch.body)) return passed();
+    // A challenge served to a spoofed crawler user agent says nothing about what the verified crawler receives.
+    if (challengeMarkers.test(bot.fetch.body.subarray(0, 64 * 1024).toString('utf8'))) return notEvaluated('challenge-page');
     const botText = parseHtml(bot.fetch.body.toString('utf8')).bodyText;
     const browserText = parseHtml(browser.fetch.body.toString('utf8')).bodyText;
     const botMissing = missingShare(browserText, botText);

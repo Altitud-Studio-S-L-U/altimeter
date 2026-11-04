@@ -834,7 +834,7 @@
     "title": "Canonical declaration present and self-referencing",
     "why": "Google recommends a self-referencing rel=canonical so that it can consolidate duplicate URLs, such as parameter or host variants, to the preferred one. Without it Google chooses a canonical itself.",
     "fix": "Add an absolute self-referencing canonical to every indexable page.",
-    "maxSeverity": "low",
+    "maxSeverity": "medium",
     "method": "deterministic",
     "scope": "page",
     "inputs": [
@@ -846,7 +846,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Missing on an indexable page = low (Google picks a canonical itself, and a self-reference is recommended). Present and self-referencing = pass.",
+    "thresholds": "Missing on an indexable page = low (Google picks a canonical itself, and a self-reference is recommended). Missing while a URL variant of the page answers 200 without a redirect = medium. Present = pass.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -951,7 +951,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "A relative URL = medium (works, but Google recommends absolute, and it can break with a base href). A fragment, placeholder or unparseable value = high.",
+    "thresholds": "A relative URL = low (works, but Google recommends absolute, and it can break with a base href). A fragment, placeholder, empty, non-http or unparseable value = medium (Google cannot use it, so the page has no usable canonical).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",

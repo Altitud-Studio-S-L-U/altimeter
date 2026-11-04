@@ -353,6 +353,17 @@ function charOffsetAtByte(html: string, bytes: number): number {
   return Math.max(0, low - 1);
 }
 
+/** The markup after `cut`, without the rest of a script or style element that the cut falls inside. */
+function trailingMarkup(html: string, cut: number): string {
+  const before = html.slice(0, cut).toLowerCase();
+  const opened = Math.max(before.lastIndexOf('<script'), before.lastIndexOf('<style'));
+  const closed = Math.max(before.lastIndexOf('</script'), before.lastIndexOf('</style'));
+  const rest = html.slice(cut);
+  if (opened <= closed) return rest;
+  const end = rest.search(/<\/(?:script|style)\s*>/iu);
+  return end === -1 ? '' : rest.slice(end);
+}
+
 const htmlSizeLimit: RuleImplementation = {
   id: 'crawl-html-size-limit',
   evaluate({ page, evidence }) {
@@ -370,7 +381,7 @@ const htmlSizeLimit: RuleImplementation = {
       ...parsed.headings.filter(entry => entry.offset >= cut).map(entry => `<h${entry.level}>${entry.text.slice(0, 80)}`),
       ...parsed.scripts.filter(entry => entry.offset >= cut && (entry.attrs.type ?? '').toLowerCase() === 'application/ld+json').map(() => '<script type="application/ld+json">'),
     ];
-    const trailingText = raw.html.slice(cut).replace(/<(script|style|template)\b[\s\S]*?<\/\1\s*>/giu, ' ').replace(/<[^>]*>/gu, ' ').replace(/\s+/gu, ' ').trim();
+    const trailingText = trailingMarkup(raw.html, cut).replace(/<(script|style|template)\b[\s\S]*?<\/\1\s*>/giu, ' ').replace(/<[^>]*>/gu, ' ').replace(/\s+/gu, ' ').trim();
     const important = after.length > 0 || trailingText.length > 200;
     const ids = [sizeId, ...after.slice(0, 5).map(excerpt => evidence.add({ kind: 'html', url, label: 'element after the first 2 MB', excerpt }))];
     return failure({ severity: important ? 'high' : 'low', evidence: ids, reason: important ? 'content-after-limit' : 'scripts-after-limit', params: { url, bytes, count: after.length } });

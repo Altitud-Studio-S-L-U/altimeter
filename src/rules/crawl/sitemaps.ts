@@ -107,7 +107,9 @@ const sitemapScope: RuleImplementation = {
     const insecure: { loc: string; line: number; sitemap: string }[] = [];
     for (const entry of documents) {
       const directory = directoryOf(entry.url);
-      const crossSubmitted = declared.has(normalizeUrl(entry.url));
+      // A child listed by a sitemap index that robots.txt declares inherits that cross-submission.
+      const crossSubmitted = declared.has(normalizeUrl(entry.url)) || (entry.source === 'index' && site.sitemaps.some(parent => declared.has(normalizeUrl(parent.url))
+        && parent.document?.sitemaps.some(child => normalizeUrl(child.loc) === normalizeUrl(entry.url))));
       for (const item of entry.document!.urls) {
         let loc: URL;
         try { loc = new URL(item.loc); } catch { continue; }
