@@ -75,7 +75,7 @@ describe('perf-embed-reserved-space', () => {
     const lighthouse = lab({ 'cls-culprits-insight': { score: 0, details: list(cluster(0.12, [{ cause: 'Injected iframe', value: 'https://www.youtube-nocookie.com/embed/abc123' }])) } });
     const checked = check(embedReservedSpace, page(url, { html: video(''), lighthouse }));
     assertFail(checked, 'medium', 'attributed-shift');
-    assert.ok(checked.excerpts(checked.finding).some(excerpt => excerpt.includes('https://www.youtube-nocookie.com/embed/abc123')), 'the culprit Lighthouse named is cited');
+    assert.ok(checked.excerpts(checked.finding).includes('Injected iframe: https://www.youtube-nocookie.com/embed/abc123'), 'the culprit Lighthouse named is cited');
   });
 
   test('hands an unsized embed without attributed shift to the analyst at low', () => {
