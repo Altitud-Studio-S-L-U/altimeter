@@ -105,9 +105,9 @@ function touchesPage(finding: ReportFinding, page: PageInfo, evidence: ReadonlyM
 }
 
 function factsFor(definition: PassDefinition, page: PageInfo, report: Report, evidence: ReadonlyMap<string, EvidenceItem>): ReportFinding[] {
+  // A site-wide title problem, such as duplicates, only asks for a rewrite on the pages its evidence names.
   const relevant = report.findings.filter(finding => (finding.outcome === 'pass' || finding.outcome === 'fail') && finding.needsJudgment !== true
-    && (definition.id === 'serp' ? serpRules.includes(finding.ruleId) : finding.category === definition.category)
-    && (finding.scope.kind === 'site' || touchesPage(finding, page, evidence)));
+    && (definition.id === 'serp' ? serpRules.includes(finding.ruleId) && touchesPage(finding, page, evidence) : finding.category === definition.category && (finding.scope.kind === 'site' || touchesPage(finding, page, evidence))));
   return relevant.sort((a, b) => (a.outcome === b.outcome ? 0 : a.outcome === 'fail' ? -1 : 1)).slice(0, 60);
 }
 

@@ -466,13 +466,28 @@ export function buildCorpus(site: SiteFacts, strings: SiteStrings): FactCorpus {
   return { pages, links, ...(brand ? { brand } : {}) };
 }
 
-const injectionPatterns: ReadonlyArray<{ readonly id: string; readonly pattern: RegExp }> = [
-  { id: 'ignore-instructions', pattern: /\b(?:ignor\w*|disregard\w*|forget|olvid\w*|oblid\w*|override)\b[^.\n]{0,60}\b(?:instruc\w*|prompts?|rules|reglas|regles|directions|guidelines)\b/u },
-  { id: 'role-reassignment', pattern: /\b(?:you are now|from now on you are|act as|actua como|actua com|eres un|ets un)\b[^.\n]{0,40}\b(?:ai|assistant|asistente|assistent|model|llm|chatbot|gpt|claude)\b/u },
-  { id: 'system-prompt', pattern: /\b(?:system|developer) (?:prompt|message|instructions?)\b|\bprompt del sistema\b/u },
-  { id: 'chat-markup', pattern: /<\|(?:im_start|im_end|system|assistant|user|endoftext)\|>|\[\/?inst\]|<<\/?sys>>/u },
-  { id: 'addressed-to-ai', pattern: /\b(?:if you are|to any|attention|note to|dear)\b[^.\n]{0,20}\b(?:ai|llm|language model|chatbot|assistant|crawler|agent|gpt|claude)s?\b|\b(?:ai|llm|language model|chatbot|assistant)s?\b[^.\n]{0,30}\b(?:reading|parsing|crawling|summari[sz]ing|analy[sz]ing|processing) this\b/u },
-  { id: 'grading-request', pattern: /\b(?:rate|score|rank|grade|recommend|describe)\b[^.\n]{0,30}\b(?:this|our)\b[^.\n]{0,20}\b(?:site|page|website|business|company|product)\b[^.\n]{0,30}\b(?:as|with|highly|positively|first|best|top|excellent)\b/u },
+const aiAddressee = /\b(?:ai|llm|large language model|language model|chatbot|ai assistant|ai agent|gpt|chatgpt|claude|gemini)\b/u;
+
+// Folded text (lower case, no accents). Each pattern needs the shape of an instruction to a model, so ordinary
+// copy such as "don't forget the pool rules" or "our staff act as your assistant" is not a candidate.
+const injectionPatterns: ReadonlyArray<{ readonly id: string; readonly test: (text: string) => boolean }> = [
+  {
+    id: 'ignore-instructions',
+    test: text => /\b(?:ignore|disregard|forget|override)\b(?:\s+\w+){0,2}\s+(?:previous|prior|above|earlier|preceding|all|any|your|system|these|those)\b(?:\s+\w+){0,2}\s+(?:instructions?|prompts?|rules|directions|guidelines)\b/u.test(text)
+      || /\b(?:ignor|olvid|oblid|descart)\w*\b[^.\n]{0,40}\b(?:instruc\w*|indicacion\w*|indicacions)\s+(?:anteriores|previas|anteriors|previes|del sistema|de sistema)\b/u.test(text),
+  },
+  { id: 'role-reassignment', test: text => /\b(?:you are now|from now on,? you are|ahora eres|a partir de ahora eres|ara ets|a partir d'ara ets)\b[^.\n]{0,40}\b(?:ai|assistant|asistente|assistent|model|llm|chatbot|gpt|claude)\b/u.test(text) },
+  { id: 'system-prompt', test: text => /\b(?:new|updated|real|actual|true|hidden)\s+system\s+(?:prompt|instructions?)\b|\bsystem\s+prompt\s*:/u.test(text) },
+  { id: 'chat-markup', test: text => /<\|(?:im_start|im_end|system|assistant|user|endoftext)\|>|\[\/?inst\]|<<\/?sys>>/u.test(text) },
+  {
+    id: 'addressed-to-ai',
+    test: text => /\b(?:if you are|you are|attention|note to|dear|hey|hello)\s+(?:an?\s+|the\s+)?(?:ai|llm|large language model|language model|chatbot|ai assistant|ai agent|gpt|chatgpt|claude|gemini)\b/u.test(text)
+      || /\b(?:ai|llm|language model|chatbot|ai assistant)s?\b[^.\n]{0,30}\b(?:reading|parsing|crawling|summari[sz]ing|analy[sz]ing|processing) this\b/u.test(text),
+  },
+  {
+    id: 'grading-request',
+    test: text => aiAddressee.test(text) && /\b(?:rate|score|rank|grade|recommend|describe|present)\b[^.\n]{0,40}\b(?:this|our)\b[^.\n]{0,20}\b(?:site|page|website|business|company|hotel|product|brand)\b/u.test(text),
+  },
 ];
 
 /**
@@ -483,8 +498,8 @@ export function injectionCandidates(strings: SiteStrings): InjectionCandidate[] 
   const candidates: InjectionCandidate[] = [];
   for (const item of strings.items.values()) {
     const text = fold(item.original);
-    for (const { id, pattern } of injectionPatterns) {
-      if (!pattern.test(text)) continue;
+    for (const { id, test } of injectionPatterns) {
+      if (!test(text)) continue;
       candidates.push({ ruleId: 'ai-hidden-llm-instructions', page: item.page, evidenceId: item.id, where: item.label, pattern: id, excerpt: cleanDisplay(item.original, 200), visible: item.visible });
       break;
     }
