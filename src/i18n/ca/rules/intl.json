@@ -367,7 +367,7 @@
     "messages": {
       "fail": "La pàgina no enllaça a les seves altres versions lingüístiques amb enllaços rastrejables.",
       "fail:homepages-only": "Els enllaços de llengua porten a les pàgines d'inici de cada configuració regional ({count}) en lloc de la pàgina equivalent en cada llengua.",
-      "fail:no-crawlable-links": "Cap de les altres versions lingüístiques d'aquesta pàgina ({count}) no està enllaçada amb un <a href>; s'han trobat {controls} control(s) de llengua sense enllaços. Confirma com canvien de llengua els visitants."
+      "fail:no-crawlable-links": "Cap de les altres versions lingüístiques d'aquesta pàgina ({count}) no està enllaçada amb un <a href>; s'han trobat {controls} selector(s) de llengua sense enllaços. Confirma com canvien de llengua els visitants."
     }
   },
   "intl-auto-redirect-by-language": {
