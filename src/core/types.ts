@@ -32,7 +32,19 @@ export const pageTypes = [
 ] as const;
 export type PageType = (typeof pageTypes)[number];
 
-/** What a rule reads. The collector guarantees each input exists, or the rule is not evaluated. */
+/**
+ * What a rule reads. The collector guarantees each input exists, or the rule is not evaluated.
+ * http/redirects: the page's fetch and hops. raw-html: the HTML as served. rendered-dom: the Googlebot-like render
+ * (tall viewport, no scrolling, robots-blocked subresources not loaded). user-render: a phone-sized render that
+ * scrolls; it is the only source of lab layout shifts. unblocked-render: the render without robots.txt blocking,
+ * present only when something was blocked. resources: favicons, Open Graph images, logos and /llms.txt fetched by
+ * the collector. variants: URL variants (no trailing slash, /index.html, upper case, tracking parameter, //, http,
+ * www) fetched with redirects. not-found-probe: a random unknown path. siblings: two other pages of the site, to
+ * tell template text from page content. crawl: a crawl ran and site.pages holds the crawled pages. lighthouse:
+ * the median Lighthouse run, including network requests. crux: Chrome UX Report field data. tls: the certificate.
+ * ua-probe: the page fetched as Googlebot and as a browser (page scope) or the home page fetched with each crawler's
+ * user agent (site scope). gsc, bing, bot-activity: owner data. ai: the analyst.
+ */
 export const inputIds = [
   'http',
   'redirects',

@@ -68,7 +68,7 @@ export function inputAvailable(input: InputId, site: SiteFacts, page: PageFacts 
     case 'unblocked-render':
       return page?.unblockedRender !== undefined && page.unblockedRender.result.error === undefined;
     case 'resources':
-      return page?.lighthouse?.ok === true;
+      return site.resources.length > 0;
     case 'robots':
       return site.robots !== undefined;
     case 'sitemaps':
