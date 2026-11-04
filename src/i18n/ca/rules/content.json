@@ -219,7 +219,7 @@
   },
   "content-originality": {
     "title": "Contingut principal copiat, parafrasejat o sense valor afegit",
-    "why": "Les polítiques de Google contra el contingut brossa i les directrius per als avaluadors consideren de baixa qualitat el contingut principal copiat o lleugerament parafrasejat sense valor afegit. El contingut amb llicència i el sindicat no són còpia.",
+    "why": "Les polítiques de Google contra el contingut brossa i les directrius per als avaluadors consideren de baixa qualitat el contingut principal copiat o lleugerament parafrasejat sense valor afegit. El contingut amb llicència i el contingut sindicat no són còpia.",
     "fix": "Afegeix anàlisi, dades, elements multimèdia o experiència originals. Canonicalitza o atribueix les còpies sindicades. Elimina les pàgines extretes automàticament d'altres llocs.",
     "messages": {
       "fail": "Un {overlap} % del text principal d'aquesta pàgina també apareix a {other}; l'analista hauria de jutjar si és copiat o compartit legítimament."

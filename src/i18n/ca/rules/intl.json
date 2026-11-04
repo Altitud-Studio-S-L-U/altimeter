@@ -2,7 +2,7 @@
   "intl-hreflang-invalid-language-code": {
     "title": "La subetiqueta de llengua d'un valor hreflang no és un codi ISO 639-1 vàlid",
     "why": "Google només admet codis de llengua ISO 639-1 a hreflang, seguits opcionalment d'un sistema d'escriptura i d'una regió ISO 3166-1 alpha-2. Els valors amb codis de llengua no compatibles s'ignoren.",
-    "fix": "Fes servir el codi ISO 639-1 de dues lletres (per exemple, 'ca' català, 'es' castellà, 'fr' francès, 'en' anglès), seguit opcionalment d'una regió ISO 3166-1 alpha-2.",
+    "fix": "Fes servir el codi ISO 639-1 de dues lletres (per exemple, «ca» català, «es» castellà, «fr» francès, «en» anglès), seguit opcionalment d'una regió ISO 3166-1 alpha-2.",
     "messages": {
       "fail": "{count} valor(s) hreflang no comencen amb un codi de llengua ISO 639-1: {values} ({sources}). Google ignora aquestes anotacions.",
       "fail:empty": "{count} atribut(s) hreflang estan buits ({sources}). Google ignora aquestes anotacions.",
@@ -25,7 +25,7 @@
   "intl-hreflang-invalid-region-code": {
     "title": "La subetiqueta de regió d'un valor hreflang és reservada, no assignada o no és alpha-2",
     "why": "Google només admet codis de regió ISO 3166-1 alpha-2 a hreflang i ignora les subetiquetes de regió que no reconeix, com «uk» a «en-uk», de manera que la variant perd l'orientació a la regió.",
-    "fix": "Fes servir GB per al Regne Unit (en-GB). Google no admet es-419: enumera variants per país (es-MX, es-AR...) o una variant general només de llengua 'es', o totes dues coses.",
+    "fix": "Fes servir GB per al Regne Unit (en-GB). Google no admet es-419: enumera variants per país (es-MX, es-AR...) o una variant general només de llengua, «es», o totes dues coses.",
     "messages": {
       "fail": "{count} valor(s) hreflang tenen una subetiqueta de regió que no és un codi ISO 3166-1 alpha-2 assignat: {values} ({sources}). Google ignora la part de la regió.",
       "fail:reserved-region": "{count} valor(s) hreflang fan servir un codi de regió reservat: {values} ({sources}). Google ignora la part de la regió, de manera que la variant perd l'orientació al país. Fes servir {replacement}.",
@@ -37,7 +37,7 @@
   "intl-hreflang-invalid-script-or-syntax": {
     "title": "El valor hreflang té una estructura mal formada (guió baix, subetiqueta de sistema d'escriptura incorrecta, ordre equivocat, subetiquetes de més)",
     "why": "Google documenta hreflang com a llengua, sistema d'escriptura opcional i regió opcional, separats per guions. Els guions baixos, l'ordre equivocat o les subetiquetes de més no coincideixen amb el format documentat.",
-    "fix": "Fes servir guions i l'ordre language-Script-REGION (zh-Hant, zh-Hans-US). Per al contingut en valencià, el format que documenta Google no té cap subetiqueta de variant. Fes servir 'ca' o 'ca-ES' i fes que el contingut mateix sigui diferent.",
+    "fix": "Fes servir guions i l'ordre language-Script-REGION (zh-Hant, zh-Hans-US). Per al contingut en valencià, el format que documenta Google no té cap subetiqueta de variant. Fes servir «ca» o «ca-ES» i fes que el contingut mateix sigui diferent.",
     "messages": {
       "fail": "{count} valor(s) hreflang no segueixen el format language-Script-REGION: {values} ({sources}).",
       "fail:whitespace": "{count} valor(s) hreflang contenen espais en blanc: {values} ({sources}).",
@@ -96,12 +96,12 @@
   },
   "intl-hreflang-missing-self-reference": {
     "title": "El conjunt hreflang de la pàgina no inclou la mateixa pàgina",
-    "why": "Google requereix que cada versió lingüística s'inclogui a si mateixa a més de totes les altres versions. Una entrada pròpia que difereix per una barra final o pel protocol no coincideix.",
-    "fix": "Afegeix una entrada per a la llengua-regió de la mateixa pàgina que apunti a la seva pròpia URL canònica. Cada versió s'ha d'incloure a si mateixa i totes les altres versions.",
+    "why": "Google requereix que cada versió lingüística inclogui una entrada per a si mateixa, a més de les entrades de totes les altres versions. Una entrada pròpia que difereix per una barra final o pel protocol no coincideix.",
+    "fix": "Afegeix una entrada per a la llengua-regió de la mateixa pàgina que apunti a la seva pròpia URL canònica. Cada versió ha d'incloure una entrada per a si mateixa i per a cadascuna de les altres versions.",
     "messages": {
       "fail": "El conjunt hreflang de {url} no inclou la mateixa pàgina.",
       "fail:near-miss": "El conjunt hreflang no inclou exactament {url}; l'entrada més propera ({value}) apunta a {closest}. Una entrada pròpia ha de coincidir amb la URL de la pàgina, inclosos l'esquema i la barra final.",
-      "fail:absent": "Cap de les entrades hreflang ({count}) no apunta a la mateixa pàgina, {url}. Cada versió s'ha d'incloure a si mateixa a més de les altres versions."
+      "fail:absent": "Cap de les entrades hreflang ({count}) no apunta a la mateixa pàgina, {url}. Cada versió ha d'incloure una entrada per a si mateixa, a més de les entrades de les altres versions."
     }
   },
   "intl-hreflang-missing-return-link": {
@@ -198,7 +198,7 @@
   },
   "intl-hreflang-x-default-missing": {
     "title": "El clúster no té x-default",
-    "why": "Google recomana x-default per a la pàgina de reserva que es mostra quan cap llengua no coincideix, sobretot per als selectors de llengua i les pàgines d'inici que redirigeixen automàticament. És recomanat, no obligatori.",
+    "why": "Google recomana x-default per a la pàgina de reserva que es mostra quan cap llengua no coincideix, sobretot per als selectors de llengua i les pàgines d'inici que redirigeixen automàticament. Es recomana, però no és obligatori.",
     "fix": "Fes que x-default apunti al selector de llengua o a l'arrel que redirigeix, o a la millor versió de reserva (sovint l'anglès).",
     "messages": {
       "fail": "El clúster hreflang de {url} ({members} URL) no té x-default.",
@@ -217,7 +217,7 @@
   "intl-hreflang-no-language-catchall": {
     "title": "Una llengua només té variants específiques de regió, sense cap alternativa genèrica",
     "why": "Google recomana una anotació només de llengua, com «de», a més de les regionals, perquè coincideixi amb els usuaris d'aquesta llengua d'altres regions.",
-    "fix": "Afegeix un valor només de llengua (per exemple, hreflang='es') que apunti a una de les pàgines regionals perquè els parlants d'altres països (Mèxic, els EUA) hi quedin coberts.",
+    "fix": "Afegeix un valor només de llengua (per exemple, hreflang=\"es\") que apunti a una de les pàgines regionals perquè els parlants d'altres països (Mèxic, els EUA) hi quedin coberts.",
     "messages": {
       "fail": "Tots els valors en {language} porten una regió ({values}) i el clúster no té cap valor només de llengua ({language}) ni x-default, de manera que els qui parlen {language} en altres països no tenen cap versió que hi coincideixi."
     }
@@ -278,7 +278,7 @@
   "intl-html-lang-missing-or-invalid": {
     "title": "<html lang> absent, buit o no vàlid segons BCP 47",
     "why": "L'estàndard HTML fa servir l'atribut lang amb una etiqueta BCP 47 per a l'accessibilitat, la partició de mots i els suggeriments de traducció. Google afirma que detecta la llengua a partir del contingut, no de lang.",
-    "fix": "Estableix <html lang> amb la llengua de la pàgina (per exemple, lang='ca', lang='es-ES').",
+    "fix": "Estableix <html lang> amb la llengua de la pàgina (per exemple, lang=\"ca\", lang=\"es-ES\").",
     "messages": {
       "fail": "L'atribut lang de l'element html falta o no és vàlid.",
       "fail:missing": "L'element html no té atribut lang. Els lectors de pantalla, la partició de mots i els suggeriments de traducció en depenen; Google no el fa servir per detectar la llengua.",
@@ -291,7 +291,7 @@
   "intl-html-lang-vs-content": {
     "title": "<html lang> no coincideix amb la llengua detectada del contingut",
     "why": "Un atribut lang que no coincideix amb la llengua del contingut confon els lectors de pantalla i les eines de traducció. Google afirma que no fa servir lang per detectar la llengua.",
-    "fix": "Renderitza lang a partir de la configuració regional activa, no d'un valor per defecte fix a la plantilla (lang='en' a totes les configuracions regionals és l'error habitual).",
+    "fix": "Renderitza lang a partir de la configuració regional activa, no d'un valor per defecte fix a la plantilla (lang=\"en\" a totes les configuracions regionals és l'error habitual).",
     "messages": {
       "fail": "lang=\"{lang}\" declara {declared}, però el contingut principal sembla escrit en {detected}. Google detecta la llengua a partir del contingut; les tecnologies d'assistència i altres cercadors llegeixen l'atribut."
     }

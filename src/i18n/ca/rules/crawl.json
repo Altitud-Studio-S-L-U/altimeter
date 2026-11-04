@@ -479,7 +479,7 @@
   },
   "crawl-sitemap-url-quality": {
     "title": "El mapa del lloc inclou URL no canòniques o no indexables",
-    "why": "Google i Bing demanen mapes del lloc que només incloguin URL canòniques i indexables que responguin 200. Incloure-hi redireccions, errors, URL amb noindex o bloquejades envia senyals contradictoris i malbarata rastreig.",
+    "why": "Google i Bing demanen mapes del lloc que només incloguin URL canòniques i indexables que responguin 200. Incloure-hi redireccions, errors, URL amb noindex o bloquejades envia senyals contradictoris i malbarata el rastreig.",
     "fix": "Inclou-hi només les URL canòniques i indexables que responen 200 i que vols als resultats. Genera el mapa del lloc a partir de la mateixa font de veritat que les canòniques.",
     "messages": {
       "fail": "URL del mapa del lloc que no són pàgines canòniques indexables: {count} ({share} de les {classified} classificades).",
@@ -587,7 +587,7 @@
   "crawl-url-hygiene": {
     "title": "Higiene de l'estructura de les URL",
     "why": "Google recomana URL senzilles i llegibles, amb guions, un ús coherent de majúscules i minúscules i caràcters codificats. Són bones pràctiques per a les URL noves; canviar les URL existents només per estil costa més del que aporta.",
-    "fix": "Fes servir URL llegibles, en minúscules, amb guions, amb codificació percentual i amb paràmetres '=' i '&'.",
+    "fix": "Fes servir URL llegibles, en minúscules, amb guions, amb codificació percentual i amb paràmetres «=» i «&».",
     "messages": {
       "fail": "URL internes mal formades: {count}.",
       "fail:too-long": "URL internes de més de 2048 caràcters: {count}.",
@@ -622,7 +622,7 @@
   "crawl-gsc-index-status": {
     "title": "Estat d'indexació a Google de les pàgines auditades",
     "why": "La Inspecció d'URL indica si Google ha indexat la pàgina i, si no, per què, segons l'últim rastreig. Una pàgina que l'auditoria troba indexable però que Google no indexa no rep trànsit de cerca.",
-    "fix": "Corregeix la causa que indica l'estat (errors del servidor, bloquejos, soft 404, duplicats sense canònica) i després sol·licita la indexació a la Inspecció d'URL. Per a l'estat «crawled, currently not indexed», millora la pàgina abans de tornar-ho a sol·licitar.",
+    "fix": "Corregeix la causa que indica l'estat (errors del servidor, bloquejos, soft 404, duplicats sense canònica) i després sol·licita la indexació a la Inspecció d'URL. Per a l'estat «Rastrejada: actualment sense indexar», millora la pàgina abans de tornar-ho a sol·licitar.",
     "messages": {
       "fail": "Google classifica {url} com a «{state}» (últim rastreig: {lastCrawl}).",
       "fail:soft-404": "Google tracta {url} com un soft 404: la pàgina respon 200, però sembla que no s'ha trobat (últim rastreig: {lastCrawl}).",

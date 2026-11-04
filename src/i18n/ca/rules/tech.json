@@ -79,7 +79,7 @@
   "tech-hsts-preload-eligibility": {
     "title": "Preparació per a la precàrrega HSTS (només si el propietari s'hi adhereix)",
     "why": "La llista de precàrrega HSTS fixa HTTPS per a un domini dins dels navegadors. És difícil de desfer i trenca els subdominis que només funcionen amb HTTP, de manera que només es comprova quan el lloc ja declara preload.",
-    "fix": "Compleix tots els requisits de la llista abans d'enviar la sol·licitud, o elimina 'preload' si no es pretén aquest compromís.",
+    "fix": "Compleix tots els requisits de la llista abans d'enviar la sol·licitud, o elimina «preload» si no vols assumir aquest compromís.",
     "messages": {
       "fail": "La capçalera declara preload, però no es compleixen {count} requisit(s) de la llista de precàrrega HSTS: {unmet}."
     }
