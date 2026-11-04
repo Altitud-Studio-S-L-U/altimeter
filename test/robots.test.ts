@@ -27,6 +27,31 @@ describe('path matching (examples from Google\'s robots.txt specification)', () 
   }
 });
 
+describe('wildcards', () => {
+  test('decides patterns with many wildcards in linear time', () => {
+    for (const [wildcards, length] of [[10, 40], [25, 2000]] as const) {
+      const robots = `User-agent: *\nDisallow: /${'*a'.repeat(wildcards - 1)}*b\n`;
+      const started = performance.now();
+      assert.equal(allowed(robots, `/${'a'.repeat(length)}`), true);
+      assert.equal(allowed(robots, `/${'a'.repeat(length)}b`), false);
+      assert.ok(performance.now() - started < 1000, `${wildcards} wildcards against ${length} characters`);
+    }
+  });
+
+  test('match as a regular expression would on short patterns', () => {
+    let seed = 1;
+    const draw = (alphabet: string, length: number) => Array.from({ length }, () => alphabet[(seed = (seed * 48271) % 2147483647) % alphabet.length]).join('');
+    for (let index = 0; index < 3000; index++) {
+      const pattern = `/${draw('ab*$', 1 + (index % 7))}`;
+      const path = `/${draw('ab$', index % 9)}`;
+      const anchored = pattern.endsWith('$');
+      const source = (anchored ? pattern.slice(0, -1) : pattern).split('*').map(part => part.replaceAll('$', '\\$')).join('.*');
+      const matches = new RegExp(`^${source}${anchored ? '$' : ''}`, 'u').test(path);
+      assert.equal(allowed(`User-agent: *\nDisallow: ${pattern}\n`, path), !matches, `${pattern} against ${path}`);
+    }
+  });
+});
+
 describe('rule precedence', () => {
   test('the longest matching rule wins', () => {
     assert.equal(allowed('User-agent: *\nAllow: /p\nDisallow: /\n', '/page'), true);

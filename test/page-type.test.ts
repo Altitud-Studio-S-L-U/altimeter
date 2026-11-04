@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { classifyPage, type PageTypeInput } from '../src/analyze/page-type.ts';
+import { classifyPage, ownLanguages, type PageTypeInput } from '../src/analyze/page-type.ts';
+import { documentFacts } from '../src/collect/page.ts';
 import { parseHtml } from '../src/parse/html.ts';
 import { extractStructuredData } from '../src/parse/structured-data.ts';
 
@@ -15,6 +16,23 @@ test('recognizes home pages and locale roots', () => {
     assert.equal(type({ url }), 'home', url);
   }
   assert.equal(type({ url: 'https://example.com/landing', isHome: true }), 'home');
+});
+
+test('takes a one-segment path for a locale root only when the page names that locale', () => {
+  const at = (path: string, ...languages: string[]) => type({ url: `https://example.com${path}`, languages });
+  const roots = [['/ca/', 'ca'], ['/en', 'en-GB'], ['/pt-br/', 'pt-BR'], ['/us/', 'en-US'], ['/uk/', 'en-GB'], ['/us-en/', 'en'], ['/no/', 'nb'], ['/mx/', 'es', 'es-MX']];
+  for (const [path, ...languages] of roots) assert.equal(at(path!, ...languages), 'home', path);
+  for (const path of ['/ai/', '/go/', '/qa/', '/ux/', '/it/', '/hi-fi/']) assert.equal(at(path, 'en', 'en-US'), 'other', path);
+  assert.equal(at('/ca/'), 'other', 'a page that names no language');
+  assert.equal(at('/', 'en'), 'home');
+});
+
+test('reads the languages a page gives itself from its html lang and its own hreflang annotations', () => {
+  const head = '<base href="https://example.com/mx/"><link rel="alternate" hreflang="es-MX" href="./#top"><link rel="alternate" hreflang="it" href="https://example.com/it/">';
+  const languages = ownLanguages(documentFacts(`<!doctype html><html lang="es"><head>${head}</head><body></body></html>`), 'https://example.com/mx/');
+  assert.deepEqual(languages, ['es', 'es-MX']);
+  assert.equal(type({ url: 'https://example.com/mx/', languages }), 'home');
+  assert.deepEqual(ownLanguages(documentFacts('<p>No language</p>'), 'https://example.com/ai/'), []);
 });
 
 test('recognizes legal, contact, about, utility and error pages in several languages', () => {
@@ -37,4 +55,16 @@ test('uses structured data and Open Graph types for content pages', () => {
   assert.equal(type({ url: 'https://example.com/blog' }), 'listing');
   assert.equal(type({ url: 'https://example.com/en/services/custom-software/' }), 'service');
   assert.equal(type({ url: 'https://example.com/en/open-source/' }), 'other');
+});
+
+test('reads the main entity of a page node and treats recipes as articles', () => {
+  const data = (html: string) => extractStructuredData(parseHtml(html));
+  const jsonLd = (value: unknown) => data(`<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', ...value as object })}</script>`);
+  const lamp = { '@type': 'Product', name: 'Lamp', offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' } };
+  assert.equal(type({ url: 'https://example.com/receptes/pa-amb-tomaquet', data: jsonLd({ '@type': 'Recipe', name: 'Pa amb tomaquet' }) }), 'article');
+  assert.equal(type({ url: 'https://example.com/item/lamp', data: jsonLd({ '@type': 'ItemPage', mainEntity: lamp }) }), 'product');
+  assert.equal(type({ url: 'https://example.com/item/lamp', data: jsonLd({ '@graph': [{ '@type': 'ItemPage', mainEntity: [lamp] }] }) }), 'product');
+  const microdata = '<div itemscope itemtype="https://schema.org/ItemPage"><div itemprop="mainEntity" itemscope itemtype="https://schema.org/Product"><span itemprop="name">Lamp</span></div></div>';
+  assert.equal(type({ url: 'https://example.com/item/lamp', data: data(microdata) }), 'product');
+  assert.equal(type({ url: 'https://example.com/posts/lamp-review', data: jsonLd({ '@type': 'BlogPosting', headline: 'H', review: { '@type': 'Review', itemReviewed: lamp } }) }), 'article');
 });

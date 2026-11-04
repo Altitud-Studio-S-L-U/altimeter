@@ -3,7 +3,7 @@
  * Every rule ships at least a passing fixture, a failing fixture and a fixture where it cannot be evaluated.
  */
 import { rule as catalogRule } from '../../src/catalog/index.ts';
-import { classifyPage } from '../../src/analyze/page-type.ts';
+import { classifyPage, ownLanguages } from '../../src/analyze/page-type.ts';
 import { documentFacts } from '../../src/collect/page.ts';
 import { EvidenceStore } from '../../src/core/evidence.ts';
 import type { PageFacts, ProbeFacts, RenderFacts, ResourceFacts, SiteFacts, SitemapFacts } from '../../src/core/facts.ts';
@@ -105,6 +105,7 @@ export function page(url: string, spec: PageSpec = {}): PageFacts {
   const decision = classifyPage({
     url: fetch.finalUrl, status: fetch.status, title: raw?.parsed.titles[0]?.text,
     h1: raw?.parsed.headings.find(heading => heading.level === 1)?.text, ogType: undefined, data: raw?.data,
+    ...(raw ? { languages: ownLanguages(raw, fetch.finalUrl) } : {}),
   });
   const rendered = asRender(fetch.finalUrl, spec.rendered, 'googlebot');
   const userRender = asRender(fetch.finalUrl, spec.userRender, 'user');

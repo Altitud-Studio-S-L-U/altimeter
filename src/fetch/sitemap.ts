@@ -41,7 +41,12 @@ export interface SitemapDocument {
   readonly namespace: string | undefined;
   readonly urls: readonly SitemapUrl[];
   readonly sitemaps: readonly SitemapReference[];
+  /** Entries without a <loc>, which crawlers drop while they read the rest of the file. */
+  readonly missingLoc: readonly { readonly line: number; readonly element: 'url' | 'sitemap' }[];
+  /** What keeps the file from being read: malformed XML, a document type declaration or invalid gzip data. */
   readonly errors: readonly { readonly line: number; readonly message: string }[];
+  /** <url> and <sitemap> entries in the file; only the first 50,000, the protocol limit, are kept in urls, sitemaps and missingLoc. */
+  readonly entries: number;
   /** Uncompressed size in bytes. */
   readonly bytes: number;
   readonly gzipped: boolean;
@@ -59,15 +64,22 @@ export function decodeSitemapBody(body: Buffer): { readonly xml: Buffer; readonl
   }
 }
 
+/** A copy of `value` that does not keep the whole decoded text alive, as the parser's slices of it would. */
+function detached(value: string): string {
+  return Buffer.from(value, 'utf8').toString('utf8');
+}
+
 export function parseSitemap(input: Buffer | string): SitemapDocument {
   const raw = typeof input === 'string' ? Buffer.from(input, 'utf8') : input;
   const decoded = decodeSitemapBody(raw);
   const errors: Array<{ line: number; message: string }> = decoded.error ? [{ line: 0, message: decoded.error }] : [];
   const urls: SitemapUrl[] = [];
   const sitemaps: SitemapReference[] = [];
+  const missingLoc: Array<SitemapDocument['missingLoc'][number]> = [];
   let kind: SitemapDocument['kind'] = 'unknown';
   let namespace: string | undefined;
   let depth = 0;
+  let entries = 0;
   let text = '';
   let entry: { loc?: string; lastmod?: string; changefreq?: string; priority?: string; alternates: SitemapAlternate[];
     images: number; videos: number; news: boolean; line: number } | undefined;
@@ -83,12 +95,14 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
     depth += 1;
     text = '';
     if (depth === 1) {
-      namespace = tag.uri;
+      namespace = detached(tag.uri);
       kind = tag.local === 'urlset' ? 'urlset' : tag.local === 'sitemapindex' ? 'sitemapindex' : 'unknown';
       return;
     }
     if (depth === 2 && tag.uri === ns.sitemap && (tag.local === 'url' || tag.local === 'sitemap')) {
-      entry = { alternates: [], images: 0, videos: 0, news: false, line: parser.line };
+      entries += 1;
+      // Entries past the protocol limit are only counted, so an oversized file cannot exhaust memory.
+      if (entries <= sitemapLimits.entries) entry = { alternates: [], images: 0, videos: 0, news: false, line: parser.line };
       return;
     }
     if (!entry) return;
@@ -96,7 +110,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
       const attributes = tag.attributes as Record<string, { local: string; value: string }>;
       const value = (name: string) => Object.values(attributes).find(attr => attr.local === name)?.value;
       if (value('rel')?.toLowerCase() === 'alternate' && value('hreflang') && value('href')) {
-        entry.alternates.push({ hreflang: value('hreflang')!, href: value('href')! });
+        entry.alternates.push({ hreflang: detached(value('hreflang')!), href: detached(value('href')!) });
       }
     } else if (tag.uri === ns.image && tag.local === 'image') entry.images += 1;
     else if (tag.uri === ns.video && tag.local === 'video') entry.videos += 1;
@@ -110,14 +124,14 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
   });
   parser.on('closetag', tag => {
     if (entry && depth === 3 && tag.uri === ns.sitemap) {
-      const value = text.trim();
+      const value = detached(text.trim());
       if (tag.local === 'loc') entry.loc = value;
       else if (tag.local === 'lastmod') entry.lastmod = value;
       else if (tag.local === 'changefreq') entry.changefreq = value;
       else if (tag.local === 'priority') entry.priority = value;
     }
     if (entry && depth === 2) {
-      if (entry.loc === undefined || entry.loc === '') errors.push({ line: entry.line, message: `<${tag.local}> without <loc>` });
+      if (entry.loc === undefined || entry.loc === '') missingLoc.push({ line: entry.line, element: tag.local === 'sitemap' ? 'sitemap' : 'url' });
       else if (tag.local === 'sitemap') sitemaps.push({ loc: entry.loc, line: entry.line, ...(entry.lastmod ? { lastmod: entry.lastmod } : {}) });
       else urls.push({
         loc: entry.loc,
@@ -146,10 +160,12 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
     namespace,
     urls,
     sitemaps,
+    missingLoc,
     errors,
+    entries,
     bytes: decoded.xml.length,
     gzipped: decoded.gzipped,
-    overEntryLimit: urls.length + sitemaps.length > sitemapLimits.entries,
+    overEntryLimit: entries > sitemapLimits.entries,
     overByteLimit: decoded.xml.length > sitemapLimits.bytes,
   };
 }

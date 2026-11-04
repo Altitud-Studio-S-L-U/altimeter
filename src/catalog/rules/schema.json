@@ -1864,10 +1864,7 @@
     "optionalInputs": [
       "rendered-dom"
     ],
-    "appliesTo": [
-      "product",
-      "service"
-    ],
+    "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,

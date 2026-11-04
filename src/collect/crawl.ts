@@ -3,6 +3,7 @@ import type { HttpClient } from '../fetch/http.ts';
 import { fetchPage } from './page.ts';
 
 export interface CrawlOptions {
+  /** URLs to start from, in order; the first four times `maxPages` that can be crawled are queued, since no more could be fetched. */
   readonly seeds: readonly string[];
   /** Pages already fetched (the audited page and the home page); they are not fetched again. */
   readonly known: ReadonlyMap<string, PageFacts>;
@@ -26,6 +27,9 @@ export interface CrawlResult {
 }
 
 const nonHtml = /\.(?:pdf|jpe?g|png|gif|webp|avif|svg|ico|bmp|tiff?|mp4|webm|mov|mp3|wav|ogg|zip|gz|rar|7z|xml|txt|json|csv|xlsx?|docx?|pptx?|css|js|mjs|woff2?|ttf|otf|eot)$/iu;
+
+/** Cloudflare answers this path itself on every site it proxies, for example with its email obfuscation page. */
+const cloudflareReserved = /^\/cdn-cgi\//u;
 
 function normalize(url: string): string {
   const parsed = new URL(url);
@@ -57,7 +61,7 @@ export async function crawlSite(client: HttpClient, options: CrawlOptions): Prom
       return;
     }
     const parsed = new URL(url);
-    if (!/^https?:$/u.test(parsed.protocol) || siteKey(url) !== site || nonHtml.test(parsed.pathname) || queued.has(url)) return;
+    if (!/^https?:$/u.test(parsed.protocol) || siteKey(url) !== site || nonHtml.test(parsed.pathname) || cloudflareReserved.test(parsed.pathname) || queued.has(url)) return;
     if (parsed.search !== '') {
       const count = queryVariants.get(parsed.pathname) ?? 0;
       if (count >= maxVariants) return;
@@ -67,7 +71,11 @@ export async function crawlSite(client: HttpClient, options: CrawlOptions): Prom
     queue.push(url);
   };
 
-  for (const seed of options.seeds) enqueue(seed, seed);
+  // Sitemaps can list hundreds of thousands of URLs; queuing them all costs memory, and time when robots.txt blocks them.
+  for (const seed of options.seeds) {
+    if (queue.length >= 4 * options.maxPages) break;
+    enqueue(seed, seed);
+  }
   for (const page of options.known.values()) for (const anchor of page.raw?.parsed.anchors ?? []) enqueue(anchor.attrs.href, page.fetch.finalUrl);
 
   const budget = Math.max(0, options.maxPages - options.known.size);

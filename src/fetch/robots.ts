@@ -148,11 +148,25 @@ export function normalizeRobotsPath(path: string): string {
   });
 }
 
+/**
+ * Whether a pattern matches the start of `path`, where `*` is any run of characters and a final `$` the end. Each
+ * literal part is taken at its first occurrence after the previous one: that finds a match whenever one exists and,
+ * unlike a regular expression, cannot backtrack exponentially on a hostile robots.txt.
+ */
 function patternMatches(pattern: string, path: string): boolean {
   const anchored = pattern.endsWith('$');
-  const body = anchored ? pattern.slice(0, -1) : pattern;
-  const source = body.split('*').map(part => part.replace(/[.+?^${}()|[\]\\]/gu, '\\$&')).join('.*');
-  return new RegExp(`^${source}${anchored ? '$' : ''}`, 'u').test(path);
+  const parts = (anchored ? pattern.slice(0, -1) : pattern).split('*');
+  const first = parts[0]!;
+  if (parts.length === 1) return anchored ? path === first : path.startsWith(first);
+  if (!path.startsWith(first)) return false;
+  let position = first.length;
+  for (const part of parts.slice(1, -1)) {
+    const found = path.indexOf(part, position);
+    if (found === -1) return false;
+    position = found + part.length;
+  }
+  const last = parts.at(-1)!;
+  return anchored ? path.length - last.length >= position && path.endsWith(last) : path.includes(last, position);
 }
 
 export interface RobotsDecision {

@@ -71,17 +71,21 @@ const sitemapValidity: RuleImplementation = {
         continue;
       }
       if (document.overEntryLimit || document.overByteLimit) {
-        const id = evidence.add({ kind: 'sitemap', url, label: 'entries and uncompressed bytes', excerpt: `${document.urls.length + document.sitemaps.length} entries, ${document.bytes} bytes` });
-        results.push(failure({ severity: 'high', evidence: [id], reason: 'over-limit', params: { url, detail: `${document.urls.length + document.sitemaps.length} entries, ${document.bytes} bytes` } }));
+        const id = evidence.add({ kind: 'sitemap', url, label: 'entries and uncompressed bytes', excerpt: `${document.entries} entries, ${document.bytes} bytes` });
+        results.push(failure({ severity: 'high', evidence: [id], reason: 'over-limit', params: { url, detail: `${document.entries} entries, ${document.bytes} bytes` } }));
         continue;
       }
       if (entry.source === 'index' && document.kind === 'sitemapindex') {
         const id = evidence.add({ kind: 'sitemap', url, label: 'sitemap index listed inside another sitemap index', excerpt: `${document.sitemaps.length} child sitemaps` });
         results.push(failure({ severity: 'medium', evidence: [id], reason: 'nested-index', params: { url, detail: 'index inside an index' } }));
       }
-      const invalid = [...document.urls, ...document.sitemaps].filter(item => !validLoc(item.loc));
+      const invalid: { line: number; label: string; excerpt?: string }[] = [
+        ...[...document.urls, ...document.sitemaps].filter(item => !validLoc(item.loc))
+          .map(item => ({ line: item.line, label: 'loc that is not an absolute http(s) URL under 2,048 characters', excerpt: item.loc })),
+        ...document.missingLoc.map(item => ({ line: item.line, label: `<${item.element}> entry without a <loc>` })),
+      ].sort((a, b) => a.line - b.line);
       if (invalid.length > 0) {
-        const ids = invalid.slice(0, 5).map(item => evidence.add({ kind: 'sitemap', url, label: 'loc that is not an absolute http(s) URL under 2,048 characters', excerpt: item.loc, line: item.line }));
+        const ids = invalid.slice(0, 5).map(item => evidence.add({ kind: 'sitemap', url, ...item }));
         results.push(failure({ severity: 'medium', evidence: ids, reason: 'invalid-urls', params: { url, detail: `${invalid.length} entries` } }));
       }
     }

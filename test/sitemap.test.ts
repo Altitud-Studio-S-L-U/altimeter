@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import { gzipSync } from 'node:zlib';
 import { decodeSitemapBody, isW3cDatetime, parseSitemap, sitemapLimits } from '../src/fetch/sitemap.ts';
 
@@ -48,8 +50,9 @@ describe('parseSitemap', () => {
     const wrong = parseSitemap('<urlset xmlns="http://example.com/other"><url><loc>https://example.com/</loc></url></urlset>');
     assert.equal(wrong.namespace, 'http://example.com/other');
     assert.equal(wrong.urls.length, 0);
-    const missing = parseSitemap('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><lastmod>2026-01-01</lastmod></url></urlset>');
-    assert.match(missing.errors[0]?.message ?? '', /without <loc>/u);
+    const missing = parseSitemap('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><lastmod>2026-01-01</lastmod></url>\n<url><loc> </loc></url>\n</urlset>');
+    assert.deepEqual(missing.errors, [], 'an entry without loc does not make the XML unreadable');
+    assert.deepEqual(missing.missingLoc, [{ line: 2, element: 'url' }, { line: 3, element: 'url' }]);
     const broken = parseSitemap('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</url>');
     assert.ok(broken.errors.length > 0);
   });
@@ -58,6 +61,29 @@ describe('parseSitemap', () => {
     const doc = parseSitemap('<?xml version="1.0"?><!DOCTYPE urlset [<!ENTITY x "https://evil.example/">]><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>&x;</loc></url></urlset>');
     assert.ok(doc.errors.some(error => /Document type declarations/u.test(error.message)));
     assert.ok(doc.urls.every(url => !url.loc.includes('evil')));
+  });
+
+  test('keeps the entries within the protocol limit and counts the rest', () => {
+    const doc = parseSitemap(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${'<url><loc>https://example.com/</loc></url>'.repeat(sitemapLimits.entries + 10)}<url/></urlset>`);
+    assert.equal(doc.entries, sitemapLimits.entries + 11);
+    assert.equal(doc.urls.length, sitemapLimits.entries);
+    assert.deepEqual(doc.missingLoc, []);
+    assert.equal(doc.overEntryLimit, true);
+    assert.equal(parseSitemap(urlset).entries, 2);
+  });
+
+  test('keeps no reference to the decoded text once parsed', () => {
+    setFlagsFromString('--expose-gc');
+    const gc = runInNewContext('gc') as () => void;
+    const entry = '<url><loc>https://example.com/en/page</loc><lastmod>2026-11-04T10:00:00+01:00</lastmod><changefreq>weekly</changefreq><priority>0.8</priority>'
+      + '<xhtml:link rel="alternate" hreflang="en-GB" href="https://example.com/en-gb/page"/></url>';
+    const body = Buffer.from(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${entry}${' '.repeat(32 * 1024 * 1024)}</urlset>`);
+    gc();
+    const before = process.memoryUsage().heapUsed;
+    const doc = parseSitemap(body);
+    gc();
+    assert.equal(doc.urls[0]?.alternates[0]?.href, 'https://example.com/en-gb/page');
+    assert.ok(process.memoryUsage().heapUsed - before < 8 * 1024 * 1024, 'the values read do not hold on to the 32 MiB of text');
   });
 
   test('decompresses gzip by content and enforces the size limit', () => {

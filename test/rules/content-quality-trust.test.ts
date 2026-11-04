@@ -145,6 +145,15 @@ describe('content-byline-author', () => {
     assert.equal(run(bylineAuthor, [page(url, { html })]).at()?.reason, 'no-byline');
     assert.equal(run(bylineAuthor, [page(url, { html, pageType: 'service' })]).at()?.reason, 'page-type:service');
   });
+
+  test('reads the author of the recipe a recipe page is about', () => {
+    const recipeUrl = `${origin}/recipes/rose-petal-jam`;
+    const head = (author: unknown) => `<title>Rose petal jam</title>${jsonLd({ '@type': 'Recipe', name: 'Rose petal jam', image: `${origin}/jam.jpg`, author })}`;
+    const at = (author: unknown, body = '<p>Text</p>') => run(bylineAuthor, [page(recipeUrl, { html: doc(`<main><h1>Rose petal jam</h1>${body}</main>`, head(author)) })]).at(recipeUrl);
+    assert.equal(at({ '@type': 'Organization', name: 'Acme' })?.outcome, 'pass');
+    assert.equal(at({ '@type': 'Person', name: 'Jane Roe' }, '<p>A recipe from Jane Roe.</p>')?.outcome, 'pass');
+    assert.equal(at({ '@type': 'Person', name: 'Jane Roe' })?.reason, 'markup-not-visible');
+  });
 });
 
 describe('content-date-consistency', () => {

@@ -128,7 +128,8 @@ function pickSiblings(page: PageFacts, exclude: Set<string>): string[] {
     }
     url.hash = '';
     if (!/^https?:$/u.test(url.protocol) || !sameSite(url.href, page.fetch.finalUrl) || exclude.has(url.href)) continue;
-    if (/\.(pdf|jpe?g|png|gif|webp|avif|svg|zip|xml|txt|json)$/iu.test(url.pathname)) continue;
+    // Cloudflare answers /cdn-cgi/ itself, so a page there, such as its email protection page, is not the site's template.
+    if (/\.(pdf|jpe?g|png|gif|webp|avif|svg|zip|xml|txt|json)$/iu.test(url.pathname) || url.pathname.startsWith('/cdn-cgi/')) continue;
     exclude.add(url.href);
     picks.push(url.href);
     if (picks.length === 2) break;
@@ -207,6 +208,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       const home = await fetchPage(client, homeUrl, { isHome: true });
       homeFinal = home.fetch.finalUrl;
       if (home.fetch.finalUrl !== page.fetch.finalUrl) pages.set(home.url, home);
+      // The root lands on the audited page, so it is the home page whatever its path and languages say.
+      else pages.set(page.url, { ...page, pageType: home.pageType, pageTypeReason: home.pageTypeReason });
     }
 
     const declared = robots.availability.kind === 'parsed' ? robots.availability.file.sitemaps.map(line => line.value) : [];

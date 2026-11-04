@@ -11,7 +11,7 @@ function run(id: string, facts: SiteFacts | SiteSpec) {
   const implementation = implementations.find(entry => entry.id === id);
   assert.ok(implementation, `${id} is implemented`);
   const { findings, evidence } = evaluate(implementation, facts.pages instanceof Map ? facts as SiteFacts : site(facts as SiteSpec));
-  return { finding: findings[0]!, findings, excerpts: (finding: Finding = findings[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? '') };
+  return { finding: findings[0]!, findings, evidence, excerpts: (finding: Finding = findings[0]!) => finding.evidence.map(ref => evidence.get(ref)?.excerpt ?? '') };
 }
 
 function assertFail(finding: Finding, severity: Severity, reason?: string, needsJudgment = false) {
@@ -58,6 +58,13 @@ describe('crawl-sitemap-validity', () => {
     assertFail(finding, 'high', 'wrong-namespace');
     assert.deepEqual(excerpts(), ['http://www.google.com/schemas/sitemap/0.84']);
   });
+  test('fails high over the entry limit and counts every entry', () => {
+    const xml = urlset(Array.from({ length: 50_001 }, (_, index) => entry(`${origin}/p/${index}`)));
+    const { finding, excerpts } = run(id, { pages: [home()], sitemaps: [{ url: map, xml }] });
+    assertFail(finding, 'high', 'over-limit');
+    assert.match(excerpts()[0]!, /^50001 entries, /u);
+    assert.match(String(finding.params?.detail), /^50001 entries, /u);
+  });
   test('fails medium on relative locs, unreachable children and nested indexes', () => {
     const { finding, excerpts } = run(id, { pages: [home()], sitemaps: [{ url: map, xml: urlset([entry('/relative')]) }] });
     assertFail(finding, 'medium', 'invalid-urls');
@@ -65,6 +72,14 @@ describe('crawl-sitemap-validity', () => {
     assertFail(run(id, { pages: [home()], sitemaps: [{ url: `${origin}/a.xml`, status: 404, source: 'index' }] }).finding, 'medium', 'child-unreachable');
     const nested = `<?xml version="1.0"?><sitemapindex xmlns="${namespace}"><sitemap><loc>${origin}/b.xml</loc></sitemap></sitemapindex>`;
     assertFail(run(id, { pages: [home()], sitemaps: [{ url: `${origin}/a.xml`, xml: nested, source: 'index' }] }).finding, 'medium', 'nested-index');
+  });
+  test('fails medium, not as unparseable, on an entry without a loc', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="${namespace}">\n${entry(`${origin}/`)}\n<url><loc></loc></url>\n${entry('/relative')}\n</urlset>`;
+    const { finding, findings, evidence } = run(id, { pages: [home()], sitemaps: [{ url: map, xml }] });
+    assert.equal(findings.length, 1);
+    assertFail(finding, 'medium', 'invalid-urls');
+    assert.equal(finding.params?.detail, '2 entries');
+    assert.deepEqual(finding.evidence.map(ref => [evidence.get(ref)?.line, evidence.get(ref)?.excerpt]), [[4, undefined], [5, '/relative']]);
   });
   test('fails medium on a bad line in a text sitemap', () => {
     assertFail(run(id, { pages: [home()], sitemaps: [{ url: `${origin}/urls.txt`, xml: `${origin}/\nnot a url\n` }] }).finding, 'medium', 'invalid-urls');

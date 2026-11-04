@@ -1,6 +1,7 @@
-import type { SitemapFacts } from '../../core/facts.ts';
+import type { SiteFacts, SitemapFacts } from '../../core/facts.ts';
 import { decodeSitemapBody, type SitemapUrl } from '../../fetch/sitemap.ts';
 import type { RuleImplementation } from '../engine.ts';
+import { linksWithRel } from '../helpers.ts';
 import { normalizeUrl } from './annotations.ts';
 import { parseHreflang } from './codes.ts';
 import { fail, groupBy, list, maxEvidence, notApplicable, notEvaluated, pass } from './shared.ts';
@@ -28,11 +29,23 @@ function entryExcerpt(entry: SitemapUrl): string {
   return [`<loc>${entry.loc}</loc>`, ...entry.alternates.map(alternate => `hreflang="${alternate.hreflang}" href="${alternate.href}"`)].join('\n');
 }
 
-/** True when every child sitemap the indexes list was fetched and parsed, so a missing entry is really missing. */
-function complete(sitemaps: readonly SitemapFacts[]): boolean {
+/**
+ * True when every sitemap robots.txt or a page declares was fetched (the collector reads only the first few), every
+ * child sitemap an index lists was fetched and parsed, and none was cut at the 50,000-entry limit, so a missing entry
+ * is really missing.
+ */
+function complete(site: SiteFacts): boolean {
+  const sitemaps = site.sitemaps;
+  const key = (url: string) => normalizeUrl(url) ?? url;
+  const fetched = new Set(sitemaps.map(sitemap => key(sitemap.url)));
+  const declared = [
+    ...(site.robots?.availability.kind === 'parsed' ? site.robots.availability.file.sitemaps.map(line => line.value) : []),
+    ...[...site.pages.values()].flatMap(page => linksWithRel(page.raw, 'sitemap').map(link => normalizeUrl(link.attrs.href, page.url) ?? '')),
+  ].filter(Boolean);
   const listed = new Set(sitemaps.flatMap(sitemap => sitemap.document?.sitemaps.map(reference => reference.loc) ?? []));
   const parsed = new Set(sitemaps.filter(sitemap => sitemap.document).map(sitemap => sitemap.url));
-  return [...listed].every(url => parsed.has(url)) && sitemaps.every(sitemap => sitemap.document || sitemap.fetch.status === 404 || sitemap.source === 'default');
+  return declared.every(url => fetched.has(key(url))) && [...listed].every(url => parsed.has(url))
+    && sitemaps.every(sitemap => (sitemap.document ? !sitemap.document.overEntryLimit : sitemap.fetch.status === 404 || sitemap.source === 'default'));
 }
 
 export const sitemapFormat: RuleImplementation = {
@@ -74,7 +87,7 @@ export const sitemapFormat: RuleImplementation = {
       }
     }
     if (annotated === 0) return notApplicable('no-sitemap-hreflang');
-    if (complete(site.sitemaps)) {
+    if (complete(site)) {
       const sitemapHosts = new Set(parsed.map(sitemap => new URL(sitemap.url).hostname));
       for (const sitemap of parsed) {
         for (const entry of sitemap.document!.urls) {
