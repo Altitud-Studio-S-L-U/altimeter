@@ -350,7 +350,7 @@ const es: UiStrings = {
 };
 
 const ca: UiStrings = {
-  reportTitle: 'Auditoria SEO de {site}',
+  reportTitle: 'Auditoria SEO del lloc {site}',
   fixPlanTitle: 'Pla de correccions per a {site}',
   audited: 'URL auditada',
   generated: 'Generat per Altimeter {version} el {date}',

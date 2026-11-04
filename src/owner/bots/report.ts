@@ -187,7 +187,7 @@ const labels: Readonly<Record<Language, Labels>> = {
     generated: 'Generat per Altimeter {version} el {date}',
     sources: 'Fonts',
     logSource: '{file}: format {format}; línies: {lines}; sol·licituds dins del període: {records}; línies mal formades: {malformed}',
-    cloudflareSource: 'Cloudflare GraphQL Analytics de {zone} (consultes: {queries}; agrupació per {dimensions})',
+    cloudflareSource: 'Cloudflare GraphQL Analytics, zona {zone} (consultes: {queries}; agrupació per {dimensions})',
     sampled: 'Cloudflare mostreja aquestes dades, de manera que les xifres marcades amb ~ són estimacions.',
     noFindings: 'Cap regla de rastrejadors no ha fallat.',
     crawlers: 'Rastrejadors',

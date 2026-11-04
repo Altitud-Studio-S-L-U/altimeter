@@ -354,7 +354,7 @@ const ca: ProbeStrings = {
   searchConsoleEmpty: 'Search Console no ha llistat cap consulta sense marca per a aquesta propietat.',
   inferredFallback: 'Les consultes s\'han inferit de les pàgines del lloc perquè Search Console no n\'ha donat cap.',
   homeUnreadable: 'No s\'ha pogut llegir la pàgina d\'inici ({reason}), de manera que no s\'ha trobat cap nom de marca ni s\'ha pogut inferir cap consulta.',
-  homeRedirects: 'La pàgina d\'inici redirigeix a {to}; només les URL de {domain} compten com a pàgines del lloc.',
+  homeRedirects: 'La pàgina d\'inici redirigeix a {to}; només les URL del domini {domain} compten com a pàgines del lloc.',
   stopped: 'No s\'ha tornat a consultar {engine} en aquest sondeig després que una execució fallés: {reason}.',
   stoppedRepeated: 'No s\'ha tornat a consultar {engine} en aquest sondeig després de {count} execucions fallides seguides.',
   unrecognisedResults: 'En algunes execucions ({runs}) els resultats de cerca no tenien la forma que llegeix Altimeter (una llista JSON després de "Links:"), de manera que les seves URL es van llegir del text del resultat o no es van trobar.',

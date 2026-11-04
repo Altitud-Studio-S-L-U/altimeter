@@ -13,16 +13,16 @@
     "why": "Google documenta que un certificat no vàlid fa que prefereixi clarament la versió HTTP com a canònica, i els navegadors bloquegen la pàgina amb un avís a pantalla completa.",
     "fix": "Instal·la un certificat que cobreixi tots els noms d'amfitrió que se serveixen, serveix la cadena intermèdia completa i automatitza la renovació (ACME).",
     "messages": {
-      "fail": "No s'ha pogut verificar el certificat TLS de {host} ({code}).",
-      "fail:expired": "El certificat TLS de {host} ha caducat ({code}).",
-      "fail:not-yet-valid": "El certificat TLS de {host} encara no és vàlid ({code}).",
+      "fail": "No s'ha pogut verificar el certificat TLS de l'amfitrió {host} ({code}).",
+      "fail:expired": "El certificat TLS de l'amfitrió {host} ha caducat ({code}).",
+      "fail:not-yet-valid": "El certificat TLS de l'amfitrió {host} encara no és vàlid ({code}).",
       "fail:hostname-mismatch": "El certificat TLS no cobreix l'amfitrió {host} ({code}).",
       "fail:self-signed": "{host} serveix un certificat autosignat ({code}).",
-      "fail:revoked": "El certificat TLS de {host} està revocat ({code}).",
+      "fail:revoked": "El certificat TLS de l'amfitrió {host} està revocat ({code}).",
       "fail:incomplete-chain": "{host} no envia els certificats intermedis necessaris per verificar el seu certificat ({code}). Els clients que no obtenen els intermedis que falten rebutgen la connexió.",
-      "fail:untrusted-root": "La cadena de certificats de {host} acaba en una arrel que no és de confiança ({code}, emissor: {issuer}). Un servidor intermediari d'intercepció a la xarxa des d'on es fa l'auditoria produeix el mateix resultat.",
-      "fail:verification-failed": "El certificat TLS de {host} no ha superat la verificació ({code}).",
-      "fail:expires-soon": "El certificat TLS de {host} caduca d'aquí a {days} dia(es), el {validTo}, un moment tardà del seu període de validesa per a una renovació automatitzada."
+      "fail:untrusted-root": "La cadena de certificats de l'amfitrió {host} acaba en una arrel que no és de confiança ({code}, emissor: {issuer}). Un servidor intermediari d'intercepció a la xarxa des d'on es fa l'auditoria produeix el mateix resultat.",
+      "fail:verification-failed": "El certificat TLS de l'amfitrió {host} no ha superat la verificació ({code}).",
+      "fail:expires-soon": "El certificat TLS de l'amfitrió {host} caduca d'aquí a {days} dia(es), el {validTo}, un moment tardà del seu període de validesa per a una renovació automatitzada."
     }
   },
   "tech-http-to-https-redirect": {

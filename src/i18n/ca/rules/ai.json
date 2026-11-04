@@ -72,7 +72,7 @@
     "messages": {
       "fail": "El robots.txt esmenta l'identificador {token}, que no figura en cap documentació actual de rastrejadors; l'identificador actual és {current}.",
       "fail:legacy-token": "El robots.txt té un grup per a {token}, un identificador que ja no està documentat, i no en té cap per al seu identificador actual, {current}.",
-      "fail:near-miss-token": "El robots.txt esmenta {token}, que sembla una variant ortogràfica de {current}; els rastrejadors comparen els identificadors de producte de manera exacta, de manera que pot ser que el grup no s'apliqui a {current}."
+      "fail:near-miss-token": "El robots.txt esmenta {token}, que sembla una variant ortogràfica de l'identificador {current}; els rastrejadors comparen els identificadors de producte de manera exacta, de manera que pot ser que el grup no s'apliqui a {current}."
     }
   },
   "ai-robots-perplexitybot": {
