@@ -48,8 +48,9 @@ describe('parseSitemap', () => {
     const wrong = parseSitemap('<urlset xmlns="http://example.com/other"><url><loc>https://example.com/</loc></url></urlset>');
     assert.equal(wrong.namespace, 'http://example.com/other');
     assert.equal(wrong.urls.length, 0);
-    const missing = parseSitemap('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><lastmod>2026-01-01</lastmod></url></urlset>');
-    assert.match(missing.errors[0]?.message ?? '', /without <loc>/u);
+    const missing = parseSitemap('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><lastmod>2026-01-01</lastmod></url>\n<url><loc> </loc></url>\n</urlset>');
+    assert.deepEqual(missing.errors, [], 'an entry without loc does not make the XML unreadable');
+    assert.deepEqual(missing.missingLoc, [{ line: 2, element: 'url' }, { line: 3, element: 'url' }]);
     const broken = parseSitemap('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</url>');
     assert.ok(broken.errors.length > 0);
   });

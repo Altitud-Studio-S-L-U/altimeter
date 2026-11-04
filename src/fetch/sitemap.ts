@@ -41,6 +41,9 @@ export interface SitemapDocument {
   readonly namespace: string | undefined;
   readonly urls: readonly SitemapUrl[];
   readonly sitemaps: readonly SitemapReference[];
+  /** Entries without a <loc>, which crawlers drop while they read the rest of the file. */
+  readonly missingLoc: readonly { readonly line: number; readonly element: 'url' | 'sitemap' }[];
+  /** What keeps the file from being read: malformed XML, a document type declaration or invalid gzip data. */
   readonly errors: readonly { readonly line: number; readonly message: string }[];
   /** Uncompressed size in bytes. */
   readonly bytes: number;
@@ -65,6 +68,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
   const errors: Array<{ line: number; message: string }> = decoded.error ? [{ line: 0, message: decoded.error }] : [];
   const urls: SitemapUrl[] = [];
   const sitemaps: SitemapReference[] = [];
+  const missingLoc: Array<SitemapDocument['missingLoc'][number]> = [];
   let kind: SitemapDocument['kind'] = 'unknown';
   let namespace: string | undefined;
   let depth = 0;
@@ -117,7 +121,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
       else if (tag.local === 'priority') entry.priority = value;
     }
     if (entry && depth === 2) {
-      if (entry.loc === undefined || entry.loc === '') errors.push({ line: entry.line, message: `<${tag.local}> without <loc>` });
+      if (entry.loc === undefined || entry.loc === '') missingLoc.push({ line: entry.line, element: tag.local === 'sitemap' ? 'sitemap' : 'url' });
       else if (tag.local === 'sitemap') sitemaps.push({ loc: entry.loc, line: entry.line, ...(entry.lastmod ? { lastmod: entry.lastmod } : {}) });
       else urls.push({
         loc: entry.loc,
@@ -146,6 +150,7 @@ export function parseSitemap(input: Buffer | string): SitemapDocument {
     namespace,
     urls,
     sitemaps,
+    missingLoc,
     errors,
     bytes: decoded.xml.length,
     gzipped: decoded.gzipped,
