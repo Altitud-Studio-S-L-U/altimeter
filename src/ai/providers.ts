@@ -105,13 +105,31 @@ export function providerWorkingDirectory(env: Environment = process.env, platfor
   return pathApi(platform).join(userCacheDirectory(env, platform), 'provider-cwd');
 }
 
-/** Creates the provider working directory if needed and refuses it when anything was put inside it. */
-export async function prepareWorkingDirectory(directory: string): Promise<void> {
-  await mkdir(directory, { recursive: true, mode: 0o700 });
-  const info = await lstat(directory);
-  if (!info.isDirectory() || info.isSymbolicLink()) throw new ProviderError('unsafe-directory', `${directory} must be a plain folder.`);
+/** The provider working directory as messages name it: through the variable or home folder it rests on, never the user's own path. */
+export function providerWorkingDirectoryLabel(env: Environment = process.env, platform: NodeJS.Platform = process.platform): string {
+  if (platform === 'win32') return `${envValue(env, 'LOCALAPPDATA', platform) ? '%LOCALAPPDATA%' : '%USERPROFILE%\\AppData\\Local'}\\altimeter\\provider-cwd`;
+  if (platform === 'darwin') return '~/Library/Caches/altimeter/provider-cwd';
+  const xdg = envValue(env, 'XDG_CACHE_HOME', platform);
+  return `${xdg && posix.isAbsolute(xdg) ? '$XDG_CACHE_HOME' : '~/.cache'}/altimeter/provider-cwd`;
+}
+
+/**
+ * Creates the provider working directory if needed and refuses it when anything was put inside it. Messages name
+ * the folder as `shown` says, because they reach report files; the path itself travels apart.
+ */
+export async function prepareWorkingDirectory(directory: string, shown = 'The provider working folder'): Promise<void> {
+  let entries: string[];
+  try {
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    const info = await lstat(directory);
+    if (!info.isDirectory() || info.isSymbolicLink()) throw new ProviderError('unsafe-directory', `${shown} must be a plain folder.`, undefined, directory);
+    entries = await readdir(directory);
+  } catch (error) {
+    if (error instanceof ProviderError) throw error;
+    throw new ProviderError('unsafe-directory', `${shown} could not be prepared (${(error as NodeJS.ErrnoException).code ?? 'unknown error'}).`, undefined, directory);
+  }
   // Files here, such as a CLAUDE.md, would be read by Claude as project instructions.
-  if ((await readdir(directory)).length > 0) throw new ProviderError('unsafe-directory', `${directory} must be empty; remove what is inside it and run again.`);
+  if (entries.length > 0) throw new ProviderError('unsafe-directory', `${shown} must be empty; remove what is inside it and run again.`, undefined, directory);
 }
 
 async function existingFile(path: string): Promise<string | undefined> {
@@ -138,11 +156,11 @@ async function commandFor(name: ProviderName, path: string, source: ProviderComm
     try {
       await access(entry);
     } catch {
-      throw new ProviderError('unavailable', `${displayNames[name]} was installed by npm but its entry point ${entry} is missing.`, name);
+      throw new ProviderError('unavailable', `${displayNames[name]} was installed by npm but its entry point is missing.`, name, entry);
     }
     return { name, executable: process.execPath, prefix: [entry], path: entry, source };
   }
-  if (platform === 'win32' && extension !== '.exe') throw new ProviderError('unavailable', `${path} is neither an .exe nor a JavaScript entry point.`, name);
+  if (platform === 'win32' && extension !== '.exe') throw new ProviderError('unavailable', `${win32.basename(path)} is neither an .exe nor a JavaScript entry point.`, name, path);
   return { name, executable: path, prefix: [], path, source };
 }
 
@@ -254,12 +272,17 @@ export async function findProvider(name: ProviderName, options: DiscoveryOptions
   return undefined;
 }
 
+function foundBy(command: ProviderCommand): string {
+  if (command.source === 'env') return `set by ${overrideVariables[command.name]}`;
+  return command.source === 'path' ? 'found on PATH' : "found in the Codex desktop app's folder";
+}
+
 /** Finds a provider and reads its version, choosing the flag set that version supports. */
 export async function resolveProvider(name: ProviderName, options: DiscoveryOptions = {}): Promise<ResolvedProvider> {
   const command = await findProvider(name, options);
   if (!command) throw new ProviderError('unavailable', `${displayNames[name]} was not found. Install it or set ${overrideVariables[name]}.`, name);
   const version = await (options.probeVersion ?? (entry => readVersion(entry, options.env ?? process.env)))(command);
-  if (!version) throw new ProviderError('unavailable', `${displayNames[name]} at ${command.path} did not report a version.`, name);
+  if (!version) throw new ProviderError('unavailable', `${displayNames[name]}, ${foundBy(command)}, did not report a version.`, name, command.path);
   const capabilities = capabilitiesFor(name, version);
   const flagSet = capabilities.extras.size > 0 ? 'the flags verified for its release line' : 'the minimal flag set';
   const warnings = capabilities.verified ? [] : [`${displayNames[name]} ${version} is not a verified version; it runs with ${flagSet}.`];
@@ -285,7 +308,10 @@ export async function describeProviders(options: DiscoveryOptions = {}): Promise
       const resolved = await resolveProvider(name, options);
       results.push({ name, found: true, path: resolved.command.path, source: resolved.command.source, version: resolved.version, verified: resolved.capabilities.verified, warnings: resolved.warnings });
     } catch (error) {
-      results.push({ name, found: false, verified: false, problem: error instanceof Error ? error.message : 'unknown problem', warnings: [] });
+      const problem = error instanceof Error ? error.message : 'unknown problem';
+      // Doctor writes to the terminal only, so it can say where the file is.
+      const path = error instanceof ProviderError ? error.path : undefined;
+      results.push({ name, found: false, verified: false, problem: path === undefined ? problem : `${problem} Path: ${path}`, warnings: [] });
     }
   }
   return results;

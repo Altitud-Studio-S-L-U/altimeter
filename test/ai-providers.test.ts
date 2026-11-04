@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
 import { capabilitiesFor, compareVersions, describeProviders, findProvider, providerWorkingDirectory, resolveProvider, userCacheDirectory, versionFrom, type ProviderCommand } from '../src/ai/providers.ts';
+import { ProviderError } from '../src/ai/types.ts';
 import { providerDouble, sandbox, testEnv } from './support/providers.ts';
 
 describe('version handling', () => {
@@ -108,6 +109,29 @@ describe('resolveProvider and describeProviders', () => {
     const unknown = await resolveProvider('codex', { env: testEnv(home, { codex: newer.executable }) });
     assert.equal(unknown.capabilities.verified, false);
     assert.match(unknown.warnings[0]!, /not a verified version/u);
+  });
+
+  test('keeps local paths out of the problems it reports, which reach report files, and gives them to doctor apart', async t => {
+    const home = await sandbox(t);
+    const claude = await providerDouble(home, 'claude', {});
+    const env = testEnv(home, { claude: claude.executable });
+    const pathFree = (code: string, pattern: RegExp) => (error: unknown) => {
+      assert.ok(error instanceof ProviderError, String(error));
+      assert.equal(error.code, code);
+      assert.equal(error.message.includes(home), false, error.message);
+      assert.match(error.message, pattern);
+      assert.ok(error.path?.startsWith(home), 'the path is kept apart from the message');
+      return true;
+    };
+    await assert.rejects(resolveProvider('claude', { env, probeVersion: async () => undefined }), pathFree('unavailable', /Claude Code, set by ALTIMETER_CLAUDE_EXECUTABLE, did not report a version/u));
+    const script = join(home, 'claude.bat');
+    await writeFile(script, '');
+    await assert.rejects(findProvider('claude', { env: testEnv(home, {}, { ALTIMETER_CLAUDE_EXECUTABLE: script }), platform: 'win32' }), pathFree('unavailable', /claude\.bat is neither an \.exe/u));
+    const wrapper = join(home, 'claude.cmd');
+    await writeFile(wrapper, '@echo off\r\n');
+    await assert.rejects(findProvider('claude', { env: testEnv(home, {}, { ALTIMETER_CLAUDE_EXECUTABLE: wrapper }), platform: 'win32' }), pathFree('unavailable', /installed by npm but its entry point/u));
+    const [described] = await describeProviders({ env, probeVersion: async () => undefined });
+    assert.ok(described!.problem?.includes(claude.directory), 'doctor shows where the CLI is');
   });
 
   test('describes both providers for doctor without sending a prompt', async t => {

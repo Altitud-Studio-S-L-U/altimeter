@@ -1,5 +1,7 @@
 import { childEnvironment, ProcessError, runProcess } from './process.ts';
-import { assertModel, fromProcessError, prepareWorkingDirectory, providerWorkingDirectory, resolveProvider, type Capabilities, type ProviderCallInput } from './providers.ts';
+import {
+  assertModel, fromProcessError, prepareWorkingDirectory, providerWorkingDirectory, providerWorkingDirectoryLabel, resolveProvider, type Capabilities, type ProviderCallInput,
+} from './providers.ts';
 import type { Schema } from './schema.ts';
 import { systemPrompt } from './system-prompt.ts';
 import { ProviderError, type CallResult, type Usage } from './types.ts';
@@ -84,7 +86,7 @@ export async function call(input: ProviderCallInput): Promise<CallResult> {
   const env = input.env ?? process.env;
   const provider = input.provider ?? await resolveProvider('claude', { env });
   const cwd = input.workingDirectory ?? providerWorkingDirectory(env);
-  await prepareWorkingDirectory(cwd);
+  await prepareWorkingDirectory(cwd, input.workingDirectory === undefined ? providerWorkingDirectoryLabel(env) : undefined);
   const args = [...provider.command.prefix, ...claudeArguments({ schema: input.schema, ...(input.model ? { model: input.model } : {}), capabilities: provider.capabilities })];
   let stdout: string;
   try {
