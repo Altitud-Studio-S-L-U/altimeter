@@ -110,8 +110,13 @@ describe('running a probe', () => {
   test('cancelling a probe stops the running CLI and skips the rest', { timeout: 30_000 }, async t => {
     const { claude, probe } = await setup(t, { engines: ['claude'], runs: 1, codex: null, claude: { default: { hang: true } } });
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), 500);
+    // Cancel once the CLI is really running, however long it takes to start on a busy machine.
+    const cancel = (async () => {
+      for (let attempt = 0; attempt < 200 && (await claude.calls()).length === 0; attempt += 1) await delay(50);
+      controller.abort();
+    })();
     const report = await probe({ signal: controller.signal });
+    await cancel;
     const runs = report.engines[0]!.runs;
     assert.deepEqual(runs.map(run => run.error?.code ?? run.skipped), ['cancelled', 'cancelled', 'cancelled']);
     const [call] = await claude.calls();
