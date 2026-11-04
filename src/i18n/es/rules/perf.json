@@ -1,1 +1,472 @@
-{}
+{
+  "perf-crux-lcp-p75": {
+    "title": "LCP de campo en el p75 (por factor de forma)",
+    "why": "Largest Contentful Paint es una de las Core Web Vitals. web.dev define como bueno un valor de 2,5 s o menos y como deficiente uno de más de 4 s en el percentil 75 de los usuarios reales de Chrome, por tipo de dispositivo. Google usa las Core Web Vitals en sus señales de experiencia en la página, sin publicar su peso.",
+    "fix": "Haz el diagnóstico con las subpartes del LCP (perf-crux-lcp-subparts) y las reglas de LCP de laboratorio; corrige primero la subparte dominante.",
+    "messages": {
+      "fail": "El LCP de campo en el p75 es {value} en {formFactor} (datos de CrUX: {scope}), en el rango {band}; se considera bueno un valor de 2500 ms o menos.",
+      "fail:origin-level": "El LCP de campo en el p75 es {value} en {formFactor}, en el rango {band}; se considera bueno un valor de 2500 ms o menos. Son datos de CrUX ({scope}), que abarcan todas las páginas del origen, no solo esta URL."
+    }
+  },
+  "perf-crux-inp-p75": {
+    "title": "INP de campo en el p75 (por factor de forma)",
+    "why": "Interaction to Next Paint sustituyó a First Input Delay como Core Web Vital en marzo de 2024. web.dev define como bueno un valor de 200 ms o menos y como deficiente uno de más de 500 ms en el percentil 75.",
+    "fix": "Divide las tareas largas (scheduler.yield con setTimeout como alternativa), elimina el JS y los terceros innecesarios, reduce el trabajo de renderizado y el tamaño del DOM; investiga el controlador del botón «Aceptar» de los gestores de consentimiento.",
+    "messages": {
+      "fail": "El INP de campo en el p75 es {value} en {formFactor} (datos de CrUX: {scope}), en el rango {band}; se considera bueno un valor de 200 ms o menos.",
+      "fail:origin-level": "El INP de campo en el p75 es {value} en {formFactor}, en el rango {band}; se considera bueno un valor de 200 ms o menos. Son datos de CrUX ({scope}), que abarcan todas las páginas del origen, no solo esta URL."
+    }
+  },
+  "perf-crux-cls-p75": {
+    "title": "CLS de campo en el p75 (por factor de forma)",
+    "why": "Cumulative Layout Shift es una de las Core Web Vitals. web.dev define como bueno un valor de 0,1 o menos y como deficiente uno de más de 0,25 en el percentil 75. El CLS de campo abarca toda la vida de la página, así que puede ser peor que el CLS de laboratorio.",
+    "fix": "Indica el tamaño de las imágenes, los iframes y los anuncios, reserva espacio para la interfaz que se inserta tarde (banners de cookies) o superponla, usa animaciones con transform, ajusta las fuentes alternativas y mantén las páginas aptas para la bfcache.",
+    "messages": {
+      "fail": "El CLS de campo en el p75 es {value} en {formFactor} (datos de CrUX: {scope}), en el rango {band}; se considera bueno un valor de 0,1 o menos.",
+      "fail:origin-level": "El CLS de campo en el p75 es {value} en {formFactor}, en el rango {band}; se considera bueno un valor de 0,1 o menos. Son datos de CrUX ({scope}), que abarcan todas las páginas del origen, no solo esta URL."
+    }
+  },
+  "perf-crux-cwv-assessment": {
+    "title": "La evaluación de las Core Web Vitals se supera con los datos de campo (por tipo de dispositivo)",
+    "why": "Una página supera la evaluación de las Core Web Vitals cuando el LCP, el INP y el CLS son buenos en el percentil 75 de CrUX. Search Console agrupa URLs similares, mientras que la API de CrUX informa exactamente de una URL o de un origen. Google no publica el peso de la evaluación en el posicionamiento.",
+    "fix": "Corrige la métrica o las métricas que fallan; una página solo es tan buena como su peor Core Web Vital.",
+    "messages": {
+      "fail": "La evaluación de las Core Web Vitals con datos de campo en {formFactor} (datos de CrUX: {scope}) no es buena: {metrics}.",
+      "fail:origin-level": "La evaluación de las Core Web Vitals con datos de campo en {formFactor} no es buena: {metrics}. Son datos de CrUX ({scope}), que abarcan todas las páginas del origen, no solo esta URL."
+    }
+  },
+  "perf-crux-data-availability": {
+    "title": "Disponibilidad de datos de campo y etiquetado de los datos de origen usados como alternativa",
+    "why": "CrUX solo ofrece datos de páginas públicas e indexables con suficiente tráfico de usuarios reales. Saber si hay datos a nivel de URL, a nivel de origen o ninguno indica al lector cómo interpretar cada métrica de campo.",
+    "fix": "No hace falta ninguna. El tráfico bajo no es un defecto. Usa datos de laboratorio y RUM para las páginas sin datos de campo.",
+    "messages": {
+      "fail": "CrUX no tiene datos de campo de esta URL ni de su origen. CrUX solo abarca páginas públicas con suficiente tráfico de usuarios de Chrome que han dado su consentimiento, así que esto no es un defecto.",
+      "fail:origin-only": "CrUX no tiene datos de campo a nivel de URL para esta página; solo hay datos a nivel de origen ({formFactors}), que abarcan todas las páginas del origen.",
+      "fail:not-eligible-status": "CrUX no tiene datos de campo de esta URL ni de su origen. La URL responde HTTP {status}, y CrUX solo incluye páginas públicas que responden 200.",
+      "fail:not-eligible-noindex": "CrUX no tiene datos de campo de esta URL ni de su origen. La página lleva noindex, lo que la deja fuera de CrUX.",
+      "fail:no-field-data": "CrUX no tiene datos de campo de esta URL ni de su origen. CrUX solo abarca páginas públicas con suficiente tráfico de usuarios de Chrome que han dado su consentimiento, así que esto no es un defecto."
+    }
+  },
+  "perf-crux-fcp-p75": {
+    "title": "FCP de campo en el p75 (métrica complementaria)",
+    "why": "First Contentful Paint es una métrica de diagnóstico, no una Core Web Vital. web.dev define como bueno un valor de 1,8 s o menos. Ayuda a explicar un LCP lento.",
+    "fix": "Reduce el TTFB y el CSS/JS que bloquea el renderizado; inserta en línea el CSS crítico.",
+    "messages": {
+      "fail": "El FCP de campo en el p75 es {value} en {formFactor} (datos de CrUX: {scope}), en el rango {band}; se considera bueno un valor de 1800 ms o menos. El FCP es una métrica de diagnóstico, no una Core Web Vital.",
+      "fail:origin-level": "El FCP de campo en el p75 es {value} en {formFactor}, en el rango {band}; se considera bueno un valor de 1800 ms o menos. Son datos de CrUX ({scope}), que abarcan todas las páginas del origen. El FCP es una métrica de diagnóstico, no una Core Web Vital."
+    }
+  },
+  "perf-crux-ttfb-p75": {
+    "title": "TTFB de campo en el p75 (métrica complementaria)",
+    "why": "Time to First Byte es una métrica de diagnóstico, no una Core Web Vital. web.dev define como bueno un valor de 800 ms o menos. Un TTFB lento retrasa todas las métricas posteriores, incluido el LCP.",
+    "fix": "Usa un CDN que almacene el HTML en caché en el perímetro, evita las redirecciones y los parámetros de consulta únicos que invalidan la caché, reduce el procesamiento del servidor y considera 103 Early Hints.",
+    "messages": {
+      "fail": "El TTFB de campo en el p75 es {value} en {formFactor} (datos de CrUX: {scope}), en el rango {band}; se considera bueno un valor de 800 ms o menos. El TTFB es una métrica de diagnóstico, no una Core Web Vital, e incluye las redirecciones y el establecimiento de la conexión.",
+      "fail:origin-level": "El TTFB de campo en el p75 es {value} en {formFactor}, en el rango {band}; se considera bueno un valor de 800 ms o menos. Son datos de CrUX ({scope}), que abarcan todas las páginas del origen. El TTFB es una métrica de diagnóstico, no una Core Web Vital."
+    }
+  },
+  "perf-crux-lcp-subparts": {
+    "title": "Subpartes del LCP de imagen en los datos de campo: cuello de botella dominante",
+    "why": "CrUX divide el LCP de imagen en tiempo hasta el primer byte, retraso en la carga del recurso, duración de la carga del recurso y retraso en el renderizado del elemento. web.dev da proporciones orientativas para cada una, que señalan el cuello de botella que hay que corregir.",
+    "fix": "Retraso en la carga: haz que la imagen del LCP se pueda descubrir en el HTML, añade fetchpriority=high y quita la carga en diferido. Duración de la carga: imágenes más pequeñas y en formatos modernos, CDN. Retraso en el renderizado: reduce el CSS/JS que bloquea el renderizado y evita el CSR y la ocultación antiparpadeo. TTFB: servidor/CDN.",
+    "messages": {
+      "fail": "El LCP de campo en el p75 es {lcp} en {formFactor} (datos de CrUX: {scope}). Subpartes del LCP de imagen por encima de su proporción orientativa: {subparts}. Las subpartes son percentiles independientes, así que las proporciones son aproximadas."
+    }
+  },
+  "perf-crux-navigation-types": {
+    "title": "Navegaciones hacia atrás o hacia delante no servidas desde la bfcache",
+    "why": "CrUX indica cuántas navegaciones hacia atrás y hacia delante se sirven desde la caché de atrás y adelante. web.dev incluye la bfcache entre las mejoras más eficaces, porque las páginas restauradas se cargan al instante.",
+    "fix": "Ejecuta perf-bfcache-eligibility. Elimina los detectores de eventos unload, evita no-store cuando no sea necesario y cierra las conexiones abiertas en pagehide.",
+    "messages": {
+      "fail": "En {formFactor} (datos de CrUX: {scope}), el {backForward} de las navegaciones son navegaciones hacia atrás o hacia delante que no se han restaurado desde la caché de atrás y adelante, frente al {restored} que sí. El umbral del 5 % es una heurística de la herramienta."
+    }
+  },
+  "perf-crux-softnav-experimental": {
+    "title": "Variantes experimentales de las CWV con navegaciones suaves (SPA)",
+    "why": "CrUX publica variantes experimentales de las métricas que incluyen las navegaciones suaves en las aplicaciones de una sola página. No forman parte de la evaluación de las Core Web Vitals.",
+    "fix": "En las SPA, explica la diferencia entre la experiencia a nivel de ruta y las CWV de carga completa.",
+    "messages": {
+      "fail": "En {formFactor} (datos de CrUX: {scope}), las métricas experimentales que incluyen navegaciones suaves quedan en un rango distinto: {metrics}. Son experimentales y no forman parte de la evaluación de las Core Web Vitals."
+    }
+  },
+  "perf-lab-run-protocol": {
+    "title": "Protocolo de medición de laboratorio y varianza",
+    "why": "Lighthouse documenta que los resultados de laboratorio varían entre ejecuciones por la red, la carga del host, las pruebas A/B y los anuncios, y recomienda la mediana de varias ejecuciones. El protocolo de ejecución y su varianza se registran para poder interpretar las cifras de laboratorio.",
+    "fix": "No aplica (metodología). No ejecutes nunca varias instancias de Lighthouse en paralelo en una misma máquina.",
+    "messages": {
+      "fail": "El protocolo de ejecución de Lighthouse limita la estabilidad de los valores de laboratorio.",
+      "fail:few-runs": "Los valores de laboratorio proceden de la mediana de {validRuns} ejecuciones válidas de Lighthouse de {runs}; {recommended} ejecuciones dan una mediana más estable.",
+      "fail:run-warnings": "Lighthouse ha indicado {count} advertencias de ejecución, así que los valores de laboratorio pueden no ser fiables."
+    }
+  },
+  "perf-lab-performance-score": {
+    "title": "Puntuación de rendimiento de Lighthouse (solo contexto)",
+    "why": "La puntuación de rendimiento de Lighthouse es un resumen ponderado de laboratorio. La Búsqueda de Google usa las Core Web Vitals de campo, no la puntuación de Lighthouse, así que la puntuación solo sirve como contexto.",
+    "fix": "Mejora las métricas subyacentes; no optimices la puntuación en sí.",
+    "messages": {
+      "fail": "La puntuación de rendimiento de Lighthouse es {score} ({conditions}). Es un resumen de laboratorio, no un dato que Google use para el posicionamiento.",
+      "fail:poor": "La puntuación de rendimiento de Lighthouse es {score} ({conditions}), en el rango 0-49. Es un resumen de laboratorio, no un dato que Google use para el posicionamiento.",
+      "fail:needs-improvement": "La puntuación de rendimiento de Lighthouse es {score} ({conditions}), en el rango 50-89. Es un resumen de laboratorio, no un dato que Google use para el posicionamiento."
+    }
+  },
+  "perf-lab-lcp": {
+    "title": "LCP de laboratorio (móvil, simulado)",
+    "why": "El LCP de laboratorio de Lighthouse muestra el proceso de carga de una primera visita en un dispositivo emulado. Es un diagnóstico: la evaluación de las Core Web Vitals usa datos de campo.",
+    "fix": "Consulta las reglas perf-lcp-*.",
+    "messages": {
+      "fail": "El LCP de laboratorio es {value} ({conditions}), por encima del umbral de 2500 ms para un valor bueno.",
+      "fail:field-precedence": "El LCP de laboratorio es {value} ({conditions}), por encima de 2500 ms. Hay datos de campo, así que el resultado de campo decide el estado y este valor de laboratorio es un diagnóstico."
+    }
+  },
+  "perf-lab-tbt-inp-proxy": {
+    "title": "Total Blocking Time de laboratorio (indicador indirecto del riesgo de INP)",
+    "why": "Total Blocking Time mide el bloqueo del hilo principal durante la carga y es el indicador indirecto de laboratorio de la capacidad de respuesta. No es una Core Web Vital, y una ejecución de navegación no mide ninguna interacción.",
+    "fix": "Divide las tareas largas, aplaza el JS no crítico y elimina el JS y los terceros que no se usan.",
+    "messages": {
+      "fail": "El Total Blocking Time de laboratorio es {value} ({conditions}). El TBT mide el bloqueo del hilo principal durante la carga; es una evidencia de laboratorio del riesgo de INP, no el INP de campo.",
+      "fail:field-precedence": "El Total Blocking Time de laboratorio es {value} ({conditions}). Hay INP de campo, así que el resultado de campo decide el estado y este valor de laboratorio es un diagnóstico."
+    }
+  },
+  "perf-lab-cls": {
+    "title": "CLS de laboratorio durante la carga",
+    "why": "El CLS de laboratorio solo abarca los cambios de diseño durante la carga de la página y suele ser inferior al CLS de campo, así que un resultado de laboratorio limpio no refuta un valor de campo deficiente.",
+    "fix": "Consulta perf-cls-culprits.",
+    "messages": {
+      "fail": "El CLS de laboratorio es {value} ({conditions}), por encima de 0,1. El CLS de laboratorio solo abarca la carga de la página.",
+      "fail:field-precedence": "El CLS de laboratorio es {value} ({conditions}), por encima de 0,1. Hay CLS de campo, así que el resultado de campo decide el estado y este valor de laboratorio es un diagnóstico."
+    }
+  },
+  "perf-lcp-lazy-loaded": {
+    "title": "La imagen del LCP se carga en diferido",
+    "why": "web.dev documenta que cargar en diferido la imagen del LCP la retrasa hasta que se conoce el diseño, lo que ralentiza el LCP. Las imágenes del viewport inicial deberían cargarse de forma inmediata. Lighthouse 13.6 lo indica en lcp-discovery-insight.",
+    "fix": "Quita loading=lazy de las imágenes que probablemente estén en el viewport inicial, sobre todo de la imagen del LCP o la imagen principal; quita también el cargador en diferido de JS que la gestione.",
+    "messages": {
+      "fail": "La imagen del LCP de laboratorio se carga en diferido (loading=lazy) sin una precarga, así que su solicitud espera a que se calcule el diseño.",
+      "fail:loading-lazy": "La imagen del LCP de laboratorio se carga en diferido (loading=lazy) sin una precarga, así que su solicitud espera a que se calcule el diseño.",
+      "fail:script-lazy-load": "La URL de la imagen del LCP solo aparece en un atributo data de carga en diferido de su <img>, así que solo se carga después de que un script la coloque."
+    }
+  },
+  "perf-lcp-not-discoverable": {
+    "title": "El recurso del LCP no se puede descubrir en el HTML inicial",
+    "why": "web.dev documenta que el escáner de precarga no puede encontrar una imagen del LCP a la que solo se hace referencia desde CSS, JavaScript o atributos data, lo que la retrasa. Lighthouse 13.6 lo indica en lcp-discovery-insight.",
+    "fix": "Renderiza en el servidor el <img> principal con src/srcset; para las imágenes a las que se hace referencia desde CSS o JS, añade <link rel=preload as=image fetchpriority=high> en el <head>.",
+    "messages": {
+      "fail": "Ni el analizador desde el HTML del servidor ni una precarga solicitan la imagen del LCP de laboratorio ({url}), así que el navegador la descubre tarde.",
+      "fail:conflicting-signals": "Lighthouse indica que el analizador no solicitó la imagen del LCP ({url}) desde el HTML del servidor, aunque el HTML del servidor hace referencia a ella; comprueba cómo se inserta la imagen."
+    }
+  },
+  "perf-lcp-fetchpriority": {
+    "title": "La imagen del LCP no tiene fetchpriority=high",
+    "why": "web.dev recomienda fetchpriority=\"high\" en la imagen del LCP para que el navegador la solicite antes que otras imágenes. Es una indicación, y abusar de ella elimina la ventaja.",
+    "fix": "Añade fetchpriority=high solo a la imagen principal o del LCP (una o dos imágenes como máximo); usa fetchpriority=low para las diapositivas ocultas de los carruseles.",
+    "messages": {
+      "fail": "La imagen del LCP de laboratorio se puede descubrir, pero no tiene fetchpriority=high en su <img> ni en su precarga.",
+      "fail:overuse": "{count} imágenes del HTML tienen fetchpriority=high; más de dos compiten con la imagen del LCP por el ancho de banda."
+    }
+  },
+  "perf-lcp-breakdown-lab": {
+    "title": "Fase dominante del desglose del LCP de laboratorio",
+    "why": "Lighthouse 13.6 indica las subpartes del LCP de laboratorio en lcp-breakdown-insight. La subparte dominante muestra si hay que corregir el servidor, el descubrimiento, la descarga o el renderizado.",
+    "fix": "Céntrate en la fase dominante (consulta perf-crux-lcp-subparts).",
+    "messages": {
+      "fail": "El LCP de laboratorio es {lcp}. Subpartes del LCP por encima de su proporción orientativa en el desglose de laboratorio: {subparts}."
+    }
+  },
+  "perf-lcp-client-side-rendered": {
+    "title": "El contenido del LCP depende del renderizado del lado del cliente",
+    "why": "web.dev documenta que, cuando el contenido del LCP lo genera JavaScript del lado del cliente, el retraso en el renderizado del elemento crece con el tiempo de descarga y ejecución de los scripts.",
+    "fix": "Renderiza en el servidor o prerrenderiza (SSG) el contenido de la mitad superior de la página; aplica la hidratación después.",
+    "messages": {
+      "fail": "El contenido del LCP no se ha encontrado en el HTML del servidor y el LCP de laboratorio llega {gap} después del FCP; puede que lo rendericen scripts.",
+      "fail:app-shell": "El HTML del servidor tiene el body vacío y el contenido del LCP solo aparece después de que se ejecuten los scripts; el LCP de laboratorio llega {gap} después del FCP.",
+      "fail:content-differs": "El contenido del LCP no se ha encontrado en el HTML del servidor y el LCP de laboratorio llega {gap} después del FCP. Puede que lo rendericen scripts o que cambie por personalización o ubicación."
+    }
+  },
+  "perf-lcp-antiflicker-hiding": {
+    "title": "Contenido oculto por un antiparpadeo de pruebas A/B o un cargador",
+    "why": "web.dev cita ocultar el contenido mientras se cargan los scripts de pruebas A/B o de personalización como una causa del retraso en el renderizado del elemento del LCP.",
+    "fix": "Elimina el fragmento de código antiparpadeo o ejecuta los experimentos en el servidor o en el perímetro.",
+    "messages": {
+      "fail": "Un fragmento de código que oculta la página ({snippet}) la mantiene invisible mientras se cargan los scripts, y el retraso en el renderizado del elemento del LCP de laboratorio es {delay}."
+    }
+  },
+  "perf-render-blocking": {
+    "title": "Recursos que bloquean el renderizado en el <head>",
+    "why": "Los scripts y las hojas de estilos síncronos del head retrasan el primer renderizado. Lighthouse 13.6 los indica en render-blocking-insight, que sustituyó a render-blocking-resources.",
+    "fix": "Aplica defer o async a los scripts; inserta en línea el CSS crítico pequeño y carga el resto sin bloquear; reduce el tamaño del CSS.",
+    "messages": {
+      "fail": "{count} scripts externos del head bloquean el analizador: {scripts}.",
+      "fail:parser-blocking-script": "{count} scripts externos del head bloquean el analizador (sin async, defer ni type=module): {scripts}.",
+      "fail:consent-script": "{count} scripts de consentimiento del head se cargan de forma síncrona: {scripts}. Algunas herramientas de consentimiento deben ejecutarse primero; comprueba si el proveedor ofrece un cargador asíncrono que siga bloqueando las etiquetas hasta que haya consentimiento.",
+      "fail:render-blocking-requests": "Lighthouse estima que quitar de la ruta crítica las solicitudes que bloquean el renderizado ahorra {savings} de FCP de laboratorio: {requests}."
+    }
+  },
+  "perf-document-redirects": {
+    "title": "Redirecciones en la solicitud del documento",
+    "why": "Cada redirección en la solicitud del documento añade un viaje de ida y vuelta completo antes de que llegue el HTML, que cuenta en el TTFB y el LCP. Lighthouse 13.6 lo indica en document-latency-insight.",
+    "fix": "Enlaza internamente a las URLs finales y reduce las cadenas http->https->www a un solo salto.",
+    "messages": {
+      "fail": "{from} pasa por {hops} redirección(es) antes de que responda {to}; cada salto se suma al TTFB y al LCP."
+    }
+  },
+  "perf-server-response-time": {
+    "title": "Respuesta lenta del servidor para el documento",
+    "why": "Una respuesta lenta del documento retrasa todo lo que viene después. Lighthouse 13.6 marca las respuestas del servidor de más de 600 ms en document-latency-insight. Una sola muestra desde la ubicación del recopilador no es el TTFB de los usuarios.",
+    "fix": "Almacena en caché el HTML en el perímetro del CDN, optimiza el backend y la base de datos, evita el trabajo no almacenable en caché en cada solicitud y usa Early Hints durante el tiempo de procesamiento del servidor.",
+    "messages": {
+      "fail": "La respuesta del documento ha tardado {lab} en el laboratorio, por encima del umbral de 600 ms de Lighthouse (muestra del recopilador: {collector}). Son mediciones desde una sola ubicación, no el TTFB de los usuarios."
+    }
+  },
+  "perf-text-compression": {
+    "title": "Recursos de texto servidos sin compresión",
+    "why": "El HTML, el CSS y el JavaScript servidos sin gzip, Brotli o zstd tardan más en descargarse. Lighthouse 13.6 lo indica en document-latency-insight para el documento.",
+    "fix": "Activa Brotli (o zstd) con gzip como alternativa en el servidor o el CDN para los tipos MIME de texto.",
+    "messages": {
+      "fail": "Las respuestas de texto se envían sin compresión gzip, Brotli ni zstd.",
+      "fail:document": "La respuesta HTML ({size} descodificada) se envía sin compresión gzip, Brotli ni zstd.",
+      "fail:assets": "{count} recursos de texto propios se envían sin compresión: {urls}."
+    }
+  },
+  "perf-http-protocol": {
+    "title": "Recursos estáticos servidos mediante HTTP/1.1",
+    "why": "HTTP/2 y HTTP/3 multiplexan las solicitudes en una sola conexión. Lighthouse 13.6 indica en modern-http-insight los orígenes que sirven muchas solicitudes estáticas mediante HTTP/1.1.",
+    "fix": "Activa HTTP/2 (e, idealmente, HTTP/3) en el origen o el CDN.",
+    "messages": {
+      "fail": "Los recursos estáticos de {origins} se cargan mediante HTTP/1.x, con seis o más solicitudes por origen en cola en unas pocas conexiones.",
+      "fail:third-party": "Los orígenes de terceros {origins} sirven seis o más solicitudes estáticas mediante HTTP/1.x; esto escapa al control del sitio."
+    }
+  },
+  "perf-static-cache-ttl": {
+    "title": "Recursos estáticos con una duración de caché corta o inexistente",
+    "why": "Los recursos estáticos con una duración de caché corta o inexistente se vuelven a descargar en las visitas repetidas. Lighthouse 13.6 lo indica en cache-insight. La ventaja solo se aplica a las visitas repetidas.",
+    "fix": "Incluye una huella del contenido en los nombres de archivo de los recursos y sírvelos con Cache-Control: public, max-age=31536000, immutable (immutable es opcional); sirve el HTML con no-cache y un ETag.",
+    "messages": {
+      "fail": "{count} recursos estáticos propios tienen una duración de caché inferior a 30 días o ninguna: {urls}.",
+      "fail:fingerprinted": "{count} recursos estáticos propios tienen una duración de caché inferior a 30 días o ninguna: {urls}. {hashed} de ellos tienen nombres de archivo con huella del contenido, que se pueden almacenar en caché durante un año."
+    }
+  },
+  "perf-html-no-store": {
+    "title": "HTML servido con Cache-Control: no-store",
+    "why": "Cache-Control: no-store en el HTML impide el almacenamiento en caché y, en los navegadores distintos de las versiones recientes de Chrome, deja la página fuera de la caché de atrás y adelante. Es adecuado para páginas personalizadas o privadas.",
+    "fix": "Usa no-cache o max-age=0 para mantener la página actualizada, salvo que contenga datos sensibles.",
+    "messages": {
+      "fail": "El HTML se sirve con Cache-Control: {value}, aunque nada indica que esté personalizado; no-store impide que la página se almacene en la caché del navegador y en las cachés compartidas.",
+      "fail:sets-cookie": "El HTML se sirve con no-store y establece cookies. Si la página no está personalizada, una política que permita la caché haría posible el almacenamiento en la caché del navegador y en las compartidas."
+    }
+  },
+  "perf-bfcache-eligibility": {
+    "title": "La página no es apta para la caché de atrás y adelante",
+    "why": "web.dev incluye la caché de atrás y adelante entre las mejoras más eficaces para el LCP y el CLS en las navegaciones por el historial. Lighthouse 13.6 comprueba si la página es apta en la auditoría bf-cache.",
+    "fix": "Elimina los controladores de unload, evita los no-store innecesarios, cierra IndexedDB/WebSocket/fetch en pagehide y evita window.opener (usa noopener).",
+    "messages": {
+      "fail": "Lighthouse ha encontrado {count} motivos corregibles que dejan la página fuera de la caché de atrás y adelante: {reasons}."
+    }
+  },
+  "perf-unload-handlers": {
+    "title": "Hay detectores del evento unload",
+    "why": "Los detectores de unload dejan las páginas fuera de la caché de atrás y adelante en algunos navegadores. Chrome ha declarado obsoleto unload, así que el impacto que queda se da sobre todo en otros navegadores.",
+    "fix": "Sustitúyelos por pagehide/visibilitychange. Opcionalmente, envía Permissions-Policy: unload=() (solo Chromium).",
+    "messages": {
+      "fail": "La página registra {count} detector(es) de unload. Chrome ya no activa unload de forma predeterminada, pero estos detectores pueden seguir dejando la página fuera de la caché de atrás y adelante de otros navegadores."
+    }
+  },
+  "perf-unsized-images": {
+    "title": "Imágenes sin dimensiones explícitas",
+    "why": "web.dev documenta que las imágenes sin atributos width y height (o sin aspect-ratio) provocan cambios de diseño al cargarse. Lighthouse 13.6 las indica en la auditoría unsized-images.",
+    "fix": "Añade los atributos width y height (con la misma relación de aspecto en todas las candidatas de srcset) o establece aspect-ratio en CSS.",
+    "messages": {
+      "fail": "{count} imágenes no tienen dimensiones explícitas; {aboveFold} de ellas están en el primer viewport de la ejecución de laboratorio.",
+      "fail:below-fold": "{count} imágenes no tienen dimensiones explícitas, todas por debajo del primer viewport de la ejecución de laboratorio."
+    }
+  },
+  "perf-cls-culprits": {
+    "title": "Causantes de los cambios de diseño durante la carga",
+    "why": "Lighthouse 13.6 atribuye en cls-culprits-insight los cambios de diseño a causas como los elementos multimedia sin dimensiones, el contenido insertado y las fuentes web. El elemento desplazado a menudo no es la causa.",
+    "fix": "Corrige la causa que indica el análisis: dimensiones, espacio reservado, métricas de las fuentes alternativas, animaciones con transform.",
+    "messages": {
+      "fail": "El peor grupo de cambios de diseño de laboratorio obtiene {score} ({clusters} grupos por encima de 0,05). Causas raíz que atribuye Lighthouse: {causes}.",
+      "fail:no-root-cause": "El peor grupo de cambios de diseño de laboratorio obtiene {score} ({clusters} grupos por encima de 0,05) y Lighthouse no ha atribuido ninguna causa raíz; el elemento desplazado no es necesariamente la causa."
+    }
+  },
+  "perf-embed-reserved-space": {
+    "title": "Anuncios, iframes y elementos insertados sin espacio reservado",
+    "why": "web.dev recomienda reservar espacio para los anuncios, los iframes y los elementos insertados, porque el contenido que se carga en contenedores sin dimensiones desplaza la página.",
+    "fix": "Reserva el tamaño más probable con min-height/aspect-ratio; mantén el marcador de posición cuando no se sirva ningún anuncio; coloca los espacios dinámicos más abajo en el viewport.",
+    "messages": {
+      "fail": "{count} elementos insertados no tienen espacio reservado.",
+      "fail:attributed-shift": "{count} elementos insertados no tienen width y height ni una altura reservada, y Lighthouse atribuye un cambio de diseño de laboratorio a un iframe insertado.",
+      "fail:unsized-embed": "{count} elementos insertados no tienen width y height ni una altura reservada en línea; puede que una hoja de estilos o un contenedor reserven el espacio igualmente."
+    }
+  },
+  "perf-non-composited-animations": {
+    "title": "Animaciones de propiedades que provocan un recálculo del diseño",
+    "why": "Las animaciones de propiedades que provocan un recálculo del diseño, como top, margin o width, se ejecutan en el hilo principal y pueden causar cambios de diseño. Lighthouse 13.6 las indica en non-composited-animations.",
+    "fix": "Anima transform/opacity en su lugar; respeta prefers-reduced-motion.",
+    "messages": {
+      "fail": "{count} elementos ejecutan animaciones que el navegador no puede componer: {reasons}."
+    }
+  },
+  "perf-font-display": {
+    "title": "Las fuentes web bloquean el renderizado del texto",
+    "why": "Las fuentes web sin font-display: swap u optional ocultan el texto hasta que se carga la fuente. Lighthouse 13.6 lo indica en font-display-insight.",
+    "fix": "Usa font-display: swap para la marca y los titulares y optional para el texto del cuerpo; añade size-adjust o ajustes de métricas a la fuente alternativa para reducir el CLS.",
+    "messages": {
+      "fail": "{count} fuentes web mantienen el texto invisible mientras se cargan: {fonts}."
+    }
+  },
+  "perf-font-preload-crossorigin": {
+    "title": "A la precarga o la preconexión de una fuente le falta crossorigin",
+    "why": "Las fuentes se obtienen en modo CORS, así que una precarga o una preconexión para una fuente sin el atributo crossorigin no se reutiliza y la fuente se descarga dos veces.",
+    "fix": "Añade crossorigin (anonymous) a las precargas de fuentes y a la preconexión al origen de las fuentes.",
+    "messages": {
+      "fail": "A {count} indicaciones de precarga o preconexión de fuentes les falta el atributo crossorigin, así que la solicitud de la fuente no puede reutilizarlas."
+    }
+  },
+  "perf-font-format": {
+    "title": "Fuentes no servidas como WOFF2 o exceso de archivos de fuentes",
+    "why": "WOFF2 es el formato de fuente más pequeño con amplia compatibilidad, y muchos archivos de fuentes en la carga inicial compiten con los recursos críticos.",
+    "fix": "Sirve solo WOFF2, crea subconjuntos con unicode-range y usa menos familias o pesos, o una fuente variable cuando ahorre bytes.",
+    "messages": {
+      "fail": "{count} archivos de fuentes no son WOFF2: {fonts}.",
+      "fail:not-woff2": "{count} archivos de fuentes no son WOFF2: {fonts}.",
+      "fail:many-files": "La página carga {count} archivos de fuentes ({size}) en el laboratorio; el umbral de más de seis es una heurística de la herramienta, no un límite."
+    }
+  },
+  "perf-preconnect-hints": {
+    "title": "Higiene de las indicaciones preconnect",
+    "why": "web.dev recomienda preconnect solo para los orígenes que se usan pronto, porque las conexiones que no se usan se cierran al cabo de unos 10 segundos y demasiadas indicaciones compiten entre sí.",
+    "fix": "Usa preconnect solo para los 1-3 orígenes críticos que se usan pronto; usa dns-prefetch para los demás en un <link> aparte.",
+    "messages": {
+      "fail": "Las indicaciones preconnect de la página no coinciden con las solicitudes que hace.",
+      "fail:too-many": "La página declara {count} indicaciones preconnect. El umbral de más de cuatro es una heurística: cada una abre una conexión que compite con las solicitudes críticas.",
+      "fail:combined-rel": "{count} elementos link combinan preconnect y dns-prefetch en un mismo atributo rel; se recomiendan elementos link separados.",
+      "fail:unused": "Los orígenes con preconnect no han recibido ninguna solicitud de laboratorio en los primeros 10 segundos: {origins}.",
+      "fail:missing": "Lighthouse estima que un preconnect aceleraría las solicitudes a {origins}."
+    }
+  },
+  "perf-critical-request-chains": {
+    "title": "Cadenas de solicitudes críticas profundas",
+    "why": "Las cadenas largas de solicitudes dependientes en la ruta crítica retrasan el primer renderizado y el LCP. Lighthouse 13.6 las indica en network-dependency-tree-insight, que sustituyó a critical-request-chains y network-dependency-tree-insight.",
+    "fix": "Aplana las cadenas (@import de CSS, CSS o fuentes cargados por JS) y precarga los recursos críticos que se descubren tarde.",
+    "messages": {
+      "fail": "La cadena de solicitudes críticas más profunda tiene {depth} solicitudes después del documento (cadena más larga: {duration}, laboratorio)."
+    }
+  },
+  "perf-image-delivery": {
+    "title": "Las imágenes se sirven con un tamaño y un formato eficientes",
+    "why": "Lighthouse 13.6 indica en image-delivery-insight las imágenes demasiado grandes, sin comprimir o en formatos antiguos. La documentación de Google Imágenes también recomienda imágenes adaptables con srcset y un img como alternativa. El impacto es mayor en la imagen del LCP.",
+    "fix": "Sirve srcset/sizes adaptables, AVIF/WebP y una calidad razonable; sustituye los GIF animados por vídeo.",
+    "messages": {
+      "fail": "Las imágenes se podrían servir con menos bytes (estimación de laboratorio).",
+      "fail:lcp-image": "La imagen del LCP {url} podría ser unos {savings} más pequeña mediante el tamaño, el formato o la compresión (estimación de laboratorio).",
+      "fail:images": "{count} imágenes podrían ahorrar unos {savings} en total mediante el tamaño, el formato o la compresión (estimación de laboratorio)."
+    }
+  },
+  "perf-long-tasks": {
+    "title": "Tareas largas del hilo principal durante la carga",
+    "why": "Las tareas del hilo principal de más de 50 ms bloquean la gestión de las entradas y el renderizado. web.dev documenta cómo dividirlas para mejorar la capacidad de respuesta.",
+    "fix": "Divide el trabajo y cede el control; divide el código; aplaza la hidratación de los componentes que están por debajo de la mitad superior de la página; elimina las etiquetas que ya no se usan.",
+    "messages": {
+      "fail": "{count} tareas largas bloquean el hilo principal durante {blocking} más allá de los 50 ms de cada una en la carga de laboratorio. Scripts con más tiempo de ejecución: {scripts}."
+    }
+  },
+  "perf-forced-reflow": {
+    "title": "Diseño síncrono forzado (layout thrashing)",
+    "why": "Leer propiedades de diseño después de cambiar los estilos obliga a calcular el diseño de forma síncrona. Lighthouse 13.6 lo indica en forced-reflow-insight.",
+    "fix": "Agrupa las lecturas del DOM antes de las escrituras; evita leer propiedades de diseño justo después de las mutaciones.",
+    "messages": {
+      "fail": "Hay scripts que fuerzan el cálculo síncrono del diseño durante la carga de laboratorio: {sources}."
+    }
+  },
+  "perf-dom-size": {
+    "title": "DOM grande o cálculos de estilo y diseño costosos",
+    "why": "Los DOM grandes hacen más lentos el cálculo de estilos y el diseño, lo que afecta a la capacidad de respuesta. Lighthouse 13.6 lo indica en dom-size-insight.",
+    "fix": "Elimina el marcado duplicado oculto (por ejemplo, menús separados para móvil y ordenador), pagina o virtualiza las listas largas y usa content-visibility:auto para las secciones fuera de la pantalla.",
+    "messages": {
+      "fail": "El DOM renderizado tiene {count} elementos, por encima de 1400.",
+      "fail:costly-rendering": "Lighthouse ha registrado un recálculo costoso del diseño o de los estilos en la traza de laboratorio; el DOM renderizado solo tiene {count} elementos, así que revisa los scripts y los estilos que lo provocaron en lugar del tamaño del DOM.",
+      "fail:warn": "El DOM renderizado tiene {count} elementos, por encima del antiguo nivel de advertencia de 800."
+    }
+  },
+  "perf-third-party-cost": {
+    "title": "Los scripts de terceros y del gestor de etiquetas consumen tiempo del hilo principal y bytes",
+    "why": "Lighthouse 13.6 atribuye en third-parties-insight el tiempo del hilo principal y el tamaño de transferencia a entidades de terceros. Los scripts de terceros pesados ralentizan la carga y la capacidad de respuesta.",
+    "fix": "Elimina las etiquetas del gestor de etiquetas que no se usan, carga los terceros no críticos después de la interacción o cuando el navegador esté inactivo, aloja la CMP en tu propio servidor o usa preconnect para ella, y usa fachadas para los elementos insertados pesados.",
+    "messages": {
+      "fail": "El código de terceros ocupa tiempo del hilo principal en la carga de laboratorio: {entities}.",
+      "fail:bytes": "El código de terceros añade tamaño de transferencia en la carga de laboratorio: {entities}.",
+      "fail:consent-manager": "El gestor de consentimiento cuesta {entities} en la carga de laboratorio. Puede ser obligatorio por ley, así que busca una forma de carga más ligera en lugar de eliminarlo."
+    }
+  },
+  "perf-third-party-facades": {
+    "title": "Elementos insertados pesados cargados de inmediato (candidatos a fachada)",
+    "why": "Los elementos insertados pesados, como los reproductores de vídeo y los widgets de chat, se pueden sustituir por una fachada ligera que carga el elemento al interactuar. Lighthouse 13 eliminó su auditoría de fachadas, así que la herramienta lo calcula por su cuenta.",
+    "fix": "Usa una fachada (por ejemplo, lite-youtube-embed o un cargador de chat) que cargue el elemento real al hacer clic.",
+    "messages": {
+      "fail": "Hay elementos insertados que cargan todo su código antes de cualquier interacción: {embeds}. Una fachada lo carga cuando el visitante lo pide."
+    }
+  },
+  "perf-unused-code": {
+    "title": "JavaScript y CSS sin usar",
+    "why": "Lighthouse 13.6 indica en unused-javascript y unused-css-rules el JavaScript y el CSS que se descargan pero no se usan durante la carga. El código que se usa más adelante en la sesión también cuenta como no usado.",
+    "fix": "Divide el código por rutas, prescinde de las bibliotecas que no se usan, purga el CSS sin usar y elimina las etiquetas obsoletas.",
+    "messages": {
+      "fail": "El código que carga la página no se usa durante la carga de laboratorio.",
+      "fail:javascript": "Unos {size} de JavaScript no se usan durante la carga de laboratorio, que no tiene interacciones: {files}.",
+      "fail:css": "Unos {size} de CSS no se usan durante la carga de laboratorio, que no tiene interacciones: {files}."
+    }
+  },
+  "perf-legacy-duplicated-js": {
+    "title": "Polyfills heredados y módulos duplicados",
+    "why": "Lighthouse 13.6 indica en legacy-javascript-insight los polyfills para funciones que admiten los navegadores modernos, y en duplicated-javascript-insight los módulos empaquetados dos veces.",
+    "fix": "Configura el empaquetador para los navegadores de Baseline y elimina las dependencias duplicadas.",
+    "messages": {
+      "fail": "Los scripts incluyen código que los navegadores modernos no necesitan.",
+      "fail:legacy": "Los scripts incluyen unos {size} de polyfills y transformaciones para funciones que admiten los navegadores de destino: {files}.",
+      "fail:duplicated": "Los scripts empaquetan los mismos módulos más de una vez, unos {size}: {files}."
+    }
+  },
+  "perf-minification": {
+    "title": "CSS/JS sin minificar",
+    "why": "Lighthouse 13.6 indica en unminified-css y unminified-javascript el CSS y el JavaScript que podrían ser más pequeños si se minificaran. La compresión ya elimina la mayor parte de la diferencia.",
+    "fix": "Activa la minificación en la compilación.",
+    "messages": {
+      "fail": "Minificar el CSS y el JavaScript ahorraría unos {size} (estimación de laboratorio)."
+    }
+  },
+  "perf-total-byte-weight": {
+    "title": "Peso total de la página y número de solicitudes",
+    "why": "Lighthouse 13.6 marca en total-byte-weight las páginas de más de unos 4 MB. El peso por sí solo no es un factor de posicionamiento; lo que más importa son los bytes de la ruta crítica.",
+    "fix": "Localiza lo que más contribuye al peso (imágenes, vídeo, JS) y trátalo mediante las reglas específicas.",
+    "messages": {
+      "fail": "La carga de laboratorio transfiere {size} en al menos {requests} solicitudes, por encima de 4000 KiB.",
+      "fail:note": "La carga de laboratorio transfiere {size} en al menos {requests} solicitudes, por encima de 2667 KiB."
+    }
+  },
+  "perf-speculation-rules": {
+    "title": "Navegaciones instantáneas mediante reglas de especulación",
+    "why": "Chrome admite reglas de especulación que obtienen por adelantado o prerrenderizan las páginas siguientes probables para conseguir una navegación casi instantánea. Que no existan no es un defecto; las reglas que coinciden con URLs que cambian el estado sí lo son.",
+    "fix": "Plantéate usar reglas de documento con eagerness moderate para las páginas siguientes probables; excluye los enlaces de cierre de sesión y los que cambian el estado; gestiona la analítica en la activación.",
+    "messages": {
+      "fail": "Las reglas de especulación pueden obtener por adelantado o prerrenderizar enlaces que cambian el estado: {urls}.",
+      "fail:state-changing-urls": "Las reglas de especulación pueden obtener por adelantado o prerrenderizar enlaces que cambian el estado: {urls}. Exclúyelos para que la especulación no pueda cerrar la sesión de los visitantes ni modificar un carrito.",
+      "fail:invalid-json": "Un script de reglas de especulación no es JSON válido, así que los navegadores lo ignoran."
+    }
+  },
+  "perf-html-cdn": {
+    "title": "HTML no servido desde un CDN o una caché perimetral",
+    "why": "Servir el HTML desde un CDN o una caché perimetral reduce el TTFB para los usuarios lejanos. La detección se basa en las cabeceras de respuesta y es heurística, así que la regla dice que no se han detectado marcadores de CDN, no que no exista un CDN.",
+    "fix": "Sirve a través de un CDN; almacena brevemente en la caché perimetral el HTML estático o anónimo; evita los parámetros de consulta únicos que se saltan la caché.",
+    "messages": {
+      "fail": "No se han detectado marcadores de CDN en las cabeceras de respuesta de {count} páginas HTML auditadas. Algunos CDN eliminan sus marcadores, así que esto no demuestra que no se use un CDN."
+    }
+  },
+  "perf-consent-lab-bias": {
+    "title": "El banner de consentimiento afecta a las mediciones de laboratorio",
+    "why": "Lighthouse mide a un visitante nuevo, que siempre ve el banner de consentimiento, mientras que los datos de campo mezclan usuarios nuevos y recurrentes. Cuando el elemento del LCP está en la interfaz de consentimiento, el LCP de laboratorio se anota.",
+    "fix": "Si el banner es el elemento del LCP en móvil, hazlo más pequeño o renderízalo pronto en el servidor; prueba también el estado aceptado con una cabecera de cookie.",
+    "messages": {
+      "fail": "El elemento del LCP de laboratorio ({element}) está dentro de un cuadro de diálogo de consentimiento. El laboratorio mide a un visitante nuevo, mientras que los datos de campo mezclan a visitantes que ya lo han respondido."
+    }
+  }
+}
