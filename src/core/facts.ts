@@ -1,7 +1,9 @@
 import type { CruxFormFactor, CruxOutcome } from '../data/crux.ts';
+import type { ProbeAgent } from '../data/agents.ts';
 import type { FetchResult } from '../fetch/http.ts';
 import type { RobotsAvailability } from '../fetch/robots.ts';
 import type { SitemapDocument } from '../fetch/sitemap.ts';
+import type { TlsFacts } from '../fetch/tls.ts';
 import type { ParsedHtml } from '../parse/html.ts';
 import type { StructuredData } from '../parse/structured-data.ts';
 import type { RenderResult } from '../render/chrome.ts';
@@ -30,6 +32,14 @@ export interface PageFacts {
   readonly unblockedRender?: RenderFacts;
   readonly lighthouse?: LighthouseOutcome;
   readonly crux?: Readonly<Record<'url' | 'origin', Readonly<Partial<Record<CruxFormFactor, CruxOutcome>>>>>;
+  /** The raw page fetched again as Googlebot and as a browser, to compare what each receives. */
+  readonly uaProbes?: readonly AgentProbe[];
+}
+
+export interface AgentProbe {
+  readonly agent: ProbeAgent;
+  readonly url: string;
+  readonly fetch: FetchResult;
 }
 
 export interface SitemapFacts {
@@ -58,4 +68,8 @@ export interface SiteFacts {
   /** True when a crawl ran, so site-scope graph rules can be evaluated. */
   readonly crawled: boolean;
   readonly homeUrl?: string;
+  /** Certificate of the audited host, for https targets. */
+  readonly tls?: TlsFacts;
+  /** The home page fetched with the user agent of each crawler that decides search and AI-answer visibility. */
+  readonly agentProbes: readonly AgentProbe[];
 }

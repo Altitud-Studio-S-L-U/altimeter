@@ -88,6 +88,7 @@ export interface PageSpec extends ResponseSpec {
   readonly unblockedRender?: RenderSpec | string;
   readonly lighthouse?: LighthouseOutcome;
   readonly crux?: PageFacts['crux'];
+  readonly uaProbes?: PageFacts['uaProbes'];
 }
 
 const asRender = (url: string, spec: RenderSpec | string | undefined, mode: RenderResult['mode']) =>
@@ -115,6 +116,7 @@ export function page(url: string, spec: PageSpec = {}): PageFacts {
     ...(unblockedRender ? { unblockedRender } : {}),
     ...(spec.lighthouse ? { lighthouse: spec.lighthouse } : {}),
     ...(spec.crux ? { crux: spec.crux } : {}),
+    ...(spec.uaProbes ? { uaProbes: spec.uaProbes } : {}),
   };
 }
 
@@ -129,6 +131,8 @@ export interface SiteSpec {
   readonly siblings?: readonly PageFacts[];
   readonly crawled?: boolean;
   readonly homeUrl?: string;
+  readonly agentProbes?: SiteFacts['agentProbes'];
+  readonly tls?: SiteFacts['tls'];
 }
 
 export function site(spec: SiteSpec): SiteFacts {
@@ -168,6 +172,8 @@ export function site(spec: SiteSpec): SiteFacts {
     pages: new Map(spec.pages.map(entry => [entry.url, entry])),
     crawled: spec.crawled ?? false,
     ...(spec.homeUrl ? { homeUrl: spec.homeUrl } : {}),
+    agentProbes: spec.agentProbes ?? [],
+    ...(spec.tls ? { tls: spec.tls } : {}),
   };
 }
 

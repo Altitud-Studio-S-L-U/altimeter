@@ -1,11 +1,13 @@
 import type { lookup as dnsLookup } from 'node:dns';
 import { performance } from 'node:perf_hooks';
-import type { PageFacts, ProbeFacts, RenderFacts, SiteFacts, SitemapFacts } from '../core/facts.ts';
+import type { AgentProbe, PageFacts, ProbeFacts, RenderFacts, SiteFacts, SitemapFacts } from '../core/facts.ts';
+import { browserAgent, googlebotSmartphone, probeAgents, type ProbeAgent } from '../data/agents.ts';
 import { queryCrux, cruxEndpoint, type CruxFormFactor, type CruxOutcome } from '../data/crux.ts';
 import { HttpClient, defaultUserAgent } from '../fetch/http.ts';
 import { publicOnly, type NetworkPolicy } from '../fetch/ip-guard.ts';
 import { isAllowed, robotsAvailability, type RobotsAvailability } from '../fetch/robots.ts';
 import { parseSitemap } from '../fetch/sitemap.ts';
+import { inspectTls } from '../fetch/tls.ts';
 import { findChrome, launchAuditBrowser, renderPage, type AuditBrowser, type RenderMode } from '../render/chrome.ts';
 import { runLighthouse } from '../render/lighthouse.ts';
 import { documentFacts, fetchPage, isHtmlResponse, decodeHtml } from './page.ts';
@@ -149,6 +151,12 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
     const notFound = missing.fetch.error === undefined && isHtmlResponse(missing.fetch.headers, missing.fetch.body)
       ? { ...missing, parsed: documentFacts(decodeHtml(missing.fetch.headers, missing.fetch.body)).parsed }
       : missing;
+    log('Probing crawler user agents');
+    const fetchAs = async (agent: ProbeAgent, url: string): Promise<AgentProbe> => ({ agent, url, fetch: await client.fetch(url, { headers: { 'user-agent': agent.userAgent }, maxBytes: 4 * 1024 * 1024 }) });
+    const agentProbes = await Promise.all(probeAgents.map(agent => fetchAs(agent, homeUrl)));
+    const uaProbes = page.raw ? await Promise.all([googlebotSmartphone, browserAgent].map(agent => fetchAs(agent, page.fetch.finalUrl))) : [];
+    if (uaProbes.length > 0) pages.set(page.url, { ...pages.get(page.url)!, uaProbes });
+    const tls = target.protocol === 'https:' ? await inspectTls(target.hostname, { policy: options.policy ?? publicOnly, ...(target.port ? { port: Number(target.port) } : {}), ...(options.lookup ? { lookup: options.lookup } : {}) }) : undefined;
     const siblingUrls = pickSiblings(page, new Set([page.url, page.fetch.finalUrl, homeUrl, homeFinal]));
     const siblings = await Promise.all(siblingUrls.map(url => fetchPage(client, url)));
 
@@ -210,6 +218,8 @@ export async function collect(options: CollectOptions): Promise<CollectResult> {
       pages,
       crawled: false,
       homeUrl: homeFinal,
+      agentProbes,
+      ...(tls ? { tls } : {}),
     };
     return { site, versions, warnings, durationMs: performance.now() - started };
   } finally {

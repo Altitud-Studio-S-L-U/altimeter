@@ -79,7 +79,9 @@ export function inputAvailable(input: InputId, site: SiteFacts, page: PageFacts 
     case 'crux':
       return page?.crux !== undefined && Object.values(page.crux).some(byForm => Object.values(byForm).some(result => result?.status !== 'no-key'));
     case 'tls':
+      return site.tls !== undefined;
     case 'ua-probe':
+      return page ? (page.uaProbes?.length ?? 0) > 0 : site.agentProbes.length > 0;
     case 'gsc':
     case 'bing':
     case 'bot-activity':
