@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
+import { crawlSite } from '../src/collect/crawl.ts';
 import { collect } from '../src/collect/index.ts';
+import type { HttpClient } from '../src/fetch/http.ts';
 
 let server: Server;
 let origin: string;
@@ -54,5 +56,11 @@ describe('crawl', () => {
     const { site } = await collect({ url: `${origin}/`, policy, render: false, crawl: true, maxPages: 3, crawlDelayMs: 0 });
     assert.equal(site.pages.size, 3);
     assert.ok((site.crawlSkipped ?? 0) > 0);
+  });
+
+  test('queues at most four times the page limit of the seeds', async () => {
+    const seeds = Array.from({ length: 1000 }, (_, index) => `https://example.com/p/${index}/`);
+    const { blockedByRobots } = await crawlSite({} as HttpClient, { seeds, known: new Map(), maxPages: 10, robotsAllows: async () => false });
+    assert.deepEqual(new Set(blockedByRobots), new Set(seeds.slice(0, 40)));
   });
 });
