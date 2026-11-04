@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import type { SiteFacts } from '../../src/core/facts.ts';
 import type { Severity } from '../../src/core/types.ts';
+import type { FetchResult, Hop } from '../../src/fetch/http.ts';
 import { robotsAvailability } from '../../src/fetch/robots.ts';
 import { findingMessage } from '../../src/i18n/messages.ts';
 import { implementations } from '../../src/rules/crawl/index.ts';
 import type { Finding } from '../../src/rules/engine.ts';
-import { evaluate, page, response, site, type ResponseSpec, type SiteSpec } from '../support/facts.ts';
+import { evaluate, headers, page, response, site, type ResponseSpec, type SiteSpec } from '../support/facts.ts';
 
 function run(id: string, facts: SiteFacts | SiteSpec, url?: string) {
   const implementation = implementations.find(entry => entry.id === id);
@@ -44,6 +45,19 @@ function withRobots(facts: SiteFacts, spec: ResponseSpec & { body: Buffer | stri
 /** robots.txt sent with the type Express gives res.send(string). */
 const servedAsHtml = (body: string) => withRobots(site({ pages: [home()], robots: '' }), { body, headers: { 'content-type': 'text/html; charset=utf-8' } });
 
+/** A robots.txt that redirects back to itself, as the HTTP client reports it, with the availability the collector derives and with the one Google applies. */
+function redirectLoop(availability: 'collected' | 'missing-file'): SiteFacts {
+  const url = `${origin}/robots.txt`;
+  const hops: Hop[] = [
+    { url, status: 301, headers: headers({ location: '/robots.txt/' }), location: `${url}/`, ttfbMs: 10 },
+    { url: `${url}/`, status: 301, headers: headers({ location: '/robots.txt' }), location: url, ttfbMs: 10 },
+  ];
+  const fetch: FetchResult = { requestedUrl: url, finalUrl: url, hops, status: 301, headers: hops[1]!.headers, body: Buffer.alloc(0), transferBytes: 0, truncated: false,
+    durationMs: 20, error: { code: 'redirect-loop', message: `Redirect loop at ${url}` } };
+  const robots = availability === 'collected' ? robotsAvailability(undefined, fetch.body) : robotsAvailability(301, fetch.body, true);
+  return { ...site({ pages: [home()] }), robots: { url, fetch, availability: robots } };
+}
+
 describe('crawl-robots-fetch-status', () => {
   const id = 'crawl-robots-fetch-status';
   test('passes on 200 and on 404', () => {
@@ -60,6 +74,13 @@ describe('crawl-robots-fetch-status', () => {
   });
   test('reports 403 as info only', () => {
     assertFail(run(id, { pages: [home()], robots: { status: 403 } }).finding, 'info', 'access-denied');
+  });
+  test('passes on a redirect loop, which Google reads as a missing file and crawl-robots-redirects reports', () => {
+    for (const availability of ['collected', 'missing-file'] as const) {
+      const { finding, excerpts } = run(id, redirectLoop(availability));
+      assertOutcome(finding, 'pass');
+      assert.deepEqual(excerpts(), ['HTTP 301']);
+    }
   });
   test('is not evaluated without a robots.txt fetch', () => {
     assertOutcome(run(id, { pages: [home()] }).finding, 'not_evaluated', 'missing-input:robots');
@@ -80,6 +101,11 @@ describe('crawl-robots-redirects', () => {
     assertFail(finding, 'high', 'too-many-hops');
     assert.equal(excerpts().length, 6);
     assert.equal(excerpts()[0], '302 -> https://example.com/r1.txt');
+  });
+  test('fails high on a redirect loop', () => {
+    const { finding, excerpts } = run(id, redirectLoop('collected'));
+    assertFail(finding, 'high', 'loop');
+    assert.deepEqual(excerpts(), [`301 -> ${origin}/robots.txt/`, `301 -> ${origin}/robots.txt`]);
   });
   test('does not apply without a redirect', () => {
     assertOutcome(run(id, { pages: [home()], robots: 'User-agent: *' }).finding, 'not_applicable', 'no-redirect');

@@ -53,7 +53,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": ">5 hops = fail high (treated as 404, so no rules). Cross-host redirect = pass, but the rules then apply to the original host (info). A redirect to an HTML page that answers 200 = see crawl-robots-format.",
+    "thresholds": ">5 hops or a redirect loop = fail high (treated as 404, so no rules). Cross-host redirect = pass, but the rules then apply to the original host (info). A redirect to an HTML page that answers 200 = see crawl-robots-format.",
     "sources": [
       {
         "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",

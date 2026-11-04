@@ -33,7 +33,8 @@ const robotsFetchStatus: RuleImplementation = {
     const status = robots.fetch.status;
     const observed = status === undefined ? `no response (${robots.fetch.error?.code ?? 'network error'})` : `HTTP ${status}`;
     const id = evidence.add({ kind: 'robots', url: robots.url, label: 'robots.txt fetch outcome', excerpt: observed });
-    if (robots.availability.kind === 'unreachable') {
+    // Google gives up on a redirect loop after five hops and reads the file as missing; crawl-robots-redirects reports the loop.
+    if (robots.availability.kind === 'unreachable' && robots.fetch.error?.code !== 'redirect-loop') {
       return failure({ severity: 'critical', evidence: [id], reason: status === undefined ? 'network-error' : 'server-error', params: { url: robots.url, status: observed } });
     }
     if (status === 401 || status === 403) return failure({ severity: 'info', evidence: [id], reason: 'access-denied', params: { url: robots.url, status: observed } });
@@ -46,9 +47,10 @@ const robotsRedirects: RuleImplementation = {
   evaluate({ site, evidence }) {
     const fetch = site.robots!.fetch;
     const redirects = fetch.hops.filter(hop => hop.location !== undefined);
-    if (fetch.error?.code === 'too-many-redirects' || redirects.length > 5) {
+    const loop = fetch.error?.code === 'redirect-loop';
+    if (loop || fetch.error?.code === 'too-many-redirects' || redirects.length > 5) {
       const ids = redirects.map((hop, index) => evidence.add({ kind: 'redirect', url: hop.url, label: `robots.txt redirect hop ${index + 1}`, excerpt: `${hop.status} -> ${hop.location}` }));
-      return failure({ severity: 'high', evidence: ids, reason: 'too-many-hops', params: { url: robotsUrl(site), hops: redirects.length } });
+      return failure({ severity: 'high', evidence: ids, reason: loop ? 'loop' : 'too-many-hops', params: { url: robotsUrl(site), hops: redirects.length } });
     }
     if (fetch.hops.length === 0) return notEvaluated('robots-unreachable');
     if (redirects.length === 0) return notApplicable('no-redirect');

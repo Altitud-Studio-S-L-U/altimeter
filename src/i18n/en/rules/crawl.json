@@ -10,7 +10,8 @@
   "crawl-robots-redirects": {
     "messages": {
       "fail": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply.",
-      "fail:too-many-hops": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply."
+      "fail:too-many-hops": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply.",
+      "fail:loop": "{url} redirects in a loop, back to a URL it already visited after {hops} hops. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply."
     }
   },
   "crawl-robots-format": {
