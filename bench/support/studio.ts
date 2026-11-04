@@ -146,11 +146,11 @@ document.querySelector('[data-consent-reject]')?.addEventListener('click', () =>
 const assetCss = '/assets/global.4f9a1c2e.css';
 const assetJs = '/assets/site.8b3e2d1f.js';
 
-export function escapeHtml(value: string): string {
+function escapeHtml(value: string): string {
   return value.replace(/&/gu, '&amp;').replace(/</gu, '&lt;').replace(/>/gu, '&gt;').replace(/"/gu, '&quot;');
 }
 
-export function weakEtag(body: string | Buffer): string {
+function weakEtag(body: string | Buffer): string {
   return `W/"${createHash('sha256').update(body).digest('hex').slice(0, 20)}"`;
 }
 
