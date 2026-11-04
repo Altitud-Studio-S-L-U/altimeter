@@ -33,7 +33,7 @@ const tagged = [{ time: '2026-10-31T12:00:00Z', count: 4 }];
 const allFields = ['count', 'sum_edgeResponseBytes', 'avg_sampleInterval', 'dimensions_date', 'dimensions_userAgent', 'dimensions_clientRequestPath', 'dimensions_edgeResponseStatus',
   'dimensions_verifiedBotCategory', 'dimensions_clientIP', 'dimensions_requestSource', 'dimensions_clientRefererHost', 'dimensions_clientRequestQuery'];
 
-const state = { maxPageSize: 100, availableFields: allFields, notOlderThan: 864_000, settingsErrors: undefined as string | undefined, queries: [] as string[] };
+const state = { maxPageSize: 100, availableFields: allFields, notOlderThan: 864_000, settingsErrors: undefined as string | undefined, queries: [] as string[], rows: dataset };
 
 const body = (request: IncomingMessage) => new Promise<string>(resolve => { let text = ''; request.on('data', chunk => (text += chunk)); request.on('end', () => resolve(text)); });
 
@@ -55,7 +55,7 @@ function answer(query: string): unknown {
   }
   const patterns = [...query.matchAll(/userAgent_like: "%([^"%]+)%"/gu)].map(match => match[1]!);
   const groups = new Map<string, { count: number; sum: { edgeResponseBytes: number }; avg: { sampleInterval: number }; dimensions: Record<string, unknown> }>();
-  for (const row of dataset.filter(entry => inRange(entry.time) && patterns.some(pattern => entry.userAgent.includes(pattern)))) {
+  for (const row of state.rows.filter(entry => inRange(entry.time) && patterns.some(pattern => entry.userAgent.includes(pattern)))) {
     const values: Record<string, unknown> = { ...row, date: row.time.slice(0, 10) };
     const picked = Object.fromEntries(dimensions.map(name => [name, values[name]]));
     const key = JSON.stringify(picked);
@@ -98,10 +98,19 @@ after(async () => {
 });
 
 beforeEach(() => {
-  Object.assign(state, { maxPageSize: 100, availableFields: allFields, notOlderThan: 864_000, settingsErrors: undefined, queries: [] });
+  Object.assign(state, { maxPageSize: 100, availableFields: allFields, notOlderThan: 864_000, settingsErrors: undefined, queries: [], rows: dataset });
 });
 
 const window = { start: new Date(now.getTime() - 30 * 86_400_000), end: now };
+
+/** Googlebot fills a page of two rows every day, so each slice is split down to Googlebot alone; OAI-SearchBot came on the last day only. */
+function busyZone(): Row[] {
+  const days = Array.from({ length: 11 }, (_, index) => new Date(Date.parse('2026-10-25T08:00:00Z') + index * 86_400_000).toISOString());
+  return [
+    ...days.flatMap(time => ['/a', '/b'].map(path => ({ time, userAgent: googlebot, clientRequestPath: path, edgeResponseStatus: 200, verifiedBotCategory: 'Search Engine Crawler', clientIP: '66.249.66.1', count: 20, bytes: 2000 }))),
+    { time: '2026-11-04T09:00:00Z', userAgent: oai, clientRequestPath: '/news/', edgeResponseStatus: 200, verifiedBotCategory: '', clientIP: '135.234.64.9', count: 2, bytes: 200 },
+  ];
+}
 
 describe('Cloudflare GraphQL Analytics', () => {
   test('finds the zone of a subdomain, reads the limits first and keeps every query within them', async () => {
@@ -138,6 +147,20 @@ describe('Cloudflare GraphQL Analytics', () => {
     assert.ok(state.queries.some(query => (query.match(/userAgent_like/gu) ?? []).length === 1), 'single-crawler queries were made');
     assert.equal(data.truncated, true);
     assert.ok(data.truncatedBots.includes('googlebot'), 'Googlebot alone still fills a page');
+  });
+
+  test('reads the newest days first and keeps only the days read in full when the query limit is reached', async () => {
+    Object.assign(state, { maxPageSize: 2, rows: busyZone() });
+    const client = loopbackClient();
+    const data = await fetchCloudflareActivity({ client, token, zone: zoneTag, endpoint, ...window, maxQueries: 30 });
+    await client.close();
+    assert.ok(data.queries <= 30);
+    assert.ok(data.observations.some(row => row.path === '/news/'), 'the last day was read');
+    assert.equal(data.start.toISOString(), '2026-10-31T12:01:00.000Z', 'the window starts with the oldest slice read in full');
+    assert.ok(data.observations.every(row => row.time >= Date.parse('2026-11-01T00:00:00Z')), 'nothing is kept from a slice read in part');
+    assert.match(data.warnings.join('\n'), /only the data from 2026-10-31 was read/u);
+    const referralStarts = state.queries.filter(query => query.includes('clientRefererHost_in')).map(query => /datetime_geq: "([^"]+)"/u.exec(query)![1]);
+    assert.deepEqual(referralStarts, ['2026-10-31T12:01:00Z', '2026-11-03T12:01:00Z'], 'referrals are read for the same days');
   });
 
   test('groups only by the fields the plan exposes', async () => {
@@ -196,6 +219,25 @@ describe('crawler activity from Cloudflare', () => {
       assert.ok(!JSON.stringify(activity).includes(token), 'the token is never part of the activity');
       assert.ok(!lists.requests.includes('cloudflare-v4'), 'Cloudflare\'s own ranges are not needed for its analytics');
       await assert.rejects(collectBotActivity({ cloudflare: { zone: 'example.com', endpoint }, now, client, env: {} }), /ALTIMETER_CLOUDFLARE_API_TOKEN/u);
+    } finally {
+      await client.close();
+      await lists.close();
+      await rm(cache, { recursive: true, force: true });
+    }
+  });
+
+  test('starts the window where the data read in full starts, so absences are counted over those days only', async () => {
+    Object.assign(state, { maxPageSize: 2, rows: busyZone() });
+    const lists = await listServer();
+    const cache = await mkdtemp(join(tmpdir(), 'altimeter-cf-'));
+    const client = loopbackClient();
+    try {
+      const activity = await collectBotActivity({
+        cloudflare: { zone: 'example.com', token, endpoint, maxQueries: 30 }, now, client, dns: scriptedResolver({}, {}),
+        ipLists: { cacheDirectory: cache, urls: lists.urls }, env: {},
+      });
+      assert.equal(activity.window.start, '2026-10-31T12:01:00.000Z');
+      assert.equal(activity.bots.find(bot => bot.id === 'oai-searchbot')?.verified.hits, 2);
     } finally {
       await client.close();
       await lists.close();
