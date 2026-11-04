@@ -1,1 +1,450 @@
-{}
+{
+  "crawl-robots-fetch-status": {
+    "messages": {
+      "fail": "{url} answered {status}.",
+      "fail:server-error": "{url} answered {status}. Google treats a robots.txt server error as a full disallow: it stops crawling the site for 12 hours and then uses its last cached copy for up to 30 days.",
+      "fail:network-error": "{url} could not be fetched: {status}. Google treats an unreachable robots.txt like a server error and stops crawling the site.",
+      "fail:access-denied": "{url} answered {status}. Google treats this as having no robots.txt, so no crawl restrictions apply."
+    }
+  },
+  "crawl-robots-redirects": {
+    "messages": {
+      "fail": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply.",
+      "fail:too-many-hops": "{url} redirects {hops} times. Google follows at most 5 robots.txt redirects and then treats the file as missing, so no rules apply."
+    }
+  },
+  "crawl-robots-format": {
+    "messages": {
+      "fail": "{url} cannot be read as intended.",
+      "fail:html-body": "{url} returns an HTML page instead of plain-text rules, so no rules and no Sitemap lines are read from it.",
+      "fail:over-size-limit": "{url} is {bytes} bytes. Google reads only the first 500 KiB, so {lost} rule lines after that point are ignored.",
+      "fail:invalid-utf8": "{count} allow or disallow lines in {url} contain bytes that are not valid UTF-8."
+    }
+  },
+  "crawl-robots-parse-errors": {
+    "messages": {
+      "fail": "{count} lines in {url} are not read as intended (lines {lines}).",
+      "fail:misspelled-field": "{count} lines in {url} are not read as intended (lines {lines}), including a misspelled field name.",
+      "fail:rule-outside-group": "{count} lines in {url} are not read as intended (lines {lines}), including rules before any user-agent line, which apply to no crawler.",
+      "fail:missing-separator": "{count} lines in {url} are not read as intended (lines {lines}), including lines without a colon, which are ignored.",
+      "fail:path-without-slash": "{count} lines in {url} are not read as intended (lines {lines}), including paths that start with neither / nor *."
+    }
+  },
+  "crawl-robots-unsupported-directives": {
+    "messages": {
+      "fail": "{url} uses fields Google does not support: {fields}.",
+      "fail:noindex": "{url} contains {count} noindex lines. Google ignores noindex in robots.txt, so those URLs are not removed from results. Unsupported fields found: {fields}.",
+      "fail:ignored-fields": "{url} uses fields Google ignores: {fields}. Some other engines may still read them."
+    }
+  },
+  "crawl-robots-blocks-site": {
+    "messages": {
+      "fail": "robots.txt disallows the home page {url} for {crawler}.",
+      "fail:home-googlebot": "robots.txt disallows the home page {url} for {crawler}, so Google cannot crawl the site from its entry point.",
+      "fail:home-bingbot": "robots.txt disallows the home page {url} for {crawler} while Googlebot is allowed.",
+      "fail:most-pages": "robots.txt disallows {blocked} of {total} crawled indexable-looking pages for Googlebot."
+    }
+  },
+  "crawl-robots-blocks-page": {
+    "messages": {
+      "fail": "robots.txt disallows {url} for {crawler}.",
+      "fail:disallowed": "robots.txt disallows {url} for {crawler}. The URL can still appear in results without its content if it is linked.",
+      "fail:conflict-home": "robots.txt disallows the home page {url} for {crawler}.",
+      "fail:conflict-sitemap": "robots.txt disallows {url} for {crawler}, while a sitemap lists it for crawling.",
+      "fail:conflict-canonical": "robots.txt disallows {url} for {crawler}, while another page names it as its canonical.",
+      "fail:conflict-hreflang": "robots.txt disallows {url} for {crawler}, while another page lists it as an hreflang alternate.",
+      "fail:bingbot-only": "robots.txt disallows {url} for {crawler} while Googlebot is allowed."
+    }
+  },
+  "crawl-robots-group-override": {
+    "messages": {
+      "fail": "{count} disallow rules of the * group are not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
+      "fail:crawl-trap": "{count} disallow rules of the * group, including crawl traps, are not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
+      "fail:missing-rules": "{count} disallow rules of the * group are not repeated in the groups for {tokens}; a crawler with its own group ignores the * group.",
+      "fail:intentional-allow": "The * group disallows everything and the {token} group allows it, which works as an allow list."
+    }
+  },
+  "crawl-robots-sitemap-lines": {
+    "messages": {
+      "fail": "{count} declared sitemaps cannot be used.",
+      "fail:relative-url": "{count} declared sitemaps cannot be used; a Sitemap line must hold an absolute URL.",
+      "fail:declared-not-200": "{count} declared sitemaps do not answer 200.",
+      "fail:no-sitemap": "No sitemap is declared in robots.txt or a link element, and /sitemap.xml does not answer with a sitemap. It may still be submitted in Search Console, which this audit cannot see."
+    }
+  },
+  "crawl-noindex-blocked-by-robots": {
+    "messages": {
+      "fail": "{url} carries noindex, but robots.txt disallows it for Googlebot ({rule}), so Google never reads the noindex and may index the URL without its content if it is linked."
+    }
+  },
+  "crawl-bing-crawl-delay": {
+    "messages": {
+      "fail": "robots.txt sets crawl-delay {delay} for Bingbot. Google ignores the field.",
+      "fail:present": "robots.txt sets crawl-delay {delay} for Bingbot. Google ignores the field.",
+      "fail:slow-for-size": "robots.txt sets crawl-delay {delay} for Bingbot while the sitemaps list {urls} URLs, which limits how fast Bing can crawl them."
+    }
+  },
+  "crawl-meta-robots-noindex": {
+    "messages": {
+      "fail": "{url} tells {crawler} not to index it.",
+      "fail:conflict-home": "The home page {url} tells {crawler} not to index it.",
+      "fail:conflict-sitemap": "{url} tells {crawler} not to index it, while a sitemap lists it.",
+      "fail:conflict-canonical": "{url} tells {crawler} not to index it, while another page names it as its canonical.",
+      "fail:conflict-hreflang": "{url} tells {crawler} not to index it, while another page lists it as an hreflang alternate.",
+      "fail:content-page": "{url} tells {crawler} not to index it. Confirm that this content page is meant to stay out of search results.",
+      "fail:bingbot-only": "{url} tells {crawler} not to index it, while Googlebot may index it."
+    }
+  },
+  "crawl-noindex-raw-vs-rendered": {
+    "messages": {
+      "fail": "The robots directives of {url} differ between the raw HTML and the rendered DOM.",
+      "fail:removed-by-js": "The raw HTML of {url} carries noindex and JavaScript removes it. Google may skip rendering a page that has noindex in the HTML, so the page stays out of the index.",
+      "fail:added-by-js": "JavaScript adds noindex to {url}; the raw HTML does not carry it. Whether Google applies it depends on rendering.",
+      "fail:error-view": "JavaScript adds noindex to {url}, which shows an error view; this is a documented way to keep application error views out of the index."
+    }
+  },
+  "crawl-robots-directives-conflict": {
+    "messages": {
+      "fail": "The robots directives for {url} contradict each other; the most restrictive value applies: {effective}.",
+      "fail:index-noindex": "{url} declares both index and noindex; the most restrictive value applies: {effective}.",
+      "fail:snippet": "{url} declares conflicting snippet limits; the most restrictive value applies: {effective}.",
+      "fail:follow-nofollow": "{url} declares both follow and nofollow; the most restrictive value applies: {effective}.",
+      "fail:differing-values": "{url} declares different preview limits; the most restrictive value applies: {effective}.",
+      "fail:duplicate": "{url} repeats the same robots directives in more than one place; the effective result is {effective}."
+    }
+  },
+  "crawl-robots-directive-validity": {
+    "messages": {
+      "fail": "Google ignores these robots values on {url}: {tokens}.",
+      "fail:unknown-token": "Google does not recognise these robots values on {url}, so they have no effect: {tokens}.",
+      "fail:malformed-value": "These robots values on {url} are malformed and ignored by Google: {tokens}.",
+      "fail:space-separated": "These robots values on {url} are separated by spaces instead of commas: {tokens}.",
+      "fail:no-op": "These robots values on {url} have no effect in Google Search: {tokens}."
+    }
+  },
+  "crawl-unavailable-after": {
+    "messages": {
+      "fail": "{url} declares unavailable_after {date}.",
+      "fail:past": "{url} declares unavailable_after {date}, which has passed, so Google removes the page from results.",
+      "fail:soon": "{url} declares unavailable_after {date}, {days} days after it was served; Google will remove the page from results then.",
+      "fail:unparseable": "{url} declares unavailable_after with a date Google cannot read ({date}), so the directive is ignored."
+    }
+  },
+  "crawl-snippet-restrictions": {
+    "messages": {
+      "fail": "{url} restricts its snippet with {directive}.",
+      "fail:nosnippet": "{url} uses {directive}, so Google shows no text snippet and does not use the content as direct input for AI features. Confirm that this is intended.",
+      "fail:short-snippet": "{url} limits snippets with {directive}, below 50 characters. Confirm that this is intended.",
+      "fail:image-preview": "{url} limits image previews with {directive}.",
+      "fail:video-preview": "{url} disables video previews with {directive}."
+    }
+  },
+  "crawl-page-nofollow": {
+    "messages": {
+      "fail": "{url} tells crawlers not to follow its {links} internal links.",
+      "fail:hub-page": "{url} tells crawlers not to follow its {links} internal links, so this hub page does not help discover the pages it links to.",
+      "fail:leaf-page": "{url} tells crawlers not to follow its {links} internal links."
+    }
+  },
+  "crawl-indexifembedded": {
+    "messages": {
+      "fail": "{url} declares indexifembedded without noindex, so the directive has no effect."
+    }
+  },
+  "crawl-head-invalid-element": {
+    "messages": {
+      "fail": "On {url}, {cause} at line {line} ends the head early, and {count} metadata elements after it land in the body.",
+      "fail:canonical-or-hreflang-ignored": "On {url}, {cause} at line {line} ends the head early, so the canonical or hreflang links after it land in the body, where Google ignores them.",
+      "fail:metadata-displaced": "On {url}, {cause} at line {line} ends the head early, and {count} metadata elements after it land in the body."
+    }
+  },
+  "crawl-canonical-presence": {
+    "messages": {
+      "fail": "{url} declares no canonical URL.",
+      "fail:missing": "{url} declares no canonical URL, so Google chooses one itself.",
+      "fail:duplicates-answer": "{url} declares no canonical URL while {variants} variants of it answer 200, so Google has to choose among duplicates."
+    }
+  },
+  "crawl-canonical-multiple": {
+    "messages": {
+      "fail": "{url} declares {count} different canonical targets: {targets}.",
+      "fail:conflicting-targets": "{url} declares {count} different canonical targets ({targets}); Google may ignore all of them.",
+      "fail:repeated": "{url} declares the same canonical target more than once: {targets}."
+    }
+  },
+  "crawl-canonical-js-changed": {
+    "messages": {
+      "fail": "JavaScript changes the canonical of {url} from {raw} to {rendered}.",
+      "fail:changed": "JavaScript changes the canonical of {url} from {raw} to {rendered}, which sends Google two different signals.",
+      "fail:removed": "JavaScript removes the canonical {raw} of {url}.",
+      "fail:added": "The canonical {rendered} of {url} exists only after JavaScript runs."
+    }
+  },
+  "crawl-canonical-format": {
+    "messages": {
+      "fail": "The canonical of {url} is not usable as written: {href}.",
+      "fail:relative": "The canonical of {url} is a relative URL ({href}); Google recommends an absolute URL.",
+      "fail:fragment": "The canonical of {url} contains a fragment ({href}).",
+      "fail:placeholder": "The canonical of {url} contains a template placeholder ({href}).",
+      "fail:empty": "The canonical of {url} has an empty href.",
+      "fail:unparseable": "The canonical of {url} is not a valid URL ({href}).",
+      "fail:not-http": "The canonical of {url} is not an http or https URL ({href})."
+    }
+  },
+  "crawl-canonical-ignored-attributes-placement": {
+    "messages": {
+      "fail": "A rel=canonical on {url} is ignored by Google: it is {problem}.",
+      "fail:only-unusable": "The only rel=canonical on {url} is ignored by Google: it is {problem}.",
+      "fail:extra-unusable": "An extra rel=canonical on {url} is ignored by Google: it is {problem}."
+    }
+  },
+  "crawl-canonical-target-health": {
+    "messages": {
+      "fail": "The canonical target {target} of {url} is not an indexable page.",
+      "fail:target-error": "The canonical target {target} of {url} answers HTTP {status}.",
+      "fail:target-redirects": "The canonical target {target} of {url} redirects (HTTP {status}) to {location}; the canonical should name the final URL.",
+      "fail:target-blocked": "The canonical target {target} of {url} is disallowed for Googlebot in robots.txt.",
+      "fail:target-noindex": "The canonical target {target} of {url} carries noindex."
+    }
+  },
+  "crawl-canonical-protocol-host": {
+    "messages": {
+      "fail": "The canonical of {url} points to {target}.",
+      "fail:canonical-to-http": "The HTTPS page {url} names the HTTP URL {target} as its canonical.",
+      "fail:canonical-host-mismatch": "The canonical of {url} uses the host of {target}, while the site redirects host variants to {host}."
+    }
+  },
+  "crawl-canonical-cross-domain": {
+    "messages": {
+      "fail": "{url} names a canonical on another domain: {target}.",
+      "fail:cross-domain": "{url} names a canonical on another domain ({host}). Confirm that {target} is the same content on a property the owner controls.",
+      "fail:canonical-to-staging": "{url} names a canonical on what looks like a staging host ({host}): {target}."
+    }
+  },
+  "crawl-canonical-pagination": {
+    "messages": {
+      "fail": "{count} paginated pages, such as {url}, name the first page as their canonical, so items on later pages are harder to discover."
+    }
+  },
+  "crawl-canonical-chains": {
+    "messages": {
+      "fail": "Canonicals form a chain of {hops} hops starting at {url}: {path}.",
+      "fail:chain": "Canonicals form a chain of {hops} hops starting at {url}: {path}. Each page should name the final canonical directly.",
+      "fail:loop": "Canonicals form a loop starting at {url}: {path}."
+    }
+  },
+  "crawl-canonical-signal-consistency": {
+    "messages": {
+      "fail": "Canonical signals for {url} disagree.",
+      "fail:sitemap-non-canonical": "A sitemap lists {url}, which names {target} as its canonical.",
+      "fail:links-to-non-canonical": "Internal links point {otherLinks} times at URLs that canonicalise to {url} and {canonicalLinks} times at {url} itself."
+    }
+  },
+  "crawl-base-href": {
+    "messages": {
+      "fail": "The base element of {url} points to {base}.",
+      "fail:other-host": "The base element of {url} points to another site ({base}), so {count} relative URLs on the page resolve there.",
+      "fail:other-host-unused": "The base element of {url} points to another site ({base}); no relative URLs on the page depend on it.",
+      "fail:other-host-same-site": "The base element of {url} points to another host of the same site ({base}), so {count} relative URLs resolve there.",
+      "fail:relative-links-broken": "{count} relative links on {url}, resolved against the base {base}, answer an error.",
+      "fail:unparseable": "The base element of {url} is not a valid URL ({base})."
+    }
+  },
+  "crawl-status-final": {
+    "messages": {
+      "fail": "{url} answers HTTP {status}.",
+      "fail:client-error": "{url} answers HTTP {status} while the site still points to it, so it is not indexed and drops out of results if it was.",
+      "fail:server-error": "{url} answers HTTP {status}. Persistent server errors make Google drop the URL from results.",
+      "fail:rate-limited": "{url} answers HTTP {status}, which Google treats as a server error and slows its crawl.",
+      "fail:no-content": "{url} answers HTTP {status}, which carries no content to index."
+    }
+  },
+  "crawl-redirect-chain": {
+    "messages": {
+      "fail": "{url} goes through {hops} redirects.",
+      "fail:two-hops": "{url} goes through {hops} redirects before the final page.",
+      "fail:long-chain": "{url} goes through {hops} redirects before the final page.",
+      "fail:loop": "{url} redirects in a loop after {hops} hops.",
+      "fail:too-many": "{url} goes through more than {hops} redirects; Googlebot stops after 10."
+    }
+  },
+  "crawl-redirect-type": {
+    "messages": {
+      "fail": "{url} redirects to {location} with a temporary {status}.",
+      "fail:temporary-consolidation": "{url} redirects to {location} with a temporary {status}, which is a weak signal for a permanent URL normalisation.",
+      "fail:temporary-move": "{url} redirects to {location} with a temporary {status}. If the move is permanent, a 301 or 308 states it clearly."
+    }
+  },
+  "crawl-meta-refresh-js-redirect": {
+    "messages": {
+      "fail": "{url} sends visitors to {location} from the client side.",
+      "fail:instant-refresh": "{url} redirects to {location} with an instant meta refresh instead of a server redirect.",
+      "fail:delayed-refresh": "{url} redirects to {location} with a meta refresh after {delay} seconds, which Google treats as a temporary redirect.",
+      "fail:js-redirect": "{url} navigates to {location} with JavaScript, which Google sees only when rendering succeeds."
+    }
+  },
+  "crawl-soft-404": {
+    "messages": {
+      "fail": "{url} answers 200 for content that does not exist.",
+      "fail:probe-200": "An unknown path ({url}) answers 200, so every mistyped or removed URL looks like a real page to crawlers.",
+      "fail:error-page-200": "{url} answers 200 while its title or heading says the page does not exist. Confirm and return 404 or 410."
+    }
+  },
+  "crawl-redirect-to-home": {
+    "messages": {
+      "fail": "{url} redirects to the home page {location}.",
+      "fail:probe-to-home": "An unknown path ({url}) redirects to the home page {location}, which Google treats as a soft 404.",
+      "fail:variant-to-home": "The URL variant {url} redirects to the home page {location} instead of to the page it varies.",
+      "fail:page-to-home": "{url} redirects to the home page {location}. Confirm whether it should redirect to a related page or answer 404."
+    }
+  },
+  "crawl-server-errors-rate": {
+    "messages": {
+      "fail": "{count} of {total} crawled URLs ({share}) answered a server error, a 429 or a timeout.",
+      "fail:error-rate": "{count} of {total} crawled URLs ({share}) answered a server error, a 429 or a timeout.",
+      "fail:no-retry-after": "{count} crawled URLs answered 503 or 429 without a Retry-After header."
+    }
+  },
+  "crawl-host-variant-consolidation": {
+    "messages": {
+      "fail": "The {variant} variant {url} does not consolidate to {preferred}.",
+      "fail:duplicate-200": "The {variant} variant {url} answers 200 with the same content as {preferred} and no canonical to it.",
+      "fail:temporary-redirect": "The {variant} variant {url} reaches {preferred} through a temporary redirect.",
+      "fail:multiple-hops": "The {variant} variant {url} reaches {preferred} through more than one redirect."
+    }
+  },
+  "crawl-internal-links-broken-redirected": {
+    "messages": {
+      "fail": "{count} internal links point to URLs that do not answer 200: {targets}.",
+      "fail:broken": "{count} internal links point to error pages: {targets}.",
+      "fail:redirected": "{count} internal links point to redirecting URLs instead of their destination: {targets}."
+    }
+  },
+  "crawl-conditional-requests": {
+    "messages": {
+      "fail": "The HTML responses do not support conditional requests.",
+      "fail:malformed-last-modified": "{url} sends a Last-Modified header that is not an HTTP date: {value}.",
+      "fail:no-validators": "HTML pages such as {url} send neither ETag nor Last-Modified, so crawlers cannot revalidate them cheaply."
+    }
+  },
+  "crawl-html-size-limit": {
+    "messages": {
+      "fail": "The HTML of {url} is {bytes} bytes uncompressed; Googlebot for Search reads only the first 2 MB.",
+      "fail:content-after-limit": "The HTML of {url} is {bytes} bytes uncompressed; Googlebot for Search reads only the first 2 MB, and content or {count} links, headings or metadata elements come after that point.",
+      "fail:scripts-after-limit": "The HTML of {url} is {bytes} bytes uncompressed; Googlebot for Search reads only the first 2 MB, and only scripts or markup without content come after that point."
+    }
+  },
+  "crawl-sitemap-validity": {
+    "messages": {
+      "fail": "The sitemap {url} is not valid: {detail}.",
+      "fail:unparseable": "The sitemap {url} cannot be parsed: {detail}.",
+      "fail:wrong-namespace": "The sitemap {url} uses the namespace {detail} instead of the sitemaps.org namespace.",
+      "fail:over-limit": "The sitemap {url} exceeds the protocol limits of 50,000 entries or 50 MB uncompressed ({detail}).",
+      "fail:invalid-urls": "The sitemap {url} contains entries that are not absolute http(s) URLs under 2,048 characters ({detail}).",
+      "fail:nested-index": "The sitemap {url} is a sitemap index listed inside another index.",
+      "fail:child-unreachable": "The child sitemap {url} listed in a sitemap index does not answer 200 ({detail})."
+    }
+  },
+  "crawl-sitemap-scope": {
+    "messages": {
+      "fail": "{count} URLs in {sitemap} are outside its scope.",
+      "fail:out-of-scope": "{count} URLs in {sitemap} are outside the host or directory of the sitemap and it is not declared in that host's robots.txt, so they may be ignored unless submitted in Search Console.",
+      "fail:http-urls": "{count} URLs in {sitemap} use http on an https site."
+    }
+  },
+  "crawl-sitemap-url-quality": {
+    "messages": {
+      "fail": "{count} sitemap URLs are not indexable canonical pages ({share} of {classified} classified).",
+      "fail:high-share": "{count} of {classified} classified sitemap URLs ({share}) are not indexable canonical pages.",
+      "fail:robots-blocked": "{count} sitemap URLs are not indexable canonical pages, including URLs disallowed in robots.txt.",
+      "fail:noindex": "{count} sitemap URLs are not indexable canonical pages, including URLs that carry noindex.",
+      "fail:error": "{count} sitemap URLs are not indexable canonical pages, including URLs that answer an error.",
+      "fail:redirect": "{count} sitemap URLs are not indexable canonical pages, including URLs that redirect.",
+      "fail:canonicalised": "{count} sitemap URLs are not indexable canonical pages, including URLs that name another canonical."
+    }
+  },
+  "crawl-sitemap-lastmod": {
+    "messages": {
+      "fail": "lastmod values in the sitemaps are not reliable ({count} entries, {value}).",
+      "fail:invalid-format": "{count} lastmod values are not W3C Datetime dates, for example {value}.",
+      "fail:generation-time": "{count} URLs share the lastmod {value}, the time the sitemap was generated, so Google stops trusting the field.",
+      "fail:uniform": "{count} URLs share the lastmod {value}. Confirm that it reflects real content changes rather than a rebuild date.",
+      "fail:future-dates": "{count} lastmod values are in the future, for example {value}."
+    }
+  },
+  "crawl-sitemap-ignored-tags": {
+    "messages": {
+      "fail": "{count} sitemap entries carry changefreq or priority, which Google and Bing ignore."
+    }
+  },
+  "crawl-robots-blocks-render-resources": {
+    "messages": {
+      "fail": "robots.txt blocks {count} requests that {url} needs to render ({resources}).",
+      "fail:metadata-changed": "robots.txt blocks {count} requests ({resources}) and, without them, the title, canonical, robots directives or h1 of {url} change.",
+      "fail:content-missing": "robots.txt blocks {count} requests ({resources}) and, without them, part of the main text of {url} does not render.",
+      "fail:links-missing": "robots.txt blocks {count} requests ({resources}) and, without them, internal links of {url} do not render.",
+      "fail:layout-break": "robots.txt blocks {count} requests ({resources}) and, without them, {url} becomes wider than the phone viewport.",
+      "fail:minor-differences": "robots.txt blocks {count} requests ({resources}) and, without them, some text of {url} does not render. Confirm whether it matters."
+    }
+  },
+  "crawl-js-links-crawlable": {
+    "messages": {
+      "fail": "{url} has {count} clickable elements without a crawlable href.",
+      "fail:navigation": "{url} has {count} navigation elements without a crawlable href. Confirm whether they lead to pages, which crawlers can only follow through <a href>.",
+      "fail:isolated": "{url} has {count} clickable elements without a crawlable href. Confirm whether any of them lead to pages."
+    }
+  },
+  "crawl-js-fragment-routing": {
+    "messages": {
+      "fail": "Internal links route through the URL fragment ({routes}), which Google ignores.",
+      "fail:hash-routes": "{count} internal routes live in the URL fragment ({routes}); Google ignores fragments, so these views have no URL of their own.",
+      "fail:single-hash-route": "An internal link routes through the URL fragment ({routes}), which Google ignores."
+    }
+  },
+  "crawl-js-content-dependency": {
+    "messages": {
+      "fail": "{url} depends on JavaScript for {share} of what it shows.",
+      "fail:content-after-js": "{share} of the rendered text of {url} is absent from the raw HTML. Google renders it, later; crawlers that do not run JavaScript do not see it.",
+      "fail:links-after-js": "{share} of the internal links of {url} exist only after JavaScript runs.",
+      "fail:metadata-differs": "The raw HTML and the rendered DOM of {url} differ in: {share}."
+    }
+  },
+  "crawl-js-lazy-content": {
+    "messages": {
+      "fail": "Part of {url} loads only after scrolling ({count}).",
+      "fail:content-after-scroll": "{count} of the text of {url} appears only after scrolling. Confirm that it is not the main content.",
+      "fail:links-after-scroll": "{count} internal links of {url} appear only after scrolling. Confirm whether they are item or pagination links.",
+      "fail:images-without-src": "{count} images on {url} have no src in a render without scrolling, so they are not loaded for indexing."
+    }
+  },
+  "crawl-dynamic-rendering": {
+    "messages": {
+      "fail": "{url} serves different HTML to the Googlebot user agent and to a browser.",
+      "fail:prerendered-for-bots": "{url} serves prerendered HTML to the Googlebot user agent and an application shell to a browser; dynamic rendering is a deprecated workaround.",
+      "fail:different-content": "{url} serves materially different text to the Googlebot user agent and to a browser. Confirm that the difference is not cloaking."
+    }
+  },
+  "crawl-parameter-urls": {
+    "messages": {
+      "fail": "{count} internal links or sitemap URLs carry parameters that duplicate pages.",
+      "fail:session-id": "{count} internal links or sitemap URLs carry a session parameter, which creates a new URL for each visit.",
+      "fail:tracking-parameter": "{count} internal links or sitemap URLs carry tracking parameters, which create duplicate URLs.",
+      "fail:parameter-duplicate": "A URL with a tracking parameter answers 200 without a canonical to the clean URL."
+    }
+  },
+  "crawl-url-hygiene": {
+    "messages": {
+      "fail": "{count} internal URLs are malformed.",
+      "fail:too-long": "{count} internal URLs are longer than 2,048 characters.",
+      "fail:unencoded-characters": "{count} internal URLs contain unencoded spaces or backslashes.",
+      "fail:double-slash": "{count} internal URLs contain a double slash in the path.",
+      "fail:duplicate-parameters": "{count} internal URLs repeat a parameter key."
+    }
+  },
+  "crawl-duplicate-clusters": {
+    "messages": {
+      "fail": "{count} pages share the same main text without one shared canonical: {urls}.",
+      "fail:not-consolidated": "{count} pages share the same main text and language without one shared canonical: {urls}. Confirm that they are true duplicates."
+    }
+  }
+}

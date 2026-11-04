@@ -9,10 +9,12 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
-      "sitemaps",
-      "rendered-dom"
+      "rendered-dom",
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -31,7 +33,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Collect every hreflang value from <head> link[rel=alternate][hreflang] in raw and rendered HTML, HTTP Link headers (rel=alternate; hreflang=) and sitemap xhtml:link. Except for 'x-default', parse case-insensitively with the grammar lang ['-' script] ['-' region]. Fail if the first subtag is not a two-letter code in the ISO 639-1 list. Three-letter ISO 639-2/3 codes (fil, yue, ast), private-use 'x-' tags other than x-default, and empty values all fail. Lighthouse's hreflang audit validates the language only, using a BCP 47-style check. It can pass values that Google says it doesn't support (three-letter languages, es-419), so don't treat a Lighthouse pass as proof. Bundle the ISO 639-1 list as data (e.g. from the IANA language subtag registry, keeping two-letter entries). Comparisons are case-insensitive: 'EN' is valid. Lighthouse 13.6 also runs an hreflang SEO audit; do not count the same failure twice."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Collect every hreflang value from <head> link[rel=alternate][hreflang] in raw and rendered HTML, HTTP Link headers (rel=alternate; hreflang=) and sitemap xhtml:link. Except for 'x-default', parse case-insensitively with the grammar lang ['-' script] ['-' region]. Fail if the first subtag is not a two-letter code in the ISO 639-1 list. Three-letter ISO 639-2/3 codes (fil, yue, ast), private-use 'x-' tags other than x-default, and empty values all fail. Lighthouse's hreflang audit validates the language only, using a BCP 47-style check. It can pass values that Google says it doesn't support (three-letter languages, es-419), so don't treat a Lighthouse pass as proof. Bundle the ISO 639-1 list as data (e.g. from the IANA language subtag registry, keeping two-letter entries). Comparisons are case-insensitive: 'EN' is valid. Lighthouse 13.6 also runs an hreflang SEO audit; do not count the same failure twice. A single subtag that is a country code and not a language (us, at, jp) is reported by intl-hreflang-region-only-value instead. Withdrawn codes (iw, in, ji, jw, mo, sh) fail at low with the current code."
   },
   {
     "id": "intl-hreflang-region-only-value",
@@ -43,10 +47,13 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
+      "rendered-dom",
       "sitemaps",
-      "rendered-dom"
+      "siblings"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -61,6 +68,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Flag a single-subtag value that is (a) not an ISO 639-1 code but is an ISO 3166-1 code (e.g. 'uk', 'us', 'at', 'ch', 'jp' as Japan, 'ad'), or (b) valid ISO 639-1 but probably meant as a country. Case (b) is ambiguous for 'be' (Belarusian vs Belgium), 'ca' (Catalan vs Canada), 'by', 'se' (Northern Sami vs Sweden), 'no'/'nb', 'gr' (not a language) and 'dk' (not a language). For (b), compare against the language detected in the target page's main content. Some country codes are also valid language codes: \"ca\" is Catalan, not Canada, and must not be reported when the target content is Catalan. Fail when the value is not a language code at all, or when it is a valid language code but the detected content language of the target differs and matches the country instead."
   },
   {
@@ -73,10 +82,12 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
-      "sitemaps",
-      "rendered-dom"
+      "rendered-dom",
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -91,6 +102,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "For values with a region subtag, fail if the region is not an officially assigned ISO 3166-1 alpha-2 code. Covers reserved and exceptionally reserved codes ('UK', 'EU', 'UN'), unassigned codes, numeric UN M.49 regions ('419', '150') and three-letter regions. Google says it ignores the reserved region part of the annotation (so 'en-UK' is effectively treated as region-less), not the whole tag. Report what Google will actually do: the variant loses its UK targeting. Matching is case-insensitive."
   },
   {
@@ -103,10 +116,12 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
-      "sitemaps",
-      "rendered-dom"
+      "rendered-dom",
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -123,6 +138,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Fail when the value has '_' as separator (en_GB), whitespace, a script subtag that isn't four letters from ISO 15924, a script placed after the region (zh-TW-Hant), variant or extension subtags (ca-ES-valencia, en-US-u-...), or more than 3 subtags. Accept: ll, ll-RR, ll-Ssss, ll-Ssss-RR, x-default. Variant subtags (e.g. -valencia) are valid BCP 47 but aren't in Google's documented format. Report them as 'not documented by Google', not 'invalid'. og:locale legitimately uses underscores. Don't apply this rule to og:locale."
   },
   {
@@ -135,9 +152,11 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
-      "sitemaps"
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -152,7 +171,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For each hreflang annotation, resolve href and fail if the raw attribute value lacks a scheme: root-relative '/fr/', path-relative 'fr/' or protocol-relative '//example.com/fr/'. Also fail on an empty href or a non-http(s) scheme. Check the raw attribute, not the DOM-resolved .href property, which is always absolute. Sitemaps require absolute URLs in <loc> as well."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For each hreflang annotation in the HTML and the HTTP Link header, fail if the raw attribute value lacks a scheme: root-relative '/fr/', path-relative 'fr/' or protocol-relative '//example.com/fr/' (medium, since it resolves unambiguously). Also fail on an empty href or a non-http(s) scheme. Check the raw attribute, not the DOM-resolved .href property, which is always absolute. Sitemap xhtml:link URLs are checked by intl-hreflang-sitemap-format, which reads every sitemap entry, so they are not counted here."
   },
   {
     "id": "intl-hreflang-outside-head",
@@ -164,7 +185,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -184,6 +207,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Parse raw HTML with a WHATWG-compliant parser (parse5). Fail if any link[rel=alternate][hreflang] ends up in <body>. A common cause is an element not allowed in head (div, img, iframe, noscript containing non-head content, or stray text) before the links, which implicitly closes <head>. Compare against the source position to explain the cause. Google's docs say to put the links in <head> and recommend an HTML validator to confirm. Check both raw and rendered trees. If they appear only in the rendered DOM (JS-injected), report this separately (intl-hreflang-rendered-only).",
     "related": [
       "crawl-head-invalid-element"
@@ -215,6 +240,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Compare the hreflang sets from the raw HTML and the rendered DOM. Flag when the raw HTML has none (or a different set) and the rendered DOM has them. Google's hreflang docs don't state whether JS-injected hreflang is processed. Report it as a robustness risk, not a confirmed failure. A raw/rendered conflict is more serious than rendered-only."
   },
   {
@@ -227,8 +254,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "http"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -247,6 +273,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Fail when a link element has hreflang and also a media attribute (or type indicating a different format), or when rel lists both canonical and alternate with hreflang. Google clarified on 2024-06-12 that alternate link tags must not be combined. Google also stated on 2024-02-15 that rel=canonical with an hreflang attribute is not used for canonicalization."
   },
   {
@@ -259,10 +287,12 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
-      "sitemaps",
-      "redirects"
+      "rendered-dom",
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -277,7 +307,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For each page with hreflang (from any source), normalize the page's final URL and its declared canonical. Fail when no hreflang entry's href equals the page's own URL (exact match after scheme and host lowercasing; path and query compared case-sensitively). Trailing-slash and http/https mismatches are the most common reason the self-reference silently doesn't match. Report the exact string differences. For sitemap annotations, the <url><loc> needs an xhtml:link to itself as well."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For each page with hreflang (from any source), normalize the page's final URL and its declared canonical. Fail when no hreflang entry's href equals the page's own URL (exact match after scheme and host lowercasing; path and query compared case-sensitively). Trailing-slash and http/https mismatches are the most common reason the self-reference silently doesn't match. Report the exact string differences. For sitemap annotations, the <url><loc> needs an xhtml:link to itself as well. A page whose canonical points elsewhere and whose set lists that canonical is reported by intl-hreflang-on-non-canonical-page, not here."
   },
   {
     "id": "intl-hreflang-missing-return-link",
@@ -289,11 +321,13 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "raw-html",
-      "http",
+      "http"
+    ],
+    "optionalInputs": [
       "sitemaps",
       "siblings",
-      "crawl"
+      "crawl",
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -308,7 +342,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Build a directed graph over the crawl: edge A->B for every hreflang entry on A pointing to B (B != A), merging HTML, header and sitemap sources per URL. For each edge, fetch or crawl B and fail if B's hreflang set lacks an entry whose href equals A. Output a reciprocity matrix per cluster (rows = declaring URL, columns = target, cells = ok / missing return / target not fetched). Google ignores annotations between pages that don't link to each other. Partial sets are allowed: Google still uses the pairs that do reciprocate. Report which pairs survive. If B redirects, the return link is evaluated on B's final URL, which differs from the listed one, so report it as a target-status problem as well. Don't report a missing return link when B was outside the crawl budget. Mark that 'unverified'."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Build a directed graph over the crawl: edge A->B for every hreflang entry on A pointing to B (B != A), merging HTML, header and sitemap sources per URL. For each edge, fetch or crawl B and fail if B's hreflang set lacks an entry whose href equals A. Output a reciprocity matrix per cluster (rows = declaring URL, columns = target, cells = ok / missing return / target not fetched). Google ignores annotations between pages that don't link to each other. Partial sets are allowed: Google still uses the pairs that do reciprocate. Report which pairs survive. If B redirects, the return link is evaluated on B's final URL, which differs from the listed one, so report it as a target-status problem as well. Don't report a missing return link when B was outside the crawl budget. Mark that 'unverified'. Only language entries are checked: x-default entries often point at a shared entry page (the root or a selector) that does not list every inner page, which is allowed. A target counts as checked when Altimeter fetched it (audited, home or sibling page) or a sitemap lists its set; other targets are unverified and never reported."
   },
   {
     "id": "intl-hreflang-target-not-200",
@@ -320,9 +356,14 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "sitemaps",
       "siblings",
-      "http",
-      "redirects"
+      "crawl",
+      "rendered-dom",
+      "variants"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -331,7 +372,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "industry-consensus",
-    "thresholds": "Any target status != 200 = finding. 4xx/5xx are worse than 3xx.",
+    "thresholds": "Any target status != 200 = finding: 3xx = medium, 4xx, 5xx or no response = high. A localized target that redirects to the root or to another language version is reported by intl-localized-urls-unreachable, and http or redirecting host variants by intl-hreflang-mixed-protocol-or-host, so each URL is reported once.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/specialty/international/localized-versions",
@@ -343,7 +384,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Fetch every hreflang target (without following redirects first, then following them). Fail on 3xx (report the final URL), 4xx, 5xx, timeouts and DNS errors. Google's hreflang page doesn't spell out a status-code rule. It follows from the bidirectional requirement (a redirecting or erroring URL can't return the link at the listed address). Keep the evidence label at industry-consensus. Retry 5xx and 429 once before reporting."
+    "fixLocation": "repo",
+    "verifiableBy": "deployed",
+    "notes": "Fetch every hreflang target (without following redirects first, then following them). Fail on 3xx (report the final URL), 4xx, 5xx, timeouts and DNS errors. Google's hreflang page doesn't spell out a status-code rule. It follows from the bidirectional requirement (a redirecting or erroring URL can't return the link at the listed address). Keep the evidence label at industry-consensus. Retry 5xx and 429 once before reporting. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported."
   },
   {
     "id": "intl-hreflang-target-noindex",
@@ -355,12 +398,18 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "siblings",
-      "raw-html",
       "http"
     ],
+    "optionalInputs": [
+      "sitemaps",
+      "siblings",
+      "crawl",
+      "rendered-dom"
+    ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The pages that list the target are noindex too, so the whole set is kept out of Search on purpose."
+    ],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "industry-consensus",
@@ -372,7 +421,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For each hreflang target that returns 200, check the robots meta (name=robots/googlebot) in raw and rendered HTML and the X-Robots-Tag header for noindex/none. A noindexed page can't appear for its locale, so the alternate is useless. Google applies robots rules per URL. No Google page explicitly states 'hreflang to noindex is ignored'. Keep wording factual: 'this version cannot be shown in Search'.",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For each hreflang target that returns 200, check the robots meta (name=robots/googlebot) in raw and rendered HTML and the X-Robots-Tag header for noindex/none. A noindexed page can't appear for its locale, so the alternate is useless. Google applies robots rules per URL. No Google page explicitly states 'hreflang to noindex is ignored'. Keep wording factual: 'this version cannot be shown in Search'. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported.",
     "related": [
       "crawl-meta-robots-noindex"
     ]
@@ -387,8 +438,13 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "siblings",
       "robots"
+    ],
+    "optionalInputs": [
+      "sitemaps",
+      "siblings",
+      "crawl",
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -407,7 +463,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Evaluate each hreflang target against its host's robots.txt for user-agent Googlebot (RFC 9309 matching, longest match, Allow beats Disallow on tie). Google can't read a blocked page's return links, so reciprocity can't be confirmed. Since 2025-06-11, Google's docs no longer suggest blocking auto-translated pages with robots.txt. Don't recommend that pattern.",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Evaluate each hreflang target against its host's robots.txt for user-agent Googlebot (RFC 9309 matching, longest match, Allow beats Disallow on tie). Google can't read a blocked page's return links, so reciprocity can't be confirmed. Since 2025-06-11, Google's docs no longer suggest blocking auto-translated pages with robots.txt. Don't recommend that pattern. v1 reads the robots.txt of the audited origin; targets on other hosts are not evaluated.",
     "related": [
       "crawl-robots-blocks-page"
     ]
@@ -422,16 +480,20 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "siblings",
-      "raw-html",
       "http"
+    ],
+    "optionalInputs": [
+      "sitemaps",
+      "siblings",
+      "crawl",
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Target canonical != target URL = finding. Declaring page canonical not in its own hreflang set = finding.",
+    "thresholds": "Target canonical != target URL = finding. A declaring page whose own canonical is not in its set is reported by intl-hreflang-on-non-canonical-page or intl-hreflang-missing-self-reference.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -439,7 +501,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For each hreflang target that returns 200, read its rel=canonical (HTML and Link header). Fail if the canonical differs from the target URL after normalization. Also fail when the declaring page's own canonical isn't one of the URLs in its hreflang set. Mueller (2015): if the canonical URL is not part of the hreflang pairs, the hreflang markup will be ignored. Google's canonicalization docs say Google prefers URLs that are part of hreflang clusters and recommend a self-referential canonical. Parameterized tracking URLs in hreflang are a common cause."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For each hreflang target that returns 200, read its rel=canonical (HTML and Link header). Fail if the canonical differs from the target URL after normalization. Also fail when the declaring page's own canonical isn't one of the URLs in its hreflang set. Mueller (2015): if the canonical URL is not part of the hreflang pairs, the hreflang markup will be ignored. Google's canonicalization docs say Google prefers URLs that are part of hreflang clusters and recommend a self-referential canonical. Parameterized tracking URLs in hreflang are a common cause. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported."
   },
   {
     "id": "intl-canonical-cross-language",
@@ -451,10 +515,14 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
+      "rendered-dom",
       "siblings",
-      "rendered-dom"
+      "sitemaps",
+      "crawl"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -463,7 +531,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Canonical target language != page language = finding.",
+    "thresholds": "Canonical target language != page language = finding. High when the hreflang values of the page and of its canonical name different languages, or when both detected languages differ with confidence >= 0.9 over >= 100 words; medium and confirmed by the analyst when the two languages are closely related (Catalan, Spanish, Occitan, Portuguese, Italian).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -471,7 +539,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For pages in an hreflang cluster (or with a locale path, subdomain or ccTLD), compare the declared canonical with the page URL. When it differs, compare the detected content language of the page and of the canonical target, or the hreflang values both URLs hold in the cluster. Fail when the languages differ. This asks Google to drop the localized version from the index. Exception: if a variant's main content is untranslated (same language), canonicalizing to the original is legitimate. Then it should not appear in hreflang. Same-language regional duplicates (fr-FR/fr-BE) may legitimately be folded by Google. That is not this rule."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For pages in an hreflang cluster (or with a locale path, subdomain or ccTLD), compare the declared canonical with the page URL. When it differs, compare the detected content language of the page and of the canonical target, or the hreflang values both URLs hold in the cluster. Fail when the languages differ. This asks Google to drop the localized version from the index. Exception: if a variant's main content is untranslated (same language), canonicalizing to the original is legitimate. Then it should not appear in hreflang. Same-language regional duplicates (fr-FR/fr-BE) may legitimately be folded by Google. That is not this rule. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported."
   },
   {
     "id": "intl-hreflang-on-non-canonical-page",
@@ -483,16 +553,20 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "http",
-      "crawl"
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "sitemaps"
     ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The page is a legal or utility page that is noindex on purpose; its hreflang is simply unused."
+    ],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "industry-consensus",
-    "thresholds": "Any = finding.",
+    "thresholds": "Canonical pointing elsewhere or a non-200 final status = medium. noindex = low.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
@@ -500,7 +574,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Fail when a page carrying hreflang annotations has a canonical pointing elsewhere, is noindex, or is reached only via redirect. Common on paginated or filtered URLs that inherit the template's hreflang block with the base URL."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Fail when a page carrying hreflang annotations has a canonical pointing elsewhere (HTML or Link header), is noindex, or answers with a status other than 200. A page reached through a redirect is judged at its final URL. Common on paginated or filtered URLs that inherit the template's hreflang block with the base URL."
   },
   {
     "id": "intl-hreflang-duplicate-locale-in-cluster",
@@ -512,10 +588,13 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "raw-html",
-      "http",
+      "http"
+    ],
+    "optionalInputs": [
       "sitemaps",
-      "siblings"
+      "siblings",
+      "crawl",
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -530,6 +609,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Within one page's set, and across the merged cluster, group entries by lowercased hreflang value. Fail when one value (including x-default) maps to more than one distinct URL. Values are case-insensitive: 'en-gb' and 'en-GB' are the same value. A URL listed under several values is fine (e.g. 'en' catch-all equal to 'en-GB', or x-default equal to 'en')."
   },
   {
@@ -542,8 +623,11 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
+      "rendered-dom",
       "sitemaps"
     ],
     "appliesTo": "all",
@@ -563,6 +647,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Group entries by target URL. Fail when one URL carries hreflang values with different language subtags (e.g. 'es' and 'ca' both -> /), excluding x-default. The same language with different regions on one URL (en-US and en-GB -> /en/) is allowed. That's region targeting of one page."
   },
   {
@@ -575,10 +661,13 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "raw-html",
-      "http",
+      "http"
+    ],
+    "optionalInputs": [
       "sitemaps",
-      "siblings"
+      "siblings",
+      "crawl",
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -593,6 +682,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Compute connected components of the hreflang graph (clusters). For each member, compare its declared set {value->URL} with the cluster's union. Report members missing entries or declaring conflicting values for the same URL (A says B is 'fr', C says B is 'fr-FR' or 'de'). Google's docs say the set is identical on every version. They also allow partial sets: pairs that reciprocate still work. Don't escalate missing entries above low."
   },
   {
@@ -605,10 +696,13 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "raw-html",
-      "http",
+      "http"
+    ],
+    "optionalInputs": [
       "sitemaps",
       "siblings",
+      "crawl",
+      "rendered-dom",
       "redirects"
     ],
     "appliesTo": "all",
@@ -628,6 +722,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "For each cluster, check whether any member declares hreflang='x-default'. Escalate when the site root redirects by language or location, shows a language selector, or serves locale-adaptive content. The x-default may point to the selector or redirecting root, or to the default locale page; Google documents both patterns and neither is a defect. Never require the root to be the x-default."
   },
   {
@@ -640,8 +736,13 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "sitemaps",
       "siblings",
-      "crawl"
+      "crawl",
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -658,6 +759,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "For each cluster, collect x-default URLs declared by each member. Fail if more than one distinct x-default URL exists, or if x-default points to a URL outside the cluster that doesn't reciprocate. For homepage clusters, x-default usually points to the root. For inner pages, x-default often points to the fallback-language version of that page, not the homepage. Pointing every page's x-default at the homepage is a common bug."
   },
   {
@@ -670,7 +773,13 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "siblings"
+      "http"
+    ],
+    "optionalInputs": [
+      "sitemaps",
+      "siblings",
+      "crawl",
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -685,6 +794,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "For each language in a cluster, fail if every value carries a region (e.g. es-ES, es-AD) and there is no language-only value ('es') and no x-default. The catch-all can be one of the regional URLs listed twice under two values."
   },
   {
@@ -697,8 +808,11 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "raw-html",
-      "http",
+      "rendered-dom",
       "sitemaps"
     ],
     "appliesTo": "all",
@@ -714,6 +828,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "For each URL, compute the sets from the HTML head, the HTTP Link header and sitemap xhtml:link entries for that loc. Fail if two sources give different targets for the same value, or one source has values the other lacks. Using several methods isn't an error by itself. Only contradictions are."
   },
   {
@@ -726,7 +842,9 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "sitemaps",
+      "sitemaps"
+    ],
+    "optionalInputs": [
       "robots"
     ],
     "appliesTo": "all",
@@ -734,7 +852,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Any violation = finding. Size limits per file: 50,000 <url> entries and 50 MB uncompressed.",
+    "thresholds": "Any violation = finding. Sitemap size limits are reported by the crawl sitemap rules, not here.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/specialty/international/localized-versions",
@@ -746,7 +864,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For sitemaps with xhtml:link: the xmlns:xhtml='http://www.w3.org/1999/xhtml' namespace is declared; each xhtml:link has rel='alternate', hreflang and an absolute href. Each <url> with alternates includes an xhtml:link to its own <loc>. Each <loc> lies within the sitemap's directory or verified host scope. The sitemap is <= 50,000 URLs and <= 50 MB uncompressed. Each alternate URL also appears as its own <url> entry with the reciprocal set. xhtml:link children don't count toward the URL limit. Alternate hrefs may be on other domains (Google's own example). Only <loc> is scope-restricted, and cross-host sitemaps need Search Console verification or a robots.txt Sitemap reference. Don't report cross-domain alternates as errors."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For sitemaps with xhtml:link: the xmlns:xhtml='http://www.w3.org/1999/xhtml' namespace is declared; each xhtml:link has rel='alternate', hreflang and an absolute href. Each <url> with alternates includes an xhtml:link to its own <loc>. Each <loc> lies within the sitemap's directory or verified host scope. The sitemap is <= 50,000 URLs and <= 50 MB uncompressed. Each alternate URL also appears as its own <url> entry with the reciprocal set. xhtml:link children don't count toward the URL limit. Alternate hrefs may be on other domains (Google's own example). Only <loc> is scope-restricted, and cross-host sitemaps need Search Console verification or a robots.txt Sitemap reference. Don't report cross-domain alternates as errors. Missing or non-reciprocal <url> entries are reported only when every child sitemap listed by the indexes was fetched. hreflang values of audited pages are reported by the value rules, which read sitemaps too; this rule reports invalid values of the other entries."
   },
   {
     "id": "intl-hreflang-http-header-format",
@@ -775,7 +895,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Parse Link headers per RFC 8288 (comma-separated link-values, quoted parameters). For rel=alternate entries with hreflang, validate the absolute URL in <>, the value and the presence of the self entry. Required for non-HTML resources (PDF) that participate in a cluster. Multiple Link header lines are equivalent to one comma-joined value. Merge them before parsing."
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
+    "notes": "Parse Link headers per RFC 8288 (comma-separated link-values, quoted parameters). For rel=alternate entries with hreflang, validate the absolute URL in <>, the value and the presence of the self entry. Required for non-HTML resources (PDF) that participate in a cluster. Multiple Link header lines are equivalent to one comma-joined value. Merge them before parsing. hreflang values and relative URLs in the header are reported by the value rules and intl-hreflang-relative-url; this rule reports link-values that do not parse and a header set without the response's own URL."
   },
   {
     "id": "intl-hreflang-mixed-protocol-or-host",
@@ -787,9 +909,14 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "siblings",
-      "raw-html",
       "http"
+    ],
+    "optionalInputs": [
+      "sitemaps",
+      "siblings",
+      "crawl",
+      "rendered-dom",
+      "variants"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -804,6 +931,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Fail when a target uses http:// while the site serves https, or uses a host variant (www vs apex) that redirects. Google's canonicalization docs say not to list HTTP versions in sitemaps or hreflang. This overlaps with intl-hreflang-target-not-200 (redirect). Dedupe so the same URL isn't reported twice.",
     "related": [
       "crawl-canonical-protocol-host"
@@ -819,8 +948,12 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
-      "siblings"
+      "siblings",
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -839,7 +972,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Detect the language of the main content (boilerplate stripped, >= 200 words or report low confidence) with a language-ID model. Compare it with the hreflang value the cluster assigns to this URL and with <html lang>. Fail when the hreflang language subtag differs from the detected language with confidence >= 0.9. Require high language-detection confidence and at least 200 words of main content; closely related languages are easily confused by detectors."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Detect the language of the main content (boilerplate stripped, >= 200 words or report low confidence) with a language-ID model. Compare it with the hreflang value the cluster assigns to this URL and with <html lang>. Fail when the hreflang language subtag differs from the detected language with confidence >= 0.9. Require high language-detection confidence and at least 200 words of main content; closely related languages are easily confused by detectors. The built-in identifier tells Catalan, Spanish, English, French, Portuguese, Italian, German and Occitan apart; a page declared in another language is not evaluated, because neighbouring languages (Galician, Corsican) would be misread. Mismatches between closely related languages go to the analyst."
   },
   {
     "id": "intl-html-lang-missing-or-invalid",
@@ -851,7 +986,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -875,6 +1012,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Check the documentElement lang attribute in raw HTML. Fail if absent or empty, or not well-formed BCP 47 (IANA subtag registry). Google says it doesn't use lang attributes to detect language. Don't claim a Google ranking effect. The benefit is accessibility (screen readers, hyphenation, translation prompts) and other engines. Unlike hreflang, BCP 47 allows es-419, three-letter codes and variants, so validate with BCP 47 here, not Google's hreflang grammar. Lighthouse 13.6 reports these as html-has-lang and html-lang-valid accessibility audits; do not count them twice."
   },
   {
@@ -887,7 +1026,9 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -903,6 +1044,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Compare the primary language subtag of <html lang> with the language detected in the main content. Probably matters for Bing and assistive tech, not for Google's language detection. Bing's use of lang is reported by industry sources only."
   },
   {
@@ -915,8 +1058,10 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "http"
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -933,6 +1078,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
     "notes": "Read the Content-Language response header and <meta http-equiv='content-language'>. Fail when either lists a primary language different from <html lang> or the detected content language. Flag the meta pragma itself as non-conforming HTML (info). WHATWG marks the content-language pragma non-conforming. Bing (Fabrice Canel, 2020, relayed by SER) called hreflang 'a far weaker signal than content-language at Bing', which suggests Bing reads it. No current Bing document confirms it. Google ignores code-level language information."
   },
   {
@@ -945,8 +1092,10 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
-      "ai"
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -964,7 +1113,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Segment the rendered DOM into main content, navigation and footer. Run language ID per block. Flag pages where main content contains substantial blocks (>= 20% of main-content words) in another language, side-by-side translations, or translated chrome around untranslated main content. The LLM then confirms whether this is intentional (quotes, bilingual legal text) or a defect. Candidate when a secondary language makes up 20% or more of the main-content words; the analyst decides. Short strings give unreliable language detection."
+    "fixLocation": "content",
+    "verifiableBy": "manual",
+    "notes": "Segment the rendered DOM into main content, navigation and footer. Run language ID per block. Flag pages where main content contains substantial blocks (>= 20% of main-content words) in another language, side-by-side translations, or translated chrome around untranslated main content. The LLM then confirms whether this is intentional (quotes, bilingual legal text) or a defect. Candidate when a secondary language makes up 20% or more of the main-content words; the analyst decides. Short strings give unreliable language detection. Code finds the candidate by identifying the language of each main-content block of at least 12 words; the analyst confirms every candidate."
   },
   {
     "id": "intl-untranslated-variant",
@@ -976,8 +1127,13 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "siblings",
-      "rendered-dom"
+      "crawl",
+      "rendered-dom",
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -998,7 +1154,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For each pair in a cluster with different language subtags, compute main-content similarity (shingled MinHash or cosine on normalized text) and the language detected on each. Flag when the variant's main content language equals the other's, or similarity >= 0.9. Compare main content only, and do not apply the similarity threshold to same-language regional variants."
+    "fixLocation": "content",
+    "verifiableBy": "manual",
+    "notes": "For each pair in a cluster with different language subtags, compute main-content similarity (shingled MinHash or cosine on normalized text) and the language detected on each. Flag when the variant's main content language equals the other's, or similarity >= 0.9. Compare main content only, and do not apply the similarity threshold to same-language regional variants. v1 checks the targets Altimeter fetched (audited, home and sibling pages, URL variant and language probes); other targets are unverified and never reported."
   },
   {
     "id": "intl-machine-translation-quality",
@@ -1051,9 +1209,12 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
-      "siblings"
+      "siblings",
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1074,7 +1235,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For each locale page, run language ID on <title>, meta description, og:title, og:description, image alt texts (aggregate), and visible text fields in JSON-LD (name, description, headline). Fail when a field's language differs from the page's content language. Also fail when a field is byte-identical to the source locale's field (outside brand names). Short strings (< 4 words) and brand-only titles give unreliable language ID. Report those as info."
+    "fixLocation": "content",
+    "verifiableBy": "local",
+    "notes": "For each locale page, run language ID on <title>, meta description, og:title, og:description, image alt texts (aggregate), and visible text fields in JSON-LD (name, description, headline). Fail when a field's language differs from the page's content language. Also fail when a field is byte-identical to the source locale's field (outside brand names). Short strings (< 4 words) and brand-only titles give unreliable language ID. Report those as info. Language identification needs about 30 words, so it runs on long descriptions and on the pooled image alt texts; shorter fields are compared verbatim with the versions in other languages, and the analyst confirms those candidates."
   },
   {
     "id": "intl-og-locale",
@@ -1088,8 +1251,14 @@
     "inputs": [
       "raw-html"
     ],
+    "optionalInputs": [
+      "rendered-dom",
+      "sitemaps"
+    ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The page has no Open Graph markup at all, so there is no preview metadata for og:locale to describe."
+    ],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "web-standard",
@@ -1101,6 +1270,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Read og:locale and og:locale:alternate. Fail if og:locale isn't in language_TERRITORY form (e.g. ca_AD, es_ES), or its language differs from the page language. On a multilingual page, info if it's missing (the default is en_US). og:locale has no effect on Google ranking. It affects social previews (Facebook, LinkedIn). A missing og:locale means consumers assume en_US, which mislabels Catalan or Spanish pages."
   },
   {
@@ -1108,13 +1279,17 @@
     "category": "intl",
     "title": "Locale chosen by cookie, session, JavaScript state or URL parameter instead of a distinct URL",
     "why": "Google recommends separate URLs for each language version rather than cookies or browser settings, because Googlebot sees one version per URL and does not keep cookies.",
-    "fix": "Give each language its own URL (subdirectory /ca/ /es/ /fr/ /en/ on a gTLD or generic ccTLD is the simplest). Annotate with hreflang.",
+    "fix": "Give each language or country version its own URL (subdirectories such as /en/ /de/ /fr/, subdomains or ccTLDs) and keep any cookie only as a preference that never changes what a URL serves.",
     "maxSeverity": "high",
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "http",
-      "rendered-dom"
+      "http"
+    ],
+    "optionalInputs": [
+      "siblings",
+      "sitemaps",
+      "crawl"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1123,7 +1298,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Content language changes on the same URL = high. Parameter-based locale URLs = medium.",
+    "thresholds": "Locale chosen by a URL parameter (?lang=, ?hl=, ?locale=) in hreflang targets or language links = medium. Content whose language changes on the same URL is reported by intl-locale-adaptive-same-url.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites",
@@ -1131,7 +1306,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Find the language switcher and its targets. Fail if switching changes content without a URL change (cookie, localStorage), or locales differ only by query parameter (?lang=, ?hl=, ?locale=). Confirm by fetching the same URL with and without the cookie or parameter and diffing the main-content language. Google recommends separate URLs over cookies or browser settings and doesn't recommend URL parameters. Parameter URLs can still be indexed if linked. Severity reflects maintenance and segmentation, not impossibility."
+    "fixLocation": "repo",
+    "verifiableBy": "deployed",
+    "notes": "Find hreflang targets and language links that select the locale with a query parameter. Google recommends separate URLs over cookies or browser settings and does not recommend URL parameters. Parameter URLs can still be indexed if linked; severity reflects maintenance and segmentation, not impossibility. Switching by cookie or localStorage needs interaction with the page, which v1 does not perform."
   },
   {
     "id": "intl-language-switcher-crawlable",
@@ -1143,9 +1320,11 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
-      "raw-html",
-      "siblings"
+      "sitemaps"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -1160,6 +1339,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Locate the switcher (elements with hreflang/lang attributes, or link text matching language names or ISO codes). Pass if it renders <a href> to the equivalent page in each locale. Fail if it uses buttons, select/onchange or JS handlers with no href, or links every locale to its homepage instead of the equivalent page (info). Google suggests cross-linking language versions so users can switch. Flags are not language names: prefer text labels. hreflang on the anchor element is optional and isn't the hreflang signal."
   },
   {
@@ -1173,8 +1354,7 @@
     "scope": "site",
     "inputs": [
       "http",
-      "redirects",
-      "ua-probe"
+      "redirects"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1196,7 +1376,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For a sample of locale URLs and the root, fetch with no Accept-Language, then with Accept-Language set to each of 'ca', 'es-ES', 'fr-FR', 'en-US' and one unsupported language ('de'), using a Chrome mobile UA and also the Googlebot UA. Record status, Location and main-content language. Fail when a localized (non-root) URL redirects or swaps language based on Accept-Language. For the root, see intl-root-locale-redirector. IP-based behaviour cannot be fully tested from one location; label observations with the collector's country and report IP coverage as not tested.",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
+    "notes": "For a sample of locale URLs and the root, fetch with no Accept-Language, then with Accept-Language set to each of 'ca', 'es-ES', 'fr-FR', 'en-US' and one unsupported language ('de'), using a Chrome mobile UA and also the Googlebot UA. Record status, Location and main-content language. Fail when a localized (non-root) URL redirects or swaps language based on Accept-Language. For the root, see intl-root-locale-redirector. IP-based behaviour cannot be fully tested from one location; label observations with the collector's country and report IP coverage as not tested. v1 probes the audited URL and the root with no Accept-Language and with en, es, ca, fr and de, using Altimeter's user agent from one location.",
     "related": [
       "intl-root-locale-redirector",
       "intl-localized-urls-unreachable"
@@ -1212,16 +1394,24 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "siblings",
       "http",
       "redirects"
     ],
+    "optionalInputs": [
+      "sitemaps",
+      "siblings",
+      "crawl",
+      "rendered-dom",
+      "variants"
+    ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The URL is the x-default root that redirects by country, cookie or language to locale URLs that are themselves in the cluster and answer 200."
+    ],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Any locale URL not returning 200 with its own content under default crawler headers = finding.",
+    "thresholds": "Fails (critical) when a localized hreflang URL, requested without Accept-Language or cookies, redirects to the root or to a URL the cluster assigns to another language, or loops. Other redirects and 4xx/5xx of hreflang targets are reported by intl-hreflang-target-not-200.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/specialty/international/locale-adaptive-pages",
@@ -1233,7 +1423,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For every locale URL in the cluster, fetch with no Accept-Language and no cookies. Fail if the response redirects to another locale or the root, loops, or returns 4xx/5xx. Also fetch with a mismatching Accept-Language (e.g. 'en' against /ca/). If Googlebot is always sent to the English or US version, the other locales are effectively hidden from Google. That's why this is critical."
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
+    "notes": "For every language-specific URL in the cluster that Altimeter fetched, check the response to a request with no Accept-Language and no cookies. Skip the x-default entry when it is the root locale entry point. If Googlebot is always sent to one version, the other locales are effectively hidden from Google; that is why this is critical. Responses that change with Accept-Language are reported by intl-auto-redirect-by-language."
   },
   {
     "id": "intl-root-locale-redirector",
@@ -1246,8 +1438,7 @@
     "scope": "site",
     "inputs": [
       "http",
-      "redirects",
-      "siblings"
+      "redirects"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1258,7 +1449,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "industry-consensus",
-    "thresholds": "Info: the root redirects by locale with 302 or 307 and every locale URL is reachable and in hreflang. Low: the root redirect is 301 or 308 and cacheable by shared caches, or it varies by Accept-Language without Vary: Accept-Language. The root not being the x-default is never a finding.",
+    "thresholds": "Pass: the root redirects to the same URL for every Accept-Language, or redirects by language with a temporary or uncacheable response. Low: a locale-dependent root redirect that is 301 or 308 and cacheable, or one that a shared cache may store without Vary: Accept-Language. The root not being the x-default is never a finding.",
     "sources": [
       {
         "url": "https://developers.google.com/search/blog/2013/04/x-default-hreflang-for-international-pages",
@@ -1270,6 +1461,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
     "notes": "Fetch the site root with no Accept-Language and with several Accept-Language values. If the root redirects: pass if the status is 302/303/307 (not 301/308), the targets are locale URLs that return 200, the root is listed as hreflang x-default in the homepage cluster, and the response carries Vary: Accept-Language (when Accept-Language-driven). If the root serves a selector page, it should be x-default and link to all locales. The temporary-status advice is industry consensus; Google has no document requiring 302 over 301 for a locale redirector. Do not report \"homepage redirects\", \"temporary redirect should be 301\" or \"IP redirect blocks Googlebot\" for a root that meets the exemption."
   },
   {
@@ -1282,9 +1475,7 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "http",
-      "rendered-dom",
-      "ua-probe"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1306,6 +1497,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
     "notes": "Compare the main-content language and hreflang set of the same URL across the varied Accept-Language fetches (and geo proxies if configured). Fail when the language or content changes without a URL change. Personalized minor blocks (currency in a header widget) aren't locale adaptation of main content. Compare main content only."
   },
   {
@@ -1337,8 +1530,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Map equivalent paths across locales (via hreflang). Flag when one locale's version is disallowed or noindex and its siblings are not. Also flag per-locale robots.txt on ccTLDs or subdomains that blocks a locale section. Intentional staging locales are legitimate. The finding is the inconsistency with hreflang, not the noindex itself."
+    "status": "planned",
+    "notes": "Map equivalent paths across locales (via hreflang). Flag when one locale's version is disallowed or noindex and its siblings are not. Also flag per-locale robots.txt on ccTLDs or subdomains that blocks a locale section. Intentional staging locales are legitimate. The finding is the inconsistency with hreflang, not the noindex itself. Planned: on one host, a blocked or noindex locale is already reported per target by intl-hreflang-target-blocked-by-robots and intl-hreflang-target-noindex; the per-locale robots.txt of other ccTLDs or subdomains is not collected in v1."
   },
   {
     "id": "intl-geo-meta-tags-ignored",
@@ -1365,6 +1558,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Detect meta name in {geo.position, geo.region, geo.placename, ICBM, DC.language, language, content-language name variant}. Google says it ignores locational meta tags like geo.position. Never report them as a positive signal or an error."
   },
   {
@@ -1379,6 +1574,9 @@
     "inputs": [
       "http"
     ],
+    "optionalInputs": [
+      "sitemaps"
+    ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
@@ -1392,6 +1590,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "owner-decision",
+    "verifiableBy": "manual",
     "notes": "Extract the registrable domain's TLD (Public Suffix List). If it's in Google's generic list (.ad, .ai, .as, .bz, .cc, .cd, .co, .dj, .fm, .io, .la, .me, .ms, .nu, .sc, .sr, .su, .tv, .tk, .ws, plus regional .eu and .asia), report 'treated as generic: no country signal'. Otherwise a country-code TLD implies that country. Cross-check: on a non-generic ccTLD, hreflang regions targeting other countries (e.g. example.fr with es-ES) get an info note. Google's list of ccTLDs treated as generic may change; store the verification date. Second-level registrations under a ccTLD inherit its classification."
   },
   {
@@ -1404,15 +1604,19 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "crawl",
-      "siblings"
+      "http"
+    ],
+    "optionalInputs": [
+      "siblings",
+      "sitemaps",
+      "crawl"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Parameter-based = medium. Mixed schemes = low. Otherwise info.",
+    "thresholds": "Mixed schemes (for example some locales by subdomain and others by subdirectory) = info. Otherwise an informational classification. Parameter-based locales are reported by intl-separate-urls-per-locale.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites",
@@ -1420,6 +1624,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "owner-decision",
+    "verifiableBy": "manual",
     "notes": "Classify how locales are segmented: ccTLD per country, subdomain (fr.example.com), subdirectory (/fr/), URL parameter or none. Detect mixed schemes (some locales by subdomain, others by directory) and ambiguous segments (a subdomain or path like /ca/ that could be language or country). Google lists pros and cons for each structure and doesn't rank them. Never claim that subdirectories rank better. The path itself isn't a language signal to Google. Never claim that one structure ranks better, and never recommend restructuring an existing site for style."
   },
   {
@@ -1441,15 +1647,15 @@
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Report as low. LLM decides whether a local signal is expected for this business type.",
+    "thresholds": "Info. The analyst decides whether a local signal is expected for this business type.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites",
         "verified": "2026-11-04"
       }
     ],
-    "status": "v1",
-    "notes": "For locales with a region (e.g. ca-AD, es-ES, fr-FR), extract the visible address, phone numbers (E.164 country code: +34 Spain, +33 France), currency symbols or ISO codes, and price formats. Flag when the targeted country isn't reflected (e.g. es-ES page showing only +376 and no Spain-relevant contact, delivery or pricing info). A service business may serve other countries from its home address and phone. Never demand local addresses it does not have. Never recommend entering new markets, targeting new countries or adding languages; those are owner decisions."
+    "status": "planned",
+    "notes": "For locales with a region (e.g. ca-AD, es-ES, fr-FR), extract the visible address, phone numbers (E.164 country code: +34 Spain, +33 France), currency symbols or ISO codes, and price formats. Flag when the targeted country isn't reflected (e.g. es-ES page showing only +376 and no Spain-relevant contact, delivery or pricing info). A service business may serve other countries from its home address and phone. Never demand local addresses it does not have. Never recommend entering new markets, targeting new countries or adding languages; those are owner decisions. Planned: whether a local signal is expected depends on the business, which only the analyst can judge, and the analyst stage does not report facts in v1."
   },
   {
     "id": "intl-locale-formats",
@@ -1489,7 +1695,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -1509,6 +1717,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "If areaServed is present, validate its parent type (Organization, including LocalBusiness, Service, Offer, ContactPoint...) and value type (Text, Place, AdministrativeArea, GeoShape). Flag values that are page URLs or keyword lists ('Lyon, Villeurbanne, best plumber'). Google's LocalBusiness rich-result docs don't list areaServed. Never claim it affects local ranking. Service area for Maps is set in Business Profile."
   },
   {
@@ -1543,8 +1753,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Extract every occurrence of business name, postal address and phone from the visible footer, contact page, legal notice and JSON-LD across the crawl. Normalize (phone to E.164, address tokens, case). Flag conflicting variants. If the user supplies a Business Profile URL or Place ID, compare too (external-api). Google states that complete, accurate info helps local ranking and requires the real-world name and a phone that connects to the location. The specific 'citation consistency' ranking effect is industry consensus, not Google-stated. Multiple legitimate locations or departments aren't inconsistency.",
+    "status": "planned",
+    "notes": "Extract every occurrence of business name, postal address and phone from the visible footer, contact page, legal notice and JSON-LD across the crawl. Normalize (phone to E.164, address tokens, case). Flag conflicting variants. If the user supplies a Business Profile URL or Place ID, compare too (external-api). Google states that complete, accurate info helps local ranking and requires the real-world name and a phone that connects to the location. The specific 'citation consistency' ranking effect is industry consensus, not Google-stated. Multiple legitimate locations or departments aren't inconsistency. Planned: it needs the crawl to see the footer, contact and legal pages together, and v1 audits one page with its home and two siblings.",
     "related": [
       "schema-localbusiness",
       "ai-brand-fact-consistency"
@@ -1624,15 +1834,15 @@
     "fpRisk": "high",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidates: >= 3 pages, masked similarity >= 0.8. LLM confirms.",
+    "thresholds": "Candidates: >= 3 pages, masked similarity >= 0.8. The analyst confirms; severity stays within maxSeverity.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Cluster pages whose titles or H1s differ mainly by a place name (Lyon, Marseille, Lille, Toulouse...). Compute main-content similarity after masking place names. Flag clusters of >= 3 pages with masked similarity >= 0.8, or pages that only funnel to one conversion page. The LLM then judges whether each page has unique, location-specific value (local address, staff, projects, prices, service specifics). Google's doorway examples include 'multiple domain names or pages targeted at specific regions or cities that funnel users to one page'. Real multi-location businesses with distinct details per location aren't doorways. Raise to critical only when the LLM confirms mass near-duplicates (>= 10). Never recommend entering new markets, targeting new countries or adding languages; those are owner decisions.",
+    "status": "planned",
+    "notes": "Cluster pages whose titles or H1s differ mainly by a place name. Compute main-content similarity after masking place names. Flag clusters of >= 3 pages with masked similarity >= 0.8, or pages that only funnel to one conversion page. The analyst then judges whether each page has unique, location-specific value (local address, staff, projects, prices, service specifics). Google's doorway examples include pages targeted at specific regions or cities that funnel users to one page. Real multi-location businesses with distinct details per location are not doorways. Never recommend entering new markets, targeting new countries or adding languages; those are owner decisions. Planned: it needs the crawl and the analyst, and content-scaled-doorway owns scaled doorway pages, so this rule would only add the place-name masking.",
     "related": [
       "content-scaled-doorway"
     ]
@@ -1647,15 +1857,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "http"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Presence = info. Raise to low if the site has a single language and targets multilingual markets.",
+    "thresholds": "Presence = info.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/translated-results",
@@ -1663,6 +1872,8 @@
       }
     ],
     "status": "v1",
-    "notes": "Detect 'notranslate' in meta name=robots or googlebot, or in the X-Robots-Tag header. Report as context. Never recommend adding languages or translation features as a market decision."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Detect 'notranslate' in meta name=robots or googlebot, or in the X-Robots-Tag header. Report as context. Whether the site should offer translated results is an owner decision; never recommend adding languages or translation features."
   }
 ]

@@ -43,6 +43,10 @@ const detailedAudits = new Set([
   'target-size',
   'color-contrast',
   'errors-in-console',
+  'unsized-images',
+  'non-composited-animations',
+  'unminified-css',
+  'unminified-javascript',
 ]);
 
 const omittedAudits = new Set(['screenshot-thumbnails', 'final-screenshot', 'full-page-screenshot', 'main-thread-tasks', 'script-treemap-data']);

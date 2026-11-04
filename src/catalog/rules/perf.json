@@ -18,7 +18,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "good <=2500 ms; NI >2500 and <=4000 ms; poor >4000 ms at p75",
+    "thresholds": "good <=2500 ms; NI >2500 and <=4000 ms (medium); poor >4000 ms (high) at p75, per form factor",
     "sources": [
       {
         "url": "https://developers.google.com/speed/docs/insights/v5/about",
@@ -42,7 +42,9 @@
     "related": [
       "perf-crux-cwv-assessment",
       "perf-lab-lcp"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-inp-p75",
@@ -63,7 +65,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "good <=200 ms; NI >200 and <=500 ms; poor >500 ms at p75",
+    "thresholds": "good <=200 ms; NI >200 and <=500 ms (medium); poor >500 ms (high) at p75, per form factor",
     "sources": [
       {
         "url": "https://developers.google.com/search/blog/2023/05/introducing-inp",
@@ -83,7 +85,9 @@
     "related": [
       "perf-crux-cwv-assessment",
       "perf-lab-tbt-inp-proxy"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-cls-p75",
@@ -102,7 +106,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "good <=0.1; NI >0.1 and <=0.25; poor >0.25 at p75",
+    "thresholds": "good <=0.1; NI >0.1 and <=0.25 (medium); poor >0.25 (high) at p75, per form factor",
     "sources": [
       {
         "url": "https://web.dev/articles/cls",
@@ -118,7 +122,9 @@
     "related": [
       "perf-crux-cwv-assessment",
       "perf-lab-cls"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-cwv-assessment",
@@ -139,7 +145,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "all available CWV good at p75",
+    "thresholds": "Per form factor: pass when LCP and CLS (and INP when it has data) are good at p75; any of them not good = high on PHONE, medium on DESKTOP. Without LCP or CLS data the form factor is not assessable.",
     "sources": [
       {
         "url": "https://developers.google.com/speed/docs/insights/v5/about",
@@ -159,7 +165,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Per form factor: if LCP, INP and CLS all have data, pass only if all three p75 values are good. If INP has no data, pass if LCP and CLS are good. If LCP or CLS has no data, result is 'not assessable'. Status of a group = worst metric (Search Console logic). Fail on PHONE = high; fail only on DESKTOP = medium. Search Console groups similar URLs and may show a group status rather than the exact URL; CrUX API is URL- or origin-exact. Never claim a ranking drop magnitude. When only origin-level data exists, say that it covers all pages of the origin."
+    "notes": "Per form factor: if LCP, INP and CLS all have data, pass only if all three p75 values are good. If INP has no data, pass if LCP and CLS are good. If LCP or CLS has no data, result is 'not assessable'. Status of a group = worst metric (Search Console logic). Fail on PHONE = high; fail only on DESKTOP = medium. Search Console groups similar URLs and may show a group status rather than the exact URL; CrUX API is URL- or origin-exact. Never claim a ranking drop magnitude. When only origin-level data exists, say that it covers all pages of the origin.",
+    "fixLocation": "repo",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-data-availability",
@@ -179,7 +187,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "none (classification: url / origin / none)",
+    "thresholds": "URL-level data for any form factor = pass; origin-level data only = info; no data = info, tied to a non-200 status or noindex when either is present.",
     "sources": [
       {
         "url": "https://developers.google.com/speed/docs/insights/v5/about",
@@ -195,7 +203,12 @@
       }
     ],
     "status": "v1",
-    "notes": "queryRecord for url per formFactor; on HTTP 404 (no data) retry with origin. Record which level answered. If neither, report 'no field data'. Also query without formFactor to read form_factors fractions. Eligibility needs a public, discoverable page: final status 200 after redirects, no noindex (meta or X-Robots-Tag), and the undisclosed popularity threshold. If the page returns noindex or non-200, absence of CrUX data is expected and must be tied to that finding instead of 'low traffic'. Only Chrome desktop and Android users who opted in to usage statistics and sync contribute; iOS, WebView and Edge are excluded. The 404 response for no data is observed behaviour and is not described on the API page."
+    "notes": "queryRecord for url per formFactor; on HTTP 404 (no data) retry with origin. Record which level answered. If neither, report 'no field data'. Also query without formFactor to read form_factors fractions. Eligibility needs a public, discoverable page: final status 200 after redirects, no noindex (meta or X-Robots-Tag), and the undisclosed popularity threshold. If the page returns noindex or non-200, absence of CrUX data is expected and must be tied to that finding instead of 'low traffic'. Only Chrome desktop and Android users who opted in to usage statistics and sync contribute; iOS, WebView and Edge are excluded. The 404 response for no data is observed behaviour and is not described on the API page.",
+    "optionalInputs": [
+      "raw-html"
+    ],
+    "fixLocation": "owner-decision",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-fcp-p75",
@@ -214,7 +227,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "good <=1800 ms; NI >1800 and <=3000 ms; poor >3000 ms",
+    "thresholds": "good <=1800 ms; NI >1800 and <=3000 ms; poor >3000 ms. NI or poor = low.",
     "sources": [
       {
         "url": "https://developers.google.com/speed/docs/insights/v5/about",
@@ -226,7 +239,9 @@
       }
     ],
     "status": "v1",
-    "notes": "metrics.first_contentful_paint.percentiles.p75 per formFactor; classify 1800/3000 ms. FCP is diagnostic, not a Core Web Vital; never report it as a ranking factor. Use it to explain LCP (high FCP plus high LCP means a render-path problem)."
+    "notes": "metrics.first_contentful_paint.percentiles.p75 per formFactor; classify 1800/3000 ms. FCP is diagnostic, not a Core Web Vital; never report it as a ranking factor. Use it to explain LCP (high FCP plus high LCP means a render-path problem).",
+    "fixLocation": "repo",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-ttfb-p75",
@@ -245,7 +260,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "good <=800 ms; NI >800 and <=1800 ms; poor >1800 ms",
+    "thresholds": "good <=800 ms; NI >800 and <=1800 ms; poor >1800 ms at p75. NI or poor = low, or medium when field LCP p75 for the same form factor is not good.",
     "sources": [
       {
         "url": "https://web.dev/articles/ttfb",
@@ -257,7 +272,9 @@
       }
     ],
     "status": "v1",
-    "notes": "metrics.experimental_time_to_first_byte.percentiles.p75 per formFactor; classify 800/1800 ms. TTFB is not a Core Web Vital: report it as medium only when LCP is NI/poor; otherwise low. Field TTFB includes redirects, service-worker startup, DNS, TCP and TLS, and is collected only on full page loads. 103 Early Hints counts as first bytes in Chrome (responseStart reverted in Chrome 133), so TTFB may look artificially good on sites using it."
+    "notes": "metrics.experimental_time_to_first_byte.percentiles.p75 per formFactor; classify 800/1800 ms. TTFB is not a Core Web Vital: report it as medium only when LCP is NI/poor; otherwise low. Field TTFB includes redirects, service-worker startup, DNS, TCP and TLS, and is collected only on full page loads. 103 Early Hints counts as first bytes in Chrome (responseStart reverted in Chrome 133), so TTFB may look artificially good on sites using it.",
+    "fixLocation": "platform-config",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-lcp-subparts",
@@ -276,7 +293,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Guideline shares: TTFB ~40%, load delay <10%, load duration ~40%, render delay <10%. Apply only when LCP is not good.",
+    "thresholds": "Only when LCP p75 >2500 ms: resource load delay >10%, element render delay >10% or TTFB >40% of the sum of the four subpart p75s = medium. Guideline shares, not absolute targets.",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/crux/methodology/metrics",
@@ -292,7 +309,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Read p75 of largest_contentful_paint_image_time_to_first_byte, _resource_load_delay, _resource_load_duration, _element_render_delay. Compute each as share of their sum. Flag resource_load_delay >10% or element_render_delay >10% of the sum when LCP p75 >2500 ms; flag TTFB share >~40% as server/network-bound. The subparts cover image LCPs only. Each is an independent p75, so they do not add up exactly to LCP p75; describe shares as approximate. web.dev says not to turn the shares into absolute targets. Check largest_contentful_paint_resource_type: when text dominates, the subparts describe a minority of loads."
+    "notes": "Read p75 of largest_contentful_paint_image_time_to_first_byte, _resource_load_delay, _resource_load_duration, _element_render_delay. Compute each as share of their sum. Flag resource_load_delay >10% or element_render_delay >10% of the sum when LCP p75 >2500 ms; flag TTFB share >~40% as server/network-bound. The subparts cover image LCPs only. Each is an independent p75, so they do not add up exactly to LCP p75; describe shares as approximate. web.dev says not to turn the shares into absolute targets. Check largest_contentful_paint_resource_type: when text dominates, the subparts describe a minority of loads.",
+    "fixLocation": "repo",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-lcp-resource-type",
@@ -322,8 +341,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "metrics.largest_contentful_paint_resource_type.fractions (image vs text). Context only."
+    "status": "planned",
+    "notes": "Planned: the CrUX client in src/data/crux.ts keeps percentiles and histograms only, so the fractions of largest_contentful_paint_resource_type are not collected. metrics.largest_contentful_paint_resource_type.fractions (image vs text). Context only."
   },
   {
     "id": "perf-crux-navigation-types",
@@ -342,7 +361,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "back_forward fraction > back_forward_cache fraction AND history navigations >= 5% (tool heuristic, not an official threshold)",
+    "thresholds": "back_forward fraction > back_forward_cache fraction AND back_forward + back_forward_cache >= 5% of navigations = low (tool heuristic, not an official threshold)",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/crux/methodology/metrics",
@@ -361,7 +380,9 @@
     "notes": "metrics.navigation_types.fractions: compare back_forward (not restored) with back_forward_cache. Flag when back_forward > back_forward_cache and back_forward + back_forward_cache >= 5% of navigations. Report prerender fraction as context. The 5% gate is a tool heuristic; say so. Some ineligibility reasons are outside the site's control (browser state, extensions).",
     "related": [
       "perf-bfcache-eligibility"
-    ]
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-crux-history-trend",
@@ -387,8 +408,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "records:queryHistoryRecord with collectionPeriodCount up to 40 (default 25) per formFactor. Read percentilesTimeseries.p75s. Flag a regression when the latest p75 crosses a threshold band that earlier periods were inside, or worsens >=20% versus the median of the prior 8 periods. Windows are 28 days rolling, updated weekly (Monday ~04:00 UTC), and overlap by 3 weeks. A sudden change takes about 4 weeks to show fully. p75s entries may be null and densities 'NaN' for missing periods; skip them, never treat them as 0. CLS p75s are strings. The API shares the 150 queries/min quota with queryRecord."
+    "status": "planned",
+    "notes": "Planned: the collector does not query records:queryHistoryRecord yet. records:queryHistoryRecord with collectionPeriodCount up to 40 (default 25) per formFactor. Read percentilesTimeseries.p75s. Flag a regression when the latest p75 crosses a threshold band that earlier periods were inside, or worsens >=20% versus the median of the prior 8 periods. Windows are 28 days rolling, updated weekly (Monday ~04:00 UTC), and overlap by 3 weeks. A sudden change takes about 4 weeks to show fully. p75s entries may be null and densities 'NaN' for missing periods; skip them, never treat them as 0. CLS p75s are strings. The API shares the 150 queries/min quota with queryRecord."
   },
   {
     "id": "perf-crux-rtt-context",
@@ -407,7 +428,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "none",
+    "thresholds": "none: the p75 round-trip time is recorded as context and never fails",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/crux/methodology/metrics",
@@ -418,8 +439,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "metrics.round_trip_time.percentiles.p75 per formFactor. RTT reflects the users' connections, not the server. Never report it as a site defect. It replaced the ECT dimension (removed Sept 2024)."
+    "status": "planned",
+    "notes": "Planned: context only, with no failure state, so it has no failing fixture; perf-crux-ttfb-p75 cites the round-trip time p75 beside a slow field TTFB. metrics.round_trip_time.percentiles.p75 per formFactor. RTT reflects the users' connections, not the server. Never report it as a site defect. It replaced the ECT dimension (removed Sept 2024)."
   },
   {
     "id": "perf-crux-softnav-experimental",
@@ -438,7 +459,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "none (context)",
+    "thresholds": "An experimental metric with soft navigations in a different band from its stable metric = info (context). Absent experimental metrics = not applicable.",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/crux/release-notes/",
@@ -450,7 +471,9 @@
       }
     ],
     "status": "v1",
-    "notes": "If present, read experimental_largest_contentful_paint_with_softnavs, experimental_interaction_to_next_paint_with_softnavs and experimental_cumulative_layout_shift_with_softnavs, and compare them with the stable metrics. Experimental (Sept 2026 CrUX release). Never use it for the CWV assessment or present it as what Google ranks on. It combines hard and soft navigations."
+    "notes": "If present, read experimental_largest_contentful_paint_with_softnavs, experimental_interaction_to_next_paint_with_softnavs and experimental_cumulative_layout_shift_with_softnavs, and compare them with the stable metrics. Experimental (Sept 2026 CrUX release). Never use it for the CWV assessment or present it as what Google ranks on. It combines hard and soft navigations.",
+    "fixLocation": "repo",
+    "verifiableBy": "field-28d"
   },
   {
     "id": "perf-lab-run-protocol",
@@ -469,7 +492,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-other-engine",
-    "thresholds": "N>=5; CV >15% marks the lab result unstable (tool heuristic)",
+    "thresholds": "Fewer than 5 valid runs = info; run warnings = info. A coefficient of variation of lab LCP above 15% marks the result unstable (tool heuristic); it needs the per-run values, which the summary does not keep, so only the LCP range is shown.",
     "sources": [
       {
         "url": "https://github.com/GoogleChrome/lighthouse/blob/main/docs/variability.md",
@@ -493,7 +516,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Run Lighthouse 13.x via the Node API (ESM, Node >=22.19) against a dedicated Chrome. Use mobile (default formFactor 'mobile', throttlingMethod 'simulate', moto g power 2022 UA, 412x823 at DPR 1.75) and desktop config. Do >=5 sequential runs per URL and select the median with computeMedianRun (lighthouse/core/lib/median-run.js). Record lhr.lighthouseVersion, environment.benchmarkIndex and runWarnings. Flag 'unstable' when the LCP numericValue coefficient of variation across runs is >15%. Simulated mobile throttling: 150 ms RTT, ~1.6 Mbps down / 750 Kbps up, 4x CPU slowdown. Desktop uses the desktopDense4G preset (read the exact values from lhr.configSettings). Variance sources: A/B tests, ads, network, host load. Lighthouse docs say the median of 5 runs is twice as stable as 1 run. evidenceLevel is official-other-engine because this is Chrome/Lighthouse documentation, not Search documentation."
+    "notes": "Run Lighthouse 13.x via the Node API (ESM, Node >=22.19) against a dedicated Chrome. Use mobile (default formFactor 'mobile', throttlingMethod 'simulate', moto g power 2022 UA, 412x823 at DPR 1.75) and desktop config. Do >=5 sequential runs per URL and select the median with computeMedianRun (lighthouse/core/lib/median-run.js). Record lhr.lighthouseVersion, environment.benchmarkIndex and runWarnings. Flag 'unstable' when the LCP numericValue coefficient of variation across runs is >15%. Simulated mobile throttling: 150 ms RTT, ~1.6 Mbps down / 750 Kbps up, 4x CPU slowdown. Desktop uses the desktopDense4G preset (read the exact values from lhr.configSettings). Variance sources: A/B tests, ads, network, host load. Lighthouse docs say the median of 5 runs is twice as stable as 1 run. evidenceLevel is official-other-engine because this is Chrome/Lighthouse documentation, not Search documentation.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lab-performance-score",
@@ -512,7 +537,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-other-engine",
-    "thresholds": "display bands only",
+    "thresholds": "Score 0-49 = info (poor); 50-89 = info (needs improvement); 90-100 = pass. Display bands only; never scored.",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/lighthouse/performance/performance-scoring",
@@ -524,7 +549,9 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.categories.performance.score*100 (median run). Weights: FCP 10, SI 10, LCP 25, TBT 30, CLS 25. Bands 0-49 / 50-89 / 90-100. Must not affect the SEO score. Google's ranking uses CWV field data, not the Lighthouse score. Desktop uses different scoring curves from mobile."
+    "notes": "lhr.categories.performance.score*100 (median run). Weights: FCP 10, SI 10, LCP 25, TBT 30, CLS 25. Bands 0-49 / 50-89 / 90-100. Must not affect the SEO score. Google's ranking uses CWV field data, not the Lighthouse score. Desktop uses different scoring curves from mobile.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lab-lcp",
@@ -545,7 +572,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-other-engine",
-    "thresholds": ">4000 ms poor-range; >2500 ms NI-range (lab)",
+    "thresholds": "Lab LCP >4000 ms = medium; >2500 ms = low. When CrUX has field LCP for the lab form factor, a failing lab value is info (diagnostic only).",
     "sources": [
       {
         "url": "https://web.dev/articles/lcp",
@@ -557,7 +584,12 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['largest-contentful-paint'].numericValue (ms) from the median run. Compare with 2500/4000. Lighthouse mobile scoring control points: p10 2500, median 4000 (desktop 1200/2400). Always label it 'lab'. If field data exists, field takes precedence for status. Lab can be worse or better than field (no cache, fixed device, first-visit consent banner, unload of previous page not included)."
+    "notes": "lhr.audits['largest-contentful-paint'].numericValue (ms) from the median run. Compare with 2500/4000. Lighthouse mobile scoring control points: p10 2500, median 4000 (desktop 1200/2400). Always label it 'lab'. If field data exists, field takes precedence for status. Lab can be worse or better than field (no cache, fixed device, first-visit consent banner, unload of previous page not included).",
+    "optionalInputs": [
+      "crux"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lab-tbt-inp-proxy",
@@ -578,7 +610,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-other-engine",
-    "thresholds": "mobile: <=200 good-ish, >600 flag; desktop: >350 flag",
+    "thresholds": "Lab TBT >600 ms on a mobile run or >350 ms on a desktop run = medium; otherwise pass. When CrUX has field INP for the lab form factor, a failing lab value is info (diagnostic only).",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-long-tasks",
@@ -590,7 +622,12 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['total-blocking-time'].numericValue. Mobile scoring control points p10 200 ms, median 600 ms (desktop 150/350). Flag >600 ms mobile as high main-thread blocking. TBT is not a Core Web Vital and measures load-time blocking only. A navigation-mode Lighthouse run has no INP (the interaction-to-next-paint audit has weight 0 and needs timespan mode). Never call high TBT 'poor INP'."
+    "notes": "lhr.audits['total-blocking-time'].numericValue. Mobile scoring control points p10 200 ms, median 600 ms (desktop 150/350). Flag >600 ms mobile as heavy main-thread blocking. TBT is not a Core Web Vital and measures load-time blocking only. A navigation-mode Lighthouse run has no INP (the interaction-to-next-paint audit has weight 0 and needs timespan mode). Never call high TBT 'poor INP'.",
+    "optionalInputs": [
+      "crux"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lab-cls",
@@ -611,7 +648,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": ">0.1 NI-range, >0.25 poor-range (lab)",
+    "thresholds": "Lab CLS >0.25 = medium; >0.1 = low. When CrUX has field CLS for the lab form factor, a failing lab value is info (diagnostic only).",
     "sources": [
       {
         "url": "https://web.dev/articles/cls",
@@ -623,7 +660,12 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['cumulative-layout-shift'].numericValue; compare with 0.1/0.25. Lab CLS covers page load only and is usually lower than field CLS. A clean lab result does not disprove a poor field CLS."
+    "notes": "lhr.audits['cumulative-layout-shift'].numericValue; compare with 0.1/0.25. Lab CLS covers page load only and is usually lower than field CLS. A clean lab result does not disprove a poor field CLS.",
+    "optionalInputs": [
+      "crux"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lcp-lazy-loaded",
@@ -635,8 +677,6 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "rendered-dom",
       "lighthouse"
     ],
     "appliesTo": "all",
@@ -644,7 +684,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "any loading=lazy on the LCP image = fail",
+    "thresholds": "LCP image lazy-loaded without a preload (lcp-discovery-insight eagerlyLoaded false) = high; LCP image URL only in a data-src style attribute of its <img> = high",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-lcp",
@@ -667,7 +707,14 @@
     "notes": "Identify the LCP element (rendered page: PerformanceObserver 'largest-contentful-paint' entry .element/.url via CDP Runtime.evaluate, or the lcp-discovery-insight checklist). Fail if that <img> has loading='lazy' (and is not preloaded), or if it uses a JS lazy-load pattern (data-src/data-srcset with a placeholder src, 'lazyload' class). Check both mobile and desktop viewports, since the LCP element can differ. A lazy image that is preloaded via <link rel=preload> passes the insight. web.dev reports 7% of pages hide the LCP image behind data-src.",
     "related": [
       "content-img-lazy-misuse"
-    ]
+    ],
+    "optionalInputs": [
+      "raw-html",
+      "user-render",
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lcp-not-discoverable",
@@ -679,8 +726,6 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "rendered-dom",
       "lighthouse"
     ],
     "appliesTo": "all",
@@ -688,7 +733,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "LCP URL absent from raw-HTML discovery points = fail",
+    "thresholds": "lcp-discovery-insight requestDiscoverable false = high; medium when the server HTML references the URL in an <img>, <source> or image preload anyway (conflicting signals). The data-src pattern is reported by perf-lcp-lazy-loaded only.",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-lcp",
@@ -704,7 +749,14 @@
       }
     ],
     "status": "v1",
-    "notes": "Take the LCP image URL from the rendered LCP entry. Pass if the raw (non-rendered) HTML contains it in <img src>, <img srcset>, <picture><source srcset> or <link rel=preload as=image href|imagesrcset>. Fail if it appears only after JS (CSR), only in CSS background-image, or only in data-* attributes. The Lighthouse lcp-discovery-insight check 'Request is discoverable in initial document' requires parser-initiated by the main document, or a link preload. Compare URLs after resolving relative paths and stripping image-CDN width params, otherwise srcset variants produce false fails. Text LCP is out of scope for this rule (see perf-lcp-client-side-rendered). web.dev: 35% of LCP images are not discoverable in the initial HTML."
+    "notes": "Take the LCP image URL from the rendered LCP entry. Pass if the raw (non-rendered) HTML contains it in <img src>, <img srcset>, <picture><source srcset> or <link rel=preload as=image href|imagesrcset>. Fail if it appears only after JS (CSR), only in CSS background-image, or only in data-* attributes. The Lighthouse lcp-discovery-insight check 'Request is discoverable in initial document' requires parser-initiated by the main document, or a link preload. Compare URLs after resolving relative paths and stripping image-CDN width params, otherwise srcset variants produce false fails. Text LCP is out of scope for this rule (see perf-lcp-client-side-rendered). web.dev: 35% of LCP images are not discoverable in the initial HTML.",
+    "optionalInputs": [
+      "raw-html",
+      "user-render",
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lcp-fetchpriority",
@@ -716,7 +768,6 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
       "lighthouse"
     ],
     "appliesTo": "all",
@@ -724,7 +775,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "missing on LCP image = fail; >2 images with fetchpriority=high = overuse warning",
+    "thresholds": "Discoverable LCP image without fetchpriority=high (lcp-discovery-insight priorityHinted false) = medium; more than 2 images with fetchpriority=high in the HTML = low (overuse)",
     "sources": [
       {
         "url": "https://web.dev/articles/fetch-priority",
@@ -740,7 +791,12 @@
       }
     ],
     "status": "v1",
-    "notes": "For an image LCP that is discoverable, check fetchpriority='high' on the <img> or on its preload link (Lighthouse lcp-discovery-insight: 'fetchpriority=high applied'). Separately count fetchpriority=high on images in raw HTML. It is a hint, not a guarantee. Google Flights LCP went from 2.6 s to 1.9 s. Supported in Chrome/Edge 102, Firefox 132, Safari 17.2. Since Chrome 117 the first 5 large images already get Medium priority. A carousel whose LCP image changes between runs needs care."
+    "notes": "For an image LCP that is discoverable, check fetchpriority='high' on the <img> or on its preload link (Lighthouse lcp-discovery-insight: 'fetchpriority=high applied'). Separately count fetchpriority=high on images in raw HTML. It is a hint, not a guarantee. Google Flights LCP went from 2.6 s to 1.9 s. Supported in Chrome/Edge 102, Firefox 132, Safari 17.2. Since Chrome 117 the first 5 large images already get Medium priority. A carousel whose LCP image changes between runs needs care.",
+    "optionalInputs": [
+      "raw-html"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lcp-breakdown-lab",
@@ -759,7 +815,7 @@
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "shares as perf-crux-lcp-subparts (guidelines)",
+    "thresholds": "Only when lab LCP >2500 ms and field subparts are absent: resource load delay >10%, element render delay >10% or TTFB >40% of the lab subpart sum = medium (guidelines as perf-crux-lcp-subparts)",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-lcp",
@@ -771,7 +827,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Read lhr.audits['lcp-breakdown-insight'] details (TTFB, load delay, load duration, render delay) plus its LCP element node. Report the largest phase and its share of LCP. In Lighthouse 13 the id is lcp-breakdown-insight. It was announced as lcp-breakdown-insight, and the old lcp-breakdown-insight audit was replaced. Text LCP has no load delay/duration. When field subparts exist, prefer them."
+    "notes": "Read lhr.audits['lcp-breakdown-insight'] details (TTFB, load delay, load duration, render delay) plus its LCP element node. Report the largest phase and its share of LCP. In Lighthouse 13 the id is lcp-breakdown-insight. It was announced as lcp-breakdown-insight, and the old lcp-breakdown-insight audit was replaced. Text LCP has no load delay/duration. When field subparts exist, prefer them.",
+    "optionalInputs": [
+      "crux"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lcp-client-side-rendered",
@@ -792,7 +853,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "LCP content absent from raw HTML = candidate; confirm with a large element render delay",
+    "thresholds": "LCP text or image URL absent from the raw HTML and lab LCP > FCP + 500 ms: empty server body = high; otherwise a medium candidate the analyst confirms",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-lcp",
@@ -807,7 +868,12 @@
     "notes": "Get the LCP element's text content or image URL from the rendered DOM, then search for it in the raw HTML. Fail if it is missing from the raw HTML (empty app shell such as <div id=root></div>) and the LCP time is > FCP + 500 ms in the lab. Normalise whitespace and entities before the text comparison. Personalised or geolocated content can differ legitimately between raw and rendered HTML; the LLM should confirm before reporting.",
     "related": [
       "crawl-js-content-dependency"
-    ]
+    ],
+    "optionalInputs": [
+      "user-render"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-lcp-antiflicker-hiding",
@@ -827,7 +893,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "snippet present AND element render delay >500 ms (tool heuristic)",
+    "thresholds": "A head snippet that hides html or body (opacity 0, visibility hidden, async-hide, known A/B testing pre-hiding) AND lab element render delay >500 ms = medium (tool heuristic). Section-level reveal styles are never matched.",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-lcp",
@@ -835,7 +901,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Look in the raw HTML <head> for anti-flicker snippets: inline style setting opacity:0 or visibility:hidden on html/body, an 'async-hide' class, or known optimisation/A-B testing vendor snippets with a timeout. Confirm in the trace that the LCP render delay is large. web.dev names hiding the LCP element while scripts (e.g. A/B libraries) load as a render-delay cause. The 500 ms gate is a heuristic."
+    "notes": "Look in the raw HTML <head> for anti-flicker snippets: inline style setting opacity:0 or visibility:hidden on html/body, an 'async-hide' class, or known optimisation/A-B testing vendor snippets with a timeout. Confirm in the trace that the LCP render delay is large. web.dev names hiding the LCP element while scripts (e.g. A/B libraries) load as a render-delay cause. The 500 ms gate is a heuristic.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-render-blocking",
@@ -847,8 +915,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "lighthouse"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -857,7 +924,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "any parser-blocking external script in head = fail; render-blocking-insight score <1 = fail",
+    "thresholds": "Parser-blocking external script in the head (no async, defer or type=module) = medium; only synchronous consent scripts = low; otherwise render-blocking-insight failing with an estimated FCP saving above 0 ms = low. A stylesheet without an estimated saving is not a failure.",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-lcp",
@@ -873,7 +940,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Raw HTML: in <head>, list <script src> without async/defer/type=module, and <link rel=stylesheet> without a non-matching media query. Lighthouse: lhr.audits['render-blocking-insight'] (score <1 and details items with wasted ms). Legacy id render-blocking-resources no longer exists in Lighthouse 13. Some consent/cookie-blocking scripts must be synchronous by design. Report them with that caveat."
+    "notes": "Raw HTML: in <head>, list <script src> without async/defer/type=module, and <link rel=stylesheet> without a non-matching media query. Lighthouse: lhr.audits['render-blocking-insight'] (score <1 and details items with wasted ms). Legacy id render-blocking-resources no longer exists in Lighthouse 13. Some consent/cookie-blocking scripts must be synchronous by design. Report them with that caveat.",
+    "optionalInputs": [
+      "lighthouse"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-document-redirects",
@@ -885,8 +957,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "redirects",
-      "lighthouse"
+      "redirects"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -896,7 +967,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": ">=1 hop = fail (medium); >=2 hops = high",
+    "thresholds": "Any redirect hop on an audited or linked URL = medium (the cap; the hop count is reported). Exempt: a root locale entry point whose locale URLs answer directly and are covered by hreflang, and an http/https, www or trailing-slash hop for a URL that no audited page links to.",
     "sources": [
       {
         "url": "https://web.dev/articles/ttfb",
@@ -915,7 +986,13 @@
     "notes": "Follow the HTTP chain manually (redirect: 'manual') from the audited/linked URL and count 3xx hops. Lighthouse document-latency-insight check 'noRedirects' fails when redirect duration >0. Redirect time counts in TTFB and LCP. When the user typed the redirecting URL itself, report the chain against internal links and sitemaps that use it, not the canonical page.",
     "related": [
       "crawl-redirect-chain"
-    ]
+    ],
+    "optionalInputs": [
+      "lighthouse",
+      "raw-html"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "perf-server-response-time",
@@ -927,7 +1004,6 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "http",
       "lighthouse"
     ],
     "appliesTo": "all",
@@ -935,7 +1011,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": ">600 ms fails (Lighthouse threshold); field TTFB per perf-crux-ttfb-p75",
+    "thresholds": "Lab document response (Lighthouse server-response-time) >600 ms = low; medium when the collector sample also exceeds 600 ms. Field TTFB per perf-crux-ttfb-p75.",
     "sources": [
       {
         "url": "https://web.dev/articles/ttfb",
@@ -950,7 +1026,12 @@
     "notes": "Measure the document response time (request sent to first byte, excluding DNS/connect) over >=3 warm samples from the HTTP collector; also read document-latency-insight 'serverResponseIsFast'. A single sample from the tool's own location is not user TTFB. Report it as a lab observation with the collector's location.",
     "related": [
       "perf-crux-ttfb-p75"
-    ]
+    ],
+    "optionalInputs": [
+      "http"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "perf-text-compression",
@@ -962,15 +1043,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "http",
-      "resources"
+      "http"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "uncompressed text resource >1400 bytes = fail",
+    "thresholds": "Uncompressed text HTML >1400 bytes = medium; uncompressed first-party text asset >1400 bytes (referenced resource, or a lab request that transferred at least its decoded size) = low",
     "sources": [
       {
         "url": "https://raw.githubusercontent.com/ChromeDevTools/devtools-frontend/main/front_end/models/trace/insights/DocumentLatency.ts",
@@ -982,7 +1062,13 @@
       }
     ],
     "status": "v1",
-    "notes": "Request HTML, CSS, JS, JSON, SVG and XML with Accept-Encoding: zstd, br, gzip. Fail when Content-Encoding is missing or not in {gzip, br, zstd, deflate} and the decoded body is >1400 bytes. Lighthouse: document-latency-insight 'usesCompression' (document only). Uncompressed HTML = medium; an uncompressed small asset = low. Brotli vs gzip is a micro-optimisation, so do not flag gzip. Browsers advertise zstd only over HTTPS. Some CDNs compress only when the client advertises an encoding, so always send Accept-Encoding. Do not flag already-compressed types (images, woff2)."
+    "notes": "Request HTML, CSS, JS, JSON, SVG and XML with Accept-Encoding: zstd, br, gzip. Fail when Content-Encoding is missing or not in {gzip, br, zstd, deflate} and the decoded body is >1400 bytes. Lighthouse: document-latency-insight 'usesCompression' (document only). Uncompressed HTML = medium; an uncompressed small asset = low. Brotli vs gzip is a micro-optimisation, so do not flag gzip. Browsers advertise zstd only over HTTPS. Some CDNs compress only when the client advertises an encoding, so always send Accept-Encoding. Do not flag already-compressed types (images, woff2).",
+    "optionalInputs": [
+      "resources",
+      "lighthouse"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "perf-http-protocol",
@@ -992,9 +1078,8 @@
     "fix": "Enable HTTP/2 (and ideally HTTP/3) at the origin/CDN.",
     "maxSeverity": "medium",
     "method": "deterministic",
-    "scope": "site",
+    "scope": "page",
     "inputs": [
-      "resources",
       "lighthouse"
     ],
     "appliesTo": "all",
@@ -1002,7 +1087,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "origin with >=6 static requests on HTTP/1.x = fail; Alt-Svc h3 = info",
+    "thresholds": "First-party origin with >=6 static lab requests and any of them on HTTP/1.x = medium; the same on a third-party origin = low. A missing HTTP/3 is never a failure.",
     "sources": [
       {
         "url": "https://www.rfc-editor.org/rfc/rfc9114.html#section-3.1.1",
@@ -1014,7 +1099,9 @@
       }
     ],
     "status": "v1",
-    "notes": "From the CDP Network.responseReceived 'protocol' field (or the Lighthouse modern-http-insight), group static requests by origin. Fail for an origin with >=6 static requests where any request uses HTTP/1.x. Detect HTTP/3 advertisement via the Alt-Svc header containing h3. Node fetch (undici) does not negotiate h2 by default, so take the protocol from the browser, not from the Node HTTP client. Third-party origins are outside the site's control; report them separately. A missing HTTP/3 is not a defect."
+    "notes": "From the CDP Network.responseReceived 'protocol' field (or the Lighthouse modern-http-insight), group static requests by origin. Fail for an origin with >=6 static requests where any request uses HTTP/1.x. Detect HTTP/3 advertisement via the Alt-Svc header containing h3. Node fetch (undici) does not negotiate h2 by default, so take the protocol from the browser, not from the Node HTTP client. Third-party origins are outside the site's control; report them separately. A missing HTTP/3 is not a defect.",
+    "fixLocation": "cdn-dashboard",
+    "verifiableBy": "deployed"
   },
   {
     "id": "perf-static-cache-ttl",
@@ -1024,9 +1111,8 @@
     "fix": "Fingerprint asset filenames and serve them with Cache-Control: public, max-age=31536000, immutable (immutable is optional); serve HTML with no-cache plus an ETag.",
     "maxSeverity": "low",
     "method": "deterministic",
-    "scope": "site",
+    "scope": "page",
     "inputs": [
-      "resources",
       "lighthouse"
     ],
     "appliesTo": "all",
@@ -1036,7 +1122,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "TTL <30 d or missing = flag; hashed asset with max-age <31536000 = flag",
+    "thresholds": "Any first-party static resource listed by cache-insight (TTL missing or <30 d) = low; fingerprinted file names among them are named. Third-party resources never fail.",
     "sources": [
       {
         "url": "https://web.dev/articles/http-cache",
@@ -1048,7 +1134,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For static resources (script, stylesheet, image, font, media) with cacheable status: compute TTL from max-age, else Expires. Flag missing TTL or TTL <30 days unless no-store/no-cache/must-revalidate/private is set (Lighthouse cache-insight logic). Separately, for fingerprinted filenames (hash in the path, e.g. app.3f9a1c.js) expect max-age >= 31536000. The legacy id cache-insight is gone; use cache-insight. Repeat-visit benefit only, so low severity. Third-party assets (analytics) are not under the site's control. max-age=0 is intentionally ignored by the insight."
+    "notes": "For static resources (script, stylesheet, image, font, media) with cacheable status: compute TTL from max-age, else Expires. Flag missing TTL or TTL <30 days unless no-store/no-cache/must-revalidate/private is set (Lighthouse cache-insight logic). Separately, for fingerprinted filenames (hash in the path, e.g. app.3f9a1c.js) expect max-age >= 31536000. The legacy id cache-insight is gone; use cache-insight. Repeat-visit benefit only, so low severity. Third-party assets (analytics) are not under the site's control. max-age=0 is intentionally ignored by the insight.",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "perf-html-no-store",
@@ -1061,7 +1149,7 @@
     "scope": "page",
     "inputs": [
       "http",
-      "rendered-dom"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1071,7 +1159,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "no-store on public HTML = flag",
+    "thresholds": "no-store on a 200, indexable HTML response without private, a password field or Set-Cookie = low; with Set-Cookie = low candidate the analyst confirms",
     "sources": [
       {
         "url": "https://web.dev/articles/bfcache",
@@ -1083,7 +1171,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Document response Cache-Control contains no-store on a page with no evident authenticated or sensitive content (no Set-Cookie session, public crawlable page). Since a 100% rollout in Mar-Apr 2025, Chrome admits most no-store pages to bfcache. It evicts them on cookie changes and after 3 min (10 min for other pages), and keeps them out when the page uses WebSocket, WebTransport or WebRTC. Other browsers may still block bfcache. Do not claim 'no-store blocks bfcache in Chrome'."
+    "notes": "Document response Cache-Control contains no-store on a page with no evident authenticated or sensitive content (no Set-Cookie session, public crawlable page). Since a 100% rollout in Mar-Apr 2025, Chrome admits most no-store pages to bfcache. It evicts them on cookie changes and after 3 min (10 min for other pages), and keeps them out when the page uses WebSocket, WebTransport or WebRTC. Other browsers may still block bfcache. Do not claim 'no-store blocks bfcache in Chrome'.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed"
   },
   {
     "id": "perf-bfcache-eligibility",
@@ -1104,7 +1197,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "any PageSupportNeeded (actionable) reason = fail",
+    "thresholds": "Any actionable (PageSupportNeeded) bf-cache reason not caused by the automated run = medium",
     "sources": [
       {
         "url": "https://web.dev/articles/bfcache",
@@ -1120,7 +1213,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Lighthouse lhr.audits['bf-cache'] (score 0 means failures; details list reasons and failure types). Alternatively, via CDP: navigate A->B->back and listen for Page.backForwardCacheNotUsed (notRestoredExplanations with type PageSupportNeeded / SupportPending / Circumstantial). web.dev lists bfcache among the top recommendations for LCP and CLS. Report only actionable reasons; reasons from headless or automation conditions and browser-internal reasons are not site defects. A restored page resets CLS to 0."
+    "notes": "Lighthouse lhr.audits['bf-cache'] (score 0 means failures; details list reasons and failure types). Alternatively, via CDP: navigate A->B->back and listen for Page.backForwardCacheNotUsed (notRestoredExplanations with type PageSupportNeeded / SupportPending / Circumstantial). web.dev lists bfcache among the top recommendations for LCP and CLS. Report only actionable reasons; reasons from headless or automation conditions and browser-internal reasons are not site defects. A restored page resets CLS to 0.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-unload-handlers",
@@ -1132,15 +1227,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
-      "lighthouse"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "any unload listener = flag",
+    "thresholds": "Any unload listener in an inline script or body onunload (server HTML or rendered page), or an unload reason in bf-cache = low. External script files are not read.",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/web-platform/deprecating-unload",
@@ -1152,7 +1246,13 @@
       }
     ],
     "status": "v1",
-    "notes": "Lighthouse best-practices audit no-unload-listeners if present. Otherwise use CDP DOMDebugger.getEventListeners on window for type 'unload', and search script sources for addEventListener('unload' / window.onunload. Chrome finished deprecating unload across all page loads in 2026. It no longer fires by default unless the site opts back in via Permissions-Policy, and it can still fire on iOS (WebKit). The impact is now mainly Firefox bfcache ineligibility, so low severity. Third-party scripts often add these listeners. Lighthouse 13.6 has no unload-listener audit; detect listeners from the page."
+    "notes": "Lighthouse best-practices audit no-unload-listeners if present. Otherwise use CDP DOMDebugger.getEventListeners on window for type 'unload', and search script sources for addEventListener('unload' / window.onunload. Chrome finished deprecating unload across all page loads in 2026. It no longer fires by default unless the site opts back in via Permissions-Policy, and it can still fire on iOS (WebKit). The impact is now mainly Firefox bfcache ineligibility, so low severity. Third-party scripts often add these listeners. Lighthouse 13.6 has no unload-listener audit; detect listeners from the page.",
+    "optionalInputs": [
+      "rendered-dom",
+      "lighthouse"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-unsized-images",
@@ -1164,7 +1264,6 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
       "lighthouse"
     ],
     "appliesTo": "all",
@@ -1174,7 +1273,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "any above-the-fold unsized image = medium; below the fold = low",
+    "thresholds": "Any unsized image (Lighthouse unsized-images, which accounts for CSS sizing) in the first viewport of the lab run = medium; only below it = low",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-cls",
@@ -1190,7 +1289,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Lighthouse unsized-images audit (diagnostic, still in LH13). Raw/rendered DOM: <img> lacking either width+height attributes or CSS width+height/aspect-ratio, excluding position:fixed/absolute, inline SVG and images with an explicitly sized container. 66% of pages have at least one unsized image (web.dev). width/height with CSS height:auto is correct. Do not flag images where CSS sets both dimensions."
+    "notes": "Lighthouse unsized-images audit (diagnostic, still in LH13). Raw/rendered DOM: <img> lacking either width+height attributes or CSS width+height/aspect-ratio, excluding position:fixed/absolute, inline SVG and images with an explicitly sized container. 66% of pages have at least one unsized image (web.dev). width/height with CSS height:auto is correct. Do not flag images where CSS sets both dimensions.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-cls-culprits",
@@ -1209,7 +1310,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "any shift cluster >0.05 is a reportable candidate; the cluster score attributes the impact",
+    "thresholds": "Worst shift cluster >0.05 (tool heuristic): >=0.1 = medium, otherwise low. Without a root cause attributed by Lighthouse the finding is a candidate the analyst confirms.",
     "sources": [
       {
         "url": "https://developer.chrome.com/blog/moving-lighthouse-to-insights",
@@ -1225,7 +1326,9 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['cls-culprits-insight'] details: shift clusters with root causes (unsized images, web fonts, injected iframes/content, non-composited animations). Rendered page: PerformanceObserver 'layout-shift' entries with sources[].node, excluding hadRecentInput. The shifted element is often not the cause (web.dev). The LLM must name the cause, not the moved node. The 0.05 candidate cut-off is a tool heuristic."
+    "notes": "lhr.audits['cls-culprits-insight'] details: shift clusters with root causes (unsized images, web fonts, injected iframes/content, non-composited animations). Rendered page: PerformanceObserver 'layout-shift' entries with sources[].node, excluding hadRecentInput. The shifted element is often not the cause (web.dev). The LLM must name the cause, not the moved node. The 0.05 candidate cut-off is a tool heuristic.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-late-injected-banner",
@@ -1258,8 +1361,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Rendered page: find consent, promo or app banners (fixed/sticky vs static positioning) inserted after first paint. A static, in-flow banner at the top that coincides with a layout-shift entry whose sources include main content = fail. Lab runs see a first-time visitor (banner shown). Field users who already consented do not, so impact is overstated in the lab.",
+    "status": "planned",
+    "notes": "Planned: the rendered facts record neither when a node was inserted nor its computed position, so an in-flow injected banner cannot be told from a fixed overlay. Rendered page: find consent, promo or app banners (fixed/sticky vs static positioning) inserted after first paint. A static, in-flow banner at the top that coincides with a layout-shift entry whose sources include main content = fail. Lab runs see a first-time visitor (banner shown). Field users who already consented do not, so impact is overstated in the lab.",
     "related": [
       "tech-cmp-blocks-content",
       "perf-consent-lab-bias"
@@ -1275,15 +1378,14 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
-      "lighthouse"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "unsized embed above the fold or with an attributed shift = fail",
+    "thresholds": "Embed without width and height attributes or an inline height or aspect-ratio, with an injected-iframe shift attributed by Lighthouse = medium; without an attributed shift = low candidate the analyst confirms (a stylesheet may reserve the space)",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-cls",
@@ -1295,7 +1397,13 @@
       }
     ],
     "status": "v1",
-    "notes": "Rendered DOM: iframes, ad slots (common ad containers), video embeds and social embeds without width/height, aspect-ratio or min-height on the element or its container; confirm with layout-shift sources. Shifts inside cross-origin iframes are not measurable by web APIs."
+    "notes": "Rendered DOM: iframes, ad slots (common ad containers), video embeds and social embeds without width/height, aspect-ratio or min-height on the element or its container; confirm with layout-shift sources. Shifts inside cross-origin iframes are not measurable by web APIs.",
+    "optionalInputs": [
+      "rendered-dom",
+      "lighthouse"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-non-composited-animations",
@@ -1314,7 +1422,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "any non-composited animation on visible elements = flag",
+    "thresholds": "Any non-composited animation reported by Lighthouse = low",
     "sources": [
       {
         "url": "https://web.dev/articles/top-cwv",
@@ -1326,7 +1434,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Lighthouse non-composited-animations audit (diagnostic). CSS scan of @keyframes/transitions animating top/left/right/bottom/margin/width/height/border. web.dev: pages animating layout-inducing properties are 15% less likely to have good CLS, and margin/border animations show nearly 2x the poor-CLS rate. Raise to medium when they appear in cls-culprits-insight."
+    "notes": "Lighthouse non-composited-animations audit (diagnostic). CSS scan of @keyframes/transitions animating top/left/right/bottom/margin/width/height/border. web.dev: pages animating layout-inducing properties are 15% less likely to have good CLS, and margin/border animations show nearly 2x the poor-CLS rate. Animations among the shift causes are reported by perf-cls-culprits.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-font-display",
@@ -1338,15 +1448,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "lighthouse",
-      "resources"
+      "lighthouse"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "font-display missing/auto/block on a critical font = flag",
+    "thresholds": "font-display-insight failing with wasted time on any font = low",
     "sources": [
       {
         "url": "https://web.dev/articles/font-best-practices",
@@ -1358,7 +1467,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Lighthouse font-display-insight score <1. CSS: @font-face without font-display, or with auto/block, for fonts used above the fold. Icon fonts with swap cause shifts; prefer SVG icons. Google Fonts URLs accept &display=swap. Raise to medium when the LCP element is text in a web font and LCP is not good."
+    "notes": "Lighthouse font-display-insight score <1. CSS: @font-face without font-display, or with auto/block, for fonts used above the fold. Icon fonts with swap cause shifts; prefer SVG icons. Google Fonts URLs accept &display=swap.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-font-preload-crossorigin",
@@ -1377,7 +1488,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "any = fail",
+    "thresholds": "Any font preload without crossorigin, or a preconnect to a font-file origin without crossorigin and without a CORS twin = low",
     "sources": [
       {
         "url": "https://web.dev/articles/font-best-practices",
@@ -1389,7 +1500,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Raw HTML: <link rel=preload as=font> without a crossorigin attribute; <link rel=preconnect> to a font-file origin (e.g. fonts.gstatic.com) without crossorigin. Without it the preload is not reused (double fetch) and the preconnect only does DNS."
+    "notes": "Raw HTML: <link rel=preload as=font> without a crossorigin attribute; <link rel=preconnect> to a font-file origin (e.g. fonts.gstatic.com) without crossorigin. Without it the preload is not reused (double fetch) and the preconnect only does DNS.",
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-font-format",
@@ -1399,9 +1515,9 @@
     "fix": "Serve WOFF2 only, subset with unicode-range, use fewer families/weights or a variable font where it saves bytes.",
     "maxSeverity": "low",
     "method": "deterministic",
-    "scope": "site",
+    "scope": "page",
     "inputs": [
-      "resources"
+      "lighthouse"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1410,7 +1526,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "non-woff2 font = flag; >6 font files on initial load = flag (tool heuristic)",
+    "thresholds": "Any non-woff2 font file in the lab load = low; more than 6 font files = low (tool heuristic)",
     "sources": [
       {
         "url": "https://web.dev/articles/font-best-practices",
@@ -1418,7 +1534,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Network log: font requests whose Content-Type or extension is not woff2; count font files and bytes on the page. Micro-optimisation unless fonts sit on the LCP path. The 6-file cut-off is heuristic."
+    "notes": "Network log: font requests whose Content-Type or extension is not woff2; count font files and bytes on the page. Micro-optimisation unless fonts sit on the LCP path. The 6-file cut-off is heuristic.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-preconnect-hints",
@@ -1430,16 +1548,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "resources",
-      "lighthouse"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "unused preconnect (no request within 10 s) = flag; combined rel = flag; >4 preconnects = warn (heuristic)",
+    "thresholds": "Each = low: more than 4 preconnects (heuristic); preconnect combined with dns-prefetch in one rel; a preconnected origin without a lab request in the first 10 s; an origin Lighthouse estimates a preconnect would speed up",
     "sources": [
       {
         "url": "https://web.dev/articles/preconnect-and-dns-prefetch",
@@ -1451,7 +1567,13 @@
       }
     ],
     "status": "v1",
-    "notes": "Raw HTML <link rel=preconnect>: (a) count; (b) preconnected origins that get no request in the first 10 s of the lab load; (c) rel='preconnect dns-prefetch' combined in one tag; (d) critical third-party origins on the LCP path without a preconnect (from network-dependency-tree-insight). No official numeric limit exists ('limit the number'). The >4 warning is a heuristic and must be phrased that way. The browser closes unused connections after 10 s."
+    "notes": "Raw HTML <link rel=preconnect>: (a) count; (b) preconnected origins that get no request in the first 10 s of the lab load; (c) rel='preconnect dns-prefetch' combined in one tag; (d) critical third-party origins on the LCP path without a preconnect (from network-dependency-tree-insight). No official numeric limit exists ('limit the number'). The >4 warning is a heuristic and must be phrased that way. The browser closes unused connections after 10 s.",
+    "optionalInputs": [
+      "rendered-dom",
+      "lighthouse"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-critical-request-chains",
@@ -1470,7 +1592,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-other-engine",
-    "thresholds": "insight score <1 = flag; chain depth >3 on the LCP path = medium",
+    "thresholds": "Deepest critical request chain more than 3 requests after the document = low (tool heuristic). The insight fails on any two-request chain, so its score alone is not used.",
     "sources": [
       {
         "url": "https://developer.chrome.com/blog/moving-lighthouse-to-insights",
@@ -1482,7 +1604,9 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['network-dependency-tree-insight'] details: maximum critical path latency and chain depth. Replaces the legacy critical-request-chains and network-dependency-tree-insight audits. The depth cut-off is a heuristic."
+    "notes": "lhr.audits['network-dependency-tree-insight'] details: maximum critical path latency and chain depth. Replaces the legacy critical-request-chains and network-dependency-tree-insight audits. The depth cut-off is a heuristic.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-image-delivery",
@@ -1494,8 +1618,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "lighthouse",
-      "rendered-dom"
+      "lighthouse"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
@@ -1518,7 +1641,13 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['image-delivery-insight'] items (oversized for display size, legacy format, poor compression, animated GIF): sum the estimated savings. Rendered DOM: images whose intrinsic width >2x rendered width x DPR; large images without srcset/sizes. Most material when it is the LCP image (load duration subpart). Replaces uses-webp-images, uses-optimized-images, image-delivery-insight and efficient-animated-content."
+    "notes": "lhr.audits['image-delivery-insight'] items (oversized for display size, legacy format, poor compression, animated GIF): sum the estimated savings. Rendered DOM: images whose intrinsic width >2x rendered width x DPR; large images without srcset/sizes. Most material when it is the LCP image (load duration subpart). Replaces uses-webp-images, uses-optimized-images, image-delivery-insight and efficient-animated-content.",
+    "optionalInputs": [
+      "user-render",
+      "rendered-dom"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-offscreen-images-eager",
@@ -1551,8 +1680,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Rendered DOM at the mobile viewport: <img>/<iframe> whose top is >1.5 viewport heights below the fold with no loading=lazy, and whose request starts before the load event. Lighthouse 13 removed the offscreen-images audit, so the tool must compute this itself. Never recommend lazy-loading anything in the initial viewport."
+    "status": "planned",
+    "notes": "Planned: the rendered facts keep no image positions or request start times, so images more than 1.5 viewports below the fold cannot be located. Rendered DOM at the mobile viewport: <img>/<iframe> whose top is >1.5 viewport heights below the fold with no loading=lazy, and whose request starts before the load event. Lighthouse 13 removed the offscreen-images audit, so the tool must compute this itself. Never recommend lazy-loading anything in the initial viewport."
   },
   {
     "id": "perf-lab-inp-interactions",
@@ -1571,7 +1700,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "interaction >200 ms = flag; >500 ms = high-risk",
+    "thresholds": "interaction >200 ms = flag; >500 ms = higher risk (still capped at medium)",
     "sources": [
       {
         "url": "https://web.dev/articles/inp",
@@ -1606,7 +1735,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "task >50 ms = long; flag when the sum of (task-50 ms) >600 ms mobile",
+    "thresholds": "Sum of (task - 50 ms) over the long tasks Lighthouse lists >600 ms = medium (Lighthouse lists at most 20 tasks, so the sum is a lower bound; applied to mobile and desktop runs)",
     "sources": [
       {
         "url": "https://web.dev/articles/optimize-long-tasks",
@@ -1618,7 +1747,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Lighthouse long-tasks, mainthread-work-breakdown and bootup-time audits. Count tasks >50 ms, total blocking ms, and the top scripts by execution time (attribute to first party vs third party). Hydration of large SSR frameworks commonly shows as long tasks. The LLM may name the framework only when bundle or script evidence identifies it. isInputPending is no longer recommended."
+    "notes": "Lighthouse long-tasks, mainthread-work-breakdown and bootup-time audits. Count tasks >50 ms, total blocking ms, and the top scripts by execution time (attribute to first party vs third party). Hydration of large SSR frameworks commonly shows as long tasks. The LLM may name the framework only when bundle or script evidence identifies it. isInputPending is no longer recommended.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-forced-reflow",
@@ -1637,7 +1768,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-other-engine",
-    "thresholds": "insight score <1 = flag",
+    "thresholds": "forced-reflow-insight failing = low",
     "sources": [
       {
         "url": "https://web.dev/articles/top-cwv",
@@ -1649,7 +1780,9 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['forced-reflow-insight'] score <1; list top call sites. Raise to medium only when field INP is NI/poor."
+    "notes": "lhr.audits['forced-reflow-insight'] score <1; list top call sites.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-dom-size",
@@ -1661,15 +1794,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
-      "lighthouse"
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "elements >1400 = flag (warn from 800, legacy Lighthouse guidance); dom-size-insight state informative = flag",
+    "thresholds": "More than 1400 rendered elements, or dom-size-insight informative (costly layout or style recalculation) = low; 801-1400 elements = info (legacy Lighthouse warning)",
     "sources": [
       {
         "url": "https://web.dev/articles/dom-size-and-interactivity",
@@ -1681,7 +1813,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Element count of the rendered DOM (document.getElementsByTagName('*').length) and max depth. Lighthouse dom-size-insight: informative when layout events with >100 dirty objects or style recalcs with >300 elements took >=40 ms. The 800/1400 counts come from the legacy dom-size audit cited by web.dev. The LH13 insight has no element-count fail state. Raise to medium only with NI/poor field INP."
+    "notes": "Element count of the rendered DOM (document.getElementsByTagName('*').length) and max depth. Lighthouse dom-size-insight: informative when layout events with >100 dirty objects or style recalcs with >300 elements took >=40 ms. The 800/1400 counts come from the legacy dom-size audit cited by web.dev. The LH13 insight has no element-count fail state.",
+    "optionalInputs": [
+      "lighthouse"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-third-party-cost",
@@ -1691,10 +1828,9 @@
     "fix": "Prune unused tag-manager tags, load non-critical third parties after interaction or idle, self-host or preconnect the CMP, use facades for heavy embeds.",
     "maxSeverity": "medium",
     "method": "hybrid",
-    "scope": "site",
+    "scope": "page",
     "inputs": [
-      "lighthouse",
-      "resources"
+      "lighthouse"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1704,7 +1840,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": ">=250 ms main-thread or >=100 KiB per entity (heuristic)",
+    "thresholds": "Third-party entity with >=250 ms lab main-thread time = medium; >=100 KiB only = low; only consent managers = low (optimisation, not removal). Cut-offs are heuristics.",
     "sources": [
       {
         "url": "https://developer.chrome.com/blog/moving-lighthouse-to-insights",
@@ -1724,7 +1860,9 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['third-parties-insight']: per entity transfer size and main-thread time. Flag entities with main-thread time >=250 ms or >=100 KiB on mobile. Classify tag managers, consent managers, chat widgets, A/B testing, ads and analytics. The cut-offs are heuristics. A consent manager may be legally required, so recommend optimisation, not removal."
+    "notes": "lhr.audits['third-parties-insight']: per entity transfer size and main-thread time. Flag entities with main-thread time >=250 ms or >=100 KiB on mobile. Classify tag managers, consent managers, chat widgets, A/B testing, ads and analytics. The cut-offs are heuristics. A consent manager may be legally required, so recommend optimisation, not removal.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-third-party-facades",
@@ -1736,15 +1874,14 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
-      "resources"
+      "lighthouse"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "any eager video/chat embed costing >=100 KiB or >=100 ms main thread = flag (heuristic)",
+    "thresholds": "Video or chat embed loaded before any interaction costing >=100 KiB or >=100 ms main thread in the lab load = low (heuristic)",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/lighthouse/performance/third-party-facades",
@@ -1752,7 +1889,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Rendered DOM/network: YouTube/Vimeo iframes, chat widgets (Intercom, Drift, HubSpot chat, Messenger, etc.) and social widgets loaded before any interaction; sum their bytes and main-thread time. The third-party-facades audit was removed in Lighthouse 13; compute it yourself. Facades can lose features such as chat unread badges."
+    "notes": "Rendered DOM/network: YouTube/Vimeo iframes, chat widgets (Intercom, Drift, HubSpot chat, Messenger, etc.) and social widgets loaded before any interaction; sum their bytes and main-thread time. The third-party-facades audit was removed in Lighthouse 13; compute it yourself. Facades can lose features such as chat unread badges.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-unused-code",
@@ -1771,7 +1910,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "unused JS >=150 KiB or unused CSS >=50 KiB on initial load = flag (heuristic)",
+    "thresholds": "Unused JS >=150 KiB = low; unused CSS >=50 KiB = low (heuristics, one load without interactions)",
     "sources": [
       {
         "url": "https://web.dev/articles/top-cwv",
@@ -1783,7 +1922,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Lighthouse unused-javascript and unused-css-rules audits: details.overallSavingsBytes and per-URL wasted bytes. Coverage reflects one page load without interactions, so code used later counts as 'unused'. Never promise the savings."
+    "notes": "Lighthouse unused-javascript and unused-css-rules audits: details.overallSavingsBytes and per-URL wasted bytes. Coverage reflects one page load without interactions, so code used later counts as 'unused'. Never promise the savings.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-legacy-duplicated-js",
@@ -1793,7 +1934,7 @@
     "fix": "Target Baseline browsers in the bundler and dedupe dependencies.",
     "maxSeverity": "low",
     "method": "deterministic",
-    "scope": "site",
+    "scope": "page",
     "inputs": [
       "lighthouse"
     ],
@@ -1802,7 +1943,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-other-engine",
-    "thresholds": "insight score <1 = flag",
+    "thresholds": "legacy-javascript-insight or duplicated-javascript-insight failing = low",
     "sources": [
       {
         "url": "https://developer.chrome.com/blog/moving-lighthouse-to-insights",
@@ -1810,7 +1951,9 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['legacy-javascript-insight'] and ['duplicated-javascript-insight'] wasted bytes. Micro-optimisation."
+    "notes": "lhr.audits['legacy-javascript-insight'] and ['duplicated-javascript-insight'] wasted bytes. Micro-optimisation.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-minification",
@@ -1820,7 +1963,7 @@
     "fix": "Enable minification in the build.",
     "maxSeverity": "low",
     "method": "deterministic",
-    "scope": "site",
+    "scope": "page",
     "inputs": [
       "lighthouse"
     ],
@@ -1829,7 +1972,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-other-engine",
-    "thresholds": "savings >=10 KiB = flag",
+    "thresholds": "unminified-css plus unminified-javascript savings >=10 KiB = low",
     "sources": [
       {
         "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/config/default-config.js",
@@ -1837,7 +1980,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Lighthouse unminified-css and unminified-javascript wasted bytes. Micro-optimisation; compression already removes most of the gap."
+    "notes": "Lighthouse unminified-css and unminified-javascript wasted bytes. Micro-optimisation; compression already removes most of the gap.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-total-byte-weight",
@@ -1856,7 +2001,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-other-engine",
-    "thresholds": ">4000 KiB = flag; >2667 KiB = note",
+    "thresholds": ">4000 KiB = low; >2667 KiB = info",
     "sources": [
       {
         "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/audits/byte-efficiency/total-byte-weight.js",
@@ -1864,7 +2009,9 @@
       }
     ],
     "status": "v1",
-    "notes": "lhr.audits['total-byte-weight'].numericValue (bytes) and the request count from the network log. Lighthouse scoring control points: p10 2667 KiB, median 4000 KiB. Weight alone is not a ranking factor. Only bytes on the critical path matter for LCP."
+    "notes": "lhr.audits['total-byte-weight'].numericValue (bytes) and the request count from the network log. Lighthouse scoring control points: p10 2667 KiB, median 4000 KiB. Weight alone is not a ranking factor. Only bytes on the critical path matter for LCP.",
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-speculation-rules",
@@ -1874,17 +2021,16 @@
     "fix": "Consider document rules with moderate eagerness for likely next pages; exclude logout and state-changing links; handle analytics on activation.",
     "maxSeverity": "info",
     "method": "hybrid",
-    "scope": "site",
+    "scope": "page",
     "inputs": [
-      "raw-html",
-      "http"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "none (presence = info). A rule matching state-changing URLs = medium issue",
+    "thresholds": "Absence is not a defect (not applicable). A prefetch or prerender rule that lists or matches a state-changing link on the page (logout, cart, checkout) = info; invalid JSON = info. Conditions that need the DOM (selector_matches) are not decided.",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/web-platform/prerender-pages",
@@ -1896,7 +2042,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Raw HTML <script type=speculationrules> or a Speculation-Rules response header. Parse the JSON: prerender/prefetch, eagerness, and where/href_matches exclusions (logout, cart, ?add-to-cart). Chrome-only (Firefox/Safari limited or behind flags). Chrome limits: moderate/eager on desktop 2 prefetch/2 prerender (FIFO); immediate 50/10. Speculations are suppressed under Save-Data or low memory. Absence is not a defect."
+    "notes": "Raw HTML <script type=speculationrules> or a Speculation-Rules response header. Parse the JSON: prerender/prefetch, eagerness, and where/href_matches exclusions (logout, cart, ?add-to-cart). Chrome-only (Firefox/Safari limited or behind flags). Chrome limits: moderate/eager on desktop 2 prefetch/2 prerender (FIFO); immediate 50/10. Speculations are suppressed under Save-Data or low memory. Absence is not a defect.",
+    "optionalInputs": [
+      "http"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   },
   {
     "id": "perf-early-hints",
@@ -1915,15 +2066,15 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "slow server response and no 103 = info/low",
+    "thresholds": "slow server response and no 103 = info",
     "sources": [
       {
         "url": "https://developer.chrome.com/docs/web-platform/early-hints",
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Inspect the document response for a 103 status (requires a raw HTTP/2 client or CDP) and its Link headers. When field or lab TTFB >600 ms and none is sent, mark it as an opportunity. Chrome supports only preconnect and preload. Safari supports preconnect only. Hints are dropped on cross-origin redirects. Useless when the server answers 200 immediately."
+    "status": "planned",
+    "notes": "Planned: the HTTP client does not record 103 informational responses. Inspect the document response for a 103 status (requires a raw HTTP/2 client or CDP) and its Link headers. When field or lab TTFB >600 ms and none is sent, mark it as an opportunity. Chrome supports only preconnect and preload. Safari supports preconnect only. Hints are dropped on cross-origin redirects. Useless when the server answers 200 immediately."
   },
   {
     "id": "perf-html-cdn",
@@ -1944,7 +2095,7 @@
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "no CDN markers AND field TTFB not good = low; otherwise info",
+    "thresholds": "No CDN markers detected on any audited HTML response = info; markers present = pass. It is reported as no markers detected, never as no CDN.",
     "sources": [
       {
         "url": "https://web.dev/articles/top-cwv",
@@ -1956,7 +2107,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Document response headers: CDN markers (cf-cache-status, x-cache, x-served-by, age, via, server values of known CDNs, x-vercel-cache, etc.). Record HIT/MISS across 2 consecutive requests. Header-based CDN detection is heuristic, and some CDNs strip their markers. Never report 'no CDN' as fact; say 'no CDN markers detected'. Only 33% of HTML requests are served from a CDN (Web Almanac, via web.dev)."
+    "notes": "Document response headers: CDN markers (cf-cache-status, x-cache, x-served-by, age, via, server values of known CDNs, x-vercel-cache, etc.). Record HIT/MISS across 2 consecutive requests. Header-based CDN detection is heuristic, and some CDNs strip their markers. Never report 'no CDN' as fact; say 'no CDN markers detected'. Only 33% of HTML requests are served from a CDN (Web Almanac, via web.dev).",
+    "fixLocation": "cdn-dashboard",
+    "verifiableBy": "deployed"
   },
   {
     "id": "perf-consent-lab-bias",
@@ -1968,15 +2121,14 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
-      "lighthouse"
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "LCP element inside consent UI = annotate lab LCP",
+    "thresholds": "Lab LCP element inside a consent dialog = info (annotates the lab LCP)",
     "sources": [
       {
         "url": "https://web.dev/articles/cookie-notice-best-practices",
@@ -1984,6 +2136,12 @@
       }
     ],
     "status": "v1",
-    "notes": "Detect a consent dialog in the rendered DOM (common CMP containers/roles). Check whether the lab LCP element sits inside it. Lighthouse and PSI measure a first-time visitor (PSI sets no cookies). Field data mixes consented and new users. The LLM must not extrapolate lab banner effects to field metrics."
+    "notes": "Detect a consent dialog in the rendered DOM (common CMP containers/roles). Check whether the lab LCP element sits inside it. Lighthouse and PSI measure a first-time visitor (PSI sets no cookies). Field data mixes consented and new users. The LLM must not extrapolate lab banner effects to field metrics.",
+    "optionalInputs": [
+      "lighthouse",
+      "user-render"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "local"
   }
 ]

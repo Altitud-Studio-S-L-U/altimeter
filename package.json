@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Evidence-based SEO audits: primary-source rules, crawl and Core Web Vitals evidence, and Claude Code or Codex analysis verified against that evidence.",
   "type": "module",
-  "license": "MIT",
+  "license": "MIT AND CC-BY-SA-3.0",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/",
@@ -28,7 +28,8 @@
     "dist",
     "README.md",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "repository": {
     "type": "git",
