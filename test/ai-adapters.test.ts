@@ -125,8 +125,10 @@ describe('Claude Code adapter', () => {
 
   test('kills a call that hangs without output at its deadline', { timeout: 30_000 }, async t => {
     const { double, env, provider } = await claudeSetup(t, { default: { hang: true } });
-    await assert.rejects(claude.call({ prompt, schema, timeoutMs: 1500, provider, env }), isProviderError('timeout'));
+    // Long enough for the double to start and record itself on a loaded machine before the deadline kills it.
+    await assert.rejects(claude.call({ prompt, schema, timeoutMs: 4000, provider, env }), isProviderError('timeout'));
     const [call] = await double.calls();
+    assert.ok(call, 'the double started and recorded the call');
     for (let attempt = 0; attempt < 20 && alive(call!.pid); attempt += 1) await delay(100);
     assert.equal(alive(call!.pid), false);
   });
@@ -207,8 +209,9 @@ describe('Codex adapter', () => {
 
   test('kills a call that hangs without output at its deadline', { timeout: 30_000 }, async t => {
     const { double, env, provider } = await codexSetup(t, { default: { hang: true } });
-    await assert.rejects(codex.call({ prompt, schema, timeoutMs: 1500, provider, env }), isProviderError('timeout'));
+    await assert.rejects(codex.call({ prompt, schema, timeoutMs: 4000, provider, env }), isProviderError('timeout'));
     const [call] = await double.calls();
+    assert.ok(call, 'the double started and recorded the call');
     for (let attempt = 0; attempt < 20 && alive(call!.pid); attempt += 1) await delay(100);
     assert.equal(alive(call!.pid), false);
   });

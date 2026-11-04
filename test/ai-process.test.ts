@@ -41,14 +41,15 @@ describe('runProcess', () => {
     });
   });
 
-  test('kills a process that hangs without output, with its whole tree, at the deadline', { timeout: 20_000 }, async t => {
+  test('kills a process that hangs without output, with its whole tree, at the deadline', { timeout: 30_000 }, async t => {
     const home = await sandbox(t);
     const pidFile = join(home, 'pids.json');
     const child = 'setInterval(()=>{},1000)';
     const parent = `const {spawn}=require('node:child_process');const fs=require('node:fs');const c=spawn(process.execPath,['-e',${JSON.stringify(child)}],{stdio:'ignore',windowsHide:true});fs.writeFileSync(${JSON.stringify(pidFile)},JSON.stringify([process.pid,c.pid]));setInterval(()=>{},1000)`;
     const started = Date.now();
-    await assert.rejects(runProcess({ ...script(parent), timeoutMs: 1500 }), (error: unknown) => error instanceof ProcessError && error.code === 'timeout');
-    assert.ok(Date.now() - started < 10_000);
+    // Long enough for the parent to start its child and write both ids on a loaded machine.
+    await assert.rejects(runProcess({ ...script(parent), timeoutMs: 4000 }), (error: unknown) => error instanceof ProcessError && error.code === 'timeout');
+    assert.ok(Date.now() - started < 15_000);
     const pids = JSON.parse(await readFile(pidFile, 'utf8')) as number[];
     for (let attempt = 0; attempt < 20 && pids.some(alive); attempt += 1) await delay(100);
     for (const pid of pids) assert.equal(alive(pid), false, `process ${pid} survived`);

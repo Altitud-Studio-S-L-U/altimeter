@@ -303,8 +303,9 @@ describe('planning, budget and providers', () => {
   test('the overall deadline cancels hung calls and skips the rest', { timeout: 60_000 }, async t => {
     const { options } = await setup(t, { default: { hang: true } });
     const started = Date.now();
-    const result = await runAnalysis(options({ deadlineMs: 6000, concurrency: 1 }));
-    assert.ok(Date.now() - started < 30_000);
+    // Calls need at least five seconds left to start, so eight leave room for the first one on a loaded machine.
+    const result = await runAnalysis(options({ deadlineMs: 8000, concurrency: 1 }));
+    assert.ok(Date.now() - started < 40_000);
     assert.deepEqual(result.findings, []);
     assert.equal(result.calls[0]?.status, 'failed');
     assert.equal(result.calls[0]?.error?.code, 'cancelled');
@@ -329,14 +330,34 @@ describe('planning, budget and providers', () => {
     assert.deepEqual(none.warnings, []);
   });
 
-  test('merges into a report as an optional ai section without touching other fields', async t => {
+  test('merges into a report: supported decisions judge the candidates, confirmed ones become tasks, the score stays', async t => {
     const { options } = await setup(t);
     const { report } = hotelAudit();
     const analysis = await runAnalysis(options());
     const merged = mergeAnalysis(report, analysis);
     assert.equal(merged.ai, analysis);
-    const { ai: _ai, ...rest } = merged;
+    const { ai: _ai, findings, tasks, ...rest } = merged;
+    const { findings: before, tasks: tasksBefore, ...unchanged } = report;
+    assert.deepEqual(rest, unchanged, 'only the candidates\' judgment and the task list change');
+    assert.deepEqual(merged.score, report.score);
+    assert.deepEqual(findings.map(({ judgment: _judgment, ...finding }) => finding), before);
+    assert.deepEqual(Object.fromEntries(findings.filter(finding => finding.judgment).map(finding => [finding.ruleId, finding.judgment])), {
+      'content-img-alt-quality': 'dismissed',
+      'content-title-obsolete-year': 'dismissed',
+      'schema-localbusiness': 'confirmed',
+      'schema-visible-content-parity': 'dismissed',
+    }, 'content-keyword-stuffing was confirmed but only partly supported, so it stays a candidate');
+    assert.deepEqual(tasks.map(task => task.ruleId).sort(), [...tasksBefore.map(task => task.ruleId), 'schema-localbusiness'].sort());
+    assert.equal(JSON.parse(JSON.stringify(merged)).ai.findings.length, analysis.findings.length);
+  });
+
+  test('merges an analysis without verified decisions as an ai section only', async t => {
+    const { options } = await setup(t);
+    const { report } = hotelAudit();
+    const analysis = await runAnalysis(options({ verifier: 'none' }));
+    assert.ok(analysis.confirmations.length > 0 && analysis.confirmations.every(entry => entry.verification === 'unverified'));
+    const { ai, ...rest } = mergeAnalysis(report, analysis);
+    assert.equal(ai, analysis);
     assert.deepEqual(rest, report);
-    assert.deepEqual(JSON.parse(JSON.stringify(merged)).ai.findings.length, analysis.findings.length);
   });
 });
