@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.tmp/
+*.tgz
+.env
+.env.*
+!.env.example
+altimeter-report/
+test/live/*
+!test/live/README.md

@@ -1,0 +1,38 @@
+name: Bug report
+description: Altimeter crashed, hung or produced invalid output.
+labels: [bug]
+body:
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Include the command you ran and the error output. Remove tokens and private URLs.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: A minimal synthetic page or a public URL that reproduces the problem.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Altimeter version
+      description: Output of `altimeter --version`, or the commit you built.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Node.js version, and the Claude Code or Codex CLI version if analysis was enabled.
+    validations:
+      required: true

@@ -1,0 +1,39 @@
+name: Wrong finding
+description: Altimeter reported a problem that does not exist, or missed one that does.
+labels: [bug]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - False positive (reported, but not a problem)
+        - Missed issue (a problem that was not reported)
+    validations:
+      required: true
+  - type: input
+    id: rule
+    attributes:
+      label: Rule id
+      description: For example `crawl-canonical-target-health`. Leave empty for a missed issue without a rule.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: The relevant excerpt of report.json, or the page markup and headers. Remove tokens and private data.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected outcome and source
+      description: What the correct outcome is, and the official documentation or standard that supports it.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Altimeter version
+    validations:
+      required: true

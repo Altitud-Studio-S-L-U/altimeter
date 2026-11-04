@@ -1,0 +1,27 @@
+name: Guidance changed
+description: A search engine or standard changed guidance that a rule relies on.
+labels: [enhancement]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Official source
+      description: URL of the documentation, changelog entry or standard that changed.
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Date of the change
+      description: As stated by the source, in YYYY-MM-DD form if known.
+  - type: textarea
+    id: change
+    attributes:
+      label: What changed
+    validations:
+      required: true
+  - type: input
+    id: rules
+    attributes:
+      label: Affected rules
+      description: Rule ids from `altimeter rules`, if you know them.
