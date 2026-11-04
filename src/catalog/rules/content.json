@@ -9,7 +9,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -17,7 +19,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Fail: 0 non-empty head <title> in the rendered DOM. Warn: missing in raw HTML but present after rendering (see content-title-raw-rendered-mismatch).",
+    "thresholds": "High: no non-empty <title> in the document head (rendered DOM when present, otherwise raw HTML). Info when the page is noindex, non-200 or canonicalised elsewhere. A title missing only from the raw HTML is reported by content-title-raw-rendered-mismatch.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -29,6 +31,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "In the rendered DOM and the raw HTML, select document.head > title (exclude <title> inside inline <svg>). Fail if it is absent, or if its textContent is empty or whitespace only after trimming and collapsing whitespace. Do not count <title> inside <svg> or <template>. Non-indexable pages (noindex, non-200, canonicalised elsewhere) get info severity only. Lighthouse 13.6 reports the same condition as document-title (SEO and accessibility); do not count it twice.",
     "related": [
       "content-title-multiple",
@@ -45,8 +49,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
-      "rendered-dom"
+      "raw-html"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -67,6 +70,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Count <title> elements that are children of <head> in the raw HTML, and count any <title> in <body> outside SVG. Fail if the head count is >1 or a body-level title exists. SVG <title> elements (accessibility names for icons) are legitimate and must be excluded."
   },
   {
@@ -89,7 +94,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "industry-consensus",
-    "thresholds": "Warn when the strings differ after whitespace/case normalisation. Fail when the raw title is empty or a generic placeholder (e.g. 'React App', 'Loading…', the site name only) and only JavaScript sets the real one.",
+    "thresholds": "Low when the raw and rendered titles differ after whitespace and case normalisation and after removing a leading unread counter such as '(3)'. Medium when the raw title is missing or a generic placeholder (a framework default, 'Loading…', or only the site name on a page other than the home page) and only JavaScript sets the real one.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -97,6 +102,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Compare the normalised <title> text in the raw HTML with the rendered DOM after network idle. Google renders JavaScript and generally uses the rendered title. Bing, social previews and LLM fetchers often use the raw HTML. A dynamic title (unread count, A/B test) is a false-positive trap: report the difference, not an error."
   },
   {
@@ -109,7 +116,9 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "crawl",
+      "crawl"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -121,7 +130,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: any duplicate group. High: ≥10% of indexable crawled pages are in duplicate groups, or the home page title is shared.",
+    "thresholds": "Medium: any group of two or more indexable, self-canonical pages with the same normalised title, or with the same title once a segment naming the site is removed. Groups whose pages are all hreflang alternates of each other are exempt.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -129,6 +138,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Across crawled pages that are 200, indexable and self-canonical, group them by normalised title (lowercase, collapsed whitespace, Unicode NFC). Report groups of size ≥2. Also detect micro-boilerplate: titles identical after removing the brand/site-name segment. Exclude paginated series that differ only by page number when they are canonicalised or noindexed. Exclude hreflang alternates in different languages, which may legitimately share a brand-only title only when the content really is the same. Pages blocked by robots.txt are not seen by Google; report them separately."
   },
   {
@@ -141,15 +152,19 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
-      "crawl",
+      "crawl"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The home page title is only the site name."
+    ],
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Tool heuristic: warn if uniqueChars < 15 or the template share is >50% of the title's pixel width. Fail if the title equals the site name or '| Site name' only.",
+    "thresholds": "Medium: a half-empty title, meaning one that starts with a delimiter or, on a page other than the home page, holds only the site name. Low (tool heuristic): with three or more titles, the delimited prefix or suffix shared by at least 30% of them has four or more words and is wider than the page-specific part. A short brand segment is never boilerplate.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -157,7 +172,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Across the site, find the longest common prefix and suffix shared by ≥30% of titles (the template). For each page, compute uniqueChars = length of the title after removing the template parts. Also flag 'half-empty' titles that consist only of a delimiter plus the site name. The thresholds are tool heuristics, not Google figures. Google names 'half-empty' titles and repeated boilerplate as causes of rewrites."
+    "fixLocation": "content",
+    "verifiableBy": "local",
+    "notes": "Across the site, take the delimited first and last segments shared by at least 30% (and at least two) of the indexable titles as the template. Flag 'half-empty' titles that consist only of a delimiter plus the site name, and titles where a long template (four or more words) outweighs the page-specific text in pixel width. The thresholds are tool heuristics, not Google figures. Google names 'half-empty' titles and repeated boilerplate as causes of rewrites; a concise brand segment is what Google recommends, so it is never reported."
   },
   {
     "id": "content-title-width",
@@ -169,6 +186,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -184,6 +204,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Measure the title's rendered width in pixels with a canvas using Arial at 20px (desktop title link) and the mobile equivalent. Count characters too. Google: 'there's no limit on how long a <title> element can be'; it is truncated to the device width. The ~600px desktop figure is industry consensus, not documented by Google. Screaming Frog's measured values (482px desktop, 550px mobile) date from 2014. Zyppy (Q1 2022, 80,959 titles): 61.6% rewritten; lowest rewrite rate at 51–60 characters (39–42%); >60 characters >76%; >70 characters 99.9%. These are correlations with rewrites, not ranking effects. Font metrics differ per script (CJK, Arabic)."
   },
   {
@@ -196,6 +218,9 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -206,7 +231,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate: token repeated ≥3 times, or ≥4 separators with average segment ≤3 words. The LLM confirms.",
+    "thresholds": "Candidate (medium, for the analyst): a content word (singular and plural folded) repeated three or more times, or four or more list separators with an average segment of three words or fewer. The analyst confirms unnatural repetition.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -218,6 +243,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Tokenise the title. Flag it if any non-stopword content token (or its lemma) appears ≥3 times, if there are ≥4 list separators (comma, pipe, slash, middle dot) between short noun phrases with no verb, or if it is a list of place names or phone numbers. Send candidates to the LLM to confirm unnatural repetition. Product names with model numbers or legitimate breadcrumb-like titles ('Shoes / Men / Running') can trip the separator heuristic, so the LLM must judge naturalness. Google cites stuffed titles being shortened."
   },
   {
@@ -230,18 +257,22 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
     "appliesTo": "all",
     "exemptWhen": [
       "The home page h1 is a slogan or tagline and the title names the brand and service.",
-      "A single h1 combines a keyword line and a tagline (for example in two spans or across a line break); it is one h1."
+      "A single h1 combines a keyword line and a tagline (for example in two spans or across a line break); it is one h1.",
+      "The page is the home page; code does not flag it and the analyst reviews it when asked."
     ],
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate: Jaccard <0.2 and no shared named entity. The LLM decides whether there is a real topical mismatch.",
+    "thresholds": "Candidate (low, for the analyst): word-stem Jaccard overlap below 0.2 between the title without its brand segment and the main h1, with no shared capitalised name. The analyst decides whether there is a real topical mismatch.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -249,6 +280,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Find the main heading (the first visible h1 in main content; otherwise the largest-font heading in the first viewport). Compute token overlap (Jaccard on lemmatised content words) between the title (without the brand) and the heading. Send pages with low overlap to the LLM, which decides whether they describe different things. A short h1 with a longer, more descriptive title is fine. Google lists 'no clear main title' (several equally prominent headings) as a cause of rewrites. The home page h1 is often a slogan; the LLM should be lenient there."
   },
   {
@@ -279,8 +312,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Detect the language of the title (without the brand) and of the main content text, e.g. with CLD3 or fastText lid, using confidence thresholds. Fail if the languages differ with high confidence, or the scripts differ (e.g. Latin transliteration vs Devanagari content). Brand names, product names and English loanwords in Spanish/Catalan titles are not mismatches. Spanish and Catalan are easily confused by short-text detectors, so require main-content detection to agree with html lang."
+    "status": "planned",
+    "notes": "Detect the language of the title (without the brand) and of the main content text, e.g. with CLD3 or fastText lid, using confidence thresholds. Fail if the languages differ with high confidence, or the scripts differ (e.g. Latin transliteration vs Devanagari content). Brand names, product names and English loanwords in Spanish/Catalan titles are not mismatches. Spanish and Catalan are easily confused by short-text detectors, so require main-content detection to agree with html lang. Planned: needs the shared language detector (src/analyze/language.ts) so that title and content detection use the same model and thresholds."
   },
   {
     "id": "content-title-obsolete-year",
@@ -292,8 +325,11 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "ai"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -302,7 +338,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Deterministic fail when the title year is older than the h1 year. LLM judgment for 'title says 2023 while content describes current state'.",
+    "thresholds": "Medium (deterministic): the title's latest year is older than the latest year in the main h1, and the h1 does not also name the title's year. Comparing with dateModified on time-scoped titles is left to the analyst.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -310,6 +346,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Extract four-digit years 1990..(currentYear+1) from the title. Compare them with years in the h1/first heading, the visible date and dateModified. Fail if the title's highest year is older than the visible heading year, or older than the dateModified year on a page whose content is clearly time-scoped ('2026 guide', 'admissions 2026'). Historical pages (\"1998 World Cup\") legitimately carry old years. Google's own example: a '2020 admissions criteria' title rewritten to match a visible '2021' heading."
   },
   {
@@ -322,15 +360,17 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Low: brand repeated, or brand share >50%. Info: brand absent (Google may show the site name separately).",
+    "thresholds": "Low: the brand appears more than once, takes more than 50% of the title width (not on the home page), or sits mid-title rather than at the start or end. Info: brand absent (Google may show the site name separately). Not evaluated without a declared site name. A title that is only the brand is reported by content-title-boilerplate.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -342,6 +382,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Using the site name from WebSite JSON-LD name/alternateName, og:site_name or the home page title, check whether it appears in the title. Flag a title where the brand appears more than once, where brand text takes >50% of the width, or where a brand appears mid-title rather than at the start/end with a delimiter. Google may drop a domain-level site name from the title link when it repeats the site name shown in the result. A missing brand is not an error."
   },
   {
@@ -364,7 +406,7 @@
     "fpRisk": "high",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Fail only with quoted evidence of a promise/content mismatch or excessive punctuation/caps hype.",
+    "thresholds": "Medium at most, and only with quoted evidence of a promise/content mismatch or excessive punctuation/caps hype.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
@@ -392,7 +434,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -402,18 +446,20 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Low by default. Medium for the home page and top-level hub pages (click depth ≤1).",
+    "thresholds": "Low: no meta description in the head of an indexable page, or an empty one.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/snippet",
         "verified": "2026-11-03"
       },
       {
-        "url": "https://developer.chrome.com/docs/lighthouse/seo/",
+        "url": "https://raw.githubusercontent.com/GoogleChrome/lighthouse/main/core/config/default-config.js",
         "verified": "2026-11-03"
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Find meta[name=description i] in the head of the raw and rendered HTML. Fail if it is absent or its content is empty. Google builds snippets primarily from page content and uses the meta description only when it describes the page better, so a missing description never blocks indexing. Lighthouse 13.6 reports the same condition as the meta-description SEO audit; do not count it twice."
   },
   {
@@ -428,6 +474,9 @@
     "inputs": [
       "crawl"
     ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
     "appliesTo": "all",
     "exemptWhen": [
       "Pages canonicalised to another page, and paginated pages."
@@ -435,7 +484,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: any group ≥2. High: ≥25% of indexable pages share one description.",
+    "thresholds": "Medium: any group of two or more indexable, self-canonical, non-paginated pages with the same normalised meta description.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/snippet",
@@ -443,6 +492,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Group indexable, self-canonical crawled pages by normalised meta description. Report groups of size ≥2, and the share of pages that use the site-wide default description. Google: 'Identical or similar descriptions on every page of a site aren't helpful.' Exclude canonicalised duplicates and paginated pages."
   },
   {
@@ -455,6 +506,9 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -463,7 +517,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate: <8 words, keyword list pattern, equals title, contains '{{', '%s', 'lorem'. The LLM confirms.",
+    "thresholds": "Low (deterministic): a template placeholder ('{{', '%s', 'lorem ipsum', '[insert') or a description identical to the title. Candidates (low, for the analyst): four or more short comma-separated segments (keyword list), or fewer than 8 words. There is no length limit.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/snippet",
@@ -471,6 +525,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Deterministic candidate flags: ≥4 comma-separated short noun phrases with no verb (keyword list), fewer than about 8 words, identical to the title, or contains template placeholders. The LLM then judges whether it summarises this specific page and includes useful specifics (price, author, date, location, hours where relevant). Google gives bad/better examples: keyword list, identical across pages, doesn't summarise, too short ('Mechanical pencil'). There is no length limit; truncation is to device width. Report predicted truncation (desktop ≈920px at 14px Arial, an industry estimate) only as info."
   },
   {
@@ -479,11 +535,13 @@
     "title": "data-nosnippet is on unsupported elements, added late by JavaScript, or covers the main content",
     "why": "Google honours data-nosnippet only on span, div and section elements. Text inside it is excluded from snippets and from direct input to AI Overviews and AI Mode, so covering the main content has the effect of nosnippet for those surfaces.",
     "fix": "Use data-nosnippet only on span, div or section elements. Include it in the server HTML, or when JS first inserts the element.",
-    "maxSeverity": "medium",
+    "maxSeverity": "low",
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -493,7 +551,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "data-nosnippet on an unsupported element, or added by JavaScript to an existing node = low. data-nosnippet covering most of the main content = medium.",
+    "thresholds": "Low: data-nosnippet on an element other than span, div or section, or added by JavaScript to an element (matched by id) that the raw HTML has without it. Info: data-nosnippet elements hold at least 50% of the main content text; the owner may intend it, so the effect is reported and never an error.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
@@ -505,6 +563,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Find elements with the data-nosnippet attribute. Fail if any is not span, div or section. Fail if the attribute appears in the rendered DOM on a node that exists in the raw HTML without it (added by JS). Validate that the containing HTML is well formed (the parser reports no unclosed-tag errors within that subtree). Nodes created entirely by JS that carry the attribute from creation are fine.",
     "related": [
       "crawl-snippet-restrictions"
@@ -523,6 +583,9 @@
       "raw-html",
       "http"
     ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
     "appliesTo": [
       "article"
     ],
@@ -530,7 +593,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Low: absent on article pages. Medium: explicitly 'none' on article pages (unless intentional).",
+    "thresholds": "Low: an article page with no max-image-preview directive, or with max-image-preview:none or standard (unless intentional).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/google-discover",
@@ -542,6 +605,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "For pages with Article/BlogPosting/NewsArticle JSON-LD or og:type=article, check whether the robots meta allows max-image-preview:large. Flag 'none' and 'standard' explicitly, and report when the directive is absent. Discover recommends images at least 1200px wide, 16:9, and max-image-preview:large. Do not claim what Google's default is when the directive is absent; it is not documented on the page."
   },
   {
@@ -554,6 +619,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -564,7 +632,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: 0 visible h1 and no dominant visual title. Info: more than one h1 (allowed).",
+    "thresholds": "Low: no h1 element and no dominant visual title (rendered text of at least 28px and 1.6 times the median font size in the first phone viewport). More than one h1 is allowed and never reported.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -580,6 +648,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "In the rendered DOM, find visible h1 elements (non-zero box, not display:none or visibility:hidden, not clipped sr-only). Fail if none exists and no element in the first viewport is styled as a dominant title (largest font in main). Report the h1 count as info. Google says the number and order of headings don't matter for ranking. The h1 matters as a clear main title (used for title links) and for accessibility. Never report multiple h1s as an error. The WHATWG spec says a document with headings should have at least one level-1 heading."
   },
   {
@@ -592,14 +662,21 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom"
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "user-render"
     ],
     "appliesTo": "all",
-    "exemptWhen": [],
+    "exemptWhen": [
+      "The content is present in the HTML and has opacity 0 only until an IntersectionObserver reveal (for example [data-reveal]) fires on scroll; Google renders with a tall viewport that triggers it.",
+      "The h1 is screen-reader-only text; it keeps its accessible name."
+    ],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "web-standard",
-    "thresholds": "Fail: empty accessible name, or every h1 is hidden.",
+    "thresholds": "Low: an h1 with an empty accessible name (text, image alt, aria-label, SVG title), or every h1 removed from view in the render (display:none, visibility:hidden, zero size or off screen), also in the scrolled render when present.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/title-link",
@@ -611,7 +688,9 @@
       }
     ],
     "status": "v1",
-    "notes": "For each h1, compute its accessible name: text content plus alt of contained images plus aria-label. Fail if the name is empty or whitespace, or if the only h1 is hidden (display:none, off-screen, opacity 0). A hidden keyword-laden h1 should also be routed to content-hidden-text.",
+    "fixLocation": "content",
+    "verifiableBy": "local",
+    "notes": "For each h1, compute its accessible name: text content plus alt of contained images plus aria-label and SVG titles. Fail if the name is empty or whitespace, or if every h1 is removed from view (display:none, visibility:hidden, zero size, off-screen) in the render and in the scrolled user render. Opacity 0 is not a hidden state here: reveal-on-scroll sections sit at opacity 0 until an observer fires. A hidden keyword-laden h1 should also be routed to content-hidden-text.",
     "related": [
       "content-hidden-text"
     ]
@@ -626,7 +705,11 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom"
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "user-render"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -636,7 +719,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "web-standard",
-    "thresholds": "Low: any skip (e.g. h2→h4). Info only for headings inside third-party widgets.",
+    "thresholds": "Low: a heading more than one level below the previous heading (e.g. h2 then h4), ignoring headings in navigation, footers, sidebars, dialogs, cookie banners, hidden elements and headings removed from view in the render.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
@@ -648,6 +731,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Walk visible h1–h6 in tree order (respecting the headingoffset attribute if present). Flag each heading whose level is more than 1 greater than the previous heading's level. This is an accessibility and spec-conformance item. Google states that heading order does not matter for ranking. Never present it as an SEO ranking issue."
   },
   {
@@ -698,6 +783,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -705,7 +793,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "web-standard",
-    "thresholds": "Low: 0 or >1 visible main landmarks.",
+    "thresholds": "Low: 0 or more than 1 main landmarks (main or role=main without the hidden attribute).",
     "sources": [
       {
         "url": "https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf",
@@ -717,6 +805,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Count visible <main> or [role=main] elements. Fail if 0 or >1 visible. Report whether an <article> wraps the primary text. Google does not require <main>. Its value is accessibility, and it lets this tool separate main content from boilerplate for the other checks. When it is missing, the tool falls back to a readability-style content extractor."
   },
   {
@@ -729,7 +819,9 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "crawl",
+      "crawl"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -742,7 +834,7 @@
     "fpRisk": "high",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate only: uniqueMainWords <100 or boilerplate share >80% on non-utility pages. No word-count pass/fail.",
+    "thresholds": "Candidate only (medium, for the analyst): fewer than 100 words of page-specific main text or more than 80% of the text repeated on at least half of the indexable pages, on pages other than about, contact, product, utility, legal and error pages. No word-count pass/fail.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
@@ -754,6 +846,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Across the crawl, compute DOM text blocks repeated on ≥50% of pages (boilerplate). For each page, compute uniqueMainWords (words in main content not in boilerplate blocks) and the boilerplate share. Send pages whose purpose is informational and that have very little unique text to the LLM to judge whether the main content satisfies the page's purpose. Google explicitly rejects preferred word counts. Product pages, calculators, contact pages and image galleries can be complete with few words. The LLM decides against the page purpose (QRG: amount of MC should fit the purpose)."
   },
   {
@@ -766,8 +860,10 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "user-render"
+    ],
+    "optionalInputs": [
       "rendered-dom",
-      "user-render",
       "ai"
     ],
     "appliesTo": "all",
@@ -777,7 +873,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate when the first purpose-fulfilling content starts beyond 2 mobile viewports. The LLM confirms with quotes.",
+    "thresholds": "Candidate (medium, for the analyst): the first visible main-content paragraph of at least 120 characters starts more than 2 phone viewports down in the scrolled phone render. The analyst confirms with quotes.",
     "sources": [
       {
         "url": "https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf",
@@ -789,6 +885,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "The LLM reads the first screenful(s) of rendered main content. It flags pages where low-value filler (long preambles, life stories before a recipe, repeated generic intros) or distracting ads/interstitials push the content that fulfils the page's purpose far down. Deterministic support: character offset of the first paragraph that matches the h1 topic; ad/iframe count above the fold. QRG 5.2.2 'Filler as a Poor User Experience' and 5.3 'Distracting Ads/SC' (Low rating). Supporting content placed lower is acceptable.",
     "related": [
       "tech-intrusive-interstitial"
@@ -816,7 +914,7 @@
     "fpRisk": "high",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "High finding when ≥3 search-engine-first warning signs are evidenced, or no original information or analysis beyond the obvious is found on a page whose purpose is informational.",
+    "thresholds": "Medium at most, when three or more search-engine-first warning signs are evidenced, or no original information or analysis beyond the obvious is found on a page whose purpose is informational.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
@@ -852,11 +950,13 @@
     "title": "Copied, paraphrased or no-added-value main content",
     "why": "Google's spam policies and rater guidelines treat main content that is copied or lightly paraphrased without added value as low quality. Licensed and syndicated content is not copying.",
     "fix": "Add original analysis, data, media or experience. Canonicalise or attribute syndicated copies. Remove scraped pages.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "crawl",
+      "crawl"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -868,7 +968,7 @@
     "fpRisk": "high",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate: internal shingle overlap ≥80% with another indexable page, or an external exact-match copy found. The LLM decides between Lowest-style (almost all MC copied/paraphrased) and acceptable syndication or licensing.",
+    "thresholds": "Candidate (medium, for the analyst): at least 80% of the page's five-word sequences (30 or more) also appear on another indexable crawled page that is not its hreflang alternate. The analyst decides between copied content and acceptable syndication, licensing or quotation.",
     "sources": [
       {
         "url": "https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf",
@@ -884,7 +984,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Deterministic: shingle (5-gram) and SimHash comparison of the main content against other crawled pages. Optional: exact-quote search of 2–3 distinctive sentences via a search API to find external copies. The LLM then judges whether the page adds original content, context or analysis beyond its sources (QRG 4.6.6 and 5.2.1). Licensed or syndicated content (AP, Reuters) is not 'copied' per QRG. Quotes, legal texts and manufacturer specs are expected duplicates. Without an external search API, external copying is not observable; say so. External copying is not observable without a search API; the rule compares pages within the crawl only."
+    "fixLocation": "content",
+    "verifiableBy": "local",
+    "notes": "Deterministic: five-word shingle containment of the main content against the other indexable crawled pages. The analyst then judges whether the page adds original content, context or analysis beyond its sources (QRG 4.6.6 and 5.2.1). Licensed or syndicated content (AP, Reuters) is not copied per QRG. Quotes, legal texts and manufacturer specs are expected duplicates. External copy detection requires a search input that v1 does not collect; the rule compares pages within the crawl only."
   },
   {
     "id": "content-scaled-doorway",
@@ -892,11 +994,13 @@
     "title": "Scaled content abuse / doorway pattern",
     "why": "Google's scaled content abuse and doorway policies cover many pages generated mainly to rank, whether by AI, people or both, including near-identical pages that only swap a place or keyword and pages built to capture query variants. The rule reports a risk pattern, never a penalty.",
     "fix": "Merge into one useful page per real offering, or add genuinely local or unique content (staff, prices, cases, photos per location). Noindex or remove auto-generated variants.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "crawl",
+      "crawl"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -908,7 +1012,7 @@
     "fpRisk": "high",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate: ≥10 pages whose main content differs only by ≤5% of tokens, those tokens being place or keyword substitutions. The LLM must quote ≥2 pages side by side to confirm.",
+    "thresholds": "Candidate (medium, for the analyst): ten or more indexable pages with at least 50 words whose main text differs by at most 5% of its words. The analyst must quote at least two pages side by side to confirm place or keyword substitution.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -928,6 +1032,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Site-level. Cluster pages by template plus near-identical main content where the only differences are a substituted entity (city, service, product keyword), found by token diff between pages. Also detect pages made of keyword-bearing nonsense. The LLM reviews a sample of ≥3 pages per cluster: do they add unique value, or do they funnel users to the same destination? Applies however the content was made (AI, human, or both). Legitimate location pages with real per-location information are not doorways. Report this as 'risk pattern consistent with the scaled content abuse policy', never as 'penalised'.",
     "related": [
       "intl-doorway-location-pages"
@@ -939,22 +1045,24 @@
     "title": "Leftover AI/template artifacts in published content",
     "why": "Google's guidance on generative AI content asks for accuracy and quality whatever the production method. Leftover assistant phrases, template placeholders or unfilled variables show that the content was published without review.",
     "fix": "Remove the artifacts and review the whole piece by hand for accuracy; Google asks for manual fact-checking of all AI output, including metadata.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [
-      "The site copy discusses AI, agents, prompts or AI products as its subject; only instruction-like text aimed at AI systems placed in hidden text or attributes counts.",
+      "The page is about AI and quotes such phrases as examples; outside blockquote and code they go to the analyst.",
       "The phrase is inside a quotation, a code sample or a blockquote."
     ],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Fail: any match in main content or metadata.",
+    "thresholds": "Medium: an unfilled template token ('[insert …]', '[Your Name]', 'lorem ipsum', a bare '%s', or '{{variable}}' in the rendered DOM) or an unedited assistant phrase in the title, meta description, page text or image alt text, outside blockquote, q, pre and code. On a page that discusses AI an assistant phrase is a candidate for the analyst.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/using-gen-ai-content",
@@ -966,6 +1074,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Regex/phrase scan of the rendered main content, title, meta description and alt text for unedited generation artifacts in en/es/ca, e.g. 'As an AI language model', 'I cannot browse', 'Certainly! Here is', 'Como modelo de lenguaje', 'Com a model de llenguatge', '[insert', '[Your Name]', 'Lorem ipsum', unrendered '{{ }}' or '%s', 'Regenerate response'. Articles that are about AI may quote such phrases legitimately, so require the match outside <blockquote>/<code> and send borderline cases to the LLM."
   },
   {
@@ -986,7 +1096,7 @@
     "fpRisk": "high",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Report each error with the quote and the reason. Severity escalates to high on YMYL pages.",
+    "thresholds": "Report each error with the quote and the reason. Medium on YMYL pages, low otherwise.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
@@ -1020,7 +1130,7 @@
     "fpRisk": "high",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Low: ≥1 confirmed error per 300 words. Medium: ≥1 per 100 words or errors in title/h1.",
+    "thresholds": "Low: one or more confirmed errors per 300 words, per 100 words, or in the title or h1.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
@@ -1031,8 +1141,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Run a language-aware spell/grammar checker (e.g. LanguageTool with the detected language: en, es, ca) on the main content. Exclude proper nouns, code and brand terms. The LLM reviews flagged items and drops false positives. Catalan/Spanish mixing, regional variants (es-ES vs es-MX) and technical jargon cause false positives. The rates are tool heuristics."
+    "status": "planned",
+    "notes": "Run a language-aware spell/grammar checker (e.g. LanguageTool with the detected language: en, es, ca) on the main content. Exclude proper nouns, code and brand terms. The LLM reviews flagged items and drops false positives. Catalan/Spanish mixing, regional variants (es-ES vs es-MX) and technical jargon cause false positives. The rates are tool heuristics. Planned: needs the shared language detector (src/analyze/language.ts) and a language-aware checker that v1 does not bundle."
   },
   {
     "id": "content-ymyl-classification",
@@ -1087,7 +1197,7 @@
     "fpRisk": "high",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "High: YMYL page with no identifiable responsible entity or author. Medium: non-YMYL commercial page with no clear business identity.",
+    "thresholds": "Medium at most: a YMYL page with no identifiable responsible entity or author, or a commercial page with no clear business identity.",
     "sources": [
       {
         "url": "https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf",
@@ -1107,11 +1217,13 @@
     "title": "Hidden text (colour, size, opacity, positioning, behind images)",
     "why": "Google's spam policies prohibit text hidden from users but present for search engines, such as text in the background colour, behind images or positioned off screen. They explicitly allow tabs, accordions, sliders, tooltips and screen-reader text.",
     "fix": "Remove the hidden text, or make it visible as useful content.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
+      "rendered-dom"
+    ],
+    "optionalInputs": [
       "user-render",
       "ai"
     ],
@@ -1124,7 +1236,7 @@
     "fpRisk": "high",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate: hidden text ≥20 words or containing ≥3 repeated target keywords/place names. Critical when the LLM confirms deceptive intent.",
+    "thresholds": "Candidate (medium, for the analyst): text hidden by the same colour as its background, a font under 2px, off-screen placement or opacity 0 (opacity only when the scrolled render exists and also hides it), totalling at least 20 words or repeating a word three or more times, outside menus, dialogs, tabs, accordions, sliders, tooltips and screen-reader text, and not shown elsewhere in the scrolled render. The analyst confirms or rejects; the verdict cannot raise the severity.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1132,7 +1244,9 @@
       }
     ],
     "status": "v1",
-    "notes": "In the rendered DOM, for each text node with ≥3 words, compute visibility: font-size <1px, opacity 0, colour contrast ratio against the effective background <1.1:1, positioned off-screen (left/top < -1000px or outside the document scroll area), height 0 with overflow hidden, or covered by an opaque element (elementFromPoint test). Exclude accessible sr-only patterns (clip: rect(0 0 0 0) / clip-path with 1px size and skip links), [hidden] interactive components, accordions/tabs/sliders/tooltips and aria-live regions. The LLM reviews the remaining candidates for keyword-laden content. Google explicitly allows accordion or tabbed content, sliders, tooltips and screen-reader-only text. Consent banners, mega-menus and mobile nav drawers are hidden by design. Report a 'pattern consistent with the hidden text policy', not a penalty."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "In the rendered DOM, for each text node with ≥3 words, compute visibility: font-size <1px, opacity 0, colour contrast ratio against the effective background <1.1:1, positioned off-screen (left/top < -1000px or outside the document scroll area), height 0 with overflow hidden, or covered by an opaque element (elementFromPoint test). Exclude accessible sr-only patterns (clip: rect(0 0 0 0) / clip-path with 1px size and skip links), [hidden] interactive components, accordions/tabs/sliders/tooltips and aria-live regions. The LLM reviews the remaining candidates for keyword-laden content. Google explicitly allows accordion or tabbed content, sliders, tooltips and screen-reader-only text. Consent banners, mega-menus and mobile nav drawers are hidden by design. Report a 'pattern consistent with the hidden text policy', not a penalty. The same-colour test compares text colour with the nearest background colour and ignores background images, so white text over a hero photo can be a candidate; the analyst rejects it."
   },
   {
     "id": "content-hidden-links",
@@ -1140,11 +1254,14 @@
     "title": "Hidden or disguised links",
     "why": "Google's spam policies prohibit links hidden from users, such as a link on a single character or styled to be invisible, when they exist to manipulate ranking.",
     "fix": "Remove hidden links. If the site may be compromised, investigate injected code (see content-hacked-signals).",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
+      "rendered-dom"
+    ],
+    "optionalInputs": [
+      "user-render",
       "ai"
     ],
     "appliesTo": "all",
@@ -1155,7 +1272,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate: any hidden external link. Critical when the LLM confirms it is not a legitimate UI element (icon links with aria-label are legitimate).",
+    "thresholds": "Candidate (medium, for the analyst): a followed external link whose text is hidden in the render (outside menus and other UI components, and not shown in the scrolled render), or a followed external link on a single character. Icon links with an aria-label are not candidates.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1163,6 +1280,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "For each <a href> in the rendered DOM, flag it if it has zero layout area, an invisible style (same tests as hidden text), anchor text of a single non-alphanumeric character or one letter inside a paragraph, or if it points to an external host and sits inside a hidden container. Group by target host. Icon-only links with an accessible name, skip links, and links inside closed menus or accordions are not abuse."
   },
   {
@@ -1171,10 +1290,13 @@
     "title": "Keyword stuffing in main content",
     "why": "Google's spam policies define keyword stuffing as filling a page with keywords or numbers to manipulate ranking, such as lists of cities or repeated phrases out of context. Google publishes no keyword density target.",
     "fix": "Rewrite naturally. Replace place lists with real service-area information or a single structured list where users need it.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -1185,7 +1307,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidates by the heuristics above (tool thresholds, not Google numbers). The LLM must quote the passage.",
+    "thresholds": "Candidates (medium, tool heuristics, not Google numbers): a 2-4 word phrase repeated at least 8 times per 500 words of main content inside prose blocks of 12 or more words (site names, links, buttons, card titles and short list items excluded), or five or more phone numbers with fewer than 25 words of text per number. The analyst must quote the passage.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1197,6 +1319,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Detect: (a) blocks listing ≥10 place names or ≥5 phone numbers with little surrounding prose; (b) any 2–4-word n-gram (non-stopword) repeated far above a language baseline, i.e. the same phrase occurring ≥8 times in under 500 words of main content; (c) footer or sidebar keyword lists. The LLM confirms whether the text reads unnaturally. Do not compute or report 'keyword density' targets. Store locators, glossary pages and legitimate directories naturally contain many names or numbers; judge whether there is added value."
   },
   {
@@ -1209,9 +1333,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "ua-probe",
-      "raw-html",
-      "rendered-dom"
+      "ua-probe"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1221,7 +1343,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Fail: main-content SimHash Hamming distance >10, a different title/h1, or new outbound links/keywords present only for the Googlebot UA. Warn: a smaller divergence.",
+    "thresholds": "High: followed outbound links to hosts served only to the Googlebot user agent, or a different title or h1 together with a main-text SimHash distance over 10. Low: only one of those two differences. Not evaluated when either response is not a 200 HTML page, or when it is a consent or challenge page.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1229,7 +1351,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Fetch the URL with a Chrome mobile UA and with the Googlebot Smartphone UA (same IP and headers otherwise), render both, then compare the title, h1, main-content SimHash, outbound link set and redirect target. IP-based cloaking (verified Googlebot IPs) cannot be detected from the tool's IP; say so. Bot-protection challenges, geo/consent walls and personalisation cause benign differences. Paywalls are not cloaking if Google sees the full content and Flexible Sampling is followed. Dynamic rendering that serves equivalent content is not cloaking.",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
+    "notes": "Fetch the URL with a Chrome mobile UA and with the Googlebot Smartphone UA (same IP and headers otherwise), render both, then compare the title, h1, main-content SimHash, outbound link set and redirect target. IP-based cloaking (verified Googlebot IPs) cannot be detected from the tool's IP; say so. Bot-protection challenges, geo/consent walls and personalisation cause benign differences. Paywalls are not cloaking if Google sees the full content and Flexible Sampling is followed. Dynamic rendering that serves equivalent content is not cloaking. v1 compares the raw HTML of both user-agent fetches; it does not render them.",
     "related": [
       "crawl-dynamic-rendering",
       "crawl-bot-blocking",
@@ -1246,9 +1370,7 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "redirects",
-      "ua-probe",
-      "rendered-dom"
+      "ua-probe"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1258,7 +1380,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Fail: final URL registrable domain differs between variants, or a JS redirect to an external domain fires only with a search referrer or a mobile UA.",
+    "thresholds": "Critical: the Googlebot and browser user agents land on different registrable domains, following HTTP redirects and immediate meta refresh. Redirects within the same site (language, device) are never sneaky here.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1266,7 +1388,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Load the page in headless Chrome with a desktop UA, a mobile UA, and with Referer=https://www.google.com/. Record HTTP, meta-refresh and JS redirects (navigation events within 10 s of load without user input). Fail if any variant ends on a different registrable domain or an unrelated page, unlike the others. Legitimate: site moves, page consolidation, post-login redirects, and language/region redirects to the same site (these are still bad practice for crawlers, but not sneaky)."
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
+    "notes": "Load the page in headless Chrome with a desktop UA, a mobile UA, and with Referer=https://www.google.com/. Record HTTP, meta-refresh and JS redirects (navigation events within 10 s of load without user input). Fail if any variant ends on a different registrable domain or an unrelated page, unlike the others. Legitimate: site moves, page consolidation, post-login redirects, and language/region redirects to the same site (these are still bad practice for crawlers, but not sneaky). v1 probes user agents only; JavaScript redirects that depend on the referrer are not observed."
   },
   {
     "id": "content-back-button-hijacking",
@@ -1282,12 +1406,14 @@
     ],
     "appliesTo": "all",
     "exemptWhen": [
-      "A single-page application pushes history entries for navigation the user triggered."
+      "A single-page application pushes history entries for navigation the user triggered.",
+      "The root URL redirects by country, cookie or language to locale home pages, every locale URL answers 200 when requested directly, and hreflang covers every locale.",
+      "A redirect (server-side or location.replace/assign) that adds no history entries beyond the redirect itself."
     ],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Fail: one back action does not return to the previous page.",
+    "thresholds": "Critical only when history.pushState or replaceState entries are added without user navigation, or back leads to a page the user never visited. A redirect loop on back = medium (a UX bug).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1298,8 +1424,8 @@
         "verified": "2026-11-04"
       }
     ],
-    "status": "v1",
-    "notes": "In headless Chrome: navigate from a blank origin page to the URL, wait 5 s without interaction, then trigger history.back(). Fail if the browser does not return to the origin page (e.g. history.pushState/replaceState injected entries on load, or a popstate handler that navigates elsewhere). Also statically scan scripts for pushState calls at load combined with popstate listeners that navigate. Added to the malicious practices policy on 13 Apr 2026. SPAs that push state on genuine user-triggered navigation are fine; the test must involve no interaction. Hash-based deep-link scrolling that replaces state without adding entries is fine."
+    "status": "planned",
+    "notes": "In headless Chrome: navigate from a blank origin page to the URL, wait 5 s without interaction, then trigger history.back(). Fail if the browser does not return to the origin page (e.g. history.pushState/replaceState injected entries on load, or a popstate handler that navigates elsewhere). Also statically scan scripts for pushState calls at load combined with popstate listeners that navigate. Added to the malicious practices policy on 13 Apr 2026. SPAs that push state on genuine user-triggered navigation are fine; the test must involve no interaction. Hash-based deep-link scrolling that replaces state without adding entries is fine. Planned: the renders do not record history entries or test the back action; it needs a history probe in the user render."
   },
   {
     "id": "content-hacked-signals",
@@ -1307,15 +1433,18 @@
     "title": "No signs of hacked or injected content, cloaked spam or injected redirects",
     "why": "Google's spam policies cover hacked content: spam pages, links or redirects injected into a site without the owner's consent. Hacked content is often shown only to crawlers, and Google may warn users or remove pages.",
     "fix": "Clean the compromise, patch the CMS and plugins, rotate credentials, then request review in Search Console if a manual action exists.",
-    "maxSeverity": "critical",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "rendered-dom",
-      "raw-html",
+      "http"
+    ],
+    "optionalInputs": [
       "crawl",
       "sitemaps",
-      "ua-probe"
+      "ua-probe",
+      "rendered-dom",
+      "ai"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1324,7 +1453,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Critical when ≥1 confirmed injected spam block or URL is found.",
+    "thresholds": "Candidates (medium, for the analyst): sitemap URLs, outbound links or page text with vocabulary typical of injected spam (pharma, casino, replica, payday loans, adult), a large block of Chinese, Japanese or Korean text on a site in another language, or spam vocabulary served only to the Googlebot user agent. Not applicable when the home page itself is about those topics.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1332,6 +1461,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "platform-config",
+    "verifiableBy": "deployed",
     "notes": "Detect off-topic spam vocabulary (pharma, casino, replica, loans, adult, Japanese/Chinese keyword blocks on a non-CJK site) in the main content, hidden blocks or outbound links. Detect unknown external script injections and links to such domains, and pages in the crawl or sitemap unrelated to the site topic (e.g. /wp-content/…/cheap-viagra.html). The LLM checks whether the topics are foreign to the site's purpose. Hacked content may be cloaked (shown only to Googlebot), so run it together with content-cloaking-ua. Legitimate pharmacies and casinos exist; judge relative to the site's own topic.",
     "related": [
       "content-cloaking-ua",
@@ -1395,7 +1526,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Info: topic changed. High: change combined with low-value or affiliate content of the kind Google gives as examples (casino on a former school site).",
+    "thresholds": "Info only: a topic change, with or without low-value or affiliate content of the kind Google gives as examples (casino on a former school site).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1415,10 +1546,13 @@
     "title": "Thin affiliate pages",
     "why": "Google's spam policies cover thin affiliate pages that copy merchant descriptions and reviews without adding original value. Affiliate links themselves are fine.",
     "fix": "Add original evaluation (evidence, measurements, comparisons). Link to several sellers. Qualify the links with rel=sponsored or nofollow.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -1431,7 +1565,7 @@
     "fpRisk": "high",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "High when the affiliate page's main content is mostly merchant descriptions without original evaluation (quoted).",
+    "thresholds": "Candidate (medium, for the analyst): an article, product or listing page with links through known affiliate networks. The analyst judges, with quotes, whether the main content adds original evaluation or is mostly merchant descriptions.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1443,6 +1577,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Detect affiliate links by known patterns (amazon tag=, amzn.to, awin1.com, tradedoubler, cj.com/anrdoezrs, impact.com/sjv.io, shareasale, partnerize, ?ref=/aff=). For pages with ≥1 affiliate link, the LLM evaluates added value: first-hand testing evidence, comparisons, pros and cons, measurements, multiple sellers (Google's review guidance), versus merchant-copied descriptions. Affiliate links themselves are fine. Copying merchant text without added value is the violation. Merchant text can't be fetched to compare in most cases; the LLM judges from the generic manufacturer-speak style plus evidence."
   },
   {
@@ -1455,6 +1591,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -1462,7 +1601,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: ≥1 such link without a qualifier. High: a sitewide footer or sidebar of unqualified commercial links.",
+    "thresholds": "Medium: one or more external links through a known affiliate network, or inside a block marked sponsored or advertorial, without rel=sponsored or nofollow.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/links-crawlable",
@@ -1474,7 +1613,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Find outbound links identified as affiliate (patterns above) or inside containers labelled sponsored/advertorial/patrocinado/publicitat/partner. Fail if rel lacks both sponsored and nofollow. Google treats affiliate links 'handled appropriately' as fine; rel=sponsored is the preferred qualifier. Redirect-through-own-domain affiliate links (/go/x) need the redirect to be followed to classify them."
+    "fixLocation": "content",
+    "verifiableBy": "local",
+    "notes": "Find outbound links identified as affiliate (patterns above) or inside containers labelled sponsored/advertorial/patrocinado/publicitat/partner. Fail if rel lacks both sponsored and nofollow. Google treats affiliate links 'handled appropriately' as fine; rel=sponsored is the preferred qualifier. Redirect-through-own-domain affiliate links (/go/x) need the redirect to be followed to classify them. Affiliate links that go through a redirect on the own domain are not followed in v1."
   },
   {
     "id": "content-ugc-link-qualifiers",
@@ -1486,6 +1627,9 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -1494,7 +1638,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: unqualified UGC outbound links. High: confirmed spam posts in UGC.",
+    "thresholds": "Medium: an external link inside a comment, reply, forum post or user review region (class or id tokens, or Comment, DiscussionForumPosting or Answer microdata) without rel=ugc, nofollow or sponsored. Spam posts in UGC are left to the analyst (medium at most).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/links-crawlable",
@@ -1506,6 +1650,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Locate UGC regions (comments, forum posts, reviews, profiles via common markup/classes, Comment/DiscussionForumPosting schema). Flag outbound links there without rel=ugc or nofollow. The LLM flags spammy UGC (off-topic commercial links, gibberish, repeated promotional posts). Google updated its UGC spam guide on 26 Oct 2026 to help platforms detect spam earlier."
   },
   {
@@ -1514,11 +1660,13 @@
     "title": "Visible link scheme patterns",
     "why": "Google's link spam policy covers link exchanges, keyword-rich links in widgets or footers across sites, and other links meant to manipulate ranking. Only outbound links on the audited site are observable.",
     "fix": "Remove the links or qualify them with rel=sponsored/nofollow. Drop link-exchange pages.",
-    "maxSeverity": "high",
+    "maxSeverity": "medium",
     "method": "hybrid",
     "scope": "site",
     "inputs": [
-      "crawl",
+      "crawl"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -1529,7 +1677,7 @@
     "fpRisk": "high",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "High when the LLM confirms followed, keyword-anchored, unrelated sitewide links or link-exchange pages.",
+    "thresholds": "Candidate (medium, for the analyst): a followed external link with three or more words of anchor text in navigation, header, footer or sidebar on at least 50% (and at least three) of the crawled pages, excluding social profiles and design or development credits.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/essentials/spam-policies",
@@ -1537,6 +1685,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Detect sitewide (≥50% of pages) footer, sidebar or template outbound links to unrelated commercial sites with keyword-rich anchors, 'partner'/'link exchange' pages listing reciprocal links, low-quality directory listings, and widget-embedded links. The LLM judges relevance and likely payment. 'Web design by Agency' footer credits are common; flag them only if keyword-stuffed and followed across many client sites (an agency's own site linking to clients is normal). Inbound link schemes are not observable."
   },
   {
@@ -1549,6 +1699,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -1568,6 +1721,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "For each <a href>, compute its anchor text: text content, plus alt of child images, plus aria-label/aria-labelledby, with title as a fallback. Fail if empty. Google uses an image's alt as anchor text and title as a fallback for empty links. aria-label helps accessibility, but Google does not document it as an anchor text source; report the Google signal separately."
   },
   {
@@ -1580,15 +1735,17 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
-      "crawl"
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": "all",
     "exemptWhen": [],
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Low: generic anchors in main content (report the count and examples). Low: >100 characters. Medium: stuffed/repeated exact-match anchors.",
+    "thresholds": "Low: generic anchors in main content when no descriptive link to the same target exists on the page (count and examples). Low: anchors over 100 characters that do not wrap block content such as a card. Low: the same anchor text to the same internal page 10 or more times.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/links-crawlable",
@@ -1600,6 +1757,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Compare normalised anchor text against a multilingual generic list (en: click here, read more, here, more, link, website, article; es: haz clic aquí, aquí, leer más, más información, ver más; ca: clica aquí, aquí, llegir més, més informació). Flag anchors longer than 100 characters or full sentences, chained adjacent links, and identical keyword-rich anchors repeated to the same internal target ≥10 times per page. 'Read more' in card grids next to a descriptive heading link is common; downgrade to info when the same target already has a descriptive link nearby. The 100-character threshold is a tool heuristic (Google: 'weirdly long'). Lighthouse 13.6 reports generic anchors as the link-text SEO audit; do not count it twice."
   },
   {
@@ -1612,6 +1771,9 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -1620,7 +1782,7 @@
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Low: all editorial external links nofollow. Medium: YMYL page with ≥3 unsourced statistical claims.",
+    "thresholds": "Low: every one of three or more editorial external links (main content, excluding profiles, affiliate, sponsored and ugc links) is nofollow. Unsourced statistical claims on YMYL pages are left to the analyst (low).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/links-crawlable",
@@ -1632,6 +1794,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Deterministic: count in-content external links and the share with nofollow. Flag a site where 100% of external editorial links are nofollow. The LLM flags factual or statistical claims (numbers, studies, 'according to') that cite no source on informational or YMYL pages. Google: linking to sources can build trust; use nofollow only when you don't trust the source. Links to own social profiles are not citations."
   },
   {
@@ -1644,6 +1808,9 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -1654,7 +1821,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Counts images with no alt attribute at all. Medium: a content image (inside main, at least 100x100 CSS px, not aria-hidden or role=presentation) without an alt attribute. Low: other images without an alt attribute. alt=\"\" is never counted as missing.",
+    "thresholds": "Counts images with no alt attribute at all. Medium: an image in the main content declared at least 100x100 CSS px (width and height attributes) without an alt attribute. Low: other images without an alt attribute. alt=\"\" is never counted as missing; aria-hidden and role=presentation images and tracking pixels are excluded.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/google-images",
@@ -1674,6 +1841,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "For each <img> (and input type=image) in the rendered DOM, fail if the alt attribute is absent. Separately count alt=\"\" (valid for decorative images). For inline <svg> used as content, check for a <title> child or aria-label. Tracking pixels (1×1) and spacer images should be excluded. alt=\"\" is correct for decorative images and is not a missing alt. Lighthouse 13.6 reports missing alt as the image-alt audit (SEO and accessibility); do not count it twice."
   },
   {
@@ -1686,6 +1855,9 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -1696,7 +1868,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Low per issue type. Medium when keyword-stuffed alts appear sitewide.",
+    "thresholds": "Low (deterministic): alt text equal to the file name or to a camera or hash name. Candidates (low, for the analyst): a generic one-word alt, four or more comma-separated keywords, the same alt on five or more different images, or alt over 250 characters (tool heuristic).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/google-images",
@@ -1708,6 +1880,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Flag alt values equal to the filename or matching camera/hash patterns (IMG_\\d+, DSC\\d+, [a-f0-9]{16,}), a generic single word ('image', 'photo', 'imagen', 'foto', 'imatge', 'logo' on a non-logo image), lists of ≥4 comma-separated keywords, the same alt repeated on ≥5 different images on a page, or alt >250 characters. The LLM checks a sample for relevance to the image and page. Google gives no alt length limit; the 250-character threshold is a tool heuristic. Functional images in links should describe the destination (WAI)."
   },
   {
@@ -1720,6 +1894,9 @@
     "method": "deterministic",
     "scope": "site",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "rendered-dom"
     ],
     "appliesTo": "all",
@@ -1727,7 +1904,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Low: ≥50% of content images on a page have opaque names.",
+    "thresholds": "Low: at least 50% of the distinct content images on a page (two or more, SVG excluded) have generic, camera, numeric or hash file names.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/google-images",
@@ -1735,6 +1912,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Parse the basename of each content image src. Flag generic or opaque names: image\\d*, img\\d*, IMG_\\d+, DSC_?\\d+, screenshot-\\d+, untitled, or a pure hash/UUID. Exclude CDN-transformed URLs where the original name is preserved in the path. Many CMSs and CDNs hash filenames; Google calls filenames a light signal ('very light clues'). Keep this low severity."
   },
   {
@@ -1749,6 +1928,9 @@
     "inputs": [
       "rendered-dom"
     ],
+    "optionalInputs": [
+      "user-render"
+    ],
     "appliesTo": "all",
     "exemptWhen": [
       "The background is decorative, such as a texture or gradient."
@@ -1756,7 +1938,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: hero, product or editorial image only as CSS background. Info: decorative backgrounds.",
+    "thresholds": "Medium: the largest contentful paint is a CSS background image with no img or picture element for the same file. Other background images are not measured in v1.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/google-images",
@@ -1768,7 +1950,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Find elements in main content or above the fold with a computed background-image url() whose area is ≥40% of the viewport width, and the Lighthouse LCP element when it is a background image. Fail if there is no <img>/<picture> equivalent of the same visual on the page. Google doesn't index CSS background images and extracts images only from img src (clarified 16 Apr 2024). Decorative textures are fine as backgrounds."
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Find elements in main content or above the fold with a computed background-image url() whose area is ≥40% of the viewport width, and the Lighthouse LCP element when it is a background image. Fail if there is no <img>/<picture> equivalent of the same visual on the page. Google doesn't index CSS background images and extracts images only from img src (clarified 16 Apr 2024). Decorative textures are fine as backgrounds. v1 reads only the LCP element: the render does not report computed background images for other elements."
   },
   {
     "id": "content-img-format",
@@ -1780,8 +1964,11 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "resources",
-      "http"
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "resources"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -1790,7 +1977,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: unsupported format with no supported fallback in <picture>. Low: extension mismatch.",
+    "thresholds": "Medium: an img whose src is in a format Google Images does not index (HEIC, TIFF, JPEG XL and similar), or a fetched Open Graph image or logo whose bytes are such a format. Low: the URL extension disagrees with the bytes of a fetched image.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/google-images",
@@ -1798,6 +1985,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed",
     "notes": "For each content image, fetch its headers and sniff the bytes. Fail if the format is not one of BMP, GIF, JPEG, PNG, WebP, SVG or AVIF (e.g. HEIC, TIFF, JPEG XL as the only source). Warn if the URL extension disagrees with the actual type. AVIF support was added on 30 Aug 2024. <picture><source type=image/jxl> with an img src JPEG fallback is fine."
   },
   {
@@ -1821,7 +2010,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: LCP image lazy-loaded, or content images never resolved without user scroll.",
+    "thresholds": "Medium: an image whose real URL sits in data-src (or a similar attribute) keeps its placeholder in the tall-viewport render and gets its real source only in the scrolled render. A lazy-loaded LCP image is counted by perf-lcp-lazy-loaded.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/crawling-indexing/javascript/lazy-loading",
@@ -1833,6 +2022,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Flag loading=lazy on the LCP image or on images intersecting the initial mobile viewport. Flag images whose real URL is only in data-src/data-srcset with a placeholder src that is not swapped in the rendered DOM without scrolling (render with a tall viewport, no scroll, then compare). Google Search does not interact with pages (no scrolling or clicking); Googlebot uses a tall viewport, so IntersectionObserver-based loading generally works.",
     "related": [
       "perf-lcp-lazy-loaded",
@@ -1849,7 +2040,10 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "raw-html",
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
       "resources"
     ],
     "appliesTo": "all",
@@ -1860,7 +2054,7 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Low: missing or logo on content pages. Medium: unreachable image. Info: <1200px wide (Discover).",
+    "thresholds": "Low: no og:image or primaryImageOfPage on an article or product page, the preferred image is the logo there, or the image does not answer 200. Info: under 1200px wide on an article page. SVG sizes are not_evaluated.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/google-images",
@@ -1872,7 +2066,9 @@
       }
     ],
     "status": "v1",
-    "notes": "Check for og:image and/or schema.org primaryImageOfPage (or an image on the mainEntity). Fail if absent on article and product pages, if it points to the site logo (URL or alt contains 'logo', or it is the same image on ≥50% of pages), if it is <1200px wide on editorial pages, or if it is unreachable (non-200 or blocked by robots). Preferred-image guidance was added on 2 Mar 2026. Reference each image with one consistent URL (12 May 2025 clarification)."
+    "fixLocation": "content",
+    "verifiableBy": "deployed",
+    "notes": "Check for og:image and/or schema.org primaryImageOfPage. Fail if absent on article and product pages, if it points to the site logo there (the file name contains logo, or it is the Organization logo), or if it is unreachable (non-200). Report a width under 1200px on editorial pages as info, reading the size from the image header; SVG sizes cannot be measured and are not evaluated. Several pages may share one image. Preferred-image guidance was added on 2 Mar 2026. Reference each image with one consistent URL (12 May 2025 clarification)."
   },
   {
     "id": "content-video-indexability",
@@ -1902,8 +2098,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "For pages whose main purpose is a single video (one dominant <video>/<iframe> player in main): check that the player is in the rendered HTML and not hidden; that VideoObject JSON-LD has name, description, thumbnailUrl and uploadDate; that the thumbnail URL returns 200, is ≥60×30 and is not robots-blocked; and that name and description are unique. Since the Aug 2024 overhaul, only watch pages are indexed as video results; supporting videos in articles aren't. A VideoObject 'creator' property was added on 24 Sep 2026.",
+    "status": "planned",
+    "notes": "For pages whose main purpose is a single video (one dominant <video>/<iframe> player in main): check that the player is in the rendered HTML and not hidden; that VideoObject JSON-LD has name, description, thumbnailUrl and uploadDate; that the thumbnail URL returns 200, is ≥60×30 and is not robots-blocked; and that name and description are unique. Since the Aug 2024 overhaul, only watch pages are indexed as video results; supporting videos in articles aren't. A VideoObject 'creator' property was added on 24 Sep 2026. Planned: telling a watch page from a page with a supporting video needs the player size and position, which the render does not report; VideoObject properties are checked by schema-video.",
     "related": [
       "schema-video"
     ]
@@ -1918,8 +2114,10 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
-      "rendered-dom",
       "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
     ],
     "appliesTo": [
       "article"
@@ -1930,7 +2128,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: article without a visible byline where one is expected, or markup author not matching the visible byline. Low: no author page or url/sameAs. Low: author.name contains extra text.",
+    "thresholds": "Medium: an article page with no visible byline (rel=author, itemprop=author, an author or byline class, or 'By/Por/Per Name' near the h1) and no Organization author, or with a Person author in Article markup whose name does not appear on the page. author.name format, url and sameAs are checked by schema-author-entity-quality.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
@@ -1942,6 +2140,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "For article-like pages (Article/BlogPosting/NewsArticle schema, og:type=article, or a /blog/ path with a date), detect a visible byline (rel=author, [itemprop=author], a 'By/Por/Per' pattern near the h1). Check that the byline links to an author page with a bio. Check that JSON-LD author is Person/Organization, that author.name contains only the name (no 'by', job title, or multiple names merged), that author.url or sameAs is present, and that the markup names match the visible byline. Bylines are expected 'where one might be expected': not on product pages, service pages or the home page. Organization authorship is valid. Fake author personas or AI headshots are a deception signal (people-first guidance).",
     "related": [
       "schema-author-entity-quality",
@@ -1958,8 +2158,10 @@
     "method": "deterministic",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
-      "raw-html",
       "sitemaps"
     ],
     "appliesTo": [
@@ -1973,7 +2175,7 @@
     "fpRisk": "low",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: visible vs structured mismatch, or a future date. Low: lastmod differs from dateModified by >1 day. Low: missing labels ('Published'/'Updated').",
+    "thresholds": "Medium: a structured date more than one day after the response's Date header, or visible publication dates (time elements in the content, or dates after a 'Published' or 'Updated' label) none of which is within one day of datePublished or dateModified. Low: sitemap lastmod differs from dateModified by more than one day. The order of datePublished and dateModified is checked by schema-date-logic.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/publication-dates",
@@ -1985,6 +2187,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
     "notes": "Extract the visible published/updated dates near the byline (with locale-aware parsing for en/es/ca month names) and JSON-LD datePublished/dateModified (ISO 8601). Fail if they disagree (calendar date), if any date is in the future, if dateModified < datePublished, or if the timezone is missing when a time is given. Compare the sitemap lastmod with dateModified. Event pages show event dates; those are not publication dates (Google: use Event markup). Time and timezone may appear only in structured data.",
     "related": [
       "crawl-sitemap-lastmod",
@@ -2001,9 +2205,11 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "crawl",
-      "raw-html",
-      "rendered-dom"
+      "ua-probe"
     ],
     "appliesTo": "all",
     "exemptWhen": [
@@ -2012,7 +2218,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: sitewide identical or per-request dateModified. Medium: date changed with <2% content change between runs.",
+    "thresholds": "Medium: dateModified changes between two fetches of the same URL made moments apart (generated per request), or at least 80% of five or more crawled pages carry the crawl day as dateModified. Candidate (medium): at least 80% of them share one other dateModified date.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
@@ -2024,6 +2230,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed",
     "notes": "Site level. Flag when dateModified (or the visible 'Updated' date) equals the crawl date or one shared date on ≥80% of pages, or is generated per request. When historical snapshots exist (previous tool runs), compare main-content SimHash: dateModified changed but content distance <2% means a cosmetic update. The people-first guidance lists 'changing the date of pages to make them seem fresh when the content has not substantially changed' as a warning sign. Template-wide changes (new footer) are not content changes."
   },
   {
@@ -2036,6 +2244,9 @@
     "method": "hybrid",
     "scope": "site",
     "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
       "crawl",
       "rendered-dom"
     ],
@@ -2047,7 +2258,7 @@
     "fpRisk": "medium",
     "scored": true,
     "evidenceLevel": "official-google",
-    "thresholds": "Medium: no about or no contact page reachable within 1 click. High: e-commerce or YMYL site with no contact or returns information.",
+    "thresholds": "Medium: the home page has no contact link, mailto or tel link, contact section or contact details in Organization markup. Candidate (medium): no link to an about page and no about section; one-page sites may describe the business on the home page itself.",
     "sources": [
       {
         "url": "https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf",
@@ -2059,6 +2270,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "From the home page and footer links, look for: About (about, nosotros, quiénes somos, qui som, sobre nosaltres), Contact (contact, contacto, contacte) with a physical address, phone or email, and Privacy and legal pages (privacy/privacidad/privadesa, aviso legal/avís legal, terms, cookies). For e-commerce, also look for returns/refunds and shipping. The LLM checks that the about page identifies a real responsible entity. QRG 2.5.2/2.5.3 and 4.5.1 (inadequate information for the page's purpose). The amount needed depends on purpose: a hobby blog needs little, a shop or YMYL site needs a lot. In the EU, legal-notice pages are often legally required, but that is outside SEO scope."
   },
   {
@@ -2071,6 +2284,9 @@
     "method": "hybrid",
     "scope": "page",
     "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
       "rendered-dom",
       "ai"
     ],
@@ -2079,7 +2295,7 @@
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Candidate thresholds as above (tool heuristics). The LLM confirms that freshness matters for the topic.",
+    "thresholds": "Candidates (medium, for the analyst): every year in the title or h1 is older than the year before the response's Date header, or a statement such as 'as of 2022' names such a year. The analyst confirms that freshness matters for the topic.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/appearance/ranking-systems-guide",
@@ -2095,6 +2311,8 @@
       }
     ],
     "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
     "notes": "Deterministic candidates: a year in the title/h1/URL older than currentYear-1 on non-historical topics; a visible updated date older than 24 months on pages with prices, software versions, laws or rankings; phrases like 'this year (2022)' or 'as of 2023'. The LLM judges whether the topic deserves freshness and quotes the outdated statements. Evergreen content does not need frequent updates (Google warns against cosmetic freshness). Freshness systems apply where users expect fresh content (QRG 18.0 'Needs Met Rating and Freshness')."
   },
   {
@@ -2115,7 +2333,7 @@
     "fpRisk": "medium",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "Info, with one low-severity flag: the topic is absent from both the title and the h1.",
+    "thresholds": "Info only, including when the topic is absent from both the title and the h1.",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
@@ -2130,8 +2348,8 @@
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Derive the page's primary topic phrase: the LLM proposes it from the title and h1, or the user supplies a target query. Deterministically report whether the phrase or its close variants appear in the title, the h1, the first 100 words of main content, the URL slug (localised), the alt of the main image, and the anchors of internal links pointing to the page (from the crawl graph). Report entity mentions (named entities in the main content). Output an alignment table, not a score. No keyword density. Google understands synonyms and doesn't require exact phrases or long-tail variants (AI optimization guide). Keywords in domain or URL have 'hardly any effect' beyond breadcrumbs."
+    "status": "planned",
+    "notes": "Derive the page's primary topic phrase: the LLM proposes it from the title and h1, or the user supplies a target query. Deterministically report whether the phrase or its close variants appear in the title, the h1, the first 100 words of main content, the URL slug (localised), the alt of the main image, and the anchors of internal links pointing to the page (from the crawl graph). Report entity mentions (named entities in the main content). Output an alignment table, not a score. No keyword density. Google understands synonyms and doesn't require exact phrases or long-tail variants (AI optimization guide). Keywords in domain or URL have 'hardly any effect' beyond breadcrumbs. Planned: the deterministic table needs a topic phrase from the analyst or the owner, which v1 does not pass to code."
   },
   {
     "id": "content-intent-match",
@@ -2151,7 +2369,7 @@
     "fpRisk": "high",
     "scored": false,
     "evidenceLevel": "official-google",
-    "thresholds": "High: likely 'Slightly Meets' or 'Fails to Meet' for the stated target query.",
+    "thresholds": "Medium at most: likely 'Slightly Meets' or 'Fails to Meet' for the stated or inferred target query.",
     "sources": [
       {
         "url": "https://static.googleusercontent.com/media/guidelines.raterhub.com/en//searchqualityevaluatorguidelines.pdf",
@@ -2210,14 +2428,14 @@
     "fpRisk": "low",
     "scored": false,
     "evidenceLevel": "industry-consensus",
-    "thresholds": "Info: scores. Low: ≥3 paragraphs >150 words, or p90 sentence length >40 words (tool heuristics).",
+    "thresholds": "Info: scores, three or more paragraphs over 150 words, or a p90 sentence length over 40 words (tool heuristics).",
     "sources": [
       {
         "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
         "verified": "2026-11-03"
       }
     ],
-    "status": "v1",
-    "notes": "Detect the language. Compute sentence and paragraph statistics for all languages: mean and p90 sentence length in words, paragraphs >150 words, and sections >400 words without a subheading. Formula by language: English uses Flesch Reading Ease (206.835 − 1.015·words/sentence − 84.6·syllables/word). Spanish uses Szigriszt-Pazos perspicuity (206.835 − 62.3·syllables/word − words/sentence) interpreted on the INFLESZ scale (<40 very difficult, 40–55 fairly difficult, 55–65 normal, 65–80 fairly easy, >80 very easy), with Fernández-Huerta optional. Catalan has no validated formula: report the statistics only. Use language-specific syllabification. Readability is not a ranking factor (Mueller 2018: Google doesn't use basic reading-level algorithms). Report it as UX only. Legal or technical audiences legitimately need complex text. Do not apply English Flesch to Spanish or Catalan. Formulas such as Flesch are language-specific; no score is computed for languages without a validated formula."
+    "status": "planned",
+    "notes": "Detect the language. Compute sentence and paragraph statistics for all languages: mean and p90 sentence length in words, paragraphs >150 words, and sections >400 words without a subheading. Formula by language: English uses Flesch Reading Ease (206.835 − 1.015·words/sentence − 84.6·syllables/word). Spanish uses Szigriszt-Pazos perspicuity (206.835 − 62.3·syllables/word − words/sentence) interpreted on the INFLESZ scale (<40 very difficult, 40–55 fairly difficult, 55–65 normal, 65–80 fairly easy, >80 very easy), with Fernández-Huerta optional. Catalan has no validated formula: report the statistics only. Use language-specific syllabification. Readability is not a ranking factor (Mueller 2018: Google doesn't use basic reading-level algorithms). Report it as UX only. Legal or technical audiences legitimately need complex text. Do not apply English Flesch to Spanish or Catalan. Formulas such as Flesch are language-specific; no score is computed for languages without a validated formula. Planned: needs the shared language detector (src/analyze/language.ts) to pick a validated formula per language."
   }
 ]
