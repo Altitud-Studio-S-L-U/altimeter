@@ -68,14 +68,18 @@ interface Edge {
   readonly to: string;
 }
 
-type EdgeState = 'ok' | 'missing' | 'unverified';
+/** `unrendered` is unverified too: the target was fetched, but not rendered, while the declaring set exists only after rendering. */
+type EdgeState = 'ok' | 'missing' | 'unverified' | 'unrendered';
 
 function returnState(site: SiteFacts, sets: ReadonlyMap<string, DeclaredSet>, edge: Edge): EdgeState {
   const target = sets.get(edge.to);
   if (target) return target.annotations.some(annotation => annotation.href === edge.from.url) ? 'ok' : 'missing';
+  const fetched = documentAt(site, edge.to);
+  if (!fetched) return 'unverified';
+  // A site that inserts hreflang with JavaScript may do so on the target as well, which only a render would show.
+  if (edge.annotation.source === 'rendered' && (!fetched.rendered || fetched.rendered.result.error !== undefined)) return 'unrendered';
   // A target fetched at its own URL that declares no hreflang at all has no return link either.
-  if (documentAt(site, edge.to)) return 'missing';
-  return 'unverified';
+  return 'missing';
 }
 
 export const missingReturnLink: RuleImplementation = {
@@ -85,6 +89,7 @@ export const missingReturnLink: RuleImplementation = {
     if (sets.size === 0) return notApplicable('no-hreflang');
     const results: RuleResult[] = [];
     let verified = 0;
+    let unrendered = 0;
     for (const cluster of clusters(sets)) {
       // x-default entries often point at a shared entry page; Google pairs language versions, so only those are checked.
       const edges: Edge[] = cluster.flatMap(url => (sets.get(url)?.annotations ?? [])
@@ -95,6 +100,7 @@ export const missingReturnLink: RuleImplementation = {
       const missing = states.filter(entry => entry.state === 'missing');
       const ok = states.filter(entry => entry.state === 'ok').length;
       verified += missing.length + ok;
+      unrendered += states.filter(entry => entry.state === 'unrendered').length;
       if (missing.length === 0) continue;
       const ids: string[] = [];
       for (const { edge } of missing.slice(0, maxEvidence)) {
@@ -107,12 +113,12 @@ export const missingReturnLink: RuleImplementation = {
       results.push(fail('high', ids, {
         count: missing.length,
         working: ok,
-        unverified: states.filter(entry => entry.state === 'unverified').length,
+        unverified: states.filter(entry => entry.state === 'unverified' || entry.state === 'unrendered').length,
         pairs: list(missing.map(({ edge }) => `${edge.from.url} -> ${edge.to}`), 2),
       }));
     }
     if (results.length > 0) return results;
-    return verified === 0 ? notEvaluated('targets-not-fetched') : pass();
+    return verified === 0 ? notEvaluated(unrendered > 0 ? 'targets-not-rendered' : 'targets-not-fetched') : pass();
   },
 };
 

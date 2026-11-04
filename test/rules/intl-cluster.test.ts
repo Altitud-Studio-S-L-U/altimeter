@@ -95,6 +95,23 @@ describe('intl-hreflang-missing-return-link', () => {
     assertFail(only(evaluate(missingReturnLink, site({ pages: [member(en, 'en', cluster(versions))], alternates })).findings), 'high');
   });
 
+  test('fails a fetched target without any hreflang when the declaring page serves its set in the HTML', () => {
+    const finding = only(evaluate(missingReturnLink, site({ pages: [member(en, 'en', cluster(versions)), member(ca, 'ca', '')] })).findings);
+    assertFail(finding, 'high');
+    assert.deepEqual([finding.params?.count, finding.params?.working, finding.params?.unverified], [1, 0, 1]);
+  });
+
+  test('leaves a target unverified when the declaring set exists only after rendering and the target was not rendered', () => {
+    const shell = (lang: string) => html({ lang, body: '<div id="root"></div><script src="/app.js"></script>' });
+    const app = page(en, { html: shell('en'), rendered: html({ lang: 'en', head: cluster(versions), body: prose('en') }) });
+    const crawled = (...targets: PageFacts[]) => site({ pages: [app, ...targets], crawled: true });
+    assertOutcome(only(evaluate(missingReturnLink, crawled(page(ca, { html: shell('ca') }), page(es, { html: shell('es') }))).findings), 'not_evaluated', 'targets-not-rendered');
+    const renderedEs = page(es, { html: shell('es'), rendered: html({ lang: 'es', body: prose('es') }) });
+    const finding = only(evaluate(missingReturnLink, crawled(page(ca, { html: shell('ca') }), renderedEs)).findings);
+    assertFail(finding, 'high');
+    assert.deepEqual([finding.params?.count, finding.params?.working, finding.params?.unverified], [1, 0, 1]);
+  });
+
   test('is not applicable without hreflang', () => {
     assertOutcome(only(evaluate(missingReturnLink, monolingual).findings), 'not_applicable', 'no-hreflang');
   });
