@@ -18,8 +18,9 @@ let work: string;
 
 function run(args: string[], cwd = work, env: Readonly<Record<string, string>> = {}): Promise<{ status: number | null; stdout: string; stderr: string }> {
   return new Promise(resolve => {
-    // No test may reach a real Claude Code or Codex: they would spend the user's quota.
-    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true, env: { ...process.env, ALTIMETER_PROVIDER: 'none', ...env } });
+    // No test may reach a real Claude Code or Codex, not even for --version: executables that do not exist stand in for them.
+    const missing = { ALTIMETER_CLAUDE_EXECUTABLE: join(work, 'missing', 'claude.exe'), ALTIMETER_CODEX_EXECUTABLE: join(work, 'missing', 'codex.exe') };
+    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true, env: { ...process.env, ALTIMETER_PROVIDER: 'none', ...missing, ...env } });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', chunk => (stdout += chunk));
