@@ -2,7 +2,7 @@ import { classifyPage } from '../../analyze/page-type.ts';
 import type { SiteFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
-import { isAllowed, robotsByteLimit, type RobotsFile, type RobotsGroup, type RobotsRule } from '../../fetch/robots.ts';
+import { isAllowed, robotsByteLimit, selectGroup, type RobotsFile, type RobotsGroup, type RobotsRule } from '../../fetch/robots.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { summarizeList } from '../helpers.ts';
 import {
@@ -190,13 +190,21 @@ function meantForIndex(url: string): boolean {
   return new URL(url).search === '' && type !== 'utility' && type !== 'legal';
 }
 
+/** Whether the rules robots.txt has for Googlebot disallow the whole site, so that only what Allow lines open can be crawled. */
+function disallowsWholeSite(file: RobotsFile): boolean {
+  return selectGroup(file, ['googlebot']).rules.some(rule => rule.type === 'disallow' && rule.pattern !== '' && /^\/?\**$/u.test(rule.pattern));
+}
+
 /**
  * The crawled pages meant for the index, and those of them robots.txt disallows for Googlebot. The crawl never fetches
- * a disallowed URL, so the URLs it found and left for that reason count too.
+ * a disallowed URL, so when the rules disallow the whole site the URLs it found and left for that reason count too.
+ * Under narrower rules they are left out: sites disallow wishlist, compare, comment or filter links on purpose, and
+ * every crawled page can link to several of them.
  */
-function crawlSample(site: SiteFacts): { readonly total: number; readonly blocked: ReadonlyArray<{ readonly url: string; readonly fetched: boolean }> } {
+function crawlSample(site: SiteFacts, file: RobotsFile): { readonly total: number; readonly blocked: ReadonlyArray<{ readonly url: string; readonly fetched: boolean }> } {
   const sampled = [...site.pages.values()].filter(page => page.fetch.status === 200 && page.pageType !== 'utility' && page.pageType !== 'legal');
-  const unfetched = (site.crawlBlocked ?? []).filter(url => meantForIndex(url) && robotsDecision(site, url)?.allowed === false);
+  const found = disallowsWholeSite(file) ? site.crawlBlocked ?? [] : [];
+  const unfetched = found.filter(url => meantForIndex(url) && robotsDecision(site, url)?.allowed === false);
   const blocked = [
     ...sampled.filter(page => robotsDecision(site, page.fetch.finalUrl)?.allowed === false).map(page => ({ url: page.fetch.finalUrl, fetched: true })),
     ...unfetched.map(url => ({ url, fetched: false })),
@@ -207,7 +215,8 @@ function crawlSample(site: SiteFacts): { readonly total: number; readonly blocke
 const robotsBlocksSite: RuleImplementation = {
   id: 'crawl-robots-blocks-site',
   evaluate({ site, evidence }) {
-    if (!robotsFile(site)) return notApplicable('no-robots-rules');
+    const file = robotsFile(site);
+    if (!file) return notApplicable('no-robots-rules');
     const url = robotsUrl(site);
     const homePaths = [...new Set([`${site.origin}/`, ...(site.homeUrl ? [site.homeUrl] : [])])];
     const blockedHome = (tokens: string[]) => homePaths.map(path => ({ path, decision: robotsDecision(site, path, tokens) }))
@@ -224,7 +233,7 @@ const robotsBlocksSite: RuleImplementation = {
     }
     if (google) return failure({ severity: 'critical', evidence: [cite(google, 'Googlebot')], reason: 'home-googlebot', params: { url: google.path, crawler: 'Googlebot' } });
     if (site.crawled) {
-      const { total, blocked } = crawlSample(site);
+      const { total, blocked } = crawlSample(site, file);
       if (total > 0 && blocked.length / total > 0.5) {
         if (privateHost(site)) return notApplicable('private-host');
         const ids = blocked.slice(0, 5).map(entry => {

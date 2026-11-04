@@ -44,7 +44,7 @@
       "fail": "robots.txt disallows the home page {url} for {crawler}.",
       "fail:home-googlebot": "robots.txt disallows the home page {url} for {crawler}, so Google cannot crawl the site from its entry point.",
       "fail:home-bingbot": "robots.txt disallows the home page {url} for {crawler} while Googlebot is allowed.",
-      "fail:most-pages": "robots.txt disallows {blocked} of {total} crawled indexable-looking pages for Googlebot."
+      "fail:most-pages": "robots.txt disallows {blocked} of the {total} indexable-looking URLs the crawl found for Googlebot."
     }
   },
   "crawl-robots-blocks-page": {

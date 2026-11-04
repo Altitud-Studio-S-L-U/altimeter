@@ -220,10 +220,16 @@ describe('crawl-robots-blocks-site', () => {
     assert.deepEqual(excerpts(), Array.from({ length: 5 }, () => 'disallow: /'));
   });
   test('does not count disallowed carts, searches, account pages and filtered URLs the crawl found', () => {
-    const robots = 'User-agent: *\nDisallow: /cart\nDisallow: /search\nDisallow: /account/\nDisallow: /*?';
+    const robots = 'User-agent: *\nAllow: /$\nAllow: /lamps/$\nDisallow: /';
     const pages = [home(), page(`${origin}/lamps/`, { html: '<!doctype html><title>Lamps</title>' })];
     const found = [`${origin}/cart`, `${origin}/search/lamps`, `${origin}/account/orders`, `${origin}/lamps/?color=red`, `${origin}/lamps/?sort=price`];
     assertOutcome(run(id, { ...site({ pages, robots, crawled: true }), crawlBlocked: found }).finding, 'pass');
+  });
+  test('does not count the URLs a narrower rule disallows, such as wishlist, compare and filter links', () => {
+    const robots = 'User-agent: *\nDisallow: /wishlist/\nDisallow: /catalog/product_compare/\nDisallow: /collections/*+*';
+    const products = Array.from({ length: 10 }, (_, index) => page(`${origin}/lamp-${index}.html`, { html: `<!doctype html><title>Lamp ${index}</title>` }));
+    const found = products.flatMap((_, index) => [`${origin}/wishlist/index/add/product/${index}/`, `${origin}/catalog/product_compare/add/product/${index}/`, `${origin}/collections/lamps/red+size-${index}`]);
+    assertOutcome(run(id, { ...site({ pages: [home(), ...products], robots, crawled: true }), crawlBlocked: found }).finding, 'pass');
   });
   test('does not apply to a staging host or without rules', () => {
     const staging = page('https://staging.example.com/', { html: '<title>Staging</title>' });
