@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { RuleImplementation } from '../engine.ts';
 import { absoluteUrl, pageDocument, summarizeList } from '../helpers.ts';
 import {
@@ -16,11 +17,11 @@ export const unsizedImages: RuleImplementation = {
     const audit = auditOf(summary, 'unsized-images');
     if (!auditRan(audit)) return notEvaluated('no-unsized-images-audit');
     const items = rows(audit.details);
-    if (audit.score === 1 || items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'unsized-images', 'Lighthouse unsized images audit')] };
+    if (audit.score === 1 || items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'unsized-images', evidenceLabel('Lighthouse unsized images audit'))] };
     const fold = viewportHeight(summary.settings.screenEmulation);
     const aboveFold = items.filter(item => (asNode(item.node)?.top ?? Number.POSITIVE_INFINITY) < fold);
     const shown = [...aboveFold, ...items.filter(item => !aboveFold.includes(item))].slice(0, 5);
-    const cited = shown.map(item => labEvidence(evidence, page!, summary, 'unsized-images', aboveFold.includes(item) ? 'unsized image in the first viewport' : 'unsized image below the first viewport',
+    const cited = shown.map(item => labEvidence(evidence, page!, summary, 'unsized-images', aboveFold.includes(item) ? evidenceLabel('unsized image in the first viewport') : evidenceLabel('unsized image below the first viewport'),
       asNode(item.node)?.snippet ?? str(item.url) ?? ''));
     return { outcome: 'fail', severity: aboveFold.length > 0 ? 'medium' : 'low', ...(aboveFold.length > 0 ? {} : { reason: 'below-fold' }), evidence: cited,
       params: { count: items.length, aboveFold: aboveFold.length } };
@@ -63,14 +64,14 @@ export const clsCulprits: RuleImplementation = {
     const audit = auditOf(summary, 'cls-culprits-insight');
     if (!auditRan(audit)) return notEvaluated('no-cls-culprits');
     const candidates = clusters(audit.details).filter(cluster => cluster.score > clusterCandidate).sort((a, b) => b.score - a.score);
-    if (candidates.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'cumulative-layout-shift', 'Lighthouse lab Cumulative Layout Shift')] };
+    if (candidates.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'cumulative-layout-shift', evidenceLabel('Lighthouse lab Cumulative Layout Shift'))] };
     const worst = candidates[0]!;
     const causes = [...new Set(candidates.flatMap(cluster => cluster.causes))];
     const cited = [
-      labEvidence(evidence, page!, summary, 'cls-culprits-insight', 'worst layout shift cluster', `cluster score=${worst.score.toFixed(3)}`),
-      ...worst.shifts.slice(0, 3).map(shift => labEvidence(evidence, page!, summary, 'cls-culprits-insight', 'element moved by a layout shift',
+      labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('worst layout shift cluster'), `cluster score=${worst.score.toFixed(3)}`),
+      ...worst.shifts.slice(0, 3).map(shift => labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('element moved by a layout shift'),
         `${asNode(shift.node)?.snippet ?? asNode(shift.node)?.selector ?? 'unknown element'} (score ${(num(shift.score) ?? 0).toFixed(3)})`)),
-      ...causes.slice(0, 5).map(entry => labEvidence(evidence, page!, summary, 'cls-culprits-insight', 'layout shift root cause attributed by Lighthouse', entry)),
+      ...causes.slice(0, 5).map(entry => labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('layout shift root cause attributed by Lighthouse'), entry)),
     ];
     const severity = worst.score >= 0.1 ? 'medium' : 'low';
     const params = { score: worst.score.toFixed(3), clusters: candidates.length, causes: causes.length > 0 ? summarizeList(causes) : 'none attributed' };
@@ -101,9 +102,9 @@ export const embedReservedSpace: RuleImplementation = {
     if (unsized.length === 0) return { outcome: 'pass' };
     const summary = labOf(page);
     const shifted = clusters(auditOf(summary, 'cls-culprits-insight')?.details).flatMap(cluster => cluster.causes).filter(entry => /^Injected iframe/u.test(entry));
-    const cited = unsized.slice(0, 5).map(info => evidence.add({ kind: 'html', url: page!.url, label: 'embed without width and height or a reserved height', excerpt: openingTag(info), line: info.line }));
+    const cited = unsized.slice(0, 5).map(info => evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('embed without width and height or a reserved height'), excerpt: openingTag(info), line: info.line }));
     if (summary && shifted.length > 0) {
-      const lab = shifted.slice(0, 3).map(entry => labEvidence(evidence, page!, summary, 'cls-culprits-insight', 'layout shift attributed to an injected iframe', entry));
+      const lab = shifted.slice(0, 3).map(entry => labEvidence(evidence, page!, summary, 'cls-culprits-insight', evidenceLabel('layout shift attributed to an injected iframe'), entry));
       return { outcome: 'fail', severity: 'medium', reason: 'attributed-shift', evidence: [...cited, ...lab], params: { count: unsized.length } };
     }
     // Space may still be reserved by a stylesheet or the container, which the HTML does not show.
@@ -118,9 +119,9 @@ export const nonCompositedAnimations: RuleImplementation = {
     const audit = auditOf(summary, 'non-composited-animations');
     if (!auditRan(audit)) return notEvaluated('no-animations-audit');
     const items = rows(audit.details);
-    if (audit.score === 1 || items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'non-composited-animations', 'Lighthouse non-composited animations audit')] };
+    if (audit.score === 1 || items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'non-composited-animations', evidenceLabel('Lighthouse non-composited animations audit'))] };
     const reasons = [...new Set(items.flatMap(subItems).map(item => str(item.failureReason)).filter((reason): reason is string => reason !== undefined))];
-    const cited = items.slice(0, 5).map(item => labEvidence(evidence, page!, summary, 'non-composited-animations', 'element with a non-composited animation',
+    const cited = items.slice(0, 5).map(item => labEvidence(evidence, page!, summary, 'non-composited-animations', evidenceLabel('element with a non-composited animation'),
       `${asNode(item.node)?.snippet ?? asNode(item.node)?.selector ?? ''}${subItems(item).length > 0 ? `: ${subItems(item).map(sub => str(sub.failureReason) ?? '').join('; ')}` : ''}`));
     return { outcome: 'fail', severity: 'low', evidence: cited, params: { count: items.length, reasons: reasons.length > 0 ? summarizeList(reasons) : 'not stated' } };
   },
@@ -134,8 +135,8 @@ export const consentLabBias: RuleImplementation = {
     if (!dialog) return notApplicable('no-consent-ui');
     const target = lcpTarget(page!);
     if (!target) return notEvaluated('no-lcp-element');
-    const ui = evidence.add({ kind: 'render', url: page!.url, label: 'consent dialog in the rendered page', excerpt: openingTag(dialog) });
-    const lcp = evidence.add({ kind: target.source === 'lighthouse' ? 'lighthouse' : 'render', url: page!.url, label: 'lab LCP element', excerpt: target.snippet ?? target.selector ?? target.url ?? '' });
+    const ui = evidence.add({ kind: 'render', url: page!.url, label: evidenceLabel('consent dialog in the rendered page'), excerpt: openingTag(dialog) });
+    const lcp = evidence.add({ kind: target.source === 'lighthouse' ? 'lighthouse' : 'render', url: page!.url, label: evidenceLabel('lab LCP element'), excerpt: target.snippet ?? target.selector ?? target.url ?? '' });
     const inside = consentMarker.test(`${target.selector ?? ''} ${target.snippet ?? ''}`);
     if (!inside) return { outcome: 'pass', evidence: [ui, lcp] };
     return { outcome: 'fail', severity: 'info', evidence: [ui, lcp], params: { element: target.selector ?? target.snippet ?? '' } };

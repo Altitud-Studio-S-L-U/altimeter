@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { ProbeFacts, SiteFacts } from '../../core/facts.ts';
 import type { FetchResult, Hop } from '../../fetch/http.ts';
 import type { TlsFacts } from '../../fetch/tls.ts';
@@ -24,9 +25,9 @@ export const httpsFinalUrl: RuleImplementation = {
     if (pages.length === 0) return notApplicable('private-host');
     const insecure = pages.filter(page => !isHttps(page.fetch.finalUrl));
     if (insecure.length === 0) {
-      return pass(pages.map(page => cite({ kind: 'http', url: page.url, label: 'final URL of the audited page', excerpt: page.fetch.finalUrl })));
+      return pass(pages.map(page => cite({ kind: 'http', url: page.url, label: evidenceLabel('final URL of the audited page'), excerpt: page.fetch.finalUrl })));
     }
-    const evidence = insecure.map(page => cite({ kind: 'redirect', url: page.url, label: 'redirect chain ending on an http URL', excerpt: chainText(page.fetch) }));
+    const evidence = insecure.map(page => cite({ kind: 'redirect', url: page.url, label: evidenceLabel('redirect chain ending on an http URL'), excerpt: chainText(page.fetch) }));
     return fail('high', evidence, 'served-over-http', { url: insecure[0]!.fetch.finalUrl, count: insecure.length });
   },
 };
@@ -67,7 +68,7 @@ function certificateResult(tls: TlsFacts, cite: Cite): RuleResult {
     `subjectAltNames=${tls.subjectAltNames.join(' ') || '(none)'}`,
     `chainLength=${tls.chainLength}`,
   ].join('; ');
-  const evidence = [cite({ kind: 'probe', url: `https://${tls.host}:${tls.port}/`, label: 'TLS certificate presented to a client that sends SNI', excerpt })];
+  const evidence = [cite({ kind: 'probe', url: `https://${tls.host}:${tls.port}/`, label: evidenceLabel('TLS certificate presented to a client that sends SNI'), excerpt })];
   if (unreachable(tls)) return notEvaluated('tls-unreachable');
   if (!tls.authorized) {
     const code = tls.error ?? 'UNKNOWN';
@@ -108,7 +109,7 @@ function expectedTarget(variant: ProbeFacts): string {
 
 function evaluateHttpVariant(variant: ProbeFacts, cite: Cite): RuleResult {
   const { fetch } = variant;
-  const chain = cite({ kind: 'redirect', url: variant.url, label: 'response chain for the http:// version of an audited URL', excerpt: chainText(fetch) || fetch.error?.message });
+  const chain = cite({ kind: 'redirect', url: variant.url, label: evidenceLabel('response chain for the http:// version of an audited URL'), excerpt: chainText(fetch) || fetch.error?.message });
   const first = fetch.hops[0];
   if (!first) return fetch.error?.code === 'connection' ? notApplicable('port-80-closed') : notEvaluated('http-probe-failed');
   if (first.location === undefined) {
@@ -148,20 +149,29 @@ export const httpToHttpsRedirect: RuleImplementation = {
 };
 
 interface Chain {
-  readonly label: string;
+  /** The label of a redirect from https to http in this chain. */
+  readonly downgrade: EvidenceLabel;
   readonly fetch: FetchResult;
 }
 
 function observedChains(site: SiteFacts): Chain[] {
   const chains: Chain[] = [];
   for (const page of site.pages.values()) {
-    chains.push({ label: 'audited page', fetch: page.fetch });
-    for (const probe of page.uaProbes ?? []) chains.push({ label: `page fetched as ${probe.agent.name}`, fetch: probe.fetch });
+    chains.push({ downgrade: evidenceLabel('redirect from https to http in the audited page chain'), fetch: page.fetch });
+    for (const probe of page.uaProbes ?? []) {
+      chains.push({ downgrade: evidenceLabel('redirect from https to http in the page fetched as {agent} chain', { agent: probe.agent.name }), fetch: probe.fetch });
+    }
   }
-  for (const variant of site.variants) chains.push({ label: `URL variant (${variant.label})`, fetch: variant.fetch });
-  for (const probe of site.localeProbes) chains.push({ label: `language probe (${probe.label})`, fetch: probe.fetch });
-  for (const probe of site.agentProbes) chains.push({ label: `home page fetched as ${probe.agent.name}`, fetch: probe.fetch });
-  for (const page of site.siblings) chains.push({ label: 'sibling page', fetch: page.fetch });
+  for (const variant of site.variants) {
+    chains.push({ downgrade: evidenceLabel('redirect from https to http in the URL variant ({variant}) chain', { variant: variant.label }), fetch: variant.fetch });
+  }
+  for (const probe of site.localeProbes) {
+    chains.push({ downgrade: evidenceLabel('redirect from https to http in the language probe ({probe}) chain', { probe: probe.label }), fetch: probe.fetch });
+  }
+  for (const probe of site.agentProbes) {
+    chains.push({ downgrade: evidenceLabel('redirect from https to http in the home page fetched as {agent} chain', { agent: probe.agent.name }), fetch: probe.fetch });
+  }
+  for (const page of site.siblings) chains.push({ downgrade: evidenceLabel('redirect from https to http in the sibling page chain'), fetch: page.fetch });
   return chains.filter(chain => sameSite(chain.fetch.requestedUrl, site.origin));
 }
 
@@ -180,7 +190,7 @@ export const httpsToHttpDowngrade: RuleImplementation = {
         const key = `${hop.url} ${hop.location}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        evidence.push(cite({ kind: 'redirect', url: hop.url, label: `redirect from https to http in the ${chain.label} chain`, excerpt: `${hop.status} ${hop.url} -> ${hop.location}` }));
+        evidence.push(cite({ kind: 'redirect', url: hop.url, label: chain.downgrade, excerpt: `${hop.status} ${hop.url} -> ${hop.location}` }));
       }
     }
     if (evidence.length === 0) return pass();
@@ -224,8 +234,8 @@ export const hstsHeader: RuleImplementation = {
     const cite = citer(context);
     const value = firstHeader(page.fetch.headers, 'strict-transport-security');
     const policy = parseHsts(value);
-    if (!policy) return fail('info', [cite({ kind: 'header', url: page.fetch.finalUrl, label: 'HTTPS response without a Strict-Transport-Security header', excerpt: 'Strict-Transport-Security: (absent)' })], 'missing');
-    const evidence = [cite({ kind: 'header', url: page.fetch.finalUrl, label: 'Strict-Transport-Security header on the HTTPS response', excerpt: `Strict-Transport-Security: ${policy.raw}` })];
+    if (!policy) return fail('info', [cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('HTTPS response without a Strict-Transport-Security header'), excerpt: 'Strict-Transport-Security: (absent)' })], 'missing');
+    const evidence = [cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('Strict-Transport-Security header on the HTTPS response'), excerpt: `Strict-Transport-Security: ${policy.raw}` })];
     const params = { maxAge: policy.maxAge ?? 'invalid', includeSubDomains: policy.includeSubDomains ? 'yes' : 'no', preload: policy.preload ? 'yes' : 'no' };
     if (policy.maxAge === undefined) return fail('info', evidence, 'invalid', params);
     if (policy.maxAge === 0) return fail('info', evidence, 'disabled', params);
@@ -243,7 +253,7 @@ export const hstsPreloadEligibility: RuleImplementation = {
     const policy = parseHsts(firstHeader(page.fetch.headers, 'strict-transport-security'));
     if (!policy?.preload) return notApplicable('no-preload-directive');
     const cite = citer(context);
-    const evidence = [cite({ kind: 'header', url: page.fetch.finalUrl, label: 'Strict-Transport-Security header on the HTTPS response', excerpt: `Strict-Transport-Security: ${policy.raw}` })];
+    const evidence = [cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('Strict-Transport-Security header on the HTTPS response'), excerpt: `Strict-Transport-Security: ${policy.raw}` })];
     const unmet: string[] = [];
     if ((policy.maxAge ?? 0) < strongMaxAge) unmet.push('max-age of at least 31536000');
     if (!policy.includeSubDomains) unmet.push('includeSubDomains');
@@ -254,13 +264,13 @@ export const hstsPreloadEligibility: RuleImplementation = {
       if (!first?.location) continue;
       if (!(first.location.startsWith('https:') && hostOf(first.location) === hostOf(variant.url))) {
         unmet.push('the http redirect goes to https on the same host first');
-        evidence.push(cite({ kind: 'redirect', url: variant.url, label: 'first redirect of the http:// version', excerpt: `${first.status} ${first.url} -> ${first.location}` }));
+        evidence.push(cite({ kind: 'redirect', url: variant.url, label: evidenceLabel('first redirect of the http:// version'), excerpt: `${first.status} ${first.url} -> ${first.location}` }));
       }
     }
     const www = site.variants.find(variant => variant.label === 'www' && hostOf(variant.url) === `www.${host}`);
     if (www && www.fetch.error && www.fetch.error.code !== 'dns') {
       unmet.push('the www subdomain is served over HTTPS');
-      evidence.push(cite({ kind: 'probe', url: www.url, label: 'HTTPS request to the www host', excerpt: `${www.fetch.error.code}: ${www.fetch.error.message}` }));
+      evidence.push(cite({ kind: 'probe', url: www.url, label: evidenceLabel('HTTPS request to the www host'), excerpt: `${www.fetch.error.code}: ${www.fetch.error.message}` }));
     }
     const redirectsWithoutHsts = [...site.variants.map(variant => variant.fetch), page.fetch]
       .flatMap(fetch => fetch.hops)
@@ -268,7 +278,7 @@ export const hstsPreloadEligibility: RuleImplementation = {
     if (redirectsWithoutHsts.length > 0) {
       unmet.push('the HSTS header on HTTPS redirects');
       const hop = redirectsWithoutHsts[0]!;
-      evidence.push(cite({ kind: 'header', url: hop.url, label: 'HTTPS redirect response without Strict-Transport-Security', excerpt: `${hop.status} ${hop.url} -> ${hop.location}` }));
+      evidence.push(cite({ kind: 'header', url: hop.url, label: evidenceLabel('HTTPS redirect response without Strict-Transport-Security'), excerpt: `${hop.status} ${hop.url} -> ${hop.location}` }));
     }
     const unique = [...new Set(unmet)];
     if (unique.length === 0) return pass(evidence);

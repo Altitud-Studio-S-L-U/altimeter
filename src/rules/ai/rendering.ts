@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { RuleImplementation } from '../engine.ts';
 import { mainText, normalizeText, textBlocks } from './main-text.ts';
 import { clip, words } from './support.ts';
@@ -25,15 +26,15 @@ const jsOnlyContent: RuleImplementation = {
     const params = { rawWords: rawMain.words, renderedWords: renderedMain.words, ratio: Math.round(ratio * 100) };
     const counts = evidence.add({
       kind: 'render', url: page!.fetch.finalUrl,
-      label: `main text in the raw HTML: ${rawMain.words} words (${rawMain.scope}); after rendering: ${renderedMain.words} words (${renderedMain.scope})`,
+      label: evidenceLabel('main text in the raw HTML: {rawWords} words ({rawScope}); after rendering: {renderedWords} words ({renderedScope})', { rawWords: rawMain.words, rawScope: rawMain.scope, renderedWords: renderedMain.words, renderedScope: renderedMain.scope }),
     });
     const rawText = normalizeText(raw.parsed.bodyText);
     const missing = textBlocks(renderedMain).find(block => words(block).length >= 5 && !rawText.includes(normalizeText(block)));
     const ids = [counts];
-    if (missing) ids.push(evidence.add({ kind: 'render', url: page!.fetch.finalUrl, label: 'rendered main text that the raw HTML does not contain', excerpt: clip(missing) }));
+    if (missing) ids.push(evidence.add({ kind: 'render', url: page!.fetch.finalUrl, label: evidenceLabel('rendered main text that the raw HTML does not contain'), excerpt: clip(missing) }));
     if (ratio < 0.5 && renderedMain.words >= minimumRenderedWords) return { outcome: 'fail', severity: 'high', reason: 'mostly-rendered', evidence: ids, params };
     if (h1Missing) {
-      ids.push(evidence.add({ kind: 'render', url: page!.fetch.finalUrl, label: 'h1 that exists only after rendering; the raw HTML has no h1', excerpt: clip(renderedH1.text), path: 'h1' }));
+      ids.push(evidence.add({ kind: 'render', url: page!.fetch.finalUrl, label: evidenceLabel('h1 that exists only after rendering; the raw HTML has no h1'), excerpt: clip(renderedH1.text), path: 'h1' }));
       return { outcome: 'fail', severity: 'high', reason: 'h1-missing', evidence: ids, params };
     }
     if (ratio < 0.8) return { outcome: 'fail', severity: 'medium', reason: 'partly-rendered', evidence: ids, params };

@@ -1,4 +1,4 @@
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, labelText, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { collapse } from '../../parse/html.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -48,13 +48,13 @@ function targetEvidence(evidence: EvidenceStore, page: PageFacts, target: LcpTar
   return evidence.add({
     kind: target.source === 'lighthouse' ? 'lighthouse' : 'render',
     url: page.url,
-    label: target.source === 'lighthouse' ? 'lab LCP element reported by Lighthouse' : 'LCP element observed in the rendered page',
+    label: target.source === 'lighthouse' ? evidenceLabel('lab LCP element reported by Lighthouse') : evidenceLabel('LCP element observed in the rendered page'),
     excerpt: target.snippet ?? target.url ?? target.selector ?? target.tag ?? '',
     ...(target.selector === undefined ? {} : { path: target.selector }),
   });
 }
 
-function elementEvidence(evidence: EvidenceStore, page: PageFacts, label: string, info: ElementInfo): string {
+function elementEvidence(evidence: EvidenceStore, page: PageFacts, label: EvidenceLabel, info: ElementInfo): string {
   return evidence.add({ kind: 'html', url: page.url, label, excerpt: openingTag(info), line: info.line });
 }
 
@@ -70,7 +70,7 @@ function discovery(page: PageFacts) {
 
 function checklistEvidence(evidence: EvidenceStore, page: PageFacts, key: string, entry: { label: string; value: boolean }): string {
   const summary = labOf(page)!;
-  return labEvidence(evidence, page, summary, 'lcp-discovery-insight', 'Lighthouse LCP request discovery check', `${key}=${entry.value}: ${entry.label}`, `audits.lcp-discovery-insight.details.checklist.${key}`);
+  return labEvidence(evidence, page, summary, 'lcp-discovery-insight', evidenceLabel('Lighthouse LCP request discovery check'), `${key}=${entry.value}: ${entry.label}`, `audits.lcp-discovery-insight.details.checklist.${key}`);
 }
 
 export const lcpLazyLoaded: RuleImplementation = {
@@ -88,7 +88,7 @@ export const lcpLazyLoaded: RuleImplementation = {
     if (url && raw) {
       const lazy = scriptLazyImage(raw, page!.fetch.finalUrl, url);
       if (lazy) {
-        const cited = [elementEvidence(evidence, page!, 'LCP image whose URL is only in a lazy-loading data attribute', lazy), targetEvidence(evidence, page!, target!)];
+        const cited = [elementEvidence(evidence, page!, evidenceLabel('LCP image whose URL is only in a lazy-loading data attribute'), lazy), targetEvidence(evidence, page!, target!)];
         return { outcome: 'fail', severity: 'high', reason: 'script-lazy-load', evidence: cited };
       }
     }
@@ -113,7 +113,7 @@ export const lcpNotDiscoverable: RuleImplementation = {
       if (scriptLazyImage(raw, page!.fetch.finalUrl, url)) return notApplicable('script-lazy-load');
       const point = discoveryPoints(raw, page!.fetch.finalUrl).find(entry => entry.urls.includes(url));
       if (point) {
-        const html = elementEvidence(evidence, page!, 'server HTML element that references the LCP image', point.info);
+        const html = elementEvidence(evidence, page!, evidenceLabel('server HTML element that references the LCP image'), point.info);
         return { outcome: 'fail', severity: 'medium', reason: 'conflicting-signals', evidence: [cited, html, targetEvidence(evidence, page!, target!)], params: { url: target!.url! } };
       }
     }
@@ -135,7 +135,7 @@ export const lcpFetchpriority: RuleImplementation = {
     const high = elements(raw).filter(info => (info.tag === 'img' || (info.tag === 'link' && (info.attrs.as ?? '').toLowerCase() === 'image'))
       && (info.attrs.fetchpriority ?? '').toLowerCase() === 'high');
     if (high.length > fetchpriorityLimit) {
-      const cited = high.slice(0, 5).map(info => elementEvidence(evidence, page!, 'image with fetchpriority=high in the server HTML', info));
+      const cited = high.slice(0, 5).map(info => elementEvidence(evidence, page!, evidenceLabel('image with fetchpriority=high in the server HTML'), info));
       results.push({ outcome: 'fail', severity: 'low', reason: 'overuse', evidence: cited, params: { count: high.length } });
     }
     if (!hinted) return results.length > 0 ? results : [notApplicable('no-image-lcp')];
@@ -192,8 +192,8 @@ export const lcpBreakdownLab: RuleImplementation = {
     };
     const excerpt = `timeToFirstByte=${Math.round(breakdown.ttfb)} ms; resourceLoadDelay=${Math.round(breakdown.loadDelay)} ms; resourceLoadDuration=${Math.round(breakdown.loadDuration)} ms; elementRenderDelay=${Math.round(breakdown.renderDelay)} ms`;
     const cited = [
-      auditEvidence(evidence, page!, summary, 'largest-contentful-paint', 'Lighthouse lab Largest Contentful Paint'),
-      labEvidence(evidence, page!, summary, 'lcp-breakdown-insight', 'Lighthouse lab LCP subparts', excerpt),
+      auditEvidence(evidence, page!, summary, 'largest-contentful-paint', evidenceLabel('Lighthouse lab Largest Contentful Paint')),
+      labEvidence(evidence, page!, summary, 'lcp-breakdown-insight', evidenceLabel('Lighthouse lab LCP subparts'), excerpt),
     ];
     const flagged = flaggedSubparts(shares);
     if (flagged.length === 0) return { outcome: 'pass', evidence: cited };
@@ -230,14 +230,14 @@ export const lcpClientSideRendered: RuleImplementation = {
       found = normalizedText(raw.parsed.bodyText).includes(needle);
       observed = block.text;
     }
-    const element = evidence.add({ kind: 'render', url: page!.url, label: 'LCP content in the rendered page', excerpt: observed, ...(lcp.selector ? { path: lcp.selector } : {}) });
+    const element = evidence.add({ kind: 'render', url: page!.url, label: evidenceLabel('LCP content in the rendered page'), excerpt: observed, ...(lcp.selector ? { path: lcp.selector } : {}) });
     if (found) return { outcome: 'pass', evidence: [element] };
     const lab = auditOf(summary, 'largest-contentful-paint')?.numericValue;
     const fcp = auditOf(summary, 'first-contentful-paint')?.numericValue;
     if (lab === undefined || fcp === undefined) return notEvaluated('no-lab-value');
-    const timing = labEvidence(evidence, page!, summary, 'largest-contentful-paint', 'Lighthouse lab LCP and FCP', `LCP=${Math.round(lab)} ms; FCP=${Math.round(fcp)} ms`);
+    const timing = labEvidence(evidence, page!, summary, 'largest-contentful-paint', evidenceLabel('Lighthouse lab LCP and FCP'), `LCP=${Math.round(lab)} ms; FCP=${Math.round(fcp)} ms`);
     if (lab - fcp <= csrGapMs) return { outcome: 'pass', evidence: [element, timing] };
-    const absent = evidence.add({ kind: 'html', url: page!.url, label: 'LCP content searched in the server HTML and not found', excerpt: observed });
+    const absent = evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('LCP content searched in the server HTML and not found'), excerpt: observed });
     const params = { gap: `${Math.round(lab - fcp)} ms` };
     // An empty server body cannot be explained by personalisation; anything else needs the analyst.
     if (raw.parsed.bodyText === '') return { outcome: 'fail', severity: 'high', reason: 'app-shell', evidence: [element, absent, timing], params };
@@ -246,15 +246,15 @@ export const lcpClientSideRendered: RuleImplementation = {
 };
 
 const hidingRule = /(?:^|[},])\s*(?:html|body|\.async-hide)(?:[.#:\[][^{,\s]*)?\s*\{[^}]*(?:opacity\s*:\s*0(?:\.0*)?(?![.\d])|visibility\s*:\s*hidden)/iu;
-const vendorSnippets: ReadonlyArray<readonly [string, RegExp]> = [
-  ['async-hide class', /async-hide/u],
-  ['VWO SmartCode', /_vwo_code[\s\S]*settings_tolerance/u],
-  ['Adobe Target pre-hiding snippet', /at-body-style/u],
-  ['Kameleoon loading style sheet', /kameleoonLoadingStyleSheet/u],
+const vendorSnippets: ReadonlyArray<readonly [EvidenceLabel, RegExp]> = [
+  [evidenceLabel('async-hide class'), /async-hide/u],
+  [evidenceLabel('VWO SmartCode'), /_vwo_code[\s\S]*settings_tolerance/u],
+  [evidenceLabel('Adobe Target pre-hiding snippet'), /at-body-style/u],
+  [evidenceLabel('Kameleoon loading style sheet'), /kameleoonLoadingStyleSheet/u],
 ];
 
 interface HidingSnippet {
-  readonly label: string;
+  readonly label: EvidenceLabel;
   readonly info: ElementInfo;
   readonly excerpt: string;
 }
@@ -266,7 +266,7 @@ function hidingSnippets(doc: DocumentFacts): HidingSnippet[] {
     if (info.tag === 'style' && info.inHead) {
       const css = textContent(info.element);
       const match = hidingRule.exec(css);
-      if (match) found.push({ label: 'style rule that hides the page', info, excerpt: match[0].trim().replace(/^[},]\s*/u, '').slice(0, 200) });
+      if (match) found.push({ label: evidenceLabel('style rule that hides the page'), info, excerpt: match[0].trim().replace(/^[},]\s*/u, '').slice(0, 200) });
     } else if (info.tag === 'script' && info.inHead) {
       const code = textContent(info.element);
       for (const [label, pattern] of vendorSnippets) {
@@ -277,7 +277,7 @@ function hidingSnippets(doc: DocumentFacts): HidingSnippet[] {
         }
       }
     } else if ((info.tag === 'html' || info.tag === 'body') && (/\basync-hide\b/u.test(info.attrs.class ?? '') || /opacity\s*:\s*0(?:\.0*)?(?![.\d])|visibility\s*:\s*hidden/iu.test(info.attrs.style ?? ''))) {
-      found.push({ label: `${info.tag} element hidden in the server HTML`, info, excerpt: openingTag(info) });
+      found.push({ label: evidenceLabel('{tag} element hidden in the server HTML', { tag: info.tag }), info, excerpt: openingTag(info) });
     }
   }
   return found;
@@ -295,9 +295,9 @@ export const lcpAntiflicker: RuleImplementation = {
     const breakdown = labBreakdown(page!);
     if (!breakdown) return notEvaluated('no-lcp-breakdown');
     const summary = labOf(page)!;
-    const delay = labEvidence(evidence, page!, summary, 'lcp-breakdown-insight', 'Lighthouse lab LCP element render delay', `elementRenderDelay=${Math.round(breakdown.renderDelay)} ms`);
+    const delay = labEvidence(evidence, page!, summary, 'lcp-breakdown-insight', evidenceLabel('Lighthouse lab LCP element render delay'), `elementRenderDelay=${Math.round(breakdown.renderDelay)} ms`);
     if (breakdown.renderDelay <= antiflickerDelayMs) return { outcome: 'pass', evidence: [...cited, delay] };
-    return { outcome: 'fail', severity: 'medium', evidence: [...cited, delay], params: { snippet: snippets[0]!.label, delay: `${Math.round(breakdown.renderDelay)} ms` } };
+    return { outcome: 'fail', severity: 'medium', evidence: [...cited, delay], params: { snippet: labelText(snippets[0]!.label), delay: `${Math.round(breakdown.renderDelay)} ms` } };
   },
 };
 

@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { ElementRef } from '../../parse/html.ts';
 import type { RuleImplementation } from '../engine.ts';
@@ -28,7 +29,7 @@ export function mobileOptimized(viewport: Viewport | undefined): boolean {
 }
 
 function citeViewport(cite: Cite, page: PageFacts, viewport: Viewport): string {
-  return cite({ kind: 'html', url: page.fetch.finalUrl, label: `viewport meta element (${viewport.source})`, excerpt: `<meta name="viewport" content="${viewport.meta.attrs.content}">`, line: viewport.meta.line });
+  return cite({ kind: 'html', url: page.fetch.finalUrl, label: viewport.source === 'raw HTML' ? evidenceLabel('viewport meta element (raw HTML)') : evidenceLabel('viewport meta element (rendered DOM)'), excerpt: `<meta name="viewport" content="${viewport.meta.attrs.content}">`, line: viewport.meta.line });
 }
 
 export const viewportMeta: RuleImplementation = {
@@ -39,10 +40,10 @@ export const viewportMeta: RuleImplementation = {
     const viewport = viewportOf(page);
     const insight = lighthouseSummary(page)?.audits['viewport-insight'];
     const lighthouse = insight && insight.score !== null
-      ? [cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: 'Lighthouse viewport insight', excerpt: `viewport-insight score=${insight.score}` })]
+      ? [cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: evidenceLabel('Lighthouse viewport insight'), excerpt: `viewport-insight score=${insight.score}` })]
       : [];
     if (!viewport) {
-      const evidence = [cite({ kind: 'html', url: page.fetch.finalUrl, label: 'no viewport meta element in the raw HTML or rendered DOM', excerpt: '<meta name="viewport"> (absent)' }), ...lighthouse];
+      const evidence = [cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('no viewport meta element in the raw HTML or rendered DOM'), excerpt: '<meta name="viewport"> (absent)' }), ...lighthouse];
       return fail('high', evidence, 'missing');
     }
     const evidence = [citeViewport(cite, page, viewport), ...lighthouse];
@@ -83,7 +84,7 @@ export const contentFitsViewport: RuleImplementation = {
     const result = page.userRender!.result;
     if (result.innerWidth <= 0) return notEvaluated('no-layout-metrics');
     const cite = citer(context);
-    const evidence = [cite({ kind: 'render', url: page.fetch.finalUrl, label: 'document width in the phone-sized render', excerpt: `scrollWidth=${result.scrollWidth} innerWidth=${result.innerWidth}` })];
+    const evidence = [cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('document width in the phone-sized render'), excerpt: `scrollWidth=${result.scrollWidth} innerWidth=${result.innerWidth}` })];
     if (result.scrollWidth > result.innerWidth + 1) {
       return fail('low', evidence, undefined, { scrollWidth: result.scrollWidth, innerWidth: result.innerWidth, overflow: result.scrollWidth - result.innerWidth });
     }
@@ -108,8 +109,8 @@ export const legibleFontSize: RuleImplementation = {
     const legibleShare = Math.round(((total - smallCharacters) / total) * 100);
     const cite = citer(context);
     const examples = small.sort((a, b) => b.text.length - a.text.length).slice(0, 3)
-      .map(block => cite({ kind: 'render', url: page.fetch.finalUrl, label: `text rendered at ${block.fontSize}px in the phone-sized render`, excerpt: shorten(block.text, 160), path: block.selector }));
-    const summary = cite({ kind: 'render', url: page.fetch.finalUrl, label: 'share of visible text at 12px or larger', excerpt: `${legibleShare}% of ${total} characters` });
+      .map(block => cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('text rendered at {size}px in the phone-sized render', { size: block.fontSize }), excerpt: shorten(block.text, 160), path: block.selector }));
+    const summary = cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('share of visible text at 12px or larger'), excerpt: `${legibleShare}% of ${total} characters` });
     if (legibleShare < 60) return fail('low', [summary, ...examples], undefined, { share: legibleShare });
     return pass([summary]);
   },
@@ -122,13 +123,13 @@ export const tapTargetSize: RuleImplementation = {
     const audit = lighthouseSummary(page)!.audits['target-size'];
     if (!audit || audit.scoreDisplayMode === 'notApplicable' || audit.score === null) return notApplicable('no-targets-audited');
     const cite = citer(context);
-    if (!auditFailed(audit)) return pass([cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: 'Lighthouse target-size audit', excerpt: `target-size score=${audit.score}` })]);
+    if (!auditFailed(audit)) return pass([cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: evidenceLabel('Lighthouse target-size audit'), excerpt: `target-size score=${audit.score}` })]);
     const items = detailItems(audit);
     const evidence = items.slice(0, 10).map(item => {
       const node = (item.node ?? {}) as Record<string, unknown>;
-      return cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: 'touch target smaller than 24x24 CSS px reported by Lighthouse target-size', excerpt: String(node.snippet ?? node.nodeLabel ?? 'target'), path: typeof node.selector === 'string' ? node.selector : undefined });
+      return cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: evidenceLabel('touch target smaller than 24x24 CSS px reported by Lighthouse target-size'), excerpt: String(node.snippet ?? node.nodeLabel ?? 'target'), path: typeof node.selector === 'string' ? node.selector : undefined });
     });
-    if (evidence.length === 0) evidence.push(cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: 'Lighthouse target-size audit', excerpt: `target-size score=${audit.score}` }));
+    if (evidence.length === 0) evidence.push(cite({ kind: 'lighthouse', url: page.fetch.finalUrl, label: evidenceLabel('Lighthouse target-size audit'), excerpt: `target-size score=${audit.score}` }));
     return fail('low', evidence, undefined, { count: items.length || 1 });
   },
 };

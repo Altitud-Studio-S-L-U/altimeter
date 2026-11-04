@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, ResourceFacts } from '../../core/facts.ts';
 import { headerValue } from '../../fetch/http.ts';
 import { attribute, collapse } from '../../parse/html.ts';
@@ -42,7 +43,7 @@ function imageSource(doc: DocumentFacts, image: Image): string {
   return location ? clip(collapse(doc.html.slice(location.startOffset, location.endOffset)), 240) : `<img src="${image.src ?? ''}">`;
 }
 
-const citeImages = (context: RuleContext, doc: DocumentFacts, images: readonly Image[], label: string) =>
+const citeImages = (context: RuleContext, doc: DocumentFacts, images: readonly Image[], label: EvidenceLabel) =>
   images.slice(0, 5).map(image => cite(context, 'html', label, { excerpt: imageSource(doc, image), line: lineOf(image.element) }));
 
 export const imgAltMissing: RuleImplementation = {
@@ -61,7 +62,7 @@ export const imgAltMissing: RuleImplementation = {
     return {
       outcome: 'fail', severity: content.length > 0 ? 'medium' : 'low', reason: content.length > 0 ? 'content-image' : 'other-image',
       params: { count: missing.length, total: images.length, emptyAlt },
-      evidence: citeImages(context, doc, content.length > 0 ? content : missing, 'image without an alt attribute'),
+      evidence: citeImages(context, doc, content.length > 0 ? content : missing, evidenceLabel('image without an alt attribute')),
     };
   },
 };
@@ -101,21 +102,21 @@ export const imgAltQuality: RuleImplementation = {
       const name = fold(stripExtension(image.src ? basename(image.src) : '')).replace(/[-_]+/gu, ' ').trim();
       return cameraOrHash.test(image.alt!.trim()) || (name !== '' && (alt === name || alt === fold(basename(image.src ?? ''))));
     });
-    if (filename.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'filename', params: { count: filename.length }, evidence: citeImages(context, doc, filename, 'alt text that repeats the file name') });
+    if (filename.length > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'filename', params: { count: filename.length }, evidence: citeImages(context, doc, filename, evidenceLabel('alt text that repeats the file name')) });
     const generic = images.filter(image => genericAlts.has(fold(image.alt!.trim())));
-    if (generic.length > 0) results.push({ outcome: 'fail', severity: 'low', needsJudgment: true, reason: 'generic', params: { count: generic.length }, evidence: citeImages(context, doc, generic, 'one-word generic alt text') });
+    if (generic.length > 0) results.push({ outcome: 'fail', severity: 'low', needsJudgment: true, reason: 'generic', params: { count: generic.length }, evidence: citeImages(context, doc, generic, evidenceLabel('one-word generic alt text')) });
     const lists = images.filter(image => {
       const parts = image.alt!.split(',').map(part => part.trim()).filter(Boolean);
       return parts.length >= 4 && parts.every(part => part.split(/\s+/u).length <= 3);
     });
-    if (lists.length > 0) results.push({ outcome: 'fail', severity: 'low', needsJudgment: true, reason: 'keyword-list', params: { count: lists.length }, evidence: citeImages(context, doc, lists, 'alt text made of a comma-separated list') });
+    if (lists.length > 0) results.push({ outcome: 'fail', severity: 'low', needsJudgment: true, reason: 'keyword-list', params: { count: lists.length }, evidence: citeImages(context, doc, lists, evidenceLabel('alt text made of a comma-separated list')) });
     const byAlt = new Map<string, Image[]>();
     for (const image of images) byAlt.set(fold(image.alt!.trim()), [...(byAlt.get(fold(image.alt!.trim())) ?? []), image]);
     // The same picture shown twice may share its alt text; only five or more different images count.
     const repeated = [...byAlt.values()].find(group => new Set(group.map(image => image.src)).size >= 5);
-    if (repeated) results.push({ outcome: 'fail', severity: 'low', needsJudgment: true, reason: 'repeated', params: { count: new Set(repeated.map(image => image.src)).size, alt: clip(repeated[0]!.alt!, 80) }, evidence: citeImages(context, doc, repeated.slice(0, 3), 'alt text shared by different images') });
+    if (repeated) results.push({ outcome: 'fail', severity: 'low', needsJudgment: true, reason: 'repeated', params: { count: new Set(repeated.map(image => image.src)).size, alt: clip(repeated[0]!.alt!, 80) }, evidence: citeImages(context, doc, repeated.slice(0, 3), evidenceLabel('alt text shared by different images')) });
     const long = images.filter(image => image.alt!.length > 250);
-    if (long.length > 0) results.push({ outcome: 'fail', severity: 'low', needsJudgment: true, reason: 'too-long', params: { count: long.length }, evidence: citeImages(context, doc, long, 'alt text over 250 characters') });
+    if (long.length > 0) results.push({ outcome: 'fail', severity: 'low', needsJudgment: true, reason: 'too-long', params: { count: long.length }, evidence: citeImages(context, doc, long, evidenceLabel('alt text over 250 characters')) });
     return results.length > 0 ? results : { outcome: 'pass' };
   },
 };
@@ -137,7 +138,7 @@ export const imgFilename: RuleImplementation = {
       const opaque = distinct.filter(image => opaqueFilename(image.src!));
       if (opaque.length / distinct.length < 0.5) continue;
       results.push({ outcome: 'fail', severity: 'low', params: { count: opaque.length, total: distinct.length, url: page.fetch.finalUrl },
-        evidence: opaque.slice(0, 5).map(image => cite(context, 'html', 'content image with a non-descriptive file name', { url: page.fetch.finalUrl, excerpt: image.src!, line: lineOf(image.element) })) });
+        evidence: opaque.slice(0, 5).map(image => cite(context, 'html', evidenceLabel('content image with a non-descriptive file name'), { url: page.fetch.finalUrl, excerpt: image.src!, line: lineOf(image.element) })) });
     }
     if (evaluated === 0) return notApplicable('fewer-than-two-content-images');
     return results.length > 0 ? results : { outcome: 'pass' };
@@ -171,7 +172,7 @@ export const imgCssBackground: RuleImplementation = {
     if (!lcp.url || ['img', 'image', 'video', 'picture', 'svg'].includes(lcp.tag ?? '')) return { outcome: 'pass' };
     if (imageUrls(render, page.fetch.finalUrl).some(url => sameAsset(url, lcp.url!))) return { outcome: 'pass' };
     return { outcome: 'fail', severity: 'medium', params: { url: lcp.url, element: lcp.tag ?? 'element' },
-      evidence: [cite(context, 'render', 'largest image painted as a CSS background, with no img element for it', { excerpt: lcp.url, ...(lcp.selector ? { path: lcp.selector } : {}) })] };
+      evidence: [cite(context, 'render', evidenceLabel('largest image painted as a CSS background, with no img element for it'), { excerpt: lcp.url, ...(lcp.selector ? { path: lcp.selector } : {}) })] };
   },
 };
 
@@ -190,14 +191,14 @@ export const imgFormat: RuleImplementation = {
     const images = imagesOf(doc, page.fetch.finalUrl).filter(image => image.src && unsupportedExtension.test(new URL(image.src).pathname));
     if (images.length > 0) {
       results.push({ outcome: 'fail', severity: 'medium', reason: 'unsupported-format', params: { count: images.length },
-        evidence: citeImages(context, doc, images, 'image whose only source has a format Google Images does not index') });
+        evidence: citeImages(context, doc, images, evidenceLabel('image whose only source has a format Google Images does not index')) });
     }
     const fetched = resourcesFor(context, page, ['og-image', 'logo']).filter(resource => resource.fetch.status === 200 && resource.fetch.body.length > 0);
     for (const resource of fetched) {
       const actual = sniffImage(resource.fetch.body);
       const declared = formatFromContentType(headerValue(resource.fetch.headers, 'content-type'));
       const format = actual === 'unknown' ? declared : actual;
-      const evidence = [cite(context, 'http', `${resource.purpose} response`, { url: resource.url, excerpt: `content-type: ${headerValue(resource.fetch.headers, 'content-type') ?? '(none)'}; bytes: ${actual}` })];
+      const evidence = [cite(context, 'http', resource.purpose === 'logo' ? evidenceLabel('logo response') : evidenceLabel('og-image response'), { url: resource.url, excerpt: `content-type: ${headerValue(resource.fetch.headers, 'content-type') ?? '(none)'}; bytes: ${actual}` })];
       if (format !== undefined && format !== 'unknown' && !indexableFormats.has(format)) {
         results.push({ outcome: 'fail', severity: 'medium', reason: 'unsupported-format', params: { count: 1, url: resource.url }, evidence });
         continue;
@@ -241,7 +242,7 @@ export const imgLazyMisuse: RuleImplementation = {
       && scrolled.some(other => other.real === image.real && !other.waiting));
     if (late.length === 0) return { outcome: 'pass' };
     return { outcome: 'fail', severity: 'medium', params: { count: late.length },
-      evidence: late.slice(0, 5).map(image => cite(context, 'render', 'image still showing its placeholder in the tall-viewport render; it loaded only after scrolling', { excerpt: `src="${clip(image.src, 80)}" -> ${image.real}`, line: lineOf(image.visit.element) })) };
+      evidence: late.slice(0, 5).map(image => cite(context, 'render', evidenceLabel('image still showing its placeholder in the tall-viewport render; it loaded only after scrolling'), { excerpt: `src="${clip(image.src, 80)}" -> ${image.real}`, line: lineOf(image.visit.element) })) };
   },
 };
 
@@ -258,16 +259,16 @@ export const preferredImage: RuleImplementation = {
     const url = absoluteUrl(raw, page.fetch.finalUrl);
     if (!url) {
       if (!contentPage) return notApplicable('not-a-content-page');
-      return { outcome: 'fail', severity: 'low', reason: 'missing', evidence: [cite(context, 'html', 'no og:image or primaryImageOfPage')] };
+      return { outcome: 'fail', severity: 'low', reason: 'missing', evidence: [cite(context, 'html', evidenceLabel('no og:image or primaryImageOfPage'))] };
     }
-    const evidence = [cite(context, primary ? 'structured-data' : 'html', primary ? 'primaryImageOfPage' : 'og:image meta tag', { excerpt: url, ...(og && !primary ? { line: og.line } : {}) })];
+    const evidence = [cite(context, primary ? 'structured-data' : 'html', primary ? evidenceLabel('primaryImageOfPage') : evidenceLabel('og:image meta tag'), { excerpt: url, ...(og && !primary ? { line: og.line } : {}) })];
     const results: RuleResult[] = [];
     const logos = context.site.resources.filter(resource => resource.purpose === 'logo').map(resource => resource.url);
     if (contentPage && (/logo/iu.test(basename(url)) || logos.some(logo => sameAsset(logo, url)))) results.push({ outcome: 'fail', severity: 'low', reason: 'logo', evidence, params: { url } });
     const resource = context.site.resources.find(entry => (entry.purpose === 'og-image' || entry.purpose === 'logo') && sameAsset(entry.url, url));
     if (resource && (resource.fetch.error || resource.fetch.status !== 200)) {
       results.push({ outcome: 'fail', severity: 'low', reason: 'unreachable', params: { url, status: resource.fetch.status ?? resource.fetch.error?.code ?? 'error' },
-        evidence: [...evidence, cite(context, 'http', 'preferred image response', { url: resource.url, excerpt: `HTTP ${resource.fetch.status ?? resource.fetch.error?.code ?? 'error'}` })] });
+        evidence: [...evidence, cite(context, 'http', evidenceLabel('preferred image response'), { url: resource.url, excerpt: `HTTP ${resource.fetch.status ?? resource.fetch.error?.code ?? 'error'}` })] });
     } else if (resource && page.pageType === 'article') {
       if (sniffImage(resource.fetch.body) === 'svg') return results.length > 0 ? results : notEvaluated('svg-size-not-measurable');
       const size = imageSize(resource.fetch.body);

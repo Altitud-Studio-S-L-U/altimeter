@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
-import { EvidenceStore } from '../src/core/evidence.ts';
+import { evidenceLabel, EvidenceStore } from '../src/core/evidence.ts';
 import { HttpClient } from '../src/fetch/http.ts';
 import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
 import { buildReport } from '../src/report/model.ts';
@@ -17,8 +17,8 @@ const titleRule: RuleImplementation = {
   id: 'content-title-missing',
   evaluate({ page: current, evidence }) {
     const title = current!.raw?.parsed.titles.find(entry => entry.inHead && entry.text.trim() !== '');
-    if (title) return { outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: current!.url, label: 'title element', excerpt: title.text })] };
-    return { outcome: 'fail', severity: 'high', evidence: [evidence.add({ kind: 'html', label: 'no non-empty title element in the head' })] };
+    if (title) return { outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: current!.url, label: evidenceLabel('title element'), excerpt: title.text })] };
+    return { outcome: 'fail', severity: 'high', evidence: [evidence.add({ kind: 'html', label: evidenceLabel('no non-empty title element in the head') })] };
   },
 };
 const rules = catalogRules.map(rule => rule.id === titleRule.id ? { ...rule, inputs: ['raw-html' as const], optionalInputs: ['rendered-dom' as const] } : rule);

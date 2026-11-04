@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import { documentedProperties } from '../../data/google-features.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
 import { bareTerm, isExternalTerm, type GraphNode, type PageGraph, type Value } from './graph.ts';
@@ -33,7 +34,7 @@ export const unknownType: RuleImplementation = {
         reason: 'unknown-type',
         severity: intended && isFeatureIntent(intended) ? 'high' : 'medium',
         subject: intended ? `${type} (${intended}?)` : type,
-        evidence: cite(context, graph, node, `@type not defined in schema.org ${vocabularyRelease}`, undefined, type),
+        evidence: cite(context, graph, node, evidenceLabel('@type not defined in schema.org {release}', { release: vocabularyRelease }), undefined, type),
       };
     })),
 };
@@ -48,7 +49,7 @@ export const unknownProperty: RuleImplementation = {
         reason: 'unknown-property',
         severity: intended && requiredBy(node.types, intended) ? 'medium' : 'low',
         subject: intended ? `${key} (${intended}?)` : key,
-        evidence: cite(context, graph, node, `property not defined in schema.org ${vocabularyRelease}`, key, key),
+        evidence: cite(context, graph, node, evidenceLabel('property not defined in schema.org {release}', { release: vocabularyRelease }), key, key),
       };
     })),
 };
@@ -65,7 +66,7 @@ export const domainRangeMismatch: RuleImplementation = {
       const domains = domainsOf(key);
       if (domains.length > 0 && !domains.some(domain => isA(node.types, domain))) {
         problems.push({ reason: 'domain', severity: 'low', subject: `${node.types.join('+')}.${key}`,
-          evidence: cite(context, graph, node, `property used on a type outside its schema.org domain (${domains.join(', ')})`, key) });
+          evidence: cite(context, graph, node, evidenceLabel('property used on a type outside its schema.org domain ({types})', { types: domains.join(', ') }), key) });
       }
       const ranges = rangesOf(key);
       if (ranges.length === 0 || ranges.includes('Thing')) continue;
@@ -73,7 +74,7 @@ export const domainRangeMismatch: RuleImplementation = {
         if (value.kind !== 'node' || !knownTypes(value.node.types) || isA(value.node.types, 'Role')) continue;
         if (ranges.some(range => isA(value.node.types, range))) continue;
         problems.push({ reason: 'range', severity: 'low', subject: `${key}: ${value.node.types.join('+')}`,
-          evidence: cite(context, graph, node, `value type outside the property's schema.org range (${ranges.join(', ')})`, key) });
+          evidence: cite(context, graph, node, evidenceLabel("value type outside the property's schema.org range ({types})", { types: ranges.join(', ') }), key) });
       }
     }
     return problems;
@@ -88,21 +89,40 @@ function termValue(value: Value): string | undefined {
   return bare === raw.trim() && !/^[A-Z][A-Za-z0-9]+$/u.test(bare) ? undefined : bare;
 }
 
+/** Labels for a term schema.org superseded, moved to the attic or keeps pending, by the kind of term. */
+const termLabels = {
+  type: {
+    superseded: evidenceLabel('type superseded in schema.org {release}', { release: vocabularyRelease }),
+    retired: evidenceLabel('type retired to the schema.org attic'),
+    pending: evidenceLabel("type in schema.org's pending section"),
+  },
+  property: {
+    superseded: evidenceLabel('property superseded in schema.org {release}', { release: vocabularyRelease }),
+    retired: evidenceLabel('property retired to the schema.org attic'),
+    pending: evidenceLabel("property in schema.org's pending section"),
+  },
+  'enumeration value': {
+    superseded: evidenceLabel('enumeration value superseded in schema.org {release}', { release: vocabularyRelease }),
+    retired: evidenceLabel('enumeration value retired to the schema.org attic'),
+    pending: evidenceLabel("enumeration value in schema.org's pending section"),
+  },
+} as const;
+
 export const supersededPendingTerm: RuleImplementation = {
   id: 'schema-superseded-pending-term',
   evaluate: context => overSchemaNodes(context, (graph, node) => {
     const problems: Problem[] = [];
-    const examine = (term: string, property: string | undefined, kind: string) => {
+    const examine = (term: string, property: string | undefined, kind: keyof typeof termLabels) => {
       const replacement = supersededBy(term);
       if (replacement) {
         problems.push({ reason: 'superseded', severity: 'low', subject: `${term} -> ${replacement}`,
-          evidence: cite(context, graph, node, `${kind} superseded in schema.org ${vocabularyRelease}`, property, term) });
+          evidence: cite(context, graph, node, termLabels[kind].superseded, property, term) });
       } else if (isAtticTerm(term)) {
         problems.push({ reason: 'retired', severity: 'low', subject: term,
-          evidence: cite(context, graph, node, `${kind} retired to the schema.org attic`, property, term) });
+          evidence: cite(context, graph, node, termLabels[kind].retired, property, term) });
       } else if (isPendingTerm(term) && !documentedProperties.has(term) && !featureTypes.has(term)) {
         problems.push({ reason: 'pending', severity: 'info', subject: term,
-          evidence: cite(context, graph, node, `${kind} in schema.org's pending section`, property, term) });
+          evidence: cite(context, graph, node, termLabels[kind].pending, property, term) });
       }
     };
     for (const type of node.types.filter(entry => !isExternalTerm(entry))) examine(type, undefined, 'type');
@@ -162,12 +182,12 @@ export const enumerationValues: RuleImplementation = {
         if (member) continue;
         problems.push({
           reason: 'not-a-member', severity: googleEnumerations.has(key) || listed ? 'high' : 'medium', subject: `${key}: ${value}`,
-          evidence: cite(context, graph, node, `value outside the allowed list for ${key}`, key, value),
+          evidence: cite(context, graph, node, evidenceLabel('value outside the allowed list for {property}', { property: key }), key, value),
         });
       }
       if (singleValued.has(key) && new Set(written.map(entry => bareTerm(entry).toLowerCase())).size > 1) {
         problems.push({ reason: 'multiple-values', severity: 'high', subject: key,
-          evidence: cite(context, graph, node, `several values given for ${key}`, key) });
+          evidence: cite(context, graph, node, evidenceLabel('several values given for {property}', { property: key }), key) });
       }
     }
     return problems;

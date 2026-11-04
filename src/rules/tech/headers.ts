@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { PageFacts, SiteFacts } from '../../core/facts.ts';
 import type { RuleImplementation } from '../engine.ts';
 import { auditedPages, citer, fail, firstHeader, notApplicable, pass } from './shared.ts';
@@ -26,8 +27,8 @@ export const securityHeadersInfo: RuleImplementation = {
     const url = page.fetch.finalUrl;
     const present = inventory.filter(name => firstHeader(page.fetch.headers, name) !== undefined);
     const absent = inventory.filter(name => !present.includes(name));
-    const evidence = present.map(name => cite({ kind: 'header', url, label: 'security header on the HTML response', excerpt: `${name}: ${firstHeader(page.fetch.headers, name)}` }));
-    if (absent.length > 0) evidence.push(cite({ kind: 'header', url, label: 'security headers the HTML response does not send', excerpt: absent.join(', ') }));
+    const evidence = present.map(name => cite({ kind: 'header', url, label: evidenceLabel('security header on the HTML response'), excerpt: `${name}: ${firstHeader(page.fetch.headers, name)}` }));
+    if (absent.length > 0) evidence.push(cite({ kind: 'header', url, label: evidenceLabel('security headers the HTML response does not send'), excerpt: absent.join(', ') }));
     const nosniff = firstHeader(page.fetch.headers, 'x-content-type-options');
     if (nosniff !== undefined && nosniff.trim().toLowerCase() !== 'nosniff') {
       return fail('info', evidence, 'invalid-nosniff', { value: nosniff });
@@ -56,8 +57,8 @@ export const framingProtection: RuleImplementation = {
     const xfo = firstHeader(page.fetch.headers, 'x-frame-options');
     const ancestors = frameAncestors(firstHeader(page.fetch.headers, 'content-security-policy'));
     const evidence = [
-      ...(xfo === undefined ? [] : [cite({ kind: 'header', url, label: 'X-Frame-Options header', excerpt: `X-Frame-Options: ${xfo}` })]),
-      ...(ancestors === undefined ? [] : [cite({ kind: 'header', url, label: 'frame-ancestors directive of the enforced Content-Security-Policy', excerpt: ancestors })]),
+      ...(xfo === undefined ? [] : [cite({ kind: 'header', url, label: evidenceLabel('X-Frame-Options header'), excerpt: `X-Frame-Options: ${xfo}` })]),
+      ...(ancestors === undefined ? [] : [cite({ kind: 'header', url, label: evidenceLabel('frame-ancestors directive of the enforced Content-Security-Policy'), excerpt: ancestors })]),
     ];
     // frame-ancestors takes precedence over X-Frame-Options in browsers that support both.
     if (ancestors !== undefined) {
@@ -68,6 +69,6 @@ export const framingProtection: RuleImplementation = {
     const xfoValue = xfo?.split(',')[0]?.trim().toLowerCase();
     if (xfoValue === 'deny' || xfoValue === 'sameorigin') return pass(evidence);
     if (xfoValue !== undefined) return fail('info', evidence, 'unsupported-x-frame-options', { value: xfo! });
-    return fail('info', [cite({ kind: 'header', url, label: 'HTML response without X-Frame-Options or a CSP frame-ancestors directive', excerpt: 'X-Frame-Options: (absent); Content-Security-Policy frame-ancestors: (absent)' })], 'missing');
+    return fail('info', [cite({ kind: 'header', url, label: evidenceLabel('HTML response without X-Frame-Options or a CSP frame-ancestors directive'), excerpt: 'X-Frame-Options: (absent); Content-Security-Policy frame-ancestors: (absent)' })], 'missing');
   },
 };

@@ -5,7 +5,7 @@
  */
 import { rules as catalogRules } from '../../src/catalog/index.ts';
 import type { CollectResult } from '../../src/collect/index.ts';
-import { EvidenceStore } from '../../src/core/evidence.ts';
+import { evidenceLabel, EvidenceStore } from '../../src/core/evidence.ts';
 import type { GscData } from '../../src/owner/gsc.ts';
 import type { TextBlock } from '../../src/render/chrome.ts';
 import { buildReport, type Report } from '../../src/report/model.ts';
@@ -74,7 +74,7 @@ const roomsBlocks = blocks([
 ], ['cheap hotel andorra cheap rooms andorra']);
 
 function titleEvidence(evidence: EvidenceStore, url: string) {
-  return evidence.add({ kind: 'html', url, label: 'title element', excerpt: roomsTitle });
+  return evidence.add({ kind: 'html', url, label: evidenceLabel('title element'), excerpt: roomsTitle });
 }
 
 /** A candidate from code on the rooms page, with the evidence code cited; other pages pass. */
@@ -98,13 +98,13 @@ const implementations: readonly RuleImplementation[] = [
   },
   {
     id: 'content-h1-missing',
-    evaluate: ({ page: current, evidence }) => ({ outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: current!.url, label: 'h1 element', excerpt: current!.url === roomsUrl ? 'Rooms with valley views' : 'Hotel Example' })] }),
+    evaluate: ({ page: current, evidence }) => ({ outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: current!.url, label: evidenceLabel('h1 element'), excerpt: current!.url === roomsUrl ? 'Rooms with valley views' : 'Hotel Example' })] }),
   },
   candidateOnRooms('content-title-obsolete-year', 'medium', evidence => titleEvidence(evidence, roomsUrl)),
-  candidateOnRooms('content-img-alt-quality', 'low', evidence => evidence.add({ kind: 'html', url: roomsUrl, label: 'img alt text to judge', excerpt: 'Double room with a balcony over the valley' })),
-  candidateOnRooms('content-keyword-stuffing', 'medium', evidence => evidence.add({ kind: 'text', url: roomsUrl, label: 'paragraph with repeated terms', excerpt: `Our 45 rooms look over the valley of Andorra la Vella. We don${apostrophe}t rent rooms by the hour.` })),
-  candidateOnRooms('schema-localbusiness', 'medium', evidence => evidence.add({ kind: 'structured-data', url: roomsUrl, label: 'Hotel node on a rooms page', path: 'jsonld[0]', excerpt: '"@type":"Hotel"' })),
-  candidateOnRooms('schema-visible-content-parity', 'medium', evidence => evidence.add({ kind: 'structured-data', url: roomsUrl, label: 'telephone marked up in JSON-LD', path: 'jsonld[0].telephone', excerpt: '+376 800 800' })),
+  candidateOnRooms('content-img-alt-quality', 'low', evidence => evidence.add({ kind: 'html', url: roomsUrl, label: evidenceLabel('img alt text to judge'), excerpt: 'Double room with a balcony over the valley' })),
+  candidateOnRooms('content-keyword-stuffing', 'medium', evidence => evidence.add({ kind: 'text', url: roomsUrl, label: evidenceLabel('paragraph with repeated terms'), excerpt: `Our 45 rooms look over the valley of Andorra la Vella. We don${apostrophe}t rent rooms by the hour.` })),
+  candidateOnRooms('schema-localbusiness', 'medium', evidence => evidence.add({ kind: 'structured-data', url: roomsUrl, label: evidenceLabel('Hotel node on a rooms page'), path: 'jsonld[0]', excerpt: '"@type":"Hotel"' })),
+  candidateOnRooms('schema-visible-content-parity', 'medium', evidence => evidence.add({ kind: 'structured-data', url: roomsUrl, label: evidenceLabel('telephone marked up in JSON-LD'), path: 'jsonld[0].telephone', excerpt: '+376 800 800' })),
 ];
 
 /** A Search Console query that must never reach a provider. */
@@ -130,12 +130,12 @@ const ownerData: GscData = {
 const ownerImplementations: readonly RuleImplementation[] = [
   {
     id: 'content-gsc-low-ctr',
-    evaluate: ({ evidence }) => ({ outcome: 'fail', severity: 'low', evidence: [evidence.add({ kind: 'owner-data', url: roomsUrl, label: 'Search Console performance of the page', excerpt: `${ownerSecret}: 500 impressions, 1 click` })] }),
+    evaluate: ({ evidence }) => ({ outcome: 'fail', severity: 'low', evidence: [evidence.add({ kind: 'owner-data', url: roomsUrl, label: evidenceLabel('Search Console performance of the page'), excerpt: `${ownerSecret}: 500 impressions, 1 click` })] }),
   },
   {
     id: 'content-meta-description-missing',
     evaluate: ({ page: current, evidence }) => current!.url === roomsUrl
-      ? { outcome: 'fail', severity: 'low', evidence: [evidence.add({ kind: 'owner-data', url: roomsUrl, label: 'queries shown with this description', excerpt: `${ownerSecret} shown 500 times` }), titleEvidence(evidence, roomsUrl)] }
+      ? { outcome: 'fail', severity: 'low', evidence: [evidence.add({ kind: 'owner-data', url: roomsUrl, label: evidenceLabel('queries shown with this description'), excerpt: `${ownerSecret} shown 500 times` }), titleEvidence(evidence, roomsUrl)] }
       : { outcome: 'pass' },
   },
 ];

@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { Severity } from '../../core/types.ts';
 import { brandPattern, cannibalization, lowCtrPages, pageTrends, strikingDistance } from '../../owner/gsc-analyses.ts';
 import type { GscData, GscProperty, UrlInspection } from '../../owner/gsc.ts';
@@ -58,7 +59,7 @@ function citeInspection(context: RuleContext, entry: UrlInspection): string {
     ...(entry.googleCanonical ? [`googleCanonical=${entry.googleCanonical}`] : []), `lastCrawlTime=${entry.lastCrawlTime ?? 'never'}`,
     ...(entry.crawledAs ? [`crawledAs=${entry.crawledAs}`] : []),
   ];
-  return context.evidence.add({ kind: 'owner-data', url: entry.url, label: 'Search Console URL Inspection of the indexed version', excerpt: fields.join('; ') });
+  return context.evidence.add({ kind: 'owner-data', url: entry.url, label: evidenceLabel('Search Console URL Inspection of the indexed version'), excerpt: fields.join('; ') });
 }
 
 const notInspected: RuleResult = { outcome: 'not_applicable', reason: 'not-inspected' };
@@ -137,6 +138,13 @@ const crawlRecency: RuleImplementation = {
   },
 };
 
+/** Labels for a sitemap Search Console does not list, by how the audit found it. */
+const unsubmittedLabel = {
+  robots: evidenceLabel('sitemap found through robots that the Search Console list does not include'),
+  link: evidenceLabel('sitemap found through link that the Search Console list does not include'),
+  default: evidenceLabel('sitemap found through default that the Search Console list does not include'),
+} as const;
+
 const sitemapReports: RuleImplementation = {
   id: 'crawl-gsc-sitemaps',
   evaluate(context) {
@@ -144,7 +152,7 @@ const sitemapReports: RuleImplementation = {
     const results: RuleResult[] = [];
     for (const map of gsc.sitemaps) {
       const excerpt = `errors=${map.errors}; warnings=${map.warnings}; lastDownloaded=${map.lastDownloaded ?? 'never'}${map.isPending ? '; pending' : ''}`;
-      const cited = () => [context.evidence.add({ kind: 'owner-data', url: map.path, label: 'Search Console report for a submitted sitemap', excerpt })];
+      const cited = () => [context.evidence.add({ kind: 'owner-data', url: map.path, label: evidenceLabel('Search Console report for a submitted sitemap'), excerpt })];
       if (map.errors > 0) results.push({ outcome: 'fail', severity: 'medium', reason: 'errors', evidence: cited(), params: { sitemap: map.path, count: map.errors } });
       else if (map.warnings > 0) results.push({ outcome: 'fail', severity: 'low', reason: 'warnings', evidence: cited(), params: { sitemap: map.path, count: map.warnings } });
     }
@@ -152,7 +160,7 @@ const sitemapReports: RuleImplementation = {
     const submitted = new Set(gsc.sitemaps.map(map => normalized(map.path)));
     for (const declared of context.site.sitemaps.filter(entry => entry.source !== 'index' && entry.document !== undefined)) {
       if (submitted.has(normalized(declared.url))) continue;
-      const id = context.evidence.add({ kind: 'sitemap', url: declared.url, label: `sitemap found through ${declared.source} that the Search Console list does not include`, excerpt: declared.url });
+      const id = context.evidence.add({ kind: 'sitemap', url: declared.url, label: unsubmittedLabel[declared.source as keyof typeof unsubmittedLabel], excerpt: declared.url });
       results.push({ outcome: 'fail', severity: 'info', reason: 'not-submitted', evidence: [id], params: { sitemap: declared.url } });
     }
     if (results.length > 0) return results;
@@ -173,7 +181,7 @@ const sitemapUrlsWithoutImpressions: RuleImplementation = {
     const shown = new Set(gsc.byPage.map(row => normalized(row.keys[0]!)));
     const silent = listed.filter(url => !shown.has(normalized(url)));
     if (silent.length === 0) return { outcome: 'pass' };
-    const id = context.evidence.add({ kind: 'owner-data', label: `sitemap URLs without impressions from ${gsc.period.start} to ${gsc.period.end}`, excerpt: silent.slice(0, 50).join('\n') });
+    const id = context.evidence.add({ kind: 'owner-data', label: evidenceLabel('sitemap URLs without impressions from {start} to {end}', { start: gsc.period.start, end: gsc.period.end }), excerpt: silent.slice(0, 50).join('\n') });
     return { outcome: 'fail', severity: 'info', evidence: [id], params: { count: silent.length, total: listed.length, examples: summarizeList(silent, 3) } };
   },
 };
@@ -190,9 +198,9 @@ const lowCtr: RuleImplementation = {
     return pages.map(page => ({
       outcome: 'fail' as const, severity: 'low' as const,
       evidence: [
-        context.evidence.add({ kind: 'owner-data', url: page.page, label: `Search Console performance of the page from ${gsc.period.start} to ${gsc.period.end}`,
+        context.evidence.add({ kind: 'owner-data', url: page.page, label: evidenceLabel('Search Console performance of the page from {start} to {end}', { start: gsc.period.start, end: gsc.period.end }),
           excerpt: `impressions=${page.impressions}; clicks=${page.clicks}; ctr=${percent(page.ctr)}; position=${page.position.toFixed(1)}; site CTR at that position=${percent(page.expectedCtr)}` }),
-        context.evidence.add({ kind: 'owner-data', url: page.page, label: 'queries with the most impressions for the page', path: searchQueriesPath,
+        context.evidence.add({ kind: 'owner-data', url: page.page, label: evidenceLabel('queries with the most impressions for the page'), path: searchQueriesPath,
           excerpt: page.topQueries.map((query, index) => `${queryLabel(context, query.query, index)} (${query.impressions} impressions, position ${query.position.toFixed(1)})`).join('\n') }),
       ],
       params: { page: page.page, impressions: page.impressions, position: page.position.toFixed(1), ctr: percent(page.ctr), expected: percent(page.expectedCtr) },
@@ -215,7 +223,7 @@ const competingPages: RuleImplementation = {
     if (found.length === 0) return { outcome: 'pass' };
     return found.map((entry, index) => ({
       outcome: 'fail' as const, severity: 'info' as const,
-      evidence: [context.evidence.add({ kind: 'owner-data', label: `pages sharing the impressions of one query (${entry.impressions} impressions)`, path: searchQueriesPath,
+      evidence: [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('pages sharing the impressions of one query ({impressions} impressions)', { impressions: entry.impressions }), path: searchQueriesPath,
         excerpt: [queryLabel(context, entry.query, index), ...entry.pages.map(page => `${page.page}: ${percent(page.impressionShare)} of impressions, ${percent(page.clickShare)} of clicks, position ${page.position.toFixed(1)}`)].join('\n') })],
       params: { query: queryLabel(context, entry.query, index), count: entry.pages.length, pages: summarizeList(entry.pages.map(page => page.page), 3) },
     }));
@@ -229,7 +237,7 @@ const nearFirstPage: RuleImplementation = {
     if (gsc.byPageQuery.length === 0) return noSearchData;
     const found = strikingDistance(gsc).slice(0, 10);
     if (found.length === 0) return { outcome: 'pass' };
-    const id = context.evidence.add({ kind: 'owner-data', label: 'queries at positions 11 to 20 with their pages', path: searchQueriesPath,
+    const id = context.evidence.add({ kind: 'owner-data', label: evidenceLabel('queries at positions 11 to 20 with their pages'), path: searchQueriesPath,
       excerpt: found.map((entry, index) => `${queryLabel(context, entry.query, index)} -> ${entry.page} (position ${entry.position.toFixed(1)}, ${entry.impressions} impressions)`).join('\n') });
     const first = found[0]!;
     return { outcome: 'fail', severity: 'info', evidence: [id], params: { count: found.length, query: queryLabel(context, first.query, 0), page: first.page, position: first.position.toFixed(1) } };
@@ -245,7 +253,7 @@ const trafficDrop: RuleImplementation = {
     if (drops.length === 0) return { outcome: 'pass' };
     return drops.map(trend => ({
       outcome: 'fail' as const, severity: 'low' as const,
-      evidence: [context.evidence.add({ kind: 'owner-data', url: trend.page, label: `clicks from ${gsc.previousPeriod.start} to ${gsc.previousPeriod.end} and from ${gsc.period.start} to ${gsc.period.end}`,
+      evidence: [context.evidence.add({ kind: 'owner-data', url: trend.page, label: evidenceLabel('clicks from {previousStart} to {previousEnd} and from {start} to {end}', { previousStart: gsc.previousPeriod.start, previousEnd: gsc.previousPeriod.end, start: gsc.period.start, end: gsc.period.end }),
         excerpt: `clicks ${trend.clicksBefore} -> ${trend.clicksNow}; z=${trend.z}` })],
       params: { page: trend.page, before: trend.clicksBefore, now: trend.clicksNow },
     }));
@@ -260,7 +268,7 @@ const richResults: RuleImplementation = {
     if (entry.richResults.length === 0) return { outcome: 'not_applicable', reason: 'no-rich-results-detected' };
     const issues = (severity: string) => entry.richResults.flatMap(result => result.issues.filter(issue => issue.severity === severity).map(issue => `${result.type}: ${issue.message}`));
     const excerpt = entry.richResults.map(result => `${result.type}: ${result.issues.length === 0 ? 'no issues' : result.issues.map(issue => `${issue.severity} ${issue.message}`).join('; ')}`).join('\n');
-    const evidence = [context.evidence.add({ kind: 'owner-data', url: entry.url, label: 'rich results Google detected in the indexed version', excerpt })];
+    const evidence = [context.evidence.add({ kind: 'owner-data', url: entry.url, label: evidenceLabel('rich results Google detected in the indexed version'), excerpt })];
     const errors = issues('ERROR');
     if (errors.length > 0) return { outcome: 'fail', severity: 'high', reason: 'errors', evidence, params: { url: entry.url, count: errors.length, items: summarizeList(errors, 3) } };
     const warnings = issues('WARNING');
@@ -274,7 +282,7 @@ const genAiControl: RuleImplementation = {
   id: 'ai-google-genai-control-context',
   evaluate(context) {
     const { property } = gscOf(context);
-    const evidence = [context.evidence.add({ kind: 'owner-data', label: 'Search Console property whose settings hold the generative AI control', excerpt: property.siteUrl })];
+    const evidence = [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('Search Console property whose settings hold the generative AI control'), excerpt: property.siteUrl })];
     return { outcome: 'fail', severity: 'info', evidence, params: { property: property.siteUrl } };
   },
 };
@@ -292,7 +300,7 @@ const measurementContext: RuleImplementation = {
       bots ? `crawler activity from ${bots.window.start.slice(0, 10)} to ${bots.window.end.slice(0, 10)}, ${bots.referrals ? 'with' : 'without'} referrers` : 'crawler activity: not read',
     ];
     const reason = owner.bing && bots ? 'all-sources' : owner.bing ? 'without-bots' : bots ? 'without-bing' : 'without-both';
-    const evidence = [context.evidence.add({ kind: 'owner-data', label: 'owner sources this report read about AI search', excerpt: lines.join('\n') })];
+    const evidence = [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('owner sources this report read about AI search'), excerpt: lines.join('\n') })];
     return { outcome: 'fail', severity: 'info', reason, evidence, params: { property: property.siteUrl } };
   },
 };

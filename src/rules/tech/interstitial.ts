@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { Overlay } from '../../render/chrome.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { citer, fail, notEvaluated, pass, shorten } from './shared.ts';
@@ -29,22 +30,23 @@ export const intrusiveInterstitial: RuleImplementation = {
     if (render.overlays === undefined) return notEvaluated('no-overlay-data');
     const cite = citer(context);
     const covering = render.overlays.filter(overlay => overlay.position === 'fixed' && overlay.coverage >= candidateCoverage).map(overlay => ({ overlay, kind: kindOf(overlay) }));
-    const cited = (overlay: Overlay, label: string) => cite({
+    const cited = (overlay: Overlay, label: EvidenceLabel) => cite({
       kind: 'render', url: render.finalUrl, label, path: overlay.selector,
       excerpt: `${Math.round(overlay.coverage * 100)}% of the screen, z-index ${overlay.zIndex ?? 'auto'}${overlay.dialog ? ', dialog' : ''}: ${shorten(overlay.text, 160) || '(no text)'}`,
     });
-    const locked = render.scrollLocked ? [cite({ kind: 'render', url: render.finalUrl, label: 'page scrolling locked at load (overflow hidden on html or body)', excerpt: 'scrollLocked=true' })] : [];
+    const locked = render.scrollLocked ? [cite({ kind: 'render', url: render.finalUrl, label: evidenceLabel('page scrolling locked at load (overflow hidden on html or body)'), excerpt: 'scrollLocked=true' })] : [];
     const params = (overlay: Overlay) => ({ coverage: Math.round(overlay.coverage * 100) });
     const promotion = covering.find(entry => entry.kind === 'promotion' && entry.overlay.coverage >= mostOfScreen);
-    if (promotion) return fail('medium', [cited(promotion.overlay, 'promotional overlay over most of the first screen at load'), ...locked], 'promotion', params(promotion.overlay));
+    if (promotion) return fail('medium', [cited(promotion.overlay, evidenceLabel('promotional overlay over most of the first screen at load')), ...locked], 'promotion', params(promotion.overlay));
     // Login dialogs are fine on content that is not public, and an unclassified overlay may be a notice the law requires.
     const candidate = covering.find(entry => entry.kind !== 'legal');
     if (candidate) {
       const reason = candidate.kind === 'access' ? 'access-dialog' : candidate.kind === 'promotion' ? 'promotion' : 'overlay';
-      return fail('medium', [cited(candidate.overlay, `${reason === 'overlay' ? 'unclassified' : reason === 'access-dialog' ? 'login or subscription' : 'promotional'} overlay over the first screen at load`), ...locked],
+      return fail('medium', [cited(candidate.overlay, reason === 'overlay' ? evidenceLabel('unclassified overlay over the first screen at load')
+        : reason === 'access-dialog' ? evidenceLabel('login or subscription overlay over the first screen at load') : evidenceLabel('promotional overlay over the first screen at load')), ...locked],
         reason, params(candidate.overlay), true);
     }
     const legal = covering.find(entry => entry.kind === 'legal');
-    return pass(legal ? [cited(legal.overlay, 'legally required notice over the first screen, which Google exempts')] : []);
+    return pass(legal ? [cited(legal.overlay, evidenceLabel('legally required notice over the first screen, which Google exempts'))] : []);
   },
 };

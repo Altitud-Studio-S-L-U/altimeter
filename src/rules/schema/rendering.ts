@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { PageFacts } from '../../core/facts.ts';
 import type { RuleImplementation } from '../engine.ts';
 import { flatten, sameSet } from './compare.ts';
@@ -29,7 +30,7 @@ export const jsOnlyMarkup: RuleImplementation = {
         reason: product ? 'product-rendered-only' : 'rendered-only',
         severity: product ? 'medium' : 'low',
         subject: node.types.join('+'),
-        evidence: cite(context, rendered, node, 'item present in the rendered DOM but not in the raw HTML'),
+        evidence: cite(context, rendered, node, evidenceLabel('item present in the rendered DOM but not in the raw HTML')),
       };
     });
     return report(problems);
@@ -65,8 +66,8 @@ export const rawRenderedConflict: RuleImplementation = {
         const property = path.includes('.') ? undefined : path;
         problems.push({
           reason: 'value-differs', severity: 'medium', subject: `${node.types.join('+')} ${path}`,
-          evidence: cite(context, rendered, node, `${path} in the rendered DOM`, property, `${path}: ${[...values.written].join(' | ')}`),
-          also: [cite(context, raw, original, `${path} in the raw HTML`, property, `${path}: ${[...previous.written].join(' | ')}`)],
+          evidence: cite(context, rendered, node, evidenceLabel('{path} in the rendered DOM', { path }), property, `${path}: ${[...values.written].join(' | ')}`),
+          also: [cite(context, raw, original, evidenceLabel('{path} in the raw HTML', { path }), property, `${path}: ${[...previous.written].join(' | ')}`)],
         });
       }
     }

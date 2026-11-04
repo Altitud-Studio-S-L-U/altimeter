@@ -1,6 +1,6 @@
 import { linkGraph } from '../../analyze/graph.ts';
 import { urlVariants } from '../../collect/probes.ts';
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { PageFacts, ProbeFacts, SiteFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue, type Hop } from '../../fetch/http.ts';
@@ -13,7 +13,7 @@ import {
 } from './shared.ts';
 
 function citeHop(evidence: EvidenceStore, hop: Hop, index: number): string {
-  return evidence.add({ kind: 'redirect', url: hop.url, label: `redirect hop ${index + 1}`, excerpt: `${hop.status} -> ${hop.location ?? '(no location)'}` });
+  return evidence.add({ kind: 'redirect', url: hop.url, label: evidenceLabel('redirect hop {number}', { number: index + 1 }), excerpt: `${hop.status} -> ${hop.location ?? '(no location)'}` });
 }
 
 function redirectHops(hops: readonly Hop[]): Hop[] {
@@ -36,7 +36,7 @@ const statusFinal: RuleImplementation = {
     const target = page!;
     const status = target.fetch.status!;
     const url = target.fetch.finalUrl;
-    const id = evidence.add({ kind: 'http', url, label: 'final response status', excerpt: `HTTP ${status}` });
+    const id = evidence.add({ kind: 'http', url, label: evidenceLabel('final response status'), excerpt: `HTTP ${status}` });
     const params = { url, status };
     if (status === 204) return failure({ severity: 'high', evidence: [id], reason: 'no-content', params });
     if (status >= 200 && status < 300) return passed([id]);
@@ -48,9 +48,9 @@ const statusFinal: RuleImplementation = {
     const linkedBy = linkedFromOtherPage(site, url);
     if (!listed && !named && !linkedBy && !isHomePage(site, target)) return notApplicable('removed-unreferenced');
     const ids = [id];
-    if (listed) ids.push(evidence.add({ kind: 'sitemap', url: listed.sitemap, label: 'sitemap entry for the URL', excerpt: listed.loc, line: listed.line }));
-    if (named) ids.push(evidence.add({ kind: 'html', url: named.by, label: `page that names the URL as its ${named.as} target`, excerpt: url }));
-    if (linkedBy) ids.push(evidence.add({ kind: 'html', url: linkedBy, label: 'page that links to the URL', excerpt: url }));
+    if (listed) ids.push(evidence.add({ kind: 'sitemap', url: listed.sitemap, label: evidenceLabel('sitemap entry for the URL'), excerpt: listed.loc, line: listed.line }));
+    if (named) ids.push(evidence.add({ kind: 'html', url: named.by, label: named.as === 'canonical' ? evidenceLabel('page that names the URL as its canonical target') : evidenceLabel('page that names the URL as its hreflang target'), excerpt: url }));
+    if (linkedBy) ids.push(evidence.add({ kind: 'html', url: linkedBy, label: evidenceLabel('page that links to the URL'), excerpt: url }));
     return failure({ severity: 'critical', evidence: ids, reason: 'client-error', params });
   },
 };
@@ -99,7 +99,7 @@ const redirectType: RuleImplementation = {
       if (isLocaleEntryRedirect(site, hop.url, hop.location) || perVisitor(hop) || loginPath.test(new URL(hop.location!).pathname)) continue;
       const ids = [citeHop(evidence, hop, index)];
       const cache = headerValue(hop.headers, 'cache-control');
-      if (cache) ids.push(evidence.add({ kind: 'header', url: hop.url, label: 'Cache-Control of the redirect response', excerpt: cache }));
+      if (cache) ids.push(evidence.add({ kind: 'header', url: hop.url, label: evidenceLabel('Cache-Control of the redirect response'), excerpt: cache }));
       const params = { url: hop.url, location: hop.location!, status: hop.status };
       if (consolidationRedirect(hop.url, hop.location!)) results.push(failure({ severity: 'medium', evidence: ids, reason: 'temporary-consolidation', params }));
       else results.push(failure({ severity: 'medium', evidence: ids, reason: 'temporary-move', params, needsJudgment: true }));
@@ -128,14 +128,14 @@ const metaRefreshJsRedirect: RuleImplementation = {
     const refresh = declared ? parseRefresh(declared.value) : undefined;
     const destination = refresh?.url ? normalizeUrl(absoluteUrl(refresh.url, url)) : undefined;
     if (declared && refresh && destination && destination !== self) {
-      const id = evidence.add({ kind: declared.kind, url, label: declared.kind === 'html' ? 'meta refresh element' : 'Refresh header', excerpt: declared.value, ...(declared.line ? { line: declared.line } : {}) });
+      const id = evidence.add({ kind: declared.kind, url, label: declared.kind === 'html' ? evidenceLabel('meta refresh element') : evidenceLabel('Refresh header'), excerpt: declared.value, ...(declared.line ? { line: declared.line } : {}) });
       const params = { url, location: destination, delay: refresh.delay };
       return refresh.delay === 0 ? failure({ severity: 'low', evidence: [id], reason: 'instant-refresh', params }) : failure({ severity: 'medium', evidence: [id], reason: 'delayed-refresh', params });
     }
     const rendered = target.rendered && target.rendered.result.error === undefined ? target.rendered : undefined;
     const landed = rendered ? normalizeUrl(rendered.result.finalUrl) : undefined;
     if (landed && landed !== self) {
-      const id = evidence.add({ kind: 'render', url, label: 'URL the render ended on', excerpt: rendered!.result.finalUrl });
+      const id = evidence.add({ kind: 'render', url, label: evidenceLabel('URL the render ended on'), excerpt: rendered!.result.finalUrl });
       return failure({ severity: 'medium', evidence: [id], reason: 'js-redirect', params: { url, location: landed, delay: 0 } });
     }
     return passed();
@@ -154,17 +154,17 @@ const soft404: RuleImplementation = {
     if (status === undefined) return notEvaluated('probe-failed');
     if (status >= 500) return notEvaluated('probe-server-error');
     const results: RuleResult[] = [];
-    const probeId = evidence.add({ kind: 'probe', url: probe.url, label: 'response to a random unknown path', excerpt: `HTTP ${status}${probe.fetch.hops.length > 1 ? ` after redirect to ${probe.fetch.finalUrl}` : ''}` });
+    const probeId = evidence.add({ kind: 'probe', url: probe.url, label: evidenceLabel('response to a random unknown path'), excerpt: `HTTP ${status}${probe.fetch.hops.length > 1 ? ` after redirect to ${probe.fetch.finalUrl}` : ''}` });
     if (status === 200 && probe.fetch.hops.length === 1) {
       const title = probe.parsed?.titles[0]?.text;
-      const ids = [probeId, ...(title ? [evidence.add({ kind: 'probe', url: probe.url, label: 'title of the unknown path response', excerpt: title })] : [])];
+      const ids = [probeId, ...(title ? [evidence.add({ kind: 'probe', url: probe.url, label: evidenceLabel('title of the unknown path response'), excerpt: title })] : [])];
       results.push(failure({ severity: 'high', evidence: ids, reason: 'probe-200', params: { url: probe.url } }));
     }
     for (const page of site.pages.values()) {
       if (page.fetch.status !== 200) continue;
       const headline = pageHeadlines(pageDocument(page));
       if (!errorWording.test(headline)) continue;
-      const id = evidence.add({ kind: 'html', url: page.fetch.finalUrl, label: 'title and h1 of a page answering 200', excerpt: headline });
+      const id = evidence.add({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('title and h1 of a page answering 200'), excerpt: headline });
       results.push(failure({ severity: 'medium', evidence: [id], reason: 'error-page-200', params: { url: page.fetch.finalUrl }, needsJudgment: true }));
     }
     return results.length > 0 ? results : passed([probeId]);
@@ -226,12 +226,12 @@ const serverErrorsRate: RuleImplementation = {
     if (fetched.length === 0) return notApplicable('no-pages');
     const failing = fetched.filter(page => page.fetch.error?.code === 'timeout' || (page.fetch.status ?? 0) >= 500 || page.fetch.status === 429);
     const share = failing.length / fetched.length;
-    const ids = failing.slice(0, 5).map(page => evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: 'crawled URL answering a server error', excerpt: page.fetch.status === undefined ? page.fetch.error?.code ?? 'error' : `HTTP ${page.fetch.status}` }));
+    const ids = failing.slice(0, 5).map(page => evidence.add({ kind: 'http', url: page.fetch.finalUrl, label: evidenceLabel('crawled URL answering a server error'), excerpt: page.fetch.status === undefined ? page.fetch.error?.code ?? 'error' : `HTTP ${page.fetch.status}` }));
     if (share >= 0.01) return failure({ severity: 'high', evidence: ids, reason: 'error-rate', params: { count: failing.length, total: fetched.length, share: `${(share * 100).toFixed(1)}%` } });
     // A 503 without Retry-After is tech-maintenance-503's; rate limiting is reported here.
     const noRetry = fetched.filter(page => page.fetch.status === 429 && headerValue(page.fetch.headers, 'retry-after') === undefined);
     if (noRetry.length > 0) {
-      return failure({ severity: 'low', evidence: noRetry.slice(0, 5).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: 'Retry-After header', excerpt: '(absent)' })),
+      return failure({ severity: 'low', evidence: noRetry.slice(0, 5).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('Retry-After header'), excerpt: '(absent)' })),
         reason: 'no-retry-after', params: { count: noRetry.length, total: fetched.length, share: `${(share * 100).toFixed(1)}%` } });
     }
     return passed();
@@ -263,8 +263,8 @@ const hostVariantConsolidation: RuleImplementation = {
         if (canonical === preferred) continue;
         if (!base.raw || !sameContent(parsed.bodyText, base.raw.parsed.bodyText)) continue;
         const ids = [
-          evidence.add({ kind: 'probe', url: variant.url, label: `URL variant (${variant.label}) answering 200 with the same content`, excerpt: `HTTP 200, canonical ${canonical ?? '(none)'}` }),
-          evidence.add({ kind: 'http', url: preferred, label: 'preferred URL', excerpt: `HTTP ${base.fetch.status}` }),
+          evidence.add({ kind: 'probe', url: variant.url, label: evidenceLabel('URL variant ({variant}) answering 200 with the same content', { variant: variant.label }), excerpt: `HTTP 200, canonical ${canonical ?? '(none)'}` }),
+          evidence.add({ kind: 'http', url: preferred, label: evidenceLabel('preferred URL'), excerpt: `HTTP ${base.fetch.status}` }),
         ];
         results.push(failure({ severity: 'high', evidence: ids, reason: 'duplicate-200', params: { url: variant.url, preferred, variant: variant.label } }));
         continue;
@@ -305,11 +305,11 @@ const internalLinksBrokenRedirected: RuleImplementation = {
     const results: RuleResult[] = [];
     if (broken.length > 0) {
       const template = broken.some(link => link.template);
-      const ids = broken.slice(0, 6).map(link => evidence.add({ kind: 'crawl', url: link.from, label: `internal link${link.template ? ' in navigation, header or footer' : ''} to an error page`, excerpt: `${link.to} -> HTTP ${link.status}` }));
+      const ids = broken.slice(0, 6).map(link => evidence.add({ kind: 'crawl', url: link.from, label: link.template ? evidenceLabel('internal link in navigation, header or footer to an error page') : evidenceLabel('internal link to an error page'), excerpt: `${link.to} -> HTTP ${link.status}` }));
       results.push(failure({ severity: template ? 'medium' : 'low', evidence: ids, reason: 'broken', params: { count: broken.length, targets: summarizeList([...new Set(broken.map(link => link.to))]) } }));
     }
     if (redirected.length > 0) {
-      const ids = redirected.slice(0, 6).map(link => evidence.add({ kind: 'crawl', url: link.from, label: 'internal link to a redirecting URL', excerpt: `${link.to} -> ${link.status} ${link.location}` }));
+      const ids = redirected.slice(0, 6).map(link => evidence.add({ kind: 'crawl', url: link.from, label: evidenceLabel('internal link to a redirecting URL'), excerpt: `${link.to} -> ${link.status} ${link.location}` }));
       const severity: Severity = redirected.length >= 10 ? 'medium' : 'low';
       results.push(failure({ severity, evidence: ids, reason: 'redirected', params: { count: redirected.length, targets: summarizeList([...new Set(redirected.map(link => link.to))]) } }));
     }
@@ -327,16 +327,16 @@ const conditionalRequests: RuleImplementation = {
     const malformed = html.map(page => ({ page, value: headerValue(page.fetch.headers, 'last-modified') }))
       .filter(item => item.value !== undefined && !httpDate.test(item.value.trim()));
     if (malformed.length > 0) {
-      const ids = malformed.slice(0, 3).map(item => evidence.add({ kind: 'header', url: item.page.fetch.finalUrl, label: 'Last-Modified header', excerpt: item.value! }));
+      const ids = malformed.slice(0, 3).map(item => evidence.add({ kind: 'header', url: item.page.fetch.finalUrl, label: evidenceLabel('Last-Modified header'), excerpt: item.value! }));
       return failure({ severity: 'low', evidence: ids, reason: 'malformed-last-modified', params: { url: malformed[0]!.page.fetch.finalUrl, value: malformed[0]!.value! } });
     }
     const validated = html.filter(page => headerValue(page.fetch.headers, 'etag') !== undefined || headerValue(page.fetch.headers, 'last-modified') !== undefined);
     if (validated.length > 0) {
       const page = validated[0]!;
-      return passed([evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: 'cache validator on the HTML response', excerpt: headerValue(page.fetch.headers, 'etag') ?? headerValue(page.fetch.headers, 'last-modified')! })]);
+      return passed([evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('cache validator on the HTML response'), excerpt: headerValue(page.fetch.headers, 'etag') ?? headerValue(page.fetch.headers, 'last-modified')! })]);
     }
     if (!site.crawled || site.pages.size < 1000) return notEvaluated('site-size-unknown');
-    const ids = html.slice(0, 3).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: 'ETag and Last-Modified headers', excerpt: '(absent)' }));
+    const ids = html.slice(0, 3).map(page => evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('ETag and Last-Modified headers'), excerpt: '(absent)' }));
     return failure({ severity: 'low', evidence: ids, reason: 'no-validators', params: { url: html[0]!.fetch.finalUrl, value: '' } });
   },
 };
@@ -373,7 +373,7 @@ const htmlSizeLimit: RuleImplementation = {
     const raw = target.raw!;
     const url = target.fetch.finalUrl;
     const bytes = Math.max(target.fetch.body.length, Buffer.byteLength(raw.html, 'utf8'));
-    const sizeId = evidence.add({ kind: 'http', url, label: `uncompressed HTML size in bytes${target.fetch.truncated ? ' (at least; the fetch was cut)' : ''}`, excerpt: String(bytes) });
+    const sizeId = evidence.add({ kind: 'http', url, label: target.fetch.truncated ? evidenceLabel('uncompressed HTML size in bytes (at least; the fetch was cut)') : evidenceLabel('uncompressed HTML size in bytes'), excerpt: String(bytes) });
     if (bytes <= googlebotHtmlLimit) return passed([sizeId]);
     const cut = charOffsetAtByte(raw.html, googlebotHtmlLimit);
     const parsed = raw.parsed;
@@ -385,7 +385,7 @@ const htmlSizeLimit: RuleImplementation = {
     ];
     const trailingText = trailingMarkup(raw.html, cut).replace(/<(script|style|template)\b[\s\S]*?<\/\1\s*>/giu, ' ').replace(/<[^>]*>/gu, ' ').replace(/\s+/gu, ' ').trim();
     const important = after.length > 0 || trailingText.length > 200;
-    const ids = [sizeId, ...after.slice(0, 5).map(excerpt => evidence.add({ kind: 'html', url, label: 'element after the first 2 MB', excerpt }))];
+    const ids = [sizeId, ...after.slice(0, 5).map(excerpt => evidence.add({ kind: 'html', url, label: evidenceLabel('element after the first 2 MB'), excerpt }))];
     return failure({ severity: important ? 'high' : 'low', evidence: ids, reason: important ? 'content-after-limit' : 'scripts-after-limit', params: { url, bytes, count: after.length } });
   },
 };

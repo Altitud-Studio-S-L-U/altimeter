@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { PageFacts } from '../../core/facts.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { auditedPages, citer, fail, firstHeader, pass, shorten, wordCount, type Cite } from './shared.ts';
@@ -21,8 +22,8 @@ function maintenanceCandidate(page: PageFacts, cite: Cite): RuleResult | undefin
   // A short page whose title or main heading announces maintenance; long pages that discuss maintenance are content.
   if (words > 200 || !(maintenanceWording.test(title) || maintenanceWording.test(h1))) return undefined;
   const evidence = [
-    cite({ kind: 'http', url: page.url, label: 'status of the audited page', excerpt: `${page.fetch.status} ${page.fetch.finalUrl}` }),
-    cite({ kind: 'html', url: page.fetch.finalUrl, label: 'title and main heading of the page', excerpt: shorten(`title: ${title}\nh1: ${h1}`, 300) }),
+    cite({ kind: 'http', url: page.url, label: evidenceLabel('status of the audited page'), excerpt: `${page.fetch.status} ${page.fetch.finalUrl}` }),
+    cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('title and main heading of the page'), excerpt: shorten(`title: ${title}\nh1: ${h1}`, 300) }),
   ];
   return fail('medium', evidence, 'maintenance-page-200', { url: page.fetch.finalUrl, words }, true);
 }
@@ -36,7 +37,7 @@ export const maintenance503: RuleImplementation = {
     for (const page of auditedPages(context.site)) {
       if (page.fetch.status === 503) {
         const retryAfter = firstHeader(page.fetch.headers, 'retry-after');
-        const evidence = cite({ kind: 'header', url: page.fetch.finalUrl, label: '503 response and its Retry-After header', excerpt: `503; Retry-After: ${retryAfter ?? '(absent)'}` });
+        const evidence = cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('503 response and its Retry-After header'), excerpt: `503; Retry-After: ${retryAfter ?? '(absent)'}` });
         if (validRetryAfter(retryAfter)) passes.push(evidence);
         else results.push(fail('low', [evidence], retryAfter === undefined ? 'missing-retry-after' : 'invalid-retry-after', { url: page.fetch.finalUrl }));
         continue;

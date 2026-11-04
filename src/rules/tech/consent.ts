@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { Hop } from '../../fetch/http.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -35,7 +36,7 @@ export const cmpBlocksContent: RuleImplementation = {
     const cite = citer(context);
     const redirect = consentRedirect(page.fetch.hops);
     if (redirect) {
-      return fail('high', [cite({ kind: 'redirect', url: page.url, label: 'redirect to a consent page before the content', excerpt: `${redirect.status} ${redirect.url} -> ${redirect.location}` })], 'consent-redirect', { target: redirect.location! });
+      return fail('high', [cite({ kind: 'redirect', url: page.url, label: evidenceLabel('redirect to a consent page before the content'), excerpt: `${redirect.status} ${redirect.url} -> ${redirect.location}` })], 'consent-redirect', { target: redirect.location! });
     }
     const rendered = page.rendered!;
     const container = consentContainer(rendered);
@@ -43,10 +44,10 @@ export const cmpBlocksContent: RuleImplementation = {
     const raw = page.raw;
     const rawWords = raw ? wordCount(raw.parsed.bodyText) : 0;
     const renderedWords = wordCount(rendered.parsed.bodyText);
-    const evidence = [cite({ kind: 'render', url: page.fetch.finalUrl, label: 'consent container in the render without interaction', excerpt: shorten(container, 300) })];
+    const evidence = [cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('consent container in the render without interaction'), excerpt: shorten(container, 300) })];
     // The served HTML stands in for the content after consent; a pre-consent render with less than half of it withholds content.
     if (rawWords >= 100 && renderedWords < rawWords * 0.5) {
-      evidence.push(cite({ kind: 'text', url: page.fetch.finalUrl, label: 'body word count in the raw HTML and in the render before consent', excerpt: `raw=${rawWords} rendered=${renderedWords}` }));
+      evidence.push(cite({ kind: 'text', url: page.fetch.finalUrl, label: evidenceLabel('body word count in the raw HTML and in the render before consent'), excerpt: `raw=${rawWords} rendered=${renderedWords}` }));
       return fail('high', evidence, 'content-withheld', { rawWords, renderedWords });
     }
     return pass(evidence);
@@ -86,9 +87,9 @@ function orderingResult(page: PageFacts, doc: DocumentFacts, cite: Cite): RuleRe
   const order = tagOrder(doc);
   if (!order.googleTag) return undefined;
   const url = page.fetch.finalUrl;
-  const tag = cite({ kind: 'html', url, label: 'first Google tag in the HTML', excerpt: order.googleTag.excerpt });
+  const tag = cite({ kind: 'html', url, label: evidenceLabel('first Google tag in the HTML'), excerpt: order.googleTag.excerpt });
   if (!order.consentDefault) return fail('info', [tag], 'no-consent-default');
-  const defaults = cite({ kind: 'html', url, label: 'consent mode default command', excerpt: order.consentDefault.excerpt });
+  const defaults = cite({ kind: 'html', url, label: evidenceLabel('consent mode default command'), excerpt: order.consentDefault.excerpt });
   if (order.consentDefault.offset > order.googleTag.offset) return fail('info', [tag, defaults], 'default-after-tags');
   return pass([tag, defaults]);
 }

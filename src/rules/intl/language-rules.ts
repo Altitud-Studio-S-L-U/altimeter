@@ -1,4 +1,5 @@
 import { detectLanguage, isDetectable } from '../../analyze/language.ts';
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { PageFacts } from '../../core/facts.ts';
 import { headerValue } from '../../fetch/http.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -35,7 +36,7 @@ export const valueVsContentLanguage: RuleImplementation = {
     const detected = language.guess.language;
     const textId = languageEvidence(evidence, self, language);
     if (matches(languages, detected) || language.guess.confidence < decisive.confidence) return pass([textId]);
-    const ids = [...annotations.slice(0, 3).map(annotation => annotationEvidence(evidence, annotation, `hreflang value assigned to this page by ${annotation.declaringUrl}`)), textId];
+    const ids = [...annotations.slice(0, 3).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang value assigned to this page by {url}', { url: annotation.declaringUrl }))), textId];
     const params = { declared: list(languages.map(languageLabel)), detected: languageLabel(detected), words: language.guess.words };
     if (language.guess.words < decisive.words) return fail('info', ids, params, 'short-content', true);
     return fail('medium', ids, params, undefined, languages.some(code => needsConfirmation(detected, code)));
@@ -62,12 +63,12 @@ export const htmlLangMissingOrInvalid: RuleImplementation = {
     if (raw === undefined) {
       const { value, source } = langAttribute(page!);
       if (source === 'rendered' && value !== undefined && bcp47Problem(value) === undefined) {
-        return fail('info', [evidence.add({ kind: 'render', url, label: 'lang attribute set only after rendering', excerpt: htmlStart(page!, 'rendered') })], { value }, 'set-by-script');
+        return fail('info', [evidence.add({ kind: 'render', url, label: evidenceLabel('lang attribute set only after rendering'), excerpt: htmlStart(page!, 'rendered') })], { value }, 'set-by-script');
       }
-      return fail('low', [evidence.add({ kind: 'html', url, label: 'html element without a lang attribute', excerpt: htmlStart(page!, 'raw') || '(no html start tag)' })], { value: '' }, 'missing');
+      return fail('low', [evidence.add({ kind: 'html', url, label: evidenceLabel('html element without a lang attribute'), excerpt: htmlStart(page!, 'raw') || '(no html start tag)' })], { value: '' }, 'missing');
     }
     const problem = bcp47Problem(raw);
-    const id = evidence.add({ kind: 'html', url, label: 'lang attribute of the html element', excerpt: htmlStart(page!, 'raw') });
+    const id = evidence.add({ kind: 'html', url, label: evidenceLabel('lang attribute of the html element'), excerpt: htmlStart(page!, 'raw') });
     if (problem === undefined) return pass([id]);
     return fail('low', [id], { value: raw }, problem);
   },
@@ -85,7 +86,7 @@ export const htmlLangVsContent: RuleImplementation = {
     const textId = languageEvidence(evidence, page!.fetch.finalUrl, language);
     const detected = language.guess.language;
     if (sameLanguage(declared, detected) || !isDecisive(language.guess)) return pass([textId]);
-    return fail('low', [evidence.add({ kind: source === 'raw' ? 'html' : 'render', url: page!.fetch.finalUrl, label: 'lang attribute of the html element', excerpt: htmlStart(page!, source) }), textId],
+    return fail('low', [evidence.add({ kind: source === 'raw' ? 'html' : 'render', url: page!.fetch.finalUrl, label: evidenceLabel('lang attribute of the html element'), excerpt: htmlStart(page!, source) }), textId],
       { lang: value!, declared: languageLabel(declared), detected: languageLabel(detected) }, undefined, needsConfirmation(detected, declared));
   },
 };
@@ -101,11 +102,11 @@ export const contentLanguageSignalConflict: RuleImplementation = {
     const ids: string[] = [];
     const declared: string[] = [];
     if (header !== undefined) {
-      ids.push(evidence.add({ kind: 'header', url, label: 'Content-Language response header', excerpt: `Content-Language: ${header}` }));
+      ids.push(evidence.add({ kind: 'header', url, label: evidenceLabel('Content-Language response header'), excerpt: `Content-Language: ${header}` }));
       declared.push(...header.split(',').map(entry => primaryLanguage(entry)).filter((code): code is string => code !== undefined));
     }
     if (pragma) {
-      const pragmaId = evidence.add({ kind: 'html', url, label: 'content-language pragma, which HTML marks non-conforming', excerpt: elementSource(page!.raw!.html, pragma), line: pragma.line });
+      const pragmaId = evidence.add({ kind: 'html', url, label: evidenceLabel('content-language pragma, which HTML marks non-conforming'), excerpt: elementSource(page!.raw!.html, pragma), line: pragma.line });
       ids.push(pragmaId);
       declared.push(...(pragma.attrs.content ?? '').split(',').map(entry => primaryLanguage(entry)).filter((code): code is string => code !== undefined));
       results.push(fail('info', [pragmaId], { value: pragma.attrs.content ?? '' }, 'meta-pragma'));
@@ -113,7 +114,7 @@ export const contentLanguageSignalConflict: RuleImplementation = {
     if (declared.length === 0) return results.length > 0 ? results : pass(ids);
     const lang = primaryLanguage(langAttribute(page!).value);
     if (lang && !matches(declared, lang)) {
-      results.push(fail('low', [...ids, evidence.add({ kind: 'html', url, label: 'lang attribute of the html element', excerpt: htmlStart(page!, 'raw') })],
+      results.push(fail('low', [...ids, evidence.add({ kind: 'html', url, label: evidenceLabel('lang attribute of the html element'), excerpt: htmlStart(page!, 'raw') })],
         { declared: list(declared), other: lang }, 'conflicts-with-lang'));
       return results;
     }
@@ -153,8 +154,8 @@ export const mixedLanguagePage: RuleImplementation = {
     if (secondary.length === 0) return pass();
     const [other, otherEntry] = secondary[0]!;
     const ids = [
-      ...otherEntry.samples.map(sample => evidence.add({ kind: 'text', url: page!.fetch.finalUrl, label: `main-content block detected as ${languageLabel(other)}`, excerpt: sample.slice(0, 300) })),
-      evidence.add({ kind: 'text', url: page!.fetch.finalUrl, label: `main-content block detected as ${languageLabel(primary)}`, excerpt: primaryEntry.samples[0]!.slice(0, 300) }),
+      ...otherEntry.samples.map(sample => evidence.add({ kind: 'text', url: page!.fetch.finalUrl, label: evidenceLabel('main-content block detected as {language}', { language: languageLabel(other) }), excerpt: sample.slice(0, 300) })),
+      evidence.add({ kind: 'text', url: page!.fetch.finalUrl, label: evidenceLabel('main-content block detected as {language}', { language: languageLabel(primary) }), excerpt: primaryEntry.samples[0]!.slice(0, 300) }),
     ];
     return fail('medium', ids, { primary: languageLabel(primary), secondary: languageLabel(other), share: Math.round((otherEntry.count / total) * 100) }, undefined, true);
   },
@@ -251,8 +252,8 @@ export const metadataTranslationParity: RuleImplementation = {
         const twin = theirs.find(entry => entry.name === field.name && entry.text === field.text);
         if (!twin || wordCount(field.text) < 4) continue;
         results.push(fail('medium', [
-          evidence.add({ kind: 'html', url: self, label: `${field.name} of this page`, excerpt: field.excerpt, ...(field.line ? { line: field.line } : {}) }),
-          evidence.add({ kind: 'html', url: href, label: `identical ${field.name} on the version in another language`, excerpt: twin.excerpt, ...(twin.line ? { line: twin.line } : {}) }),
+          evidence.add({ kind: 'html', url: self, label: evidenceLabel('{field} of this page', { field: field.name }), excerpt: field.excerpt, ...(field.line ? { line: field.line } : {}) }),
+          evidence.add({ kind: 'html', url: href, label: evidenceLabel('identical {field} on the version in another language', { field: field.name }), excerpt: twin.excerpt, ...(twin.line ? { line: twin.line } : {}) }),
         ], { field: field.name, other: href }, 'identical-to-other-locale', true));
       }
     }
@@ -266,7 +267,7 @@ export const metadataTranslationParity: RuleImplementation = {
       for (const field of candidates) {
         const guess = detectLanguage(field.text);
         if (guess.language === 'und' || guess.confidence < 0.9 || sameLanguage(guess.language, pageCode)) continue;
-        results.push(fail('medium', [evidence.add({ kind: 'html', url: self, label: `${field.name} detected as ${languageLabel(guess.language)} (confidence ${guess.confidence.toFixed(2)})`, excerpt: field.excerpt, ...(field.line ? { line: field.line } : {}) })],
+        results.push(fail('medium', [evidence.add({ kind: 'html', url: self, label: evidenceLabel('{field} detected as {language} (confidence {confidence})', { field: field.name, language: languageLabel(guess.language), confidence: guess.confidence.toFixed(2) }), excerpt: field.excerpt, ...(field.line ? { line: field.line } : {}) })],
           { field: field.name, detected: languageLabel(guess.language), expected: languageLabel(pageCode) }, 'field-language', needsConfirmation(guess.language, pageCode)));
       }
     }
@@ -293,20 +294,20 @@ export const ogLocale: RuleImplementation = {
       if (!doc.parsed.metas.some(meta => (meta.attrs.property ?? '').toLowerCase().startsWith('og:'))) return notApplicable('no-open-graph');
       if (!pageCode) return notEvaluated('page-language-unknown');
       if (sameLanguage(pageCode, 'en')) return pass();
-      const ids = [fromContent ? languageEvidence(evidence, url, detected!) : evidence.add({ kind: 'html', url, label: 'declared page language', excerpt: fromLang ? `lang="${doc.parsed.htmlLang}"` : `hreflang ${fromHreflang}` })];
+      const ids = [fromContent ? languageEvidence(evidence, url, detected!) : evidence.add({ kind: 'html', url, label: evidenceLabel('declared page language'), excerpt: fromLang ? `lang="${doc.parsed.htmlLang}"` : `hreflang ${fromHreflang}` })];
       return fail('low', ids, { language: languageLabel(pageCode) }, 'missing-non-english');
     }
     const value = locale.attrs.content.trim();
-    const id = evidence.add({ kind: 'html', url, label: 'og:locale meta element', excerpt: elementSource(doc.html, locale), line: locale.line });
+    const id = evidence.add({ kind: 'html', url, label: evidenceLabel('og:locale meta element'), excerpt: elementSource(doc.html, locale), line: locale.line });
     const results: RuleResult[] = [];
     const malformed = [locale, ...alternates].filter(meta => !ogFormat.test((meta.attrs.content ?? '').trim()));
     if (malformed.length > 0) {
-      results.push(fail('low', malformed.map(meta => evidence.add({ kind: 'html', url, label: `${(meta.attrs.property ?? '').toLowerCase()} value not in language_TERRITORY form`, excerpt: elementSource(doc.html, meta), line: meta.line })),
+      results.push(fail('low', malformed.map(meta => evidence.add({ kind: 'html', url, label: evidenceLabel('{property} value not in language_TERRITORY form', { property: (meta.attrs.property ?? '').toLowerCase() }), excerpt: elementSource(doc.html, meta), line: meta.line })),
         { value: list(malformed.map(meta => `"${(meta.attrs.content ?? '').trim()}"`)) }, 'malformed'));
     }
     const ogLanguage = primaryLanguage(value);
     if (ogLanguage && pageCode && !sameLanguage(ogLanguage, pageCode)) {
-      results.push(fail('low', [id, fromContent ? languageEvidence(evidence, url, detected!) : evidence.add({ kind: 'html', url, label: 'declared page language', excerpt: fromLang ? `lang="${doc.parsed.htmlLang}"` : `hreflang ${fromHreflang}` })],
+      results.push(fail('low', [id, fromContent ? languageEvidence(evidence, url, detected!) : evidence.add({ kind: 'html', url, label: evidenceLabel('declared page language'), excerpt: fromLang ? `lang="${doc.parsed.htmlLang}"` : `hreflang ${fromHreflang}` })],
         { value, language: languageLabel(pageCode) }, 'language-mismatch'));
     }
     return results.length > 0 ? results : pass([id]);

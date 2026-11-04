@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { RuleImplementation } from '../engine.ts';
 import { absoluteUrl } from '../helpers.ts';
 import { flatten, sameSet } from './compare.ts';
@@ -36,11 +37,11 @@ export const idDanglingOrConflicting: RuleImplementation = {
     for (const reference of references) {
       if (graph.byId.has(reference.id) || !fragmentOfPage(reference.id, graph.base)) continue;
       problems.push({ reason: 'dangling-reference', severity: 'low', subject: reference.id,
-        evidence: cite(context, graph, reference.node, '@id reference with no definition on the page', reference.property, reference.id) });
+        evidence: cite(context, graph, reference.node, evidenceLabel('@id reference with no definition on the page'), reference.property, reference.id) });
     }
     for (const [id, nodes] of graph.byId) {
       if (/\s|[<>"{}|\\^`]/u.test(id)) {
-        problems.push({ reason: 'invalid-id', severity: 'low', subject: id, evidence: cite(context, graph, nodes[0]!, '@id that is not a valid IRI', undefined, id) });
+        problems.push({ reason: 'invalid-id', severity: 'low', subject: id, evidence: cite(context, graph, nodes[0]!, evidenceLabel('@id that is not a valid IRI'), undefined, id) });
       }
       if (nodes.length < 2) continue;
       for (let i = 1; i < nodes.length; i++) {
@@ -48,8 +49,8 @@ export const idDanglingOrConflicting: RuleImplementation = {
         const other = nodes[i]!;
         if (!compatible(first.types, other.types)) {
           problems.push({ reason: 'conflicting-types', severity: 'medium', subject: `${id}: ${first.types.join('+')} / ${other.types.join('+')}`,
-            evidence: cite(context, graph, first, 'definition of an @id', undefined, `${id}: ${first.types.join(', ')}`),
-            also: [cite(context, graph, other, 'another definition of the same @id with an unrelated type', undefined, `${id}: ${other.types.join(', ')}`)] });
+            evidence: cite(context, graph, first, evidenceLabel('definition of an @id'), undefined, `${id}: ${first.types.join(', ')}`),
+            also: [cite(context, graph, other, evidenceLabel('another definition of the same @id with an unrelated type'), undefined, `${id}: ${other.types.join(', ')}`)] });
         }
         for (const key of scalarKeys) {
           const own = (node: GraphNode) => new Set(ownValues(graph, node, key));
@@ -57,7 +58,7 @@ export const idDanglingOrConflicting: RuleImplementation = {
           const b = own(other);
           if (a.size === 0 || b.size === 0 || [...a].some(value => b.has(value))) continue;
           problems.push({ reason: 'conflicting-values', severity: 'medium', subject: `${id} ${key}`,
-            evidence: cite(context, graph, first, `${key} of an @id`, key), also: [cite(context, graph, other, `different ${key} for the same @id`, key)] });
+            evidence: cite(context, graph, first, evidenceLabel('{property} of an @id', { property: key }), key), also: [cite(context, graph, other, evidenceLabel('different {property} for the same @id', { property: key }), key)] });
         }
       }
     }
@@ -127,8 +128,8 @@ export const duplicateFeatureNodes: RuleImplementation = {
           reason: differing.length > 0 ? 'conflicting-duplicate' : 'exact-duplicate',
           severity: differing.length > 0 ? 'medium' : 'low',
           subject: `${familyOf(a)} ${shared[0]}${differing.length > 0 ? ` (${differing.join(', ')})` : ''}`,
-          evidence: cite(context, graph, a, `${familyOf(a)} node`),
-          also: [cite(context, graph, b, `another ${familyOf(a)} node for the same ${shared[0]!.split(':')[0]}`)],
+          evidence: cite(context, graph, a, evidenceLabel('{type} node', { type: familyOf(a)! })),
+          also: [cite(context, graph, b, evidenceLabel('another {type} node for the same {identity}', { type: familyOf(a)!, identity: shared[0]!.split(':')[0]! }))],
         });
       }
     }

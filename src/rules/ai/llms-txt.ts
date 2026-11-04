@@ -1,4 +1,5 @@
 import { isHtmlResponse } from '../../collect/page.ts';
+import { evidenceLabel } from '../../core/evidence.ts';
 import { headerValue } from '../../fetch/http.ts';
 import { isAllowed } from '../../fetch/robots.ts';
 import { summarizeList } from '../helpers.ts';
@@ -37,7 +38,7 @@ const llmsTxt: RuleImplementation = {
     const text = fetch.body.toString('utf8');
     const shape = llmsTxtShape(text);
     const url = fetch.finalUrl;
-    const fileEvidence = evidence.add({ kind: 'http', url, label: 'llms.txt response', excerpt: `HTTP 200; content-type: ${type || '(none)'}\n${clip(text.trim(), 300)}` });
+    const fileEvidence = evidence.add({ kind: 'http', url, label: evidenceLabel('llms.txt response'), excerpt: `HTTP 200; content-type: ${type || '(none)'}\n${clip(text.trim(), 300)}` });
     const results: RuleResult[] = [];
     if (!/^text\/(?:plain|markdown)\b/iu.test(type)) {
       results.push({ outcome: 'fail', severity: 'info', reason: 'content-type', evidence: [fileEvidence], params: { contentType: type || '(none)' } });
@@ -56,7 +57,7 @@ const llmsTxt: RuleImplementation = {
     if (disallowed.length > 0) {
       results.push({
         outcome: 'fail', severity: 'info', reason: 'disallowed-links',
-        evidence: disallowed.slice(0, 5).map(link => evidence.add({ kind: 'text', url, label: 'llms.txt link to a path robots.txt disallows for a search crawler', excerpt: link.href, line: link.line })),
+        evidence: disallowed.slice(0, 5).map(link => evidence.add({ kind: 'text', url, label: evidenceLabel('llms.txt link to a path robots.txt disallows for a search crawler'), excerpt: link.href, line: link.line })),
         params: { count: disallowed.length },
       });
     }

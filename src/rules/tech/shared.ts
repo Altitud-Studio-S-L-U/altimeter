@@ -1,4 +1,4 @@
-import type { NewEvidence } from '../../core/evidence.ts';
+import type { EvidenceLabel, NewEvidence } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue, type HeaderMap } from '../../fetch/http.ts';
@@ -11,7 +11,7 @@ export type Cite = (entry: CiteEntry) => string;
 
 export interface CiteEntry {
   readonly kind: NewEvidence['kind'];
-  readonly label: string;
+  readonly label: EvidenceLabel;
   readonly url?: string | undefined;
   readonly excerpt?: string | undefined;
   readonly line?: number | undefined;

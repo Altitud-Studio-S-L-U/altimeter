@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import { createHash } from 'node:crypto';
 import { decodeHtml, documentFacts, isHtmlResponse } from '../../collect/page.ts';
 import type { AgentProbe, DocumentFacts, PageFacts } from '../../core/facts.ts';
@@ -69,7 +70,7 @@ export const aiArtifacts: RuleImplementation = {
       ...scan('image alt text', alts, rendered),
     ];
     if (matches.length === 0) return { outcome: 'pass' };
-    const evidence = matches.slice(0, 5).map(match => cite(context, 'text', `${match.kind === 'assistant' ? 'assistant phrase' : 'unfilled template token'} in the ${match.where}`, { excerpt: match.excerpt }));
+    const evidence = matches.slice(0, 5).map(match => cite(context, 'text', match.kind === 'assistant' ? evidenceLabel('assistant phrase in the {where}', { where: match.where }) : evidenceLabel('unfilled template token in the {where}', { where: match.where }), { excerpt: match.excerpt }));
     const template = matches.some(match => match.kind === 'template');
     // On a page about AI an assistant phrase may be quoted as an example; the analyst decides.
     const needsJudgment = !template && aboutAi.test(text.replace(new RegExp(assistantPhrases.map(pattern => pattern.source).join('|'), 'giu'), ''));
@@ -109,7 +110,7 @@ export const hiddenText: RuleImplementation = {
     return {
       outcome: 'fail', severity: 'medium', needsJudgment: true,
       params: { words: hiddenWords.length, blocks: blocks.length, reasons: summarizeList([...new Set(blocks.map(block => block.hidden!))]) },
-      evidence: blocks.slice(0, 5).map(block => cite(context, 'render', `text hidden by ${block.hidden}`, { excerpt: block.text, path: block.selector })),
+      evidence: blocks.slice(0, 5).map(block => cite(context, 'render', evidenceLabel('text hidden by {method}', { method: block.hidden! }), { excerpt: block.text, path: block.selector })),
     };
   },
 };
@@ -122,19 +123,19 @@ export const hiddenLinks: RuleImplementation = {
   evaluate(context) {
     const page = context.page!;
     const rendered = page.rendered!;
-    const candidates: Array<{ href: string; text: string; why: string; selector?: string }> = [];
+    const candidates: Array<{ href: string; text: string; why: EvidenceLabel; selector?: string }> = [];
     for (const anchor of anchorsOf(rendered, page.fetch.finalUrl)) {
       if (!anchor.external || !followed(anchor) || attribute(anchor.element, 'aria-label')) continue;
       const text = anchor.text;
       if (text.length === 1 && !iconCharacter.test(text) && !anchor.element.childNodes.some(child => 'tagName' in child && ['img', 'svg'].includes(child.tagName))) {
-        candidates.push({ href: anchor.href, text, why: 'single-character anchor' });
+        candidates.push({ href: anchor.href, text, why: evidenceLabel('single-character anchor') });
         continue;
       }
       if (text === '' || shownIn(page.userRender, text)) continue;
       const blocks = rendered.result.textBlocks.filter(block => /(^|> )a([.#][^>]*)?$/u.test(block.selector) && normalizeText(block.text) === normalizeText(text));
       if (blocks.length === 0 || !blocks.every(block => block.hidden !== undefined && hidingReasons.has(block.hidden) && !designHiddenSelector.test(block.selector))) continue;
       if (blocks.every(block => block.hidden === 'opacity-zero') && !page.userRender) continue;
-      candidates.push({ href: anchor.href, text, why: `link hidden by ${blocks[0]!.hidden}`, selector: blocks[0]!.selector });
+      candidates.push({ href: anchor.href, text, why: evidenceLabel('link hidden by {method}', { method: blocks[0]!.hidden! }), selector: blocks[0]!.selector });
     }
     if (candidates.length === 0) return { outcome: 'pass' };
     const hosts = [...new Set(candidates.map(candidate => new URL(candidate.href).hostname))];
@@ -176,12 +177,12 @@ export const keywordStuffing: RuleImplementation = {
     }
     if (best) {
       return { outcome: 'fail', severity: 'medium', needsJudgment: true, reason: 'repeated-phrase', params: { phrase: best.phrase, count: best.count, words: tokens.length },
-        evidence: [cite(context, 'text', `phrase repeated ${best.count} times in ${tokens.length} words of main content`, { excerpt: best.phrase })] };
+        evidence: [cite(context, 'text', evidenceLabel('phrase repeated {count} times in {words} words of main content', { count: best.count, words: tokens.length }), { excerpt: best.phrase })] };
     }
     const phones = [...new Set((text.match(phonePattern) ?? []).map(value => value.replace(/\D/gu, '')).filter(digits => digits.length >= 9 && digits.length <= 15))];
     if (phones.length >= 5 && tokens.length < phones.length * 25) {
       return { outcome: 'fail', severity: 'medium', needsJudgment: true, reason: 'number-list', params: { count: phones.length, words: tokens.length },
-        evidence: [cite(context, 'text', `${phones.length} phone numbers in ${tokens.length} words of main content`, { excerpt: clip(phones.join(', '), 200) })] };
+        evidence: [cite(context, 'text', evidenceLabel('{count} phone numbers in {words} words of main content', { count: phones.length, words: tokens.length }), { excerpt: clip(phones.join(', '), 200) })] };
     }
     return { outcome: 'pass' };
   },
@@ -247,13 +248,13 @@ export const cloakingUa: RuleImplementation = {
       || normalizeText(firstH1(googlebot.doc)?.text ?? '') !== normalizeText(firstH1(userView)?.text ?? '');
     const distance = hamming(simhash(contentText(googlebot.doc, { wholeBody: true })), simhash(contentText(userView, { wholeBody: true })));
     const evidence = [
-      cite(context, 'probe', 'title served to the Googlebot user agent', { url: googlebot.probe.fetch.finalUrl, excerpt: googlebotTitle }),
-      cite(context, 'probe', 'title served to a browser user agent', { url: browser.probe.fetch.finalUrl, excerpt: browserTitle }),
+      cite(context, 'probe', evidenceLabel('title served to the Googlebot user agent'), { url: googlebot.probe.fetch.finalUrl, excerpt: googlebotTitle }),
+      cite(context, 'probe', evidenceLabel('title served to a browser user agent'), { url: browser.probe.fetch.finalUrl, excerpt: browserTitle }),
     ];
     if (googlebotOnly.length > 0) {
       const examples = anchorsOf(googlebot.doc, base).filter(anchor => googlebotOnly.includes(registrableDomain(anchor.href)!)).slice(0, 3);
       return { outcome: 'fail', severity: 'high', reason: 'googlebot-only-links', params: { hosts: summarizeList(googlebotOnly) },
-        evidence: [...evidence, ...examples.map(anchor => cite(context, 'probe', 'followed link served only to the Googlebot user agent', { url: googlebot.probe.fetch.finalUrl, excerpt: `${anchor.text} -> ${anchor.href}`, line: anchor.line }))] };
+        evidence: [...evidence, ...examples.map(anchor => cite(context, 'probe', evidenceLabel('followed link served only to the Googlebot user agent'), { url: googlebot.probe.fetch.finalUrl, excerpt: `${anchor.text} -> ${anchor.href}`, line: anchor.line }))] };
     }
     if (headingDiffers && distance > 10) return { outcome: 'fail', severity: 'high', reason: 'different-content', evidence, params: { distance } };
     if (headingDiffers || distance > 10) return { outcome: 'fail', severity: 'low', reason: 'minor-divergence', evidence, params: { distance } };
@@ -281,8 +282,8 @@ export const sneakyRedirects: RuleImplementation = {
     const googlebotLanding = landing(googlebot);
     const browserLanding = landing(browser);
     const evidence = [
-      cite(context, 'redirect', 'where the Googlebot user agent lands', { url: googlebot.probe.url, excerpt: googlebotLanding }),
-      cite(context, 'redirect', 'where a browser user agent lands', { url: browser.probe.url, excerpt: browserLanding }),
+      cite(context, 'redirect', evidenceLabel('where the Googlebot user agent lands'), { url: googlebot.probe.url, excerpt: googlebotLanding }),
+      cite(context, 'redirect', evidenceLabel('where a browser user agent lands'), { url: browser.probe.url, excerpt: browserLanding }),
     ];
     if (registrableDomain(googlebotLanding) === registrableDomain(browserLanding)) return { outcome: 'pass', evidence };
     if ([googlebotLanding, browserLanding].some(landingUrl => consentOrLogin.test(landingUrl))) return notEvaluated('consent-or-login-redirect');
@@ -313,7 +314,7 @@ export const hackedSignals: RuleImplementation = {
       .filter(entry => spamVocabulary.test(safePath(entry.url.loc).replace(/[-_/+]/gu, ' ')));
     if (spamUrls.length > 0) {
       results.push({ outcome: 'fail', severity: 'medium', needsJudgment: true, reason: 'spam-urls-in-sitemap', params: { count: spamUrls.length },
-        evidence: spamUrls.slice(0, 5).map(entry => cite(context, 'sitemap', 'sitemap URL with vocabulary typical of injected spam', { url: entry.sitemap.url, excerpt: entry.url.loc, line: entry.url.line })) });
+        evidence: spamUrls.slice(0, 5).map(entry => cite(context, 'sitemap', evidenceLabel('sitemap URL with vocabulary typical of injected spam'), { url: entry.sitemap.url, excerpt: entry.url.loc, line: entry.url.line })) });
     }
     const pageHits: string[] = [];
     const foreign: string[] = [];
@@ -322,14 +323,14 @@ export const hackedSignals: RuleImplementation = {
       if (!doc) continue;
       const text = contentText(doc, { wholeBody: true });
       const links = anchorsOf(doc, page.fetch.finalUrl).filter(anchor => anchor.external && spamVocabulary.test(`${anchor.text} ${anchor.href}`));
-      for (const anchor of links.slice(0, 3)) pageHits.push(cite(context, 'html', 'outbound link with vocabulary typical of injected spam', { url: page.fetch.finalUrl, excerpt: `${anchor.text} -> ${anchor.href}`, line: anchor.line }));
+      for (const anchor of links.slice(0, 3)) pageHits.push(cite(context, 'html', evidenceLabel('outbound link with vocabulary typical of injected spam'), { url: page.fetch.finalUrl, excerpt: `${anchor.text} -> ${anchor.href}`, line: anchor.line }));
       const match = spamVocabulary.exec(text);
-      if (links.length === 0 && match) pageHits.push(cite(context, 'text', 'page text with vocabulary typical of injected spam', { url: page.fetch.finalUrl, excerpt: clip(text.slice(Math.max(0, match.index - 60), match.index + 80), 200) }));
+      if (links.length === 0 && match) pageHits.push(cite(context, 'text', evidenceLabel('page text with vocabulary typical of injected spam'), { url: page.fetch.finalUrl, excerpt: clip(text.slice(Math.max(0, match.index - 60), match.index + 80), 200) }));
       const letters = (text.match(/\p{L}/gu) ?? []).length;
       const cjkCount = (text.match(cjk) ?? []).length;
       const lang = (doc.parsed.htmlLang ?? '').toLowerCase();
       if (!cjkSite && !/^(zh|ja|ko)/u.test(lang) && cjkCount >= 200 && cjkCount / Math.max(letters, 1) >= 0.3) {
-        foreign.push(cite(context, 'text', 'large block of Chinese, Japanese or Korean text on a site in another language', { url: page.fetch.finalUrl, excerpt: clip(text.slice(text.search(cjk), text.search(cjk) + 120)) }));
+        foreign.push(cite(context, 'text', evidenceLabel('large block of Chinese, Japanese or Korean text on a site in another language'), { url: page.fetch.finalUrl, excerpt: clip(text.slice(text.search(cjk), text.search(cjk) + 120)) }));
       }
     }
     if (pageHits.length > 0) results.push({ outcome: 'fail', severity: 'medium', needsJudgment: true, reason: 'spam-vocabulary', params: { count: pageHits.length }, evidence: pageHits.slice(0, 5) });
@@ -342,7 +343,7 @@ export const hackedSignals: RuleImplementation = {
       const match = spamVocabulary.exec(served);
       if (match && !spamVocabulary.test(contentText(browser.doc, { wholeBody: true }))) {
         results.push({ outcome: 'fail', severity: 'medium', needsJudgment: true, reason: 'cloaked-spam', params: { term: match[0] },
-          evidence: [cite(context, 'probe', 'spam vocabulary served only to the Googlebot user agent', { url: googlebot.probe.fetch.finalUrl, excerpt: clip(served.slice(Math.max(0, match.index - 60), match.index + 80), 200) })] });
+          evidence: [cite(context, 'probe', evidenceLabel('spam vocabulary served only to the Googlebot user agent'), { url: googlebot.probe.fetch.finalUrl, excerpt: clip(served.slice(Math.max(0, match.index - 60), match.index + 80), 200) })] });
       }
     }
     return results.length > 0 ? results : { outcome: 'pass' };

@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { ResourceFacts, SiteFacts } from '../../core/facts.ts';
 import { isAllowed } from '../../fetch/robots.ts';
 import type { LinkRef } from '../../parse/html.ts';
@@ -24,17 +25,17 @@ export const faviconDeclared: RuleImplementation = {
     const links = doc.parsed.links.filter(link => isFaviconLink(link) && (link.attrs.href ?? '').trim() !== '');
     const inHead = links.filter(link => link.inHead);
     if (inHead.length > 0) {
-      return pass(inHead.slice(0, 4).map(link => cite({ kind: 'html', url: page.fetch.finalUrl, label: 'favicon link element in the home page head', excerpt: linkExcerpt(link), line: link.line })));
+      return pass(inHead.slice(0, 4).map(link => cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('favicon link element in the home page head'), excerpt: linkExcerpt(link), line: link.line })));
     }
     if (links.length > 0) {
-      const evidence = links.slice(0, 4).map(link => cite({ kind: 'html', url: page.fetch.finalUrl, label: 'favicon link element outside the head', excerpt: linkExcerpt(link), line: link.line }));
+      const evidence = links.slice(0, 4).map(link => cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('favicon link element outside the head'), excerpt: linkExcerpt(link), line: link.line }));
       return fail('low', evidence, 'outside-head');
     }
     const fallback = context.site.resources.find(resource => resource.purpose === 'favicon' && new URL(resource.url).pathname === '/favicon.ico' && sameSite(resource.url, page.fetch.finalUrl));
-    const absent = cite({ kind: 'html', url: page.fetch.finalUrl, label: 'home page without a link element whose rel is icon, shortcut icon or apple-touch-icon', excerpt: '<link rel="icon"> (absent)' });
+    const absent = cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('home page without a link element whose rel is icon, shortcut icon or apple-touch-icon'), excerpt: '<link rel="icon"> (absent)' });
     if (fallback && fallback.fetch.status === 200 && imageInfo(fallback.fetch.body).format !== undefined) {
       // Google documents only the link element; /favicon.ico alone is reported for context.
-      return fail('info', [absent, cite({ kind: 'http', url: fallback.url, label: 'undeclared /favicon.ico response', excerpt: `${fallback.fetch.status} ${firstHeader(fallback.fetch.headers, 'content-type') ?? ''}`.trim() })], 'favicon-ico-only');
+      return fail('info', [absent, cite({ kind: 'http', url: fallback.url, label: evidenceLabel('undeclared /favicon.ico response'), excerpt: `${fallback.fetch.status} ${firstHeader(fallback.fetch.headers, 'content-type') ?? ''}`.trim() })], 'favicon-ico-only');
     }
     return fail('medium', [absent], 'missing');
   },
@@ -68,7 +69,7 @@ function robotsProblem(site: SiteFacts, url: string): string | undefined {
 function candidate(site: SiteFacts, resource: ResourceFacts, cite: Cite): Candidate {
   const { fetch } = resource;
   const info = fetch.status === 200 ? imageInfo(fetch.body) : { format: undefined };
-  const evidence = cite({ kind: 'http', url: resource.url, label: 'favicon file response', excerpt: `${fetch.status ?? fetch.error?.code ?? 'no response'} ${firstHeader(fetch.headers, 'content-type') ?? ''} ${fetch.status === 200 ? describeImage(info) : ''}`.replace(/\s+/gu, ' ').trim() });
+  const evidence = cite({ kind: 'http', url: resource.url, label: evidenceLabel('favicon file response'), excerpt: `${fetch.status ?? fetch.error?.code ?? 'no response'} ${firstHeader(fetch.headers, 'content-type') ?? ''} ${fetch.status === 200 ? describeImage(info) : ''}`.replace(/\s+/gu, ' ').trim() });
   const directives = directivesFor(robotsDirectives(fetch.headers, undefined), 'googlebot-image');
   let problem: string | undefined;
   if (fetch.status !== 200) problem = 'not-200';

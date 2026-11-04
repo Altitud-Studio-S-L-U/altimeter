@@ -1,4 +1,4 @@
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { PageFacts } from '../../core/facts.ts';
 import { headerValue, type Hop } from '../../fetch/http.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
@@ -9,10 +9,10 @@ import {
 } from './shared.ts';
 
 function hopEvidence(evidence: EvidenceStore, hop: Hop): string {
-  return evidence.add({ kind: 'redirect', url: hop.url, label: `HTTP ${hop.status} redirect`, excerpt: `${hop.status} ${hop.url} -> ${hop.location ?? ''}` });
+  return evidence.add({ kind: 'redirect', url: hop.url, label: evidenceLabel('HTTP {status} redirect', { status: hop.status }), excerpt: `${hop.status} ${hop.url} -> ${hop.location ?? ''}` });
 }
 
-function headerEvidence(evidence: EvidenceStore, url: string, name: string, value: string | undefined, label: string): string {
+function headerEvidence(evidence: EvidenceStore, url: string, name: string, value: string | undefined, label: EvidenceLabel): string {
   return evidence.add({ kind: 'header', url, label, excerpt: value === undefined ? `${name}: (absent)` : `${name}: ${value}` });
 }
 
@@ -30,13 +30,13 @@ export const renderBlocking: RuleImplementation = {
     const base = page!.fetch.finalUrl;
     const own = blocking.filter(script => !isConsentScript(script.attrs.src, base));
     const consent = blocking.filter(script => isConsentScript(script.attrs.src, base));
-    const cite = (list: typeof blocking, label: string) => list.slice(0, 5).map(script => evidence.add({ kind: 'html', url: page!.url, label, excerpt: openingTag(script), line: script.line }));
+    const cite = (list: typeof blocking, label: EvidenceLabel) => list.slice(0, 5).map(script => evidence.add({ kind: 'html', url: page!.url, label, excerpt: openingTag(script), line: script.line }));
     if (own.length > 0) {
-      return { outcome: 'fail', severity: 'medium', reason: 'parser-blocking-script', evidence: cite(own, 'parser-blocking script in the head'),
+      return { outcome: 'fail', severity: 'medium', reason: 'parser-blocking-script', evidence: cite(own, evidenceLabel('parser-blocking script in the head')),
         params: { count: own.length, scripts: summarizeList(own.map(script => script.attrs.src!)) } };
     }
     if (consent.length > 0) {
-      return { outcome: 'fail', severity: 'low', reason: 'consent-script', evidence: cite(consent, 'synchronous consent script in the head'),
+      return { outcome: 'fail', severity: 'low', reason: 'consent-script', evidence: cite(consent, evidenceLabel('synchronous consent script in the head')),
         params: { count: consent.length, scripts: summarizeList(consent.map(script => script.attrs.src!)) } };
     }
     const summary = labOf(page);
@@ -44,8 +44,8 @@ export const renderBlocking: RuleImplementation = {
     // The insight fails on any render-blocking request; only an estimated saving makes it actionable.
     if (summary && insight?.score === 0 && (insight.numericValue ?? 0) > 0) {
       const items = rows(insight.details).filter(row => (num(row.wastedMs) ?? 0) > 0);
-      const cited = [auditEvidence(evidence, page!, summary, 'render-blocking-insight', 'Lighthouse render-blocking requests'),
-        ...items.slice(0, 5).map(row => labEvidence(evidence, page!, summary, 'render-blocking-insight', 'render-blocking request', `${str(row.url)}: ${Math.round(num(row.wastedMs)!)} ms`))];
+      const cited = [auditEvidence(evidence, page!, summary, 'render-blocking-insight', evidenceLabel('Lighthouse render-blocking requests')),
+        ...items.slice(0, 5).map(row => labEvidence(evidence, page!, summary, 'render-blocking-insight', evidenceLabel('render-blocking request'), `${str(row.url)}: ${Math.round(num(row.wastedMs)!)} ms`))];
       return { outcome: 'fail', severity: 'low', reason: 'render-blocking-requests', evidence: cited,
         params: { savings: formatMs(insight.numericValue!), requests: summarizeList(items.map(row => str(row.url) ?? '')) } };
     }
@@ -110,7 +110,7 @@ export const documentRedirects: RuleImplementation = {
     const typed = !linkedInternally(page!.fetch.requestedUrl, site.pages.values());
     if (typed && redirects.every(canonicalizationHop)) return { outcome: 'pass', evidence: cited };
     const summary = labOf(page);
-    const lab = summary && auditOf(summary, 'redirects')?.numericValue !== undefined ? [auditEvidence(evidence, page!, summary, 'redirects', 'Lighthouse lab redirect time')] : [];
+    const lab = summary && auditOf(summary, 'redirects')?.numericValue !== undefined ? [auditEvidence(evidence, page!, summary, 'redirects', evidenceLabel('Lighthouse lab redirect time'))] : [];
     return { outcome: 'fail', severity: 'medium', evidence: [...cited, ...lab], params: { hops: redirects.length, from: page!.fetch.requestedUrl, to: page!.fetch.finalUrl } };
   },
 };
@@ -126,10 +126,10 @@ export const serverResponseTime: RuleImplementation = {
     const summary = labOf(page)!;
     const lab = auditOf(summary, 'server-response-time')?.numericValue;
     if (lab === undefined) return notEvaluated('no-lab-value');
-    const cited = auditEvidence(evidence, page!, summary, 'server-response-time', 'Lighthouse lab document response time');
+    const cited = auditEvidence(evidence, page!, summary, 'server-response-time', evidenceLabel('Lighthouse lab document response time'));
     if (lab <= slowServerMs) return { outcome: 'pass', evidence: [cited] };
     const final = page!.fetch.hops.at(-1);
-    const collector = final ? evidence.add({ kind: 'http', url: final.url, label: 'time to response headers measured by the collector, one sample from its location', excerpt: formatMs(final.ttfbMs) }) : undefined;
+    const collector = final ? evidence.add({ kind: 'http', url: final.url, label: evidenceLabel('time to response headers measured by the collector, one sample from its location'), excerpt: formatMs(final.ttfbMs) }) : undefined;
     // Two independent slow measurements are stronger than one lab sample.
     const severity = final && final.ttfbMs > slowServerMs ? 'medium' : 'low';
     return { outcome: 'fail', severity, evidence: [cited, ...(collector ? [collector] : [])], params: { lab: formatMs(lab), collector: final ? formatMs(final.ttfbMs) : 'not measured' } };
@@ -158,8 +158,8 @@ export const textCompression: RuleImplementation = {
     const encoding = headerValue(fetch.headers, 'content-encoding');
     if (fetch.status === 200 && !fetch.truncated && uncompressed(type, encoding, fetch.body.length)) {
       results.push({ outcome: 'fail', severity: 'medium', reason: 'document', params: { size: formatKib(fetch.body.length) },
-        evidence: [headerEvidence(evidence, fetch.finalUrl, 'content-encoding', encoding, 'compression of the HTML response'),
-          evidence.add({ kind: 'http', url: fetch.finalUrl, label: 'decoded size of the HTML response', excerpt: `${fetch.body.length} bytes, ${type ?? 'no content-type'}` })] });
+        evidence: [headerEvidence(evidence, fetch.finalUrl, 'content-encoding', encoding, evidenceLabel('compression of the HTML response')),
+          evidence.add({ kind: 'http', url: fetch.finalUrl, label: evidenceLabel('decoded size of the HTML response'), excerpt: `${fetch.body.length} bytes, ${type ?? 'no content-type'}` })] });
     }
     const assets: Array<{ url: string; detail: string }> = [];
     for (const resource of site.resources) {
@@ -180,10 +180,10 @@ export const textCompression: RuleImplementation = {
     }
     if (assets.length > 0) {
       results.push({ outcome: 'fail', severity: 'low', reason: 'assets', params: { count: assets.length, urls: summarizeList(assets.map(asset => asset.url)) },
-        evidence: assets.slice(0, 5).map(asset => evidence.add({ kind: 'http', url: asset.url, label: 'text resource served without compression', excerpt: asset.detail })) });
+        evidence: assets.slice(0, 5).map(asset => evidence.add({ kind: 'http', url: asset.url, label: evidenceLabel('text resource served without compression'), excerpt: asset.detail })) });
     }
     if (results.length > 0) return results;
-    return { outcome: 'pass', evidence: [headerEvidence(evidence, fetch.finalUrl, 'content-encoding', encoding, 'compression of the HTML response')] };
+    return { outcome: 'pass', evidence: [headerEvidence(evidence, fetch.finalUrl, 'content-encoding', encoding, evidenceLabel('compression of the HTML response'))] };
   },
 };
 
@@ -205,7 +205,7 @@ export const httpProtocol: RuleImplementation = {
       if (origin) byOrigin.set(origin, [...(byOrigin.get(origin) ?? []), request]);
     }
     const legacy = [...byOrigin.entries()].filter(([, list]) => list.length >= http1QueueRequests && list.some(request => /^http\/1\./iu.test(request.protocol!)));
-    const describe = ([origin, list]: [string, typeof requests]) => labEvidence(evidence, page!, summary, 'network-requests', 'static requests per origin and protocol',
+    const describe = ([origin, list]: [string, typeof requests]) => labEvidence(evidence, page!, summary, 'network-requests', evidenceLabel('static requests per origin and protocol'),
       `${origin}: ${list.length} static requests; protocols ${[...new Set(list.map(request => request.protocol))].join(', ')}`);
     const own = legacy.filter(([origin]) => firstParty(origin, page!));
     const others = legacy.filter(([origin]) => !firstParty(origin, page!));
@@ -231,13 +231,13 @@ export const staticCacheTtl: RuleImplementation = {
     const insight = auditOf(summary, 'cache-insight');
     if (!auditRan(insight)) return notEvaluated('no-cache-insight');
     const items = rows(insight.details).filter(row => str(row.url) !== undefined && firstParty(str(row.url)!, page!));
-    if (items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'cache-insight', 'Lighthouse cache lifetime insight')] };
+    if (items.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'cache-insight', evidenceLabel('Lighthouse cache lifetime insight'))] };
     const ttl = (row: (typeof items)[number]) => {
       const lifetime = num(row.cacheLifetimeMs) ?? 0;
       return lifetime === 0 ? 'no TTL' : `TTL ${Math.round(lifetime / 3_600_000)} h`;
     };
     const hashed = items.filter(row => fingerprinted(str(row.url)!));
-    const cited = items.slice(0, 5).map(row => labEvidence(evidence, page!, summary, 'cache-insight', 'first-party static resource with a short cache lifetime', `${str(row.url)}: ${ttl(row)}`));
+    const cited = items.slice(0, 5).map(row => labEvidence(evidence, page!, summary, 'cache-insight', evidenceLabel('first-party static resource with a short cache lifetime'), `${str(row.url)}: ${ttl(row)}`));
     return { outcome: 'fail', severity: 'low', ...(hashed.length > 0 ? { reason: 'fingerprinted' } : {}), evidence: cited,
       params: { count: items.length, urls: summarizeList(items.map(row => str(row.url)!)), hashed: hashed.length } };
   },
@@ -256,19 +256,19 @@ export const htmlNoStore: RuleImplementation = {
     if (fetch.status !== 200) return notApplicable('not-200');
     const cacheControl = headerValue(fetch.headers, 'cache-control');
     const directives = cacheDirectives(cacheControl);
-    const cited = headerEvidence(evidence, fetch.finalUrl, 'cache-control', cacheControl, 'cache policy of the HTML response');
+    const cited = headerEvidence(evidence, fetch.finalUrl, 'cache-control', cacheControl, evidenceLabel('cache policy of the HTML response'));
     if (!directives.has('no-store')) return { outcome: 'pass', evidence: [cited] };
     const doc = pageDocument(page!);
     if (directivesFor(robotsDirectives(fetch.headers, doc)).has('noindex')) return notApplicable('noindex');
     // Declared private, or holding a login form: personalised HTML is meant to stay out of shared caches.
     if (directives.has('private')) return { outcome: 'pass', evidence: [cited] };
     const login = elements(doc).find(info => info.tag === 'input' && (info.attrs.type ?? '').toLowerCase() === 'password');
-    if (login) return { outcome: 'pass', evidence: [cited, evidence.add({ kind: 'html', url: page!.url, label: 'password field on the page', excerpt: openingTag(login), line: login.line })] };
+    if (login) return { outcome: 'pass', evidence: [cited, evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('password field on the page'), excerpt: openingTag(login), line: login.line })] };
     const cookie = headerValue(fetch.headers, 'set-cookie');
     if (cookie !== undefined) {
       const names = (fetch.headers['set-cookie'] ?? []).map(value => value.split('=')[0]!.trim()).join(', ');
       return { outcome: 'fail', severity: 'low', reason: 'sets-cookie', needsJudgment: true,
-        evidence: [cited, evidence.add({ kind: 'header', url: fetch.finalUrl, label: 'cookie names set by the HTML response', excerpt: `set-cookie: ${names}` })] };
+        evidence: [cited, evidence.add({ kind: 'header', url: fetch.finalUrl, label: evidenceLabel('cookie names set by the HTML response'), excerpt: `set-cookie: ${names}` })] };
     }
     return { outcome: 'fail', severity: 'low', evidence: [cited], params: { value: cacheControl ?? '' } };
   },
@@ -288,14 +288,14 @@ export const bfcacheEligibility: RuleImplementation = {
     const summary = labOf(page)!;
     const audit = auditOf(summary, 'bf-cache');
     if (!auditRan(audit) || audit.score === null) return notEvaluated('bfcache-not-tested');
-    if (audit.score === 1) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'bf-cache', 'Lighthouse back/forward cache test')] };
+    if (audit.score === 1) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'bf-cache', evidenceLabel('Lighthouse back/forward cache test'))] };
     const reasons = rows(audit.details).filter(row => {
       const type = str(row.failureType) ?? '';
       const code = str(row.protocolReason) ?? '';
       return (type === 'Actionable' || type === 'PageSupportNeeded') && !automationReasons.has(code);
     });
-    if (reasons.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'bf-cache', 'Lighthouse back/forward cache test')] };
-    const cited = reasons.slice(0, 5).map(row => labEvidence(evidence, page!, summary, 'bf-cache', 'actionable back/forward cache failure', `${str(row.reason) ?? ''} (${str(row.protocolReason) ?? ''})`));
+    if (reasons.length === 0) return { outcome: 'pass', evidence: [auditEvidence(evidence, page!, summary, 'bf-cache', evidenceLabel('Lighthouse back/forward cache test'))] };
+    const cited = reasons.slice(0, 5).map(row => labEvidence(evidence, page!, summary, 'bf-cache', evidenceLabel('actionable back/forward cache failure'), `${str(row.reason) ?? ''} (${str(row.protocolReason) ?? ''})`));
     return { outcome: 'fail', severity: 'medium', evidence: cited, params: { count: reasons.length, reasons: summarizeList(reasons.map(row => str(row.reason) ?? str(row.protocolReason) ?? '')) } };
   },
 };
@@ -313,13 +313,13 @@ export const unloadHandlers: RuleImplementation = {
         const source = info.tag === 'script' ? textContent(info.element) : info.tag === 'body' && info.attrs.onunload !== undefined ? `onunload=${info.attrs.onunload}` : '';
         const match = unloadListener.exec(source);
         if (!match) continue;
-        found.push(evidence.add({ kind: 'html', url: page!.url, label: doc === page!.raw ? 'unload listener in the server HTML' : 'unload listener in the rendered page',
+        found.push(evidence.add({ kind: 'html', url: page!.url, label: doc === page!.raw ? evidenceLabel('unload listener in the server HTML') : evidenceLabel('unload listener in the rendered page'),
           excerpt: source.slice(Math.max(0, match.index - 60), match.index + 80).trim(), line: info.line }));
       }
     }
     const summary = labOf(page);
     const lab = rows(auditOf(summary, 'bf-cache')?.details).filter(row => /^UnloadHandlerExists/u.test(str(row.protocolReason) ?? ''));
-    if (summary && lab.length > 0) found.push(labEvidence(evidence, page!, summary, 'bf-cache', 'back/forward cache failure caused by an unload listener', str(lab[0]!.reason) ?? ''));
+    if (summary && lab.length > 0) found.push(labEvidence(evidence, page!, summary, 'bf-cache', evidenceLabel('back/forward cache failure caused by an unload listener'), str(lab[0]!.reason) ?? ''));
     const unique = [...new Set(found)];
     if (unique.length === 0) return { outcome: 'pass' };
     return { outcome: 'fail', severity: 'low', evidence: unique, params: { count: unique.length } };
@@ -390,8 +390,8 @@ export const speculationRulesCheck: RuleImplementation = {
     const header = headerValue(page!.fetch.headers, 'speculation-rules');
     if (scripts.length === 0 && header === undefined) return notApplicable('no-speculation-rules');
     const cited = [
-      ...scripts.map(script => evidence.add({ kind: 'html', url: page!.url, label: 'speculation rules in the server HTML', excerpt: script.text.trim(), line: script.line })),
-      ...(header === undefined ? [] : [headerEvidence(evidence, page!.fetch.finalUrl, 'speculation-rules', header, 'speculation rules header')]),
+      ...scripts.map(script => evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('speculation rules in the server HTML'), excerpt: script.text.trim(), line: script.line })),
+      ...(header === undefined ? [] : [headerEvidence(evidence, page!.fetch.finalUrl, 'speculation-rules', header, evidenceLabel('speculation rules header'))]),
     ];
     const rules: SpeculationRule[] = [];
     for (const script of scripts) {
@@ -442,11 +442,11 @@ export const htmlCdn: RuleImplementation = {
     if (pages.length === 0) return notEvaluated('no-response');
     for (const entry of pages) {
       const markers = cdnMarkers(entry);
-      if (markers.length > 0) return { outcome: 'pass', evidence: [evidence.add({ kind: 'header', url: entry.fetch.finalUrl, label: 'CDN markers on the HTML response', excerpt: markers.join('\n') })] };
+      if (markers.length > 0) return { outcome: 'pass', evidence: [evidence.add({ kind: 'header', url: entry.fetch.finalUrl, label: evidenceLabel('CDN markers on the HTML response'), excerpt: markers.join('\n') })] };
     }
     const sample = pages[0]!;
     const names = Object.keys(sample.fetch.headers).sort().join(', ');
-    return { outcome: 'fail', severity: 'info', evidence: [evidence.add({ kind: 'header', url: sample.fetch.finalUrl, label: 'response header names of the HTML response, none of them a known CDN marker', excerpt: names })],
+    return { outcome: 'fail', severity: 'info', evidence: [evidence.add({ kind: 'header', url: sample.fetch.finalUrl, label: evidenceLabel('response header names of the HTML response, none of them a known CDN marker'), excerpt: names })],
       params: { count: pages.length } };
   },
 };

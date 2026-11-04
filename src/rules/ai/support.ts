@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { RobotsFile } from '../../fetch/robots.ts';
 import type { RuleContext, RuleResult } from '../engine.ts';
 import { groupOfRule, type CrawlerAccess } from './crawlers.ts';
@@ -22,7 +23,7 @@ export function isResult(value: Parsed | RuleResult): value is RuleResult {
 }
 
 /** Records one robots.txt line as evidence, quoting it exactly as served. */
-export function robotsLineEvidence(context: RuleContext, robots: Parsed, line: number, label: string): string {
+export function robotsLineEvidence(context: RuleContext, robots: Parsed, line: number, label: EvidenceLabel): string {
   return context.evidence.add({ kind: 'robots', url: robots.url, label, excerpt: (robots.lines[line - 1] ?? '').trim(), line });
 }
 
@@ -33,14 +34,14 @@ export function accessEvidence(context: RuleContext, robots: Parsed, access: Cra
   const rule = access.root.rule;
   if (rule) {
     const group = groupOfRule(robots.file, rule.line);
-    if (group) ids.push(robotsLineEvidence(context, robots, group.line, `start of the robots.txt group that applies to ${name}`));
-    ids.push(robotsLineEvidence(context, robots, rule.line, `robots.txt rule that decides whether ${name} may fetch /`));
+    if (group) ids.push(robotsLineEvidence(context, robots, group.line, evidenceLabel('start of the robots.txt group that applies to {crawler}', { crawler: name })));
+    ids.push(robotsLineEvidence(context, robots, rule.line, evidenceLabel('robots.txt rule that decides whether {crawler} may fetch /', { crawler: name })));
   } else {
-    ids.push(context.evidence.add({ kind: 'robots', url: robots.url, label: `no robots.txt rule matches / for ${name}` }));
+    ids.push(context.evidence.add({ kind: 'robots', url: robots.url, label: evidenceLabel('no robots.txt rule matches / for {crawler}', { crawler: name }) }));
   }
   if (access.root.allowed && access.blocked.length > 0) {
     ids.push(context.evidence.add({
-      kind: 'robots', url: robots.url, label: `sampled paths disallowed for ${name} (${access.blocked.length} of ${access.sampled.length})`,
+      kind: 'robots', url: robots.url, label: evidenceLabel('sampled paths disallowed for {crawler} ({blocked} of {sampled})', { crawler: name, blocked: access.blocked.length, sampled: access.sampled.length }),
       excerpt: access.blocked.slice(0, 10).join('\n'),
     }));
   }

@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { PageFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import type { CruxFormFactor } from '../../data/crux.ts';
@@ -141,10 +142,10 @@ export const cruxAvailability: RuleImplementation = {
     }
     if (missingFieldReason(page) === 'crux-error') return notEvaluated('crux-error');
     const status = page!.fetch.status;
-    const hop = evidence.add({ kind: 'http', url: page!.url, label: 'final response status of the audited URL', excerpt: `HTTP ${status ?? 'none'}` });
+    const hop = evidence.add({ kind: 'http', url: page!.url, label: evidenceLabel('final response status of the audited URL'), excerpt: `HTTP ${status ?? 'none'}` });
     if (status !== 200) return { outcome: 'fail', severity: 'info', reason: 'not-eligible-status', evidence: [hop], params: { status: status ?? 'none' } };
     if (noindex(page!)) {
-      const robots = evidence.add({ kind: 'html', url: page!.url, label: 'robots directives of the audited URL', excerpt: 'noindex' });
+      const robots = evidence.add({ kind: 'html', url: page!.url, label: evidenceLabel('robots directives of the audited URL'), excerpt: 'noindex' });
       return { outcome: 'fail', severity: 'info', reason: 'not-eligible-noindex', evidence: [robots] };
     }
     return { outcome: 'fail', severity: 'info', reason: 'no-field-data', evidence: [hop] };

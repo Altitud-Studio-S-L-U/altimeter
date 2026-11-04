@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { SitemapFacts } from '../../core/facts.ts';
 import { decodeSitemapBody, type SitemapUrl } from '../../fetch/sitemap.ts';
 import type { RuleImplementation } from '../engine.ts';
@@ -15,13 +16,13 @@ interface Flag {
   readonly line: number;
 }
 
-const label: Readonly<Record<SitemapProblem, string>> = {
-  namespace: 'hreflang links in a sitemap whose xhtml namespace is missing or wrong, so they are not read',
-  'missing-self': 'sitemap entry with alternates but no xhtml:link to its own loc',
-  'relative-href': 'sitemap xhtml:link with a URL that is not absolute',
-  'invalid-value': 'sitemap xhtml:link with a hreflang value outside Google\'s format',
-  'alternate-not-listed': 'alternate URL with no <url> entry of its own in the sitemaps',
-  'not-reciprocal': 'alternate URL whose own sitemap entry does not list this loc',
+const label: Readonly<Record<SitemapProblem, EvidenceLabel>> = {
+  namespace: evidenceLabel('hreflang links in a sitemap whose xhtml namespace is missing or wrong, so they are not read'),
+  'missing-self': evidenceLabel('sitemap entry with alternates but no xhtml:link to its own loc'),
+  'relative-href': evidenceLabel('sitemap xhtml:link with a URL that is not absolute'),
+  'invalid-value': evidenceLabel('sitemap xhtml:link with a hreflang value outside Google\'s format'),
+  'alternate-not-listed': evidenceLabel('alternate URL with no <url> entry of its own in the sitemaps'),
+  'not-reciprocal': evidenceLabel('alternate URL whose own sitemap entry does not list this loc'),
 };
 
 function entryExcerpt(entry: SitemapUrl): string {

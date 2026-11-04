@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { severities, type Severity } from '../../core/types.ts';
 import { issueNames, lowCtrPages, onBingSite, recentRows, trafficTotals, type CrawlIssueName, type TrafficWindow } from '../../owner/bing-analyses.ts';
@@ -85,7 +86,7 @@ const crawlIssues: RuleImplementation = {
       if (listed.length === 0) continue;
       const kind = kinds[name];
       const linked = listed.filter(entry => entry.inLinks > 0).length;
-      const evidence = [context.evidence.add({ kind: 'owner-data', url: bing.site, label: `URLs Bing lists with the crawl issue ${name}`, excerpt: listed.slice(0, 20).map(issueLine).join('\n') })];
+      const evidence = [context.evidence.add({ kind: 'owner-data', url: bing.site, label: evidenceLabel('URLs Bing lists with the crawl issue {issue}', { issue: name }), excerpt: listed.slice(0, 20).map(issueLine).join('\n') })];
       results.push({
         outcome: 'fail',
         // A missing URL that other pages link to loses visitors and link value; one nothing links to was usually removed on purpose.
@@ -96,20 +97,20 @@ const crawlIssues: RuleImplementation = {
       });
     }
     if (results.length > 0) return results;
-    return { outcome: 'pass', evidence: [context.evidence.add({ kind: 'owner-data', url: bing.site, label: 'crawl issue list Bing returned for the site', excerpt: '0 URLs' })] };
+    return { outcome: 'pass', evidence: [context.evidence.add({ kind: 'owner-data', url: bing.site, label: evidenceLabel('crawl issue list Bing returned for the site'), excerpt: '0 URLs' })] };
   },
 };
 
 function citeIssue(context: RuleContext, entry: BingCrawlIssue): string {
   return context.evidence.add({
-    kind: 'owner-data', url: entry.url, label: 'crawl issues Bing lists for the URL',
+    kind: 'owner-data', url: entry.url, label: evidenceLabel('crawl issues Bing lists for the URL'),
     excerpt: `issues=${issueNames(entry.issues).join(', ')}; httpCode=${entry.httpCode ?? 'unknown'}; inLinks=${entry.inLinks}`,
   });
 }
 
 function citeDetails(context: RuleContext, details: BingUrlInfo): string {
   return context.evidence.add({
-    kind: 'owner-data', url: details.url, label: 'index details Bing keeps for the URL',
+    kind: 'owner-data', url: details.url, label: evidenceLabel('index details Bing keeps for the URL'),
     excerpt: `httpStatus=${details.httpStatus ?? 'unknown'}; lastCrawled=${dayOf(details.lastCrawled)}; discovered=${dayOf(details.discovered)}${details.documentSize === undefined ? '' : `; documentSize=${details.documentSize}`}`,
   });
 }
@@ -176,7 +177,7 @@ const pageIssues: RuleImplementation = {
     };
     if (kind.fetched && live === 200) {
       // Fixed since Bing's crawl, intermittent, or served only to Bingbot: only the server logs tell which.
-      evidence.push(context.evidence.add({ kind: 'http', url: worst.url, label: 'status this audit received for the URL', excerpt: `HTTP ${live}` }));
+      evidence.push(context.evidence.add({ kind: 'http', url: worst.url, label: evidenceLabel('status this audit received for the URL'), excerpt: `HTTP ${live}` }));
       return { outcome: 'fail', severity: gravity(kind.page) < gravity('medium') ? 'medium' : kind.page, reason: 'not-reproduced', evidence, params };
     }
     if (kind.robots) {
@@ -184,7 +185,7 @@ const pageIssues: RuleImplementation = {
       if (decision) {
         evidence.push(context.evidence.add({
           kind: 'robots', url: context.site.robots!.url,
-          label: decision.allowed ? 'robots.txt read by this audit lets Bingbot fetch the URL' : 'robots.txt rule that still disallows the URL for Bingbot',
+          label: decision.allowed ? evidenceLabel('robots.txt read by this audit lets Bingbot fetch the URL') : evidenceLabel('robots.txt rule that still disallows the URL for Bingbot'),
           excerpt: decision.rule ? `${decision.rule.type}: ${decision.rule.pattern} (group ${decision.matchedToken ?? '*'})` : 'no rule matches the URL',
           ...(decision.rule?.line === undefined ? {} : { line: decision.rule.line }),
         }));
@@ -214,12 +215,12 @@ const lowCtr: RuleImplementation = {
     return analysis.pages.slice(0, 5).map(page => {
       const queries = topQueries(bing, page.page, window);
       const evidence = [context.evidence.add({
-        kind: 'owner-data', url: page.page, label: `Bing performance of the page from ${window.start} to ${window.end}`,
+        kind: 'owner-data', url: page.page, label: evidenceLabel('Bing performance of the page from {start} to {end}', { start: window.start, end: window.end }),
         excerpt: `impressions=${page.impressions}; clicks=${page.clicks}; ctr=${percent(page.ctr)}; position=${page.position.toFixed(1)}; CTR of the site's other pages at that position=${percent(page.expectedCtr)}`,
       })];
       if (queries.length > 0) {
         evidence.push(context.evidence.add({
-          kind: 'owner-data', url: page.page, label: 'queries with the most Bing impressions for the page', path: searchQueriesPath,
+          kind: 'owner-data', url: page.page, label: evidenceLabel('queries with the most Bing impressions for the page'), path: searchQueriesPath,
           excerpt: queries.map((query, index) => `${queryLabel(context, query.key, index)} (${query.impressions} impressions${query.position === undefined ? '' : `, position ${query.position.toFixed(1)}`})`).join('\n'),
         }));
       }
@@ -236,7 +237,7 @@ const aiPerformance: RuleImplementation = {
   id: 'content-bing-ai-performance',
   evaluate(context) {
     const bing = bingOf(context);
-    const evidence = [context.evidence.add({ kind: 'owner-data', url: bing.site, label: 'verified Bing Webmaster Tools site whose AI Performance report holds the citations', excerpt: bing.site })];
+    const evidence = [context.evidence.add({ kind: 'owner-data', url: bing.site, label: evidenceLabel('verified Bing Webmaster Tools site whose AI Performance report holds the citations'), excerpt: bing.site })];
     return { outcome: 'fail', severity: 'info', evidence, params: { site: displayUrl(bing.site) } };
   },
 };

@@ -1,4 +1,4 @@
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { Severity } from '../../core/types.ts';
 import { headerValue } from '../../fetch/http.ts';
@@ -9,11 +9,16 @@ import {
   pageHeadlines, passed, robotsSources, sitemapEntryFor, worst,
 } from './shared.ts';
 
-function citeSource(evidence: EvidenceStore, url: string, entry: RobotsDirectives, prefix = ''): string {
+function citeSource(evidence: EvidenceStore, url: string, entry: RobotsDirectives, document?: 'raw' | 'rendered'): string {
+  const agent = { agent: entry.agent === 'all' ? 'robots' : entry.agent };
+  const meta = document === 'raw' ? evidenceLabel('raw HTML: robots meta element ({agent})', agent)
+    : document === 'rendered' ? evidenceLabel('rendered DOM: robots meta element ({agent})', agent) : evidenceLabel('robots meta element ({agent})', agent);
+  const header = document === 'raw' ? evidenceLabel('raw HTML: X-Robots-Tag header')
+    : document === 'rendered' ? evidenceLabel('rendered DOM: X-Robots-Tag header') : evidenceLabel('X-Robots-Tag header');
   return evidence.add({
     kind: entry.source === 'meta' ? 'html' : 'header',
     url,
-    label: `${prefix}${entry.source === 'meta' ? `robots meta element (${entry.agent === 'all' ? 'robots' : entry.agent})` : 'X-Robots-Tag header'}`,
+    label: entry.source === 'meta' ? meta : header,
     excerpt: entry.raw,
     ...(entry.line ? { line: entry.line } : {}),
   });
@@ -44,8 +49,8 @@ const metaRobotsNoindex: RuleImplementation = {
     const listed = sitemapEntryFor(site, url) ?? sitemapEntryFor(site, target.url);
     const named = namedByOtherPage(site, url);
     const home = isHomePage(site, target);
-    if (listed) ids.push(evidence.add({ kind: 'sitemap', url: listed.sitemap, label: 'sitemap entry for the noindex page', excerpt: listed.loc, line: listed.line }));
-    if (named) ids.push(evidence.add({ kind: 'html', url: named.by, label: `page that names the noindex page as its ${named.as} target`, excerpt: url }));
+    if (listed) ids.push(evidence.add({ kind: 'sitemap', url: listed.sitemap, label: evidenceLabel('sitemap entry for the noindex page'), excerpt: listed.loc, line: listed.line }));
+    if (named) ids.push(evidence.add({ kind: 'html', url: named.by, label: named.as === 'canonical' ? evidenceLabel('page that names the noindex page as its canonical target') : evidenceLabel('page that names the noindex page as its hreflang target'), excerpt: url }));
     const conflict = home ? 'home' : listed ? 'sitemap' : named ? named.as : undefined;
     if (googleSources.length === 0) return failure({ severity: 'medium', evidence: ids, reason: 'bingbot-only', params: { url, crawler } });
     if (conflict) return failure({ severity: 'critical', evidence: ids, reason: `conflict-${conflict}`, params: { url, crawler } });
@@ -62,15 +67,15 @@ const noindexRawVsRendered: RuleImplementation = {
     const renderedNoindex = effectiveDirectives(target, rendered).has('noindex');
     const url = target.fetch.finalUrl;
     if (rawNoindex === renderedNoindex) return passed();
-    const rawIds = sourcesWith(target, target.raw, 'noindex').map(entry => citeSource(evidence, url, entry, 'raw HTML: '));
-    const renderedIds = sourcesWith(target, rendered, 'noindex').map(entry => citeSource(evidence, url, entry, 'rendered DOM: '));
+    const rawIds = sourcesWith(target, target.raw, 'noindex').map(entry => citeSource(evidence, url, entry, 'raw'));
+    const renderedIds = sourcesWith(target, rendered, 'noindex').map(entry => citeSource(evidence, url, entry, 'rendered'));
     if (rawNoindex) {
-      const none = evidence.add({ kind: 'render', url, label: 'robots directives in the rendered DOM', excerpt: [...effectiveDirectives(target, rendered)].join(', ') || '(none)' });
+      const none = evidence.add({ kind: 'render', url, label: evidenceLabel('robots directives in the rendered DOM'), excerpt: [...effectiveDirectives(target, rendered)].join(', ') || '(none)' });
       return failure({ severity: 'critical', evidence: [...rawIds, none], reason: 'removed-by-js', params: { url } });
     }
     const errorView = target.pageType === 'error' || errorWording.test(pageHeadlines(rendered));
     if (errorView) {
-      const heading = evidence.add({ kind: 'render', url, label: 'rendered title and h1', excerpt: pageHeadlines(rendered) });
+      const heading = evidence.add({ kind: 'render', url, label: evidenceLabel('rendered title and h1'), excerpt: pageHeadlines(rendered) });
       return failure({ severity: 'info', evidence: [...renderedIds, heading], reason: 'error-view', params: { url } });
     }
     return failure({ severity: 'high', evidence: renderedIds, reason: 'added-by-js', params: { url } });
@@ -167,7 +172,7 @@ const unavailableAfter: RuleImplementation = {
     const days = Math.floor((time - served) / 86_400_000);
     if (days > 30) return passed([id]);
     if (doc?.data.nodes.some(node => node.types.some(type => expiringTypes.test(type)))) return notApplicable('expiring-content');
-    const dated = evidence.add({ kind: 'header', url, label: 'Date response header', excerpt: headerValue(target.fetch.headers, 'date')! });
+    const dated = evidence.add({ kind: 'header', url, label: evidenceLabel('Date response header'), excerpt: headerValue(target.fetch.headers, 'date')! });
     if (time <= served) return failure({ severity: target.fetch.status === 200 ? 'critical' : 'low', evidence: [id, dated], reason: 'past', params: { url, date: value } });
     return failure({ severity: 'medium', evidence: [id, dated], reason: 'soon', params: { url, date: value, days } });
   },

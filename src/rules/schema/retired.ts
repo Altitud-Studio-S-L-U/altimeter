@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import { retiredFeatures } from '../../data/google-features.ts';
 import type { RuleImplementation } from '../engine.ts';
 import { has, type GraphNode, type PageGraph } from './graph.ts';
@@ -11,7 +12,7 @@ export const faqPageRetired: RuleImplementation = {
     if (isResult(graph)) return graph;
     const pages = nodesOfType(graph, 'FAQPage');
     if (pages.length === 0) return { outcome: 'not_applicable', reason: 'no-faqpage' };
-    return report(pages.map(node => ({ reason: 'present', severity: 'info', subject: 'FAQPage', evidence: cite(context, graph, node, 'FAQPage markup') })));
+    return report(pages.map(node => ({ reason: 'present', severity: 'info', subject: 'FAQPage', evidence: cite(context, graph, node, evidenceLabel('FAQPage markup')) })));
   },
 };
 
@@ -38,7 +39,7 @@ export const retiredFeatureMarkup: RuleImplementation = {
       const retired = retiredFeatureOf(graph, node);
       if (!retired) continue;
       problems.push({ reason: 'retired', severity: 'info', subject: `${retired.feature} (${retired.date})`,
-        evidence: cite(context, graph, node, `markup for a retired Google feature: ${retired.feature}`) });
+        evidence: cite(context, graph, node, evidenceLabel('markup for a retired Google feature: {feature}', { feature: retired.feature })) });
     }
     if (problems.length === 0) return { outcome: 'not_applicable', reason: 'no-retired-feature-markup' };
     return report(problems);

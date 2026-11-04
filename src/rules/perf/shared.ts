@@ -1,4 +1,4 @@
-import type { EvidenceStore } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels, type EvidenceLabel, type EvidenceStore } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import type { CruxFormFactor, CruxRecord } from '../../data/crux.ts';
 import { isElement, walk, type HtmlElement } from '../../parse/html.ts';
@@ -123,18 +123,19 @@ export function labConditions(summary: LighthouseSummary): string {
   return `lab, Lighthouse ${summary.lighthouseVersion}, ${summary.settings.formFactor}, ${summary.settings.throttlingMethod} throttling`;
 }
 
-export function labEvidence(evidence: EvidenceStore, page: PageFacts, summary: LighthouseSummary, auditId: string, label: string, excerpt?: string, path?: string): string {
+export function labEvidence(evidence: EvidenceStore, page: PageFacts, summary: LighthouseSummary, auditId: string, label: EvidenceLabel, excerpt?: string, path?: string): string {
+  const conditions = { version: summary.lighthouseVersion, formFactor: summary.settings.formFactor, throttling: summary.settings.throttlingMethod };
   return evidence.add({
     kind: 'lighthouse',
     url: page.url,
-    label: `${label} (${labConditions(summary)})`,
+    label: joinLabels(label, evidenceLabel('(lab, Lighthouse {version}, {formFactor}, {throttling} throttling)', conditions)),
     ...(excerpt === undefined ? {} : { excerpt }),
     path: path ?? `audits.${auditId}`,
   });
 }
 
 /** Evidence for a lab audit's headline value. */
-export function auditEvidence(evidence: EvidenceStore, page: PageFacts, summary: LighthouseSummary, auditId: string, label: string): string {
+export function auditEvidence(evidence: EvidenceStore, page: PageFacts, summary: LighthouseSummary, auditId: string, label: EvidenceLabel): string {
   const audit = auditOf(summary, auditId);
   const parts = [
     audit?.numericValue === undefined ? undefined : `numericValue=${Math.round(audit.numericValue * 1000) / 1000}${audit.numericUnit ? ` ${audit.numericUnit}` : ''}`,
@@ -250,11 +251,12 @@ export function scopeLabel(field: FieldRecord): string {
 
 export function fieldEvidence(evidence: EvidenceStore, field: FieldRecord, metric: string, excerpt: string): string {
   const { record } = field;
-  const period = record.collectionPeriod.first && record.collectionPeriod.last ? `, ${record.collectionPeriod.first} to ${record.collectionPeriod.last}` : '';
+  const { first, last } = record.collectionPeriod;
+  const facts = { metric, formFactor: record.formFactor, scope: scopeLabel(field) };
   return evidence.add({
     kind: 'crux',
     url: record.key,
-    label: `CrUX ${metric}, ${record.formFactor}, ${scopeLabel(field)}${period}`,
+    label: first && last ? evidenceLabel('CrUX {metric}, {formFactor}, {scope}, {first} to {last}', { ...facts, first, last }) : evidenceLabel('CrUX {metric}, {formFactor}, {scope}', facts),
     excerpt: record.normalizedUrl && record.normalizedUrl !== record.key ? `${excerpt} (CrUX matched ${record.normalizedUrl})` : excerpt,
     path: `metrics.${metric}`,
   });

@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { annotationEvidence, documentAnnotations, headerAnnotations, linkAnnotation, normalizeUrl, parseLinkHeader, type Annotation } from './annotations.ts';
 import { fail, groupBy, list, maxEvidence, notApplicable, notEvaluated, pass } from './shared.ts';
@@ -14,11 +15,11 @@ function hrefProblem(raw: string | undefined): HrefProblem | undefined {
   return /^https?:\/\/[^/]/iu.test(value) ? undefined : 'relative';
 }
 
-const hrefLabel: Readonly<Record<HrefProblem, string>> = {
-  'empty-href': 'hreflang annotation without a URL',
-  'protocol-relative': 'protocol-relative hreflang URL',
-  relative: 'relative hreflang URL',
-  'unsupported-scheme': 'hreflang URL with a scheme other than http or https',
+const hrefLabel: Readonly<Record<HrefProblem, EvidenceLabel>> = {
+  'empty-href': evidenceLabel('hreflang annotation without a URL'),
+  'protocol-relative': evidenceLabel('protocol-relative hreflang URL'),
+  relative: evidenceLabel('relative hreflang URL'),
+  'unsupported-scheme': evidenceLabel('hreflang URL with a scheme other than http or https'),
 };
 
 export const relativeUrl: RuleImplementation = {
@@ -55,13 +56,13 @@ export const outsideHead: RuleImplementation = {
     const results: RuleResult[] = [];
     const displacedRaw = raw.filter(annotation => annotation.inHead === false);
     if (displacedRaw.length > 0) {
-      const ids = displacedRaw.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, 'hreflang link element parsed into the body'));
+      const ids = displacedRaw.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang link element parsed into the body')));
       const closure = page!.raw!.parsed.headClosure;
       let cause = 'not determined';
       if (closure) {
         cause = closure.cause.kind === 'element' ? `<${closure.cause.tag}> element` : 'text content';
         ids.push(evidence.add({
-          kind: 'html', url: base, label: 'content that ended the head early, before the hreflang links',
+          kind: 'html', url: base, label: evidenceLabel('content that ended the head early, before the hreflang links'),
           excerpt: closure.cause.kind === 'element' ? `<${closure.cause.tag}>` : closure.cause.text, line: closure.cause.line,
         }));
       }
@@ -71,7 +72,7 @@ export const outsideHead: RuleImplementation = {
     const displacedRendered = rendered.filter(annotation => annotation.inHead === false
       && !displacedRaw.some(entry => entry.value === annotation.value && entry.href === annotation.href));
     if (displacedRendered.length > 0) {
-      results.push(fail('high', displacedRendered.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, 'hreflang link element in the body of the rendered DOM')),
+      results.push(fail('high', displacedRendered.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang link element in the body of the rendered DOM'))),
         { count: displacedRendered.length, cause: 'script', line: 0 }, 'rendered-body'));
     }
     return results.length > 0 ? results : pass();
@@ -88,7 +89,7 @@ export const renderedOnly: RuleImplementation = {
     const rendered = documentAnnotations(page!.rendered, base, 'rendered');
     if (raw.length === 0 && rendered.length === 0) return notApplicable('no-hreflang-links');
     if (raw.length === 0) {
-      return fail('low', rendered.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, 'hreflang link element present only after rendering')),
+      return fail('low', rendered.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang link element present only after rendering'))),
         { count: rendered.length, added: rendered.length, removed: 0 }, 'rendered-only');
     }
     const rawKeys = new Set(raw.map(key));
@@ -97,8 +98,8 @@ export const renderedOnly: RuleImplementation = {
     const removed = raw.filter(annotation => !renderedKeys.has(key(annotation)));
     if (added.length === 0 && removed.length === 0) return pass();
     return fail('low', [
-      ...added.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, 'hreflang link element added by rendering')),
-      ...removed.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, 'hreflang link element missing after rendering')),
+      ...added.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang link element added by rendering'))),
+      ...removed.slice(0, maxEvidence).map(annotation => annotationEvidence(evidence, annotation, evidenceLabel('hreflang link element missing after rendering'))),
     ], { count: added.length + removed.length, added: added.length, removed: removed.length }, 'differs');
   },
 };
@@ -115,9 +116,9 @@ function combination(annotation: Annotation): 'media' | 'canonical' | 'type' | u
 }
 
 const combinationLabel = {
-  media: 'hreflang combined with a media attribute in one link',
-  canonical: 'hreflang attribute on a rel=canonical link',
-  type: 'hreflang combined with a non-HTML type in one link',
+  media: evidenceLabel('hreflang combined with a media attribute in one link'),
+  canonical: evidenceLabel('hreflang attribute on a rel=canonical link'),
+  type: evidenceLabel('hreflang combined with a non-HTML type in one link'),
 } as const;
 
 export const combinedLinkAttributes: RuleImplementation = {
@@ -153,17 +154,17 @@ export const httpHeaderFormat: RuleImplementation = {
     const url = normalizeUrl(page!.fetch.finalUrl);
     const results: RuleResult[] = [];
     if (broken.length > 0) {
-      results.push(fail('low', broken.slice(0, maxEvidence).map(raw => evidence.add({ kind: 'header', url: page!.fetch.finalUrl, label: 'Link header value that does not parse as an RFC 8288 link-value', excerpt: raw })),
+      results.push(fail('low', broken.slice(0, maxEvidence).map(raw => evidence.add({ kind: 'header', url: page!.fetch.finalUrl, label: evidenceLabel('Link header value that does not parse as an RFC 8288 link-value'), excerpt: raw })),
         { count: broken.length }, 'parse-error'));
     }
     if (annotations.length > 0 && !annotations.some(annotation => annotation.href === url)) {
       results.push(fail('low', [
-        evidence.add({ kind: 'header', url: page!.fetch.finalUrl, label: 'Link header hreflang entries, none of which points to the response URL', excerpt: values.join(', ') }),
+        evidence.add({ kind: 'header', url: page!.fetch.finalUrl, label: evidenceLabel('Link header hreflang entries, none of which points to the response URL'), excerpt: values.join(', ') }),
       ], { count: annotations.length, url: page!.fetch.finalUrl }, 'missing-self'));
     }
     if (results.length > 0) return results;
     if (!url) return notEvaluated('unparseable-url');
-    return pass([evidence.add({ kind: 'header', url: page!.fetch.finalUrl, label: 'Link header with hreflang entries', excerpt: values.join(', ') })]);
+    return pass([evidence.add({ kind: 'header', url: page!.fetch.finalUrl, label: evidenceLabel('Link header with hreflang entries'), excerpt: values.join(', ') })]);
   },
 };
 

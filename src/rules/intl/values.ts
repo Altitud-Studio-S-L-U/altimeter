@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import type { Severity } from '../../core/types.ts';
 import type { RuleContext, RuleImplementation, RuleResult } from '../engine.ts';
 import { annotationEvidence, pageAnnotations, type Annotation } from './annotations.ts';
@@ -20,26 +21,26 @@ function flagged(context: RuleContext, owner: (typeof problemOwner)[HreflangProb
   return { annotations, flags };
 }
 
-const problemLabel: Readonly<Record<HreflangProblem, string>> = {
-  empty: 'empty hreflang value',
-  'language-not-two-letters': 'language subtag is not a two-letter ISO 639-1 code',
-  'unknown-language': 'language subtag is not in ISO 639-1',
-  'withdrawn-language': 'language subtag was withdrawn from ISO 639-1',
-  'private-use': 'private-use or grandfathered tag other than x-default',
-  'country-as-language': 'country code used where a language code belongs',
-  'unassigned-region': 'region subtag is not an assigned ISO 3166-1 alpha-2 code',
-  'reserved-region': 'region subtag is a reserved ISO 3166-1 code',
-  'numeric-region': 'numeric UN M.49 region, which Google does not support',
-  'three-letter-region': 'three-letter region subtag',
-  whitespace: 'whitespace inside the value',
-  underscore: 'underscore used as separator',
-  'empty-subtag': 'empty subtag',
-  'unknown-script': 'script subtag is not an ISO 15924 code',
-  'script-after-region': 'script subtag placed after the region',
-  variant: 'variant subtag, which Google does not document for hreflang',
-  extension: 'extension subtag, which Google does not document for hreflang',
-  'too-many-subtags': 'more than three subtags',
-  malformed: 'value does not follow language-Script-REGION',
+const problemLabel: Readonly<Record<HreflangProblem, EvidenceLabel>> = {
+  empty: evidenceLabel('empty hreflang value'),
+  'language-not-two-letters': evidenceLabel('language subtag is not a two-letter ISO 639-1 code'),
+  'unknown-language': evidenceLabel('language subtag is not in ISO 639-1'),
+  'withdrawn-language': evidenceLabel('language subtag was withdrawn from ISO 639-1'),
+  'private-use': evidenceLabel('private-use or grandfathered tag other than x-default'),
+  'country-as-language': evidenceLabel('country code used where a language code belongs'),
+  'unassigned-region': evidenceLabel('region subtag is not an assigned ISO 3166-1 alpha-2 code'),
+  'reserved-region': evidenceLabel('region subtag is a reserved ISO 3166-1 code'),
+  'numeric-region': evidenceLabel('numeric UN M.49 region, which Google does not support'),
+  'three-letter-region': evidenceLabel('three-letter region subtag'),
+  whitespace: evidenceLabel('whitespace inside the value'),
+  underscore: evidenceLabel('underscore used as separator'),
+  'empty-subtag': evidenceLabel('empty subtag'),
+  'unknown-script': evidenceLabel('script subtag is not an ISO 15924 code'),
+  'script-after-region': evidenceLabel('script subtag placed after the region'),
+  variant: evidenceLabel('variant subtag, which Google does not document for hreflang'),
+  extension: evidenceLabel('extension subtag, which Google does not document for hreflang'),
+  'too-many-subtags': evidenceLabel('more than three subtags'),
+  malformed: evidenceLabel('value does not follow language-Script-REGION'),
 };
 
 /** One failure per problem kind, citing the first annotations that show it. */
@@ -119,7 +120,7 @@ export const regionOnlyValue: RuleImplementation = {
       const detected = language.guess.language;
       if (detected === code || !countryLanguage[code]!.includes(detected)) continue;
       results.push(fail('medium', [
-        annotationEvidence(context.evidence, annotation, `hreflang "${annotation.value}" names ${languageLabel(code)}`),
+        annotationEvidence(context.evidence, annotation, evidenceLabel('hreflang "{value}" names {language}', { value: annotation.value, language: languageLabel(code) })),
         languageEvidence(context.evidence, annotation.href, language),
       ], { values: `"${annotation.value}"`, count: 1, sources: annotation.source, language: languageLabel(code), detected: languageLabel(detected), target: annotation.href }, 'possible-country', true));
     }

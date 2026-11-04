@@ -1,3 +1,4 @@
+import { evidenceLabel, joinLabels, type EvidenceLabel } from '../../core/evidence.ts';
 import type { Severity } from '../../core/types.ts';
 import type { RobotsFile } from '../../fetch/robots.ts';
 import type { BotActivity, BotSummary, RequestTally } from '../../owner/bots/activity.ts';
@@ -16,8 +17,9 @@ function count(activity: BotActivity, value: number): string | number {
   return activity.sampled ? `~${Math.round(value)}` : value;
 }
 
-function windowLabel(activity: BotActivity): string {
-  return `${day(activity.window.start)} to ${day(activity.window.end)}`;
+/** The first and last day of the data, for evidence labels. */
+function windowOf(activity: BotActivity): { start: string; end: string } {
+  return { start: day(activity.window.start), end: day(activity.window.end) };
 }
 
 /** Days the data covers: the whole window for Cloudflare, from the first to the last request for logs. */
@@ -57,8 +59,8 @@ function botLine(bot: BotSummary): string {
   return `${bot.name} (${role}${definition?.followsRobots === false ? ', fetches on user request' : ''}): ${parts.join('; ')}${bot.basis === 'claimed' ? ' (figures count unverified claims)' : ''}${bot.truncated ? ' (lower bounds)' : ''}`;
 }
 
-function activityEvidence(context: RuleContext, activity: BotActivity, bots: readonly BotSummary[], label: string): string {
-  return context.evidence.add({ kind: 'owner-data', label: `${label} from ${windowLabel(activity)}`, excerpt: bots.map(botLine).join('\n') || 'no request' });
+function activityEvidence(context: RuleContext, activity: BotActivity, bots: readonly BotSummary[], label: EvidenceLabel): string {
+  return context.evidence.add({ kind: 'owner-data', label: joinLabels(label, evidenceLabel('from {start} to {end}', windowOf(activity))), excerpt: bots.map(botLine).join('\n') || 'no request' });
 }
 
 type RobotsState = { readonly file?: RobotsFile } | RuleResult;
@@ -96,18 +98,18 @@ const crawlActivity: RuleImplementation = {
     if (!recordsUserAgents(activity)) return { outcome: 'not_evaluated', reason: 'no-user-agents' };
     const ai = activity.bots.filter(bot => botById(bot.id)?.family === 'ai');
     const notObservable = context.evidence.add({
-      kind: 'owner-data', label: 'robots.txt tokens no request carries, so logs cannot show them',
+      kind: 'owner-data', label: evidenceLabel('robots.txt tokens no request carries, so logs cannot show them'),
       excerpt: robotsOnlyTokens.map(token => `${token.name} (${token.operator})`).join('\n'),
     });
     if (ai.length === 0) {
-      return { outcome: 'pass', evidence: [context.evidence.add({ kind: 'owner-data', label: `requests from AI crawlers from ${windowLabel(activity)}`, excerpt: 'no request' }), notObservable] };
+      return { outcome: 'pass', evidence: [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('requests from AI crawlers from {start} to {end}', windowOf(activity)), excerpt: 'no request' }), notObservable] };
     }
     const verified = ai.reduce((total, bot) => total + bot.verified.hits, 0);
     const claims = ai.filter(bot => !bot.verifiable).reduce((total, bot) => total + bot.unverified.hits, 0);
     const seen = ai.filter(bot => bot.verified.hits > 0).map(bot => bot.name);
     return {
       outcome: 'fail', severity: 'info', reason: verified > 0 ? 'seen' : 'claims-only',
-      evidence: [activityEvidence(context, activity, ai, 'requests from AI crawlers in the owner\'s data'), notObservable],
+      evidence: [activityEvidence(context, activity, ai, evidenceLabel('requests from AI crawlers in the owner\'s data')), notObservable],
       params: { verified: count(activity, verified), crawlers: seen.length > 0 ? summarizeList(seen, 6) : 'none', claims: count(activity, claims + ai.filter(bot => bot.verifiable).reduce((total, bot) => total + bot.unverified.hits, 0)) },
     };
   },
@@ -138,14 +140,16 @@ const aiBlockedAtEdge: RuleImplementation = {
       results.push({
         outcome: 'fail', severity, reason,
         evidence: [
-          context.evidence.add({ kind: 'owner-data', label: `${claimed ? 'claimed' : 'verified'} ${bot.name} requests for paths robots.txt allows, from ${windowLabel(activity)}`, excerpt: tallyLine(bot.name, tally) }),
-          context.evidence.add({ kind: 'owner-data', label: `paths where ${bot.name} was refused`, excerpt: blockedPaths(bot, aiRefused) }),
+          context.evidence.add({ kind: 'owner-data', label: claimed
+            ? evidenceLabel('claimed {crawler} requests for paths robots.txt allows, from {start} to {end}', { crawler: bot.name, ...windowOf(activity) })
+            : evidenceLabel('verified {crawler} requests for paths robots.txt allows, from {start} to {end}', { crawler: bot.name, ...windowOf(activity) }), excerpt: tallyLine(bot.name, tally) }),
+          context.evidence.add({ kind: 'owner-data', label: evidenceLabel('paths where {crawler} was refused', { crawler: bot.name }), excerpt: blockedPaths(bot, aiRefused) }),
         ],
         params: { agent: bot.name, blocked: count(activity, blocked), total: count(activity, tally.hits), share: percent(blocked, tally.hits), statuses: statusList(tally.statuses, aiRefused) },
       });
     }
     if (results.length > 0) return results;
-    return { outcome: 'pass', evidence: [activityEvidence(context, activity, candidates, 'requests from AI search and answer crawlers')] };
+    return { outcome: 'pass', evidence: [activityEvidence(context, activity, candidates, evidenceLabel('requests from AI search and answer crawlers'))] };
   },
 };
 
@@ -167,7 +171,7 @@ const aiSearchNotSeen: RuleImplementation = {
     if (allowed.length === 0) return { outcome: 'not_applicable', reason: 'all-disallowed' };
     const bots = activity.bots.filter(bot => (allowed as readonly string[]).includes(bot.id));
     const evidence = [context.evidence.add({
-      kind: 'owner-data', label: `requests from the AI search crawlers robots.txt allows, from ${windowLabel(activity)}`,
+      kind: 'owner-data', label: evidenceLabel('requests from the AI search crawlers robots.txt allows, from {start} to {end}', windowOf(activity)),
       excerpt: allowed.map(id => {
         const bot = bots.find(entry => entry.id === id);
         return bot ? botLine(bot) : `${botById(id)!.name}: no request`;
@@ -193,7 +197,7 @@ const referrals: RuleImplementation = {
     const lines = [...data.byHost.map(entry => `${entry.host} (${entry.assistant}): ${Math.round(entry.visits)}`), `utm_source=chatgpt.com: ${Math.round(data.tagged)}`];
     return {
       outcome: 'fail', severity: 'info',
-      evidence: [context.evidence.add({ kind: 'owner-data', label: `browser visits referred by AI assistants from ${windowLabel(activity)}`, excerpt: lines.join('\n') })],
+      evidence: [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('browser visits referred by AI assistants from {start} to {end}', windowOf(activity)), excerpt: lines.join('\n') })],
       params: {
         visits: count(activity, data.total), tagged: count(activity, data.tagged),
         assistants: data.byHost.length > 0 ? summarizeList(data.byHost.map(entry => `${entry.assistant} ${Math.round(entry.visits)}`), 5) : 'none by referrer',
@@ -222,8 +226,8 @@ const searchEngineBlocked: RuleImplementation = {
       const refused = Math.max(sum(tally.statuses, engineRefused), tally.challenges);
       const errors = sum(tally.statuses, serverError);
       const evidence = () => [
-        context.evidence.add({ kind: 'owner-data', label: `verified ${bot.name} requests for paths robots.txt allows, from ${windowLabel(activity)}`, excerpt: tallyLine(bot.name, tally) }),
-        context.evidence.add({ kind: 'owner-data', label: `paths where ${bot.name} got errors or refusals`, excerpt: blockedPaths(bot, status => engineRefused(status) || serverError(status)) }),
+        context.evidence.add({ kind: 'owner-data', label: evidenceLabel('verified {crawler} requests for paths robots.txt allows, from {start} to {end}', { crawler: bot.name, ...windowOf(activity) }), excerpt: tallyLine(bot.name, tally) }),
+        context.evidence.add({ kind: 'owner-data', label: evidenceLabel('paths where {crawler} got errors or refusals', { crawler: bot.name }), excerpt: blockedPaths(bot, status => engineRefused(status) || serverError(status)) }),
       ];
       if (refused >= 3) {
         const share = refused / tally.hits;
@@ -237,7 +241,7 @@ const searchEngineBlocked: RuleImplementation = {
           params: { agent: bot.name, count: count(activity, errors), total: count(activity, tally.hits), share: percent(errors, tally.hits), statuses: statusList(tally.statuses, serverError) } });
       }
     }
-    return results.length > 0 ? results : { outcome: 'pass', evidence: [activityEvidence(context, activity, verified, 'verified requests from search engine crawlers')] };
+    return results.length > 0 ? results : { outcome: 'pass', evidence: [activityEvidence(context, activity, verified, evidenceLabel('verified requests from search engine crawlers'))] };
   },
 };
 
@@ -267,16 +271,18 @@ const robotsCompliance: RuleImplementation = {
         outcome: 'fail', severity: assumed ? 'info' : 'low', reason: assumed ? 'assumed-unchanged' : 'disallowed',
         evidence: [
           context.evidence.add({
-            kind: 'owner-data', label: `verified ${bot.name} requests for paths robots.txt disallows, from ${day(compliance.checkedFrom)}${compliance.incomplete ? ' (lower bound)' : ''}`,
+            kind: 'owner-data', label: compliance.incomplete
+              ? evidenceLabel('verified {crawler} requests for paths robots.txt disallows, from {start} (lower bound)', { crawler: bot.name, start: day(compliance.checkedFrom) })
+              : evidenceLabel('verified {crawler} requests for paths robots.txt disallows, from {start}', { crawler: bot.name, start: day(compliance.checkedFrom) }),
             excerpt: compliance.paths.map(entry => `${entry.path} (${Math.round(entry.hits)} requests, last ${day(entry.lastSeen)})`).join('\n'),
           }),
-          ...rules.map(entry => context.evidence.add({ kind: 'robots', url: robots.url, label: `robots.txt rule that disallows paths ${bot.name} fetched`, excerpt: (lines[entry.line - 1] ?? '').trim(), line: entry.line })),
+          ...rules.map(entry => context.evidence.add({ kind: 'robots', url: robots.url, label: evidenceLabel('robots.txt rule that disallows paths {crawler} fetched', { crawler: bot.name }), excerpt: (lines[entry.line - 1] ?? '').trim(), line: entry.line })),
         ],
         params: { agent: bot.name, count: count(activity, compliance.disallowed), hours: compliance.cacheHours, since: day(robots.effectiveFrom) },
       });
     }
     if (results.length > 0) return results;
-    return { outcome: 'pass', evidence: [activityEvidence(context, activity, checked, 'verified requests from crawlers that follow robots.txt')] };
+    return { outcome: 'pass', evidence: [activityEvidence(context, activity, checked, evidenceLabel('verified requests from crawlers that follow robots.txt'))] };
   },
 };
 
@@ -294,14 +300,14 @@ const googlebotCoverage: RuleImplementation = {
     if (!googlebot || googlebot.verified.hits === 0 || !coverage) {
       return {
         outcome: 'fail', severity: 'low', reason: 'not-seen',
-        evidence: [context.evidence.add({ kind: 'owner-data', label: `verified Googlebot requests from ${windowLabel(activity)}`, excerpt: googlebot ? botLine(googlebot) : 'Googlebot: no request' })],
+        evidence: [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('verified Googlebot requests from {start} to {end}', windowOf(activity)), excerpt: googlebot ? botLine(googlebot) : 'Googlebot: no request' })],
         params: { days: Math.floor(days), fetched: 0, urls: activity.site.sitemapUrls, share: '0%' },
       };
     }
     const share = coverage.ok / coverage.urls;
     const evidence = [
-      context.evidence.add({ kind: 'owner-data', label: `verified Googlebot requests for sitemap URLs from ${windowLabel(activity)}`, excerpt: `${coverage.ok} of ${coverage.urls} sitemap URLs answered 2xx or 304; ${coverage.fetched} requested at all` }),
-      ...(coverage.missing.length > 0 ? [context.evidence.add({ kind: 'owner-data', label: 'sitemap URLs verified Googlebot did not request', excerpt: coverage.missing.join('\n') })] : []),
+      context.evidence.add({ kind: 'owner-data', label: evidenceLabel('verified Googlebot requests for sitemap URLs from {start} to {end}', windowOf(activity)), excerpt: `${coverage.ok} of ${coverage.urls} sitemap URLs answered 2xx or 304; ${coverage.fetched} requested at all` }),
+      ...(coverage.missing.length > 0 ? [context.evidence.add({ kind: 'owner-data', label: evidenceLabel('sitemap URLs verified Googlebot did not request'), excerpt: coverage.missing.join('\n') })] : []),
     ];
     const params = { days: Math.floor(days), fetched: coverage.ok, urls: coverage.urls, share: percent(coverage.ok, coverage.urls) };
     if (share < 0.5) return { outcome: 'fail', severity: 'low', reason: 'low-coverage', evidence, params };
@@ -323,7 +329,7 @@ const spoofedCrawlers: RuleImplementation = {
     if (checked === 0) return verifiable.length > 0 ? { outcome: 'not_evaluated', reason: 'no-client-address' } : { outcome: 'not_applicable', reason: 'no-claims' };
     const impostors = verifiable.filter(bot => bot.spoofed.hits > 0);
     const evidence = [context.evidence.add({
-      kind: 'owner-data', label: `crawler requests that failed their operator's checks, from ${windowLabel(activity)}`,
+      kind: 'owner-data', label: evidenceLabel("crawler requests that failed their operator's checks, from {start} to {end}", windowOf(activity)),
       excerpt: impostors.map(bot => `${bot.name}: ${Math.round(bot.spoofed.hits)} of ${Math.round(bot.verified.hits + bot.spoofed.hits)} checked requests failed; answers ${statusList(bot.spoofed.statuses)}`).join('\n') || 'none',
     })];
     const share = spoofed / checked;

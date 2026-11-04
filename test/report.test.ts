@@ -6,7 +6,7 @@ import { describe, test } from 'node:test';
 import type { ReportAnalysis } from '../src/ai/types.ts';
 import { rules as catalogRules } from '../src/catalog/index.ts';
 import type { CollectResult } from '../src/collect/index.ts';
-import { EvidenceStore } from '../src/core/evidence.ts';
+import { evidenceLabel, EvidenceStore } from '../src/core/evidence.ts';
 import { runRules, type RuleImplementation } from '../src/rules/engine.ts';
 import { renderHtml } from '../src/report/html.ts';
 import { renderFixPlan, renderMarkdown, renderTaskFile, taskFileLimit } from '../src/report/markdown.ts';
@@ -18,8 +18,8 @@ const titleRule: RuleImplementation = {
   id: 'content-title-missing',
   evaluate({ page: current, evidence }) {
     const title = current!.raw!.parsed.titles.find(entry => entry.inHead && entry.text.trim() !== '');
-    if (title) return { outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: current!.url, label: 'title element', excerpt: title.text, line: title.line })] };
-    return { outcome: 'fail', severity: 'high', evidence: [evidence.add({ kind: 'html', label: 'no non-empty title element in the head' })] };
+    if (title) return { outcome: 'pass', evidence: [evidence.add({ kind: 'html', url: current!.url, label: evidenceLabel('title element'), excerpt: title.text, line: title.line })] };
+    return { outcome: 'fail', severity: 'high', evidence: [evidence.add({ kind: 'html', label: evidenceLabel('no non-empty title element in the head') })] };
   },
 };
 
@@ -59,12 +59,12 @@ describe('buildReport', () => {
   test('groups one defect seen on several pages with different values into one task, but keeps site findings apart', () => {
     const rule = catalogRules.find(entry => entry.id === 'content-title-width')!;
     const evidence = new EvidenceStore();
-    const cite = (url: string, title: string) => [evidence.add({ kind: 'html', url, label: 'title element', excerpt: title, line: 3 })];
+    const cite = (url: string, title: string) => [evidence.add({ kind: 'html', url, label: evidenceLabel('title element'), excerpt: title, line: 3 })];
     const pageFinding = (url: string, title: string) => ({ ruleId: rule.id, scope: { kind: 'page' as const, url }, outcome: 'fail' as const, severity: 'low' as const,
       reason: 'short', evidence: cite(url, title), evidenceSignature: url, confidence: 'high' as const, origin: 'deterministic' as const });
     const siteRule = catalogRules.find(entry => entry.id === 'crawl-host-variant-consolidation')!;
     const siteFinding = (variant: string) => ({ ruleId: siteRule.id, scope: { kind: 'site' as const, origin: 'https://example.com' }, outcome: 'fail' as const, severity: 'low' as const,
-      reason: 'temporary-redirect', evidence: [evidence.add({ kind: 'redirect', url: variant, label: 'hop 1', excerpt: `307 ${variant}` })], evidenceSignature: variant, confidence: 'high' as const, origin: 'deterministic' as const });
+      reason: 'temporary-redirect', evidence: [evidence.add({ kind: 'redirect', url: variant, label: evidenceLabel('hop 1'), excerpt: `307 ${variant}` })], evidenceSignature: variant, confidence: 'high' as const, origin: 'deterministic' as const });
     const findings = [pageFinding('https://example.com/a', 'Shop'), pageFinding('https://example.com/b', 'Blog'), siteFinding('https://example.com/a/index.html'), siteFinding('https://example.com/a')];
     const collected: CollectResult = { site: site({ pages: [] }), versions: {}, warnings: [], durationMs: 1 };
     const report = buildReport({ collected, findings, evidence, implemented: 2, language: 'en', startedAt: new Date('2026-11-04T10:00:00Z'), targetUrl: 'https://example.com/a', options: {} });

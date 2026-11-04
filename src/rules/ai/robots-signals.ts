@@ -1,3 +1,4 @@
+import { evidenceLabel } from '../../core/evidence.ts';
 import { headerValue } from '../../fetch/http.ts';
 import { isAllowed, parseRobots } from '../../fetch/robots.ts';
 import { summarizeList } from '../helpers.ts';
@@ -21,12 +22,12 @@ const managedRobots: RuleImplementation = {
     const end = endOffset === -1 ? robots.lines.length : start + 1 + endOffset;
     // Blank lines keep the segment's line numbers equal to the file's.
     const segment = parseRobots(robots.lines.map((line, index) => (index > start && index < end ? line : '')).join('\n'));
-    const marker = robotsLineEvidence(context, robots, start + 1, 'start of the Cloudflare managed robots.txt block');
+    const marker = robotsLineEvidence(context, robots, start + 1, evidenceLabel('start of the Cloudflare managed robots.txt block'));
     const disallowed = segment.groups.flatMap(group => group.userAgents.filter(token => !isAllowed(segment, [token], '/').allowed && token !== '*').map(token => ({ token, group })));
     if (disallowed.length === 0) return { outcome: 'pass', evidence: [marker] };
     const searchEngines = disallowed.filter(entry => entry.token === 'googlebot' || entry.token === 'bingbot');
     const answer = disallowed.filter(entry => { const known = purposeOf.get(entry.token); return known !== undefined && known.purpose !== 'training'; });
-    const evidence = [marker, ...disallowed.map(entry => robotsLineEvidence(context, robots, entry.group.line, 'group inside the managed block that disallows /'))];
+    const evidence = [marker, ...disallowed.map(entry => robotsLineEvidence(context, robots, entry.group.line, evidenceLabel('group inside the managed block that disallows /')))];
     const names = (entries: typeof disallowed) => summarizeList(entries.map(entry => purposeOf.get(entry.token)?.name ?? entry.token), 5);
     if (searchEngines.length > 0) return { outcome: 'fail', severity: 'medium', reason: 'search-engine-blocked', evidence, params: { agents: names(searchEngines) } };
     if (answer.length > 0) return { outcome: 'fail', severity: 'low', reason: 'answer-crawler-blocked', evidence, params: { agents: names(answer) } };
@@ -66,18 +67,18 @@ const contentSignals: RuleImplementation = {
     if (invalid.length > 0) {
       results.push({
         outcome: 'fail', severity: 'info', reason: 'invalid',
-        evidence: [...new Set(invalid.map(entry => entry.line))].map(line => robotsLineEvidence(context, robots, line, 'Content-Signal line with an unknown key or value')),
+        evidence: [...new Set(invalid.map(entry => entry.line))].map(line => robotsLineEvidence(context, robots, line, evidenceLabel('Content-Signal line with an unknown key or value'))),
         params: { pairs: summarizeList(invalid.map(entry => entry.pair), 4) },
       });
     }
     if (aiInputNo.length > 0) {
       results.push({
         outcome: 'fail', severity: 'info', reason: 'ai-input-no',
-        evidence: [...new Set(aiInputNo)].map(line => robotsLineEvidence(context, robots, line, 'Content-Signal line that states ai-input=no')),
+        evidence: [...new Set(aiInputNo)].map(line => robotsLineEvidence(context, robots, line, evidenceLabel('Content-Signal line that states ai-input=no'))),
       });
     }
     if (results.length > 0) return results;
-    return { outcome: 'pass', evidence: lines.map(line => robotsLineEvidence(context, robots, line.line, 'Content-Signal line')) };
+    return { outcome: 'pass', evidence: lines.map(line => robotsLineEvidence(context, robots, line.line, evidenceLabel('Content-Signal line'))) };
   },
 };
 
@@ -114,7 +115,7 @@ function robotsUsageLines(context: RuleContext): UsageSignal[] {
   return robots.file.unsupported.filter(line => line.key === 'content-usage').map(line => {
     // An optional path comes first; the preference is the rest of the line.
     const value = line.value.startsWith('/') ? line.value.replace(/^\S+\s*/u, '') : line.value;
-    return { evidence: robotsLineEvidence(context, robots, line.line, 'Content-Usage line in robots.txt'), value };
+    return { evidence: robotsLineEvidence(context, robots, line.line, evidenceLabel('Content-Usage line in robots.txt')), value };
   });
 }
 
@@ -123,7 +124,7 @@ function headerUsage(context: RuleContext): UsageSignal[] {
   for (const page of context.site.pages.values()) {
     const value = headerValue(page.fetch.headers, 'content-usage');
     if (value === undefined) continue;
-    signals.push({ evidence: context.evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: 'Content-Usage response header', excerpt: value }), value });
+    signals.push({ evidence: context.evidence.add({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('Content-Usage response header'), excerpt: value }), value });
   }
   return signals;
 }
@@ -134,7 +135,7 @@ const aiprefSignals: RuleImplementation = {
     const signals = [...robotsUsageLines(context), ...headerUsage(context)];
     const robots = parsedRobots(context);
     const usageGroup = isResult(robots) ? undefined : robots.file.groups.find(group => group.userAgents.includes('__usage_ai-training'));
-    const groupEvidence = usageGroup && !isResult(robots) ? [robotsLineEvidence(context, robots, usageGroup.line, 'robots.txt group for the shared AI training token')] : [];
+    const groupEvidence = usageGroup && !isResult(robots) ? [robotsLineEvidence(context, robots, usageGroup.line, evidenceLabel('robots.txt group for the shared AI training token'))] : [];
     if (signals.length === 0 && groupEvidence.length === 0) return { outcome: 'not_applicable', reason: 'no-aipref' };
     const broken = signals.map(signal => ({ signal, problems: usagePreferenceProblems(signal.value) })).filter(entry => entry.problems.length > 0);
     if (broken.length > 0) {
