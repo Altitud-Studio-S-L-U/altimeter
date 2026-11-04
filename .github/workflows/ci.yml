@@ -37,4 +37,6 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm run check
+      # The integrated benchmark renders every scenario in Chrome, which GitHub's Ubuntu and Windows runners ship.
+      - run: npm run bench
       - run: npm run build
