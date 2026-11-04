@@ -2482,7 +2482,7 @@
       }
     ],
     "status": "requires-owner-data",
-    "notes": "Expected CTR comes from the site's page and query rows grouped by position band. The queries are owner data: they stay on this machine, are left out of analyst calls and are removed from reports written with --redact-queries.",
+    "notes": "Expected CTR comes from the site's page and query rows grouped by position band. The queries are owner data: they stay on this machine, are never sent to the analyst, and reports written with --redact-queries show numbered labels instead.",
     "related": [
       "content-title-width",
       "content-meta-description-quality"

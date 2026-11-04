@@ -16,8 +16,11 @@ export interface AuditOptions extends CollectOptions {
   readonly language?: Language;
   /** Rule implementations to run; defaults to every registered implementation. */
   readonly implementations?: ReadonlyMap<string, RuleImplementation>;
-  /** Read the owner's Search Console data; `property` overrides the automatic choice. */
-  readonly gsc?: { readonly property?: string };
+  /**
+   * Read the owner's Search Console data; `property` overrides the automatic choice and `redactQueries` writes
+   * numbered labels instead of the queries.
+   */
+  readonly gsc?: { readonly property?: string; readonly redactQueries?: boolean };
   /** Options recorded in the report, already free of secrets. */
   readonly recordedOptions?: Readonly<Record<string, string | number | boolean>>;
 }
@@ -54,7 +57,7 @@ async function withSearchConsole(collected: CollectResult, options: AuditOptions
     if (!token) return { ...collected, warnings: [...collected.warnings, 'Search Console was requested but no credential was found. Run "altimeter gsc login" or set ALTIMETER_GSC_ACCESS_TOKEN.'] };
     const inspectUrls = [...collected.site.pages.values()].filter(page => page.fetch.status === 200).map(page => page.fetch.finalUrl).slice(0, 10);
     const gsc = await fetchGscData(client, token, { url: options.url, inspectUrls, ...(options.gsc.property ? { siteUrl: options.gsc.property } : {}) });
-    return { ...collected, site: { ...collected.site, owner: { ...collected.site.owner, gsc } } };
+    return { ...collected, site: { ...collected.site, owner: { ...collected.site.owner, gsc, ...(options.gsc.redactQueries ? { redactQueries: true } : {}) } } };
   } catch (error) {
     return { ...collected, warnings: [...collected.warnings, `Search Console data was not used: ${error instanceof Error ? error.message : 'unknown error'}`] };
   } finally {

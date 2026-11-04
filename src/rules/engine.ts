@@ -51,6 +51,11 @@ export interface Finding {
   readonly origin: 'deterministic' | 'ai' | 'owner-data';
   /** A candidate awaiting the analyst's confirmation; see RuleResult. */
   readonly needsJudgment?: boolean;
+  /**
+   * What the model analysis decided about a candidate, once its verifier supported the decision. A confirmed
+   * candidate becomes a task but, resting on judgment, stays out of the score and --fail-on.
+   */
+  readonly judgment?: 'confirmed' | 'dismissed';
 }
 
 /**

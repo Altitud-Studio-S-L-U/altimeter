@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
+import type { AiFinding, ReportAnalysis } from '../ai/types.ts';
 import { rule as catalogRule } from '../catalog/index.ts';
 import { categories } from '../core/types.ts';
 import { findingMessage, format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
-import { severityWeights } from '../score/score.ts';
+import { analysisSummary, listedFailures, providerLabel } from './markdown.ts';
 import type { Report, ReportFinding } from './model.ts';
 import { escapeHtml } from './sanitize.ts';
 
@@ -88,10 +89,63 @@ function findingHtml(finding: ReportFinding, language: Language, evidence: Map<s
   }).join('');
   const sources = (rule?.sources ?? []).slice(0, 3).map(source => `<li>${safeHttpsLink(source.url, source.url)} <span class="where">(${escapeHtml(format(t.verified, { date: source.verified }))})</span></li>`).join('');
   return `<details class="finding" data-finding data-category="${escapeHtml(finding.category)}" data-severity="${escapeHtml(severity)}">
-<summary><b class="sev-${escapeHtml(severity)}">${escapeHtml(t.severities[severity])}</b><span>${escapeHtml(texts.title)}</span><span class="where">${escapeHtml(where)}</span></summary>
+<summary><b class="sev-${escapeHtml(severity)}">${escapeHtml(t.severities[severity])}</b><span>${escapeHtml(texts.title)}</span><span class="where">${escapeHtml(where)}${finding.judgment === 'confirmed' ? ` · ${escapeHtml(t.analysis.confirmedMark)}` : ''}</span></summary>
 <div class="body"><p>${escapeHtml(message)}</p>${items ? `<p><b>${escapeHtml(t.evidence)}</b></p><ul>${items}</ul>` : ''}
 ${texts.fix ? `<p><b>${escapeHtml(t.fix)}:</b> ${escapeHtml(texts.fix)}</p>` : ''}${texts.why ? `<p class="where">${escapeHtml(texts.why)}</p>` : ''}
 ${sources ? `<p><b>${escapeHtml(t.source)}</b></p><ul>${sources}</ul>` : ''}<p class="where"><code>${escapeHtml(finding.ruleId)}</code></p></div></details>`;
+}
+
+function aiFindingHtml(finding: AiFinding, language: Language): string {
+  const t = ui(language);
+  const rule = catalogRule(finding.ruleId);
+  const title = rule ? ruleTexts(language, rule).title : finding.title;
+  const severity = finding.severity ?? 'info';
+  const where = finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin;
+  const text = findingMessage(language, finding.ruleId, 'fail', finding.reason, finding.params) ?? finding.message;
+  const quotes = finding.quotes.slice(0, 3).map(quote => `<li>${escapeHtml(t.analysis.quote)} (${escapeHtml(quote.evidenceId)}): <code>${escapeHtml(quote.text.slice(0, 400))}</code></li>`).join('');
+  const note = finding.notes[language] ? `<p class="where">${escapeHtml(t.analysis.notes)}: ${escapeHtml(finding.notes[language])}</p>` : '';
+  return `<details class="finding"><summary><b class="sev-${escapeHtml(severity)}">${escapeHtml(t.severities[severity])}</b><span>${escapeHtml(title)}</span><span class="where">${escapeHtml(where)} · ${escapeHtml(t.analysis.verification[finding.verification])}</span></summary>
+<div class="body">${text ? `<p>${escapeHtml(text)}</p>` : ''}${quotes ? `<ul>${quotes}</ul>` : ''}${note}<p class="where"><code>${escapeHtml(finding.ruleId)}</code></p></div></details>`;
+}
+
+/** The model analysis, rendered like the markdown report: model text and site text are escaped like any untrusted value. */
+function analysisHtml(analysis: ReportAnalysis, language: Language): string {
+  const t = ui(language);
+  const a = t.analysis;
+  const parts = [`<h2>${escapeHtml(a.title)}</h2><p>${escapeHtml(a.intro)}</p>`];
+  parts.push(`<p class="where">${escapeHtml(format(a.by, { analyst: providerLabel(analysis.provider.analyst, a.nobody), verifier: providerLabel(analysis.provider.verifier, a.nobody), pages: analysis.pages.join(', ') || '-' }))}<br>${escapeHtml(analysisSummary(analysis, language))}</p>`);
+  const failures = analysis.findings.filter(finding => finding.outcome === 'fail');
+  parts.push(`<h3>${escapeHtml(a.verified)}</h3>${failures.length === 0 ? `<p class="where">${escapeHtml(a.none)}</p>` : failures.map(finding => aiFindingHtml(finding, language)).join('')}`);
+  if (analysis.confirmations.length > 0) {
+    parts.push(`<h3>${escapeHtml(a.decisions)}</h3><ul>${analysis.confirmations.map(decision => {
+      const rule = catalogRule(decision.ruleId);
+      const where = decision.scope.kind === 'page' ? decision.scope.url : decision.scope.origin;
+      return `<li>${escapeHtml(rule ? ruleTexts(language, rule).title : decision.ruleId)} <span class="where">${escapeHtml(where)}</span>: ${escapeHtml(a.decision[decision.decision])}, ${escapeHtml(a.verification[decision.verification])}</li>`;
+    }).join('')}</ul>`);
+  }
+  if (analysis.proposals.length > 0) {
+    const items = analysis.proposals.map(proposal => {
+      const body = proposal.kind === 'json-ld'
+        ? `<pre><code>${escapeHtml(proposal.jsonLd.slice(0, 6000))}</code></pre>`
+        : `<br><code>${escapeHtml(proposal.text)}</code>${proposal.current ? `<br><span class="where">${escapeHtml(a.current)}: ${escapeHtml(proposal.current)}</span>` : ''}`;
+      const note = proposal.notes[language] ? `<br><span class="where">${escapeHtml(a.notes)}: ${escapeHtml(proposal.notes[language])}</span>` : '';
+      return `<li><b>${escapeHtml(a.proposalKinds[proposal.kind])}</b> <span class="where">${escapeHtml(proposal.scope)}</span>${body}${note}</li>`;
+    }).join('');
+    parts.push(`<h3>${escapeHtml(a.proposals)}</h3><ul>${items}</ul>${analysis.proposals.some(proposal => proposal.placeholders > 0) ? `<p class="where">${escapeHtml(a.ownerToSupply)}</p>` : ''}`);
+  }
+  if (analysis.injectionCandidates.length > 0) {
+    parts.push(`<h3>${escapeHtml(a.injection)}</h3><p class="where">${escapeHtml(a.injectionIntro)}</p><ul>${analysis.injectionCandidates.map(candidate => `<li><span class="where">${escapeHtml(candidate.page)} · ${escapeHtml(candidate.where)}</span><br><code>${escapeHtml(candidate.excerpt.slice(0, 400))}</code></li>`).join('')}</ul>`);
+  }
+  const unverified = analysis.unverified.filter(finding => finding.outcome === 'fail');
+  if (unverified.length > 0) parts.push(`<h3>${escapeHtml(a.unverified)}</h3><p class="where">${escapeHtml(a.unverifiedIntro)}</p>${unverified.map(finding => aiFindingHtml(finding, language)).join('')}`);
+  if (analysis.dropped.length > 0) {
+    const byReason = new Map<string, number>();
+    for (const claim of analysis.dropped) byReason.set(claim.reason, (byReason.get(claim.reason) ?? 0) + 1);
+    parts.push(`<h3>${escapeHtml(a.dropped)}</h3><ul>${[...byReason].sort((x, y) => y[1] - x[1]).map(([reason, count]) => `<li><code>${escapeHtml(reason)}</code>: ${count}</li>`).join('')}</ul>`);
+  }
+  if (analysis.skipped.length > 0) parts.push(`<h3>${escapeHtml(a.skipped)}</h3><ul>${analysis.skipped.map(entry => `<li>${escapeHtml(entry.pass)} <span class="where">${escapeHtml(entry.page)}</span>: <code>${escapeHtml(entry.reason)}</code></li>`).join('')}</ul>`);
+  if (analysis.warnings.length > 0) parts.push(`<p class="where">${analysis.warnings.map(warning => escapeHtml(warning)).join('<br>')}</p>`);
+  return parts.join('\n');
 }
 
 /** A self-contained report: no external requests, a strict CSP, and every value from the site escaped. */
@@ -99,8 +153,7 @@ export function renderHtml(report: Report, language: Language): string {
   const t = ui(language);
   const evidence = new Map(report.evidence.map(item => [item.id, item]));
   const host = new URL(report.target.origin).host;
-  const failures = report.findings.filter(finding => finding.outcome === 'fail' && !finding.needsJudgment)
-    .sort((a, b) => severityWeights[b.severity ?? 'info'] - severityWeights[a.severity ?? 'info'] || a.ruleId.localeCompare(b.ruleId));
+  const failures = listedFailures(report.findings);
   const scriptHash = createHash('sha256').update(script).digest('base64');
   const csp = `default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-${scriptHash}'; img-src data:; base-uri 'none'; form-action 'none'`;
   const bars = report.score.categories.map(entry => `<div class="bar"><span>${escapeHtml(t.categories[entry.category])}</span><div class="track"><div class="fill ${scoreClass(entry.score)}" style="width:${entry.score ?? 0}%"></div></div><b>${entry.score ?? '–'}</b></div>`).join('');
@@ -119,7 +172,7 @@ export function renderHtml(report: Report, language: Language): string {
     const inCategory = failures.filter(finding => finding.category === category);
     return `<section data-category-section="${category}"><h3>${escapeHtml(t.categories[category])}</h3>${inCategory.length === 0 ? `<p class="where">${escapeHtml(t.noFindings)}</p>` : inCategory.map(finding => findingHtml(finding, language, evidence)).join('')}</section>`;
   }).join('');
-  const pending = report.findings.filter(finding => finding.needsJudgment);
+  const pending = report.findings.filter(finding => finding.needsJudgment && finding.judgment === undefined);
   const notEvaluated = new Map<string, number>();
   for (const finding of report.findings.filter(entry => entry.outcome === 'not_evaluated')) notEvaluated.set(finding.reason ?? 'unknown', (notEvaluated.get(finding.reason ?? 'unknown') ?? 0) + 1);
   const pages = report.pages.map(page => `<tr><td>${escapeHtml(page.finalUrl)}</td><td>${page.status ?? '–'}</td><td>${escapeHtml(page.pageType)}</td><td>${page.rendered ? escapeHtml(t.yes) : escapeHtml(t.no)}</td></tr>`).join('');
@@ -150,6 +203,7 @@ ${tasks ? `<ol class="tasks">${tasks}</ol>` : `<p>${escapeHtml(t.noActions)}</p>
 <div class="filters" role="group" aria-label="${escapeHtml(t.score)}">${severityButtons}</div>
 ${sections}
 ${pending.length > 0 ? `<h2>${escapeHtml(t.pendingReview)}</h2><p class="where">${escapeHtml(t.pendingReviewIntro)}</p><ul>${pending.map(finding => `<li>${escapeHtml(finding.title)} <span class="where">${escapeHtml(finding.scope.kind === 'page' ? finding.scope.url : finding.scope.origin)}</span></li>`).join('')}</ul>` : ''}
+${report.ai ? analysisHtml(report.ai, language) : ''}
 ${notEvaluated.size > 0 ? `<h2>${escapeHtml(t.notEvaluated)}</h2><ul>${[...notEvaluated].sort((a, b) => b[1] - a[1]).map(([reason, count]) => `<li><code>${escapeHtml(reason)}</code>: ${count}</li>`).join('')}</ul>` : ''}
 <h2>${escapeHtml(t.pages)}</h2>
 <div class="panel"><table><thead><tr><th>${escapeHtml(t.page)}</th><th>${escapeHtml(t.status)}</th><th>${escapeHtml(t.type)}</th><th>${escapeHtml(t.rendered)}</th></tr></thead><tbody>${pages}</tbody></table></div>

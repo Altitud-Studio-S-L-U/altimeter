@@ -44,6 +44,8 @@ export interface PageFacts {
 
 export interface OwnerData {
   readonly gsc?: GscData;
+  /** Write "query 1", "query 2" instead of the owner's search queries, for a report meant to be shared. */
+  readonly redactQueries?: boolean;
 }
 
 export interface AgentProbe {

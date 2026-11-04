@@ -52,7 +52,7 @@
     "cli"
   ],
   "scripts": {
-    "build": "node scripts/clean.mjs dist && tsc -p tsconfig.build.json",
+    "build": "node scripts/clean.mjs dist && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test \"test/**/*.test.ts\"",
     "check": "npm run typecheck && npm test",

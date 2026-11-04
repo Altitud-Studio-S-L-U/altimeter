@@ -4,14 +4,19 @@ import { readFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { clearCache } from '../ai/cache.ts';
+import { describeProviders } from '../ai/providers.ts';
+import { runAnalysis } from '../ai/run.ts';
 import { audit, auditExitCode } from '../audit.ts';
 import { rule as catalogRule, rules as catalogRules } from '../catalog/index.ts';
 import { categories, type Category } from '../core/types.ts';
-import { ruleTexts, type Language } from '../i18n/messages.ts';
+import { format, ruleTexts, type Language } from '../i18n/messages.ts';
 import { ui } from '../i18n/ui.ts';
 import { findChrome } from '../render/chrome.ts';
 import { compareReports } from '../report/compare.ts';
-import type { Report } from '../report/model.ts';
+import { analysisSummary } from '../report/markdown.ts';
+import { mergeAnalysis, type Report } from '../report/model.ts';
+import { mythMatches } from '../rules/myth-filter.ts';
 import { cleanLine } from '../report/sanitize.ts';
 import { reportDirectory, writeReport } from '../report/write.ts';
 import { verifyExitCode, verifyTasks } from '../verify/index.ts';
@@ -30,7 +35,8 @@ Usage:
                                                    Re-check tasks against a local build or another origin.
   altimeter rules [--category <name>] [--stale]    List the rule catalog.
   altimeter explain <rule-id>                      Show a rule and its sources.
-  altimeter doctor                                 Check Node.js and Chrome.
+  altimeter doctor                                 Check Node.js, Chrome and the Claude Code and Codex CLIs.
+  altimeter cache clear                            Delete cached model answers.
   altimeter gsc login --client <client_secret.json> [--remember <dpapi|file>]
   altimeter gsc logout | gsc status                Manage read-only Search Console access.
   altimeter --version                              Print the version.
@@ -41,6 +47,7 @@ Audit options:
   --max-pages <n>            Pages to audit when crawling, 1 to 1000 (default 100).
   --gsc                      Add Search Console data (from ALTIMETER_GSC_ACCESS_TOKEN, ALTIMETER_GSC_SA_KEY or gsc login).
   --gsc-property <property>  Use this property, for example sc-domain:example.com.
+  --redact-queries           Write numbered labels instead of Search Console queries, for a report to share.
   --out <dir>                Parent folder for reports (default ./altimeter-report).
   --no-render                Skip Chrome rendering and Lighthouse.
   --no-lighthouse            Skip Lighthouse.
@@ -49,8 +56,20 @@ Audit options:
   --allow-private-network    Allow private and loopback addresses, for local or staging sites.
   --quiet                    Print only the report folder.
 
+Model analysis options (Claude Code or Codex, run with your own login; the pages analysed are sent to it):
+  --provider <name>          auto (Claude Code, then Codex), claude, codex or none (default auto, or ALTIMETER_PROVIDER).
+  --verifier <who>           Who checks each model finding: same, other or none (default same).
+  --model <id>               Model for the analyst; the CLI's default when omitted.
+  --ai-pages <1-10>          Pages the analyst reads: the audited page, the home page, then the most linked (default 3).
+  --ai-max-calls <1-64>      Provider calls allowed for analysis and verification together (default 16).
+  --keyword <query>          A query the page should rank for; repeat it for several. Intent is judged only against one.
+  --dry-run <dir>            Write the prompts and the call plan to <dir> and call no provider.
+  --use-api-keys             Pass API key variables to the CLIs (off: a key exported for another tool is never spent).
+  --no-ai-cache              Ask the provider again instead of reusing cached answers.
+
 Field data from the Chrome UX Report is queried when ALTIMETER_GOOGLE_API_KEY holds a Google Cloud API key
-with the Chrome UX Report API enabled. The key is sent in a header to Google only.
+with the Chrome UX Report API enabled. The key is sent in a header to Google only. Search Console data never
+reaches the model.
 
 Exit status: 0 done, 1 a check failed at --fail-on or above, 2 error, 3 the page could not be audited.
 `;
@@ -72,6 +91,48 @@ async function readReport(path: string): Promise<Report> {
   return report;
 }
 
+const providers = ['auto', 'claude', 'codex', 'none'] as const;
+const verifiers = ['same', 'other', 'none'] as const;
+
+function wholeNumber(value: string | undefined, fallback: number, low: number, high: number, flag: string): number {
+  const parsed = value === undefined ? fallback : Number(value);
+  if (!Number.isInteger(parsed) || parsed < low || parsed > high) throw new UsageError(`${flag} must be a whole number from ${low} to ${high}.`);
+  return parsed;
+}
+
+interface AnalysisFlags {
+  readonly provider?: string | undefined;
+  readonly verifier?: string | undefined;
+  readonly model?: string | undefined;
+  readonly 'ai-pages'?: string | undefined;
+  readonly 'ai-max-calls'?: string | undefined;
+  readonly keyword?: string[] | undefined;
+  readonly 'dry-run'?: string | undefined;
+  readonly 'use-api-keys'?: boolean | undefined;
+  readonly 'no-ai-cache'?: boolean | undefined;
+}
+
+/** The model analysis settings from the flags; the provider defaults to ALTIMETER_PROVIDER, then auto. */
+function analysisOptions(values: AnalysisFlags) {
+  const provider = (values.provider ?? process.env.ALTIMETER_PROVIDER ?? 'auto') as (typeof providers)[number];
+  if (!providers.includes(provider)) throw new UsageError('--provider must be auto, claude, codex or none.');
+  const verifier = (values.verifier ?? 'same') as (typeof verifiers)[number];
+  if (!verifiers.includes(verifier)) throw new UsageError('--verifier must be same, other or none.');
+  const keyword = (values.keyword ?? []).map(entry => entry.trim()).filter(Boolean);
+  if (keyword.some(entry => entry.length > 120)) throw new UsageError('Each --keyword must be at most 120 characters.');
+  return {
+    provider,
+    verifier,
+    ...(values.model ? { model: values.model } : {}),
+    aiPages: wholeNumber(values['ai-pages'], 3, 1, 10, '--ai-pages'),
+    maxCalls: wholeNumber(values['ai-max-calls'], 16, 1, 64, '--ai-max-calls'),
+    keyword,
+    ...(values['dry-run'] ? { dryRunDir: resolve(values['dry-run']) } : {}),
+    useApiKeys: values['use-api-keys'] === true,
+    cache: values['no-ai-cache'] !== true,
+  };
+}
+
 async function auditCommand(args: string[]): Promise<number> {
   const { values, positionals } = parseArgs({
     args, strict: true, allowPositionals: true,
@@ -79,6 +140,9 @@ async function auditCommand(args: string[]): Promise<number> {
       lang: { type: 'string' }, out: { type: 'string' }, 'no-render': { type: 'boolean' }, 'no-lighthouse': { type: 'boolean' },
       'lab-runs': { type: 'string' }, 'fail-on': { type: 'string' }, 'allow-private-network': { type: 'boolean' }, quiet: { type: 'boolean' },
       crawl: { type: 'boolean' }, 'max-pages': { type: 'string' }, gsc: { type: 'boolean' }, 'gsc-property': { type: 'string' },
+      'redact-queries': { type: 'boolean' }, provider: { type: 'string' }, verifier: { type: 'string' }, model: { type: 'string' },
+      'ai-pages': { type: 'string' }, 'ai-max-calls': { type: 'string' }, keyword: { type: 'string', multiple: true }, 'dry-run': { type: 'string' },
+      'use-api-keys': { type: 'boolean' }, 'no-ai-cache': { type: 'boolean' },
     },
   });
   if (positionals.length !== 1) throw new UsageError('audit needs exactly one URL.');
@@ -99,7 +163,12 @@ async function auditCommand(args: string[]): Promise<number> {
   const quiet = values.quiet === true;
   const log = quiet ? undefined : (message: string) => process.stderr.write(`· ${cleanLine(message)}\n`);
   const useGsc = values.gsc === true || values['gsc-property'] !== undefined;
-  const recordedOptions = { crawl: values.crawl === true, maxPages, searchConsole: useGsc, render: values['no-render'] !== true, lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true };
+  const ai = analysisOptions(values);
+  const recordedOptions = {
+    crawl: values.crawl === true, maxPages, searchConsole: useGsc, redactQueries: values['redact-queries'] === true, render: values['no-render'] !== true,
+    lighthouse: values['no-lighthouse'] !== true && values['no-render'] !== true, labRuns, failOn, allowPrivateNetwork: values['allow-private-network'] === true,
+    provider: ai.provider, verifier: ai.verifier, aiPages: ai.aiPages, aiMaxCalls: ai.maxCalls, dryRun: ai.dryRunDir !== undefined,
+  };
   const result = await audit({
     url: url.href,
     language: lang,
@@ -109,28 +178,34 @@ async function auditCommand(args: string[]): Promise<number> {
     labRuns,
     crawl: values.crawl === true,
     maxPages,
-    ...(useGsc ? { gsc: { ...(values['gsc-property'] ? { property: values['gsc-property'] } : {}) } } : {}),
+    ...(useGsc ? { gsc: { ...(values['gsc-property'] ? { property: values['gsc-property'] } : {}), redactQueries: values['redact-queries'] === true } } : {}),
     ...(process.env.ALTIMETER_GOOGLE_API_KEY ? { cruxKey: process.env.ALTIMETER_GOOGLE_API_KEY } : {}),
     ...(log ? { log } : {}),
     recordedOptions,
   });
-  const directory = reportDirectory(resolve(values.out ?? 'altimeter-report'), result.report.target.origin, new Date(result.report.run.startedAt));
-  await writeReport(directory, result.report, lang);
+  let report = result.report;
+  if (ai.provider !== 'none' && !result.collected.site.pages.values().next().value?.notAuditable) {
+    const analysis = await runAnalysis({ ...ai, report, collected: result.collected, mythMatches, ...(log ? { log } : {}) });
+    report = mergeAnalysis(report, analysis);
+  }
+  const directory = reportDirectory(resolve(values.out ?? 'altimeter-report'), report.target.origin, new Date(report.run.startedAt));
+  await writeReport(directory, report, lang);
   const shown = relative(process.cwd(), directory) || '.';
   if (quiet) {
     process.stdout.write(`${shown}\n`);
   } else {
     const t = ui(lang);
-    const { score, coverage, tasks } = result.report;
-    process.stdout.write(`\nAltimeter ${version} · ${cleanLine(result.report.target.url)}\n`);
+    const { score, coverage, tasks } = report;
+    process.stdout.write(`\nAltimeter ${version} · ${cleanLine(report.target.url)}\n`);
     process.stdout.write(`${t.score} ${score.overall ?? t.notScored} · ${t.indexability}: ${t.indexabilityStates[score.indexability]}\n`);
-    process.stdout.write(`${cleanLine(`${coverage.evaluated} / ${coverage.notEvaluated} / ${coverage.notApplicable}`)} (${t.coverage.toLowerCase()})\n`);
+    process.stdout.write(`${cleanLine(format(t.coverageLine, { evaluated: coverage.evaluated, notEvaluated: coverage.notEvaluated, notApplicable: coverage.notApplicable }))}\n`);
+    if (report.ai) process.stdout.write(`${cleanLine(analysisSummary(report.ai, lang))}\n`);
     if (tasks.length > 0) process.stdout.write(`\n${t.topActions}:\n`);
     for (const task of tasks.slice(0, 5)) {
       const rule = catalogRule(task.ruleId);
       process.stdout.write(`  ${task.priority}. [${t.severities[task.severity]}] ${cleanLine(rule ? ruleTexts(lang, rule).title : task.title, 120)} (${task.id})\n`);
     }
-    for (const warning of result.report.run.warnings) process.stderr.write(`! ${cleanLine(warning)}\n`);
+    for (const warning of [...report.run.warnings, ...(report.ai?.warnings ?? [])]) process.stderr.write(`! ${cleanLine(warning)}\n`);
     process.stdout.write(`\n${shown}${process.platform === 'win32' ? '\\' : '/'}report.md\n`);
   }
   return auditExitCode(result, failOn);
@@ -261,13 +336,33 @@ function explainCommand(args: string[]): number {
   return 0;
 }
 
-function doctorCommand(): number {
+const providerNames = { claude: 'Claude Code', codex: 'Codex' } as const;
+
+async function doctorCommand(): Promise<number> {
   const chrome = findChrome();
   const major = Number(process.versions.node.split('.')[0]);
   process.stdout.write(`Node.js ${process.versions.node}${major >= 24 ? '' : ' (Altimeter needs 24 or newer)'}\n`);
   process.stdout.write(`Chrome: ${chrome ? 'found' : 'not found; set CHROME_PATH to enable rendering and Lighthouse'}\n`);
   process.stdout.write(`Chrome UX Report key: ${process.env.ALTIMETER_GOOGLE_API_KEY ? 'set' : 'not set (lab data only)'}\n`);
+  // Only --version runs here: no prompt is sent, so checking costs nothing.
+  for (const provider of await describeProviders()) {
+    const name = providerNames[provider.name];
+    if (!provider.found) {
+      process.stdout.write(`${name}: not found${provider.problem ? ` (${cleanLine(provider.problem, 200)})` : ''}\n`);
+      continue;
+    }
+    const state = provider.verified ? 'a verified version' : 'not in the verified table; runs with the minimal flag set';
+    process.stdout.write(`${name}: ${cleanLine(provider.version ?? 'unknown version')}, ${state} (${cleanLine(provider.path ?? '', 200)})\n`);
+    for (const warning of provider.warnings) process.stdout.write(`  ! ${cleanLine(warning, 300)}\n`);
+  }
   return major >= 24 ? 0 : 2;
+}
+
+async function cacheCommand(args: string[]): Promise<number> {
+  if (args.length !== 1 || args[0] !== 'clear') throw new UsageError('Use "altimeter cache clear".');
+  const removed = await clearCache();
+  process.stdout.write(`Removed ${removed} cached model answer(s).\n`);
+  return 0;
 }
 
 export async function main(args: readonly string[] = process.argv.slice(2)): Promise<number> {
@@ -289,7 +384,8 @@ export async function main(args: readonly string[] = process.argv.slice(2)): Pro
       case 'gsc': return await gscCommand(rest);
       case 'rules': return rulesCommand(rest);
       case 'explain': return explainCommand(rest);
-      case 'doctor': return doctorCommand();
+      case 'doctor': return await doctorCommand();
+      case 'cache': return await cacheCommand(rest);
       default:
         throw new UsageError(`Unknown command: ${command}. Run "altimeter --help".`);
     }

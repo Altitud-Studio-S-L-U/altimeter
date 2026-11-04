@@ -58,15 +58,31 @@ export interface Report {
   readonly evidence: readonly EvidenceItem[];
   readonly tasks: readonly Task[];
   /**
-   * The Claude Code or Codex analysis, when one ran. Its findings never change the score, the tasks or
-   * --fail-on; the candidates it confirmed or dismissed are listed in ai.confirmations.
+   * The Claude Code or Codex analysis, when one ran. Its own findings never change the score, the tasks or
+   * --fail-on. Code candidates it decided carry `judgment`: a confirmed one becomes a task and still stays out of
+   * the score and --fail-on.
    */
   readonly ai?: ReportAnalysis;
 }
 
-/** Adds an analysis to a report, replacing any earlier one; every other field stays as built. */
+/**
+ * Adds an analysis to a report, replacing any earlier one. A decision on a code candidate counts only when the
+ * verifier supported it (or, for a dismissal, at least partly); the tasks are rebuilt when any decision counts.
+ */
 export function mergeAnalysis(report: Report, analysis: ReportAnalysis): Report {
-  return { ...report, ai: analysis };
+  const decisions = new Map(analysis.confirmations.map(decision => [decision.candidateId, decision]));
+  let changed = false;
+  const findings = report.findings.map((finding): ReportFinding => {
+    const decision = finding.needsJudgment ? decisions.get(finding.id) : undefined;
+    const judgment: ReportFinding['judgment'] = decision?.decision === 'confirmed' && decision.verification === 'supported' ? 'confirmed'
+      : decision?.decision === 'dismissed' && decision.verification !== 'unverified' ? 'dismissed' : undefined;
+    const { judgment: _earlier, ...rest } = finding;
+    if (judgment !== finding.judgment) changed = true;
+    return judgment ? { ...rest, judgment } : rest;
+  });
+  if (!changed) return { ...report, ai: analysis };
+  const tasks = buildTasks(findings, new Map(catalogRules.map(rule => [rule.id, rule])), new Map(report.evidence.map(item => [item.id, item])));
+  return { ...report, findings, tasks, ai: analysis };
 }
 
 export interface BuildReportInput {

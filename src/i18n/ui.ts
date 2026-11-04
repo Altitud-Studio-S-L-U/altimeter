@@ -47,12 +47,42 @@ export interface UiStrings {
   readonly verifyCommand: string;
   readonly fixPlanIntro: readonly string[];
   readonly warnings: string;
+  readonly analysis: AnalysisStrings;
   readonly categories: Readonly<Record<Category, string>>;
   readonly severities: Readonly<Record<Severity, string>>;
   readonly outcomes: Readonly<Record<Outcome, string>>;
   readonly fixLocations: Readonly<Record<FixLocation, string>>;
   readonly verifications: Readonly<Record<Verification, string>>;
 }
+
+/** Labels for the model analysis section; its findings never change the score, the tasks or --fail-on. */
+export interface AnalysisStrings {
+  readonly title: string;
+  readonly intro: string;
+  readonly by: string;
+  readonly nobody: string;
+  readonly summaryLine: string;
+  readonly verified: string;
+  readonly none: string;
+  readonly quote: string;
+  readonly notes: string;
+  readonly verification: Readonly<Record<'supported' | 'partial' | 'unverified', string>>;
+  readonly decisions: string;
+  readonly decision: Readonly<Record<'confirmed' | 'dismissed', string>>;
+  readonly proposals: string;
+  readonly proposalKinds: Readonly<Record<'title' | 'meta-description' | 'json-ld', string>>;
+  readonly current: string;
+  readonly ownerToSupply: string;
+  readonly injection: string;
+  readonly injectionIntro: string;
+  readonly unverified: string;
+  readonly unverifiedIntro: string;
+  readonly dropped: string;
+  readonly skipped: string;
+  readonly calls: string;
+  readonly confirmedMark: string;
+}
+
 
 const en: UiStrings = {
   reportTitle: 'SEO audit of {site}',
@@ -105,6 +135,32 @@ const en: UiStrings = {
     'Tasks for an external account or an owner decision are for a person, not for a coding agent.',
   ],
   warnings: 'Warnings',
+  analysis: {
+    title: 'Model analysis',
+    intro: 'A model read the pages listed here and judged what code cannot. Every finding below quotes the evidence it rests on, passed validation in code and was checked by a verifier. These findings do not change the score, the tasks or --fail-on.',
+    by: 'Analyst: {analyst} · verifier: {verifier} · pages: {pages}',
+    nobody: 'none',
+    summaryLine: 'Model analysis: {findings} verified findings and {proposals} proposals from {calls} calls ({cached} from cache), USD {cost}.',
+    verified: 'Verified findings',
+    none: 'The analysis kept no finding.',
+    quote: 'Quote',
+    notes: 'Model notes',
+    verification: { supported: 'verified', partial: 'partly verified', unverified: 'not verified' },
+    decisions: 'Decisions on code candidates',
+    decision: { confirmed: 'confirmed', dismissed: 'dismissed' },
+    proposals: 'Proposals',
+    proposalKinds: { title: 'Title', 'meta-description': 'Meta description', 'json-ld': 'JSON-LD' },
+    current: 'now',
+    ownerToSupply: 'OWNER_TO_SUPPLY marks a URL or fact only the owner can give: the model may not invent one.',
+    injection: 'Site text addressed to AI systems',
+    injectionIntro: 'Text on the site that speaks to AI systems. Altimeter never follows it; the ai-hidden-llm-instructions rule judges whether it is hidden from readers.',
+    unverified: 'Not verified',
+    unverifiedIntro: 'The verifier could not check these claims, so they are listed here only and count for nothing.',
+    dropped: 'Claims dropped by validation',
+    skipped: 'Passes not run',
+    calls: 'Calls',
+    confirmedMark: 'confirmed by the model analysis',
+  },
   categories: {
     crawl: 'Crawling and indexing',
     content: 'Content and E-E-A-T',
@@ -184,6 +240,32 @@ const es: UiStrings = {
     'Las tareas de una cuenta externa o de una decisión del propietario son para una persona, no para un agente de programación.',
   ],
   warnings: 'Avisos',
+  analysis: {
+    title: 'Análisis con modelo',
+    intro: 'Un modelo ha leído las páginas que se indican y ha juzgado lo que el código no puede. Cada hallazgo de esta sección cita la evidencia en la que se apoya, ha superado la validación en código y lo ha comprobado un verificador. Estos hallazgos no cambian la puntuación, las tareas ni --fail-on.',
+    by: 'Analista: {analyst} · verificador: {verifier} · páginas: {pages}',
+    nobody: 'ninguno',
+    summaryLine: 'Análisis con modelo: {findings} hallazgos verificados y {proposals} propuestas en {calls} llamadas ({cached} desde la caché), {cost} USD.',
+    verified: 'Hallazgos verificados',
+    none: 'El análisis no ha conservado ningún hallazgo.',
+    quote: 'Cita',
+    notes: 'Notas del modelo',
+    verification: { supported: 'verificado', partial: 'verificado en parte', unverified: 'sin verificar' },
+    decisions: 'Decisiones sobre candidatos del código',
+    decision: { confirmed: 'confirmado', dismissed: 'descartado' },
+    proposals: 'Propuestas',
+    proposalKinds: { title: 'Título', 'meta-description': 'Meta description', 'json-ld': 'JSON-LD' },
+    current: 'ahora',
+    ownerToSupply: 'OWNER_TO_SUPPLY marca una URL o un dato que solo puede dar el propietario: el modelo no puede inventarlo.',
+    injection: 'Texto del sitio dirigido a sistemas de IA',
+    injectionIntro: 'Texto del sitio que se dirige a sistemas de IA. Altimeter nunca lo obedece; la regla ai-hidden-llm-instructions juzga si está oculto para los lectores.',
+    unverified: 'Sin verificar',
+    unverifiedIntro: 'El verificador no ha podido comprobar estas afirmaciones, así que solo se listan aquí y no cuentan para nada.',
+    dropped: 'Afirmaciones descartadas en la validación',
+    skipped: 'Pasadas del análisis que no se han ejecutado',
+    calls: 'Llamadas',
+    confirmedMark: 'confirmado por el análisis con modelo',
+  },
   categories: {
     crawl: 'Rastreo e indexación',
     content: 'Contenido y E-E-A-T',
@@ -263,6 +345,32 @@ const ca: UiStrings = {
     'Les tasques d\'un compte extern o d\'una decisió del propietari són per a una persona, no per a un agent de programació.',
   ],
   warnings: 'Avisos',
+  analysis: {
+    title: 'Anàlisi amb model',
+    intro: 'Un model ha llegit les pàgines que s\'indiquen i ha jutjat el que el codi no pot. Cada troballa d\'aquesta secció cita l\'evidència en què es basa, ha superat la validació en codi i l\'ha comprovada un verificador. Aquestes troballes no canvien la puntuació, les tasques ni --fail-on.',
+    by: 'Analista: {analyst} · verificador: {verifier} · pàgines: {pages}',
+    nobody: 'cap',
+    summaryLine: 'Anàlisi amb model: {findings} troballes verificades i {proposals} propostes en {calls} crides ({cached} des de la memòria cau), {cost} USD.',
+    verified: 'Troballes verificades',
+    none: 'L\'anàlisi no ha conservat cap troballa.',
+    quote: 'Cita',
+    notes: 'Notes del model',
+    verification: { supported: 'verificada', partial: 'verificada en part', unverified: 'sense verificar' },
+    decisions: 'Decisions sobre candidats del codi',
+    decision: { confirmed: 'confirmat', dismissed: 'descartat' },
+    proposals: 'Propostes',
+    proposalKinds: { title: 'Títol', 'meta-description': 'Meta description', 'json-ld': 'JSON-LD' },
+    current: 'ara',
+    ownerToSupply: 'OWNER_TO_SUPPLY marca una URL o una dada que només pot donar el propietari: el model no la pot inventar.',
+    injection: 'Text del lloc adreçat a sistemes d\'IA',
+    injectionIntro: 'Text del lloc que s\'adreça a sistemes d\'IA. Altimeter no l\'obeeix mai; la regla ai-hidden-llm-instructions jutja si està amagat per als lectors.',
+    unverified: 'Sense verificar',
+    unverifiedIntro: 'El verificador no ha pogut comprovar aquestes afirmacions, així que només s\'hi llisten i no compten per a res.',
+    dropped: 'Afirmacions descartades en la validació',
+    skipped: 'Passades de l\'anàlisi que no s\'han executat',
+    calls: 'Crides',
+    confirmedMark: "confirmat per l'anàlisi amb model",
+  },
   categories: {
     crawl: 'Rastreig i indexació',
     content: 'Contingut i E-E-A-T',
