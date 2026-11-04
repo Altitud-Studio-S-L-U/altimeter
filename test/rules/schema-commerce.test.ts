@@ -238,6 +238,10 @@ describe('schema-software-app', () => {
   test('is not applicable without software applications', () => {
     assert.deepEqual(outcome(softwareApp, productPage(lamp)), ['not_applicable', 'no-software-application']);
   });
+  test('checks an app on any page that carries it, such as the home or a download page', () => {
+    const { aggregateRating: _rating, ...noRating } = app;
+    for (const pageType of ['home', 'other', 'article'] as const) failure(softwareApp, productPage(noRating, pageType), 'missing-rating');
+  });
 });
 
 describe('schema-service-offercatalog', () => {
