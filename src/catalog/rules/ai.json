@@ -1372,5 +1372,199 @@
     ],
     "status": "requires-owner-data",
     "notes": "Emit the measurement options that apply: the Google Search Console Generative AI performance report (impressions by page, country, device and date; no clicks), Bing Webmaster Tools AI Performance (citations, cited pages, grounding queries; sampled; no clicks), ChatGPT referrals tagged utm_source=chatgpt.com in analytics, and referrer domains in analytics/logs (chatgpt.com, perplexity.ai, copilot.microsoft.com, gemini.google.com). If the user supplies server logs, count requests per verified AI UA (IP-verified against the published JSON ranges). Google: no third-party tool has access to its internal ranking or AI systems. Prompt-sampling tools measure samples, not share of voice. The CLI must not run its own LLM queries and report them as rankings."
+  },
+  {
+    "id": "ai-bots-crawl-activity",
+    "category": "ai",
+    "title": "AI crawlers that actually fetched the site, verified (context)",
+    "why": "robots.txt only says which crawlers may fetch the site; the owner's access logs or CDN analytics show which ones did. Anyone can send a crawler's user agent, so each claim is checked against the operator's published IP list or reverse DNS, and operators that publish no check (Meta, ByteDance, MistralAI-Training) are reported as unverifiable claims, never as zero.",
+    "fix": "Nothing to fix. Compare the crawlers that fetch the site with the robots.txt policy: block training crawlers if that use is unwanted, and keep search and answer crawlers allowed if citations in AI answers are wanted.",
+    "maxSeverity": "info",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bot-activity"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-other-engine",
+    "thresholds": "Info: requests per AI crawler in the window, split into verified (published IP list, reverse DNS with forward confirmation, or the CDN's verified-bot flag), unverified (a check could not run) and spoofed (every published check ran and failed). Operators without a published check appear as claims. Google-Extended and Applebot-Extended are robots.txt tokens no request carries, so they are listed as not observable. Pass when no AI crawler request appears; not evaluated when the data records no user agents.",
+    "sources": [
+      {
+        "url": "https://developers.openai.com/api/docs/bots",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://support.apple.com/en-us/119829",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Verification follows each operator's documentation: per-crawler IP lists for OpenAI, Perplexity, Amazon, DuckDuckGo and Mistral; one list for every Anthropic crawler, which proves the operator only; reverse DNS with forward confirmation next to the lists for Googlebot (googlebot.com), Bingbot (search.msn.com), Applebot (applebot.apple.com) and CCBot (crawl.commoncrawl.org, IPv4 only). Addresses that cannot be a crawler's (private, loopback, Cloudflare's own ranges) mean the log records a proxy, so those claims stay unverified. Counts from Cloudflare GraphQL Analytics are sampled estimates. Logs from an origin behind a CDN miss the requests the CDN answered from cache.",
+    "related": [
+      "ai-measurement-context",
+      "ai-robots-policy-coherence",
+      "ai-llms-txt"
+    ],
+    "fixLocation": "owner-decision",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "ai-bots-blocked-at-edge",
+    "category": "ai",
+    "title": "AI search and answer crawlers that robots.txt allows are refused by the server or CDN",
+    "why": "Google lists crawling allowed by robots.txt and by any CDN or hosting infrastructure among the basics for AI features, and OpenAI says sites that opt out of its search crawler are not shown in ChatGPT search answers. Verified requests from these crawlers that get 401, 402, 403, 429 or a challenge show the edge blocking the real crawler, which a probe with a borrowed user agent cannot prove.",
+    "fix": "Find the CDN, firewall or rate-limit rule that answers the crawler and allow it, for example in Cloudflare AI Crawl Control or with a WAF skip rule for verified bots. If the 402 comes from pay per crawl, exempt the search and answer crawlers. Keep refusing requests that fail verification.",
+    "maxSeverity": "medium",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bot-activity",
+      "robots"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "robots.txt disallows the crawler on /, so the edge applies the same policy.",
+      "The refused requests failed verification or could not be verified: refusing impostors is correct, so unverified refusals are reported as info only and spoofed ones are not counted."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-other-engine",
+    "thresholds": "For each AI search or answer crawler that robots.txt allows on / (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Applebot, Amzn-SearchBot, Amzn-User, DuckAssistBot, MistralAI-Index, MistralAI-User, Google-Agent, Google-GeminiNotebook and Meta's search and user fetchers), refused requests are 401, 402, 403 and 429 answers or challenges among its requests for paths robots.txt allows. Medium: at least 5 refused and at least half of its verified requests. Low: at least 3 refused and at least 5%. Info: the same for requests that could not be verified. Tool conventions: the counts and shares.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/ai-features",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.openai.com/api/docs/bots",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.cloudflare.com/ai-crawl-control/features/analyze-ai-traffic/",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.cloudflare.com/ai-crawl-control/features/pay-per-crawl/what-is-pay-per-crawl/",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Reads the status counts of each crawler's requests for allowed paths. A challenge is counted once even when it is also logged as 403. The paths listed come from the crawler's most requested paths. When 402 answers are most of the refusals the reason is payment-required: Cloudflare pay per crawl answers crawlers that do not pay with 402. Googlebot and Bingbot are covered by crawl-bots-blocked-at-edge, training crawlers by the robots policy rules.",
+    "related": [
+      "ai-edge-ua-block-probe",
+      "ai-pay-per-crawl-402",
+      "crawl-bots-blocked-at-edge"
+    ],
+    "fixLocation": "cdn-dashboard",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "ai-bots-search-not-seen",
+    "category": "ai",
+    "title": "No verified visit from any AI search crawler in the window",
+    "why": "Each AI search engine fills its index with its own crawler: OAI-SearchBot for ChatGPT search, Claude-SearchBot for Claude, PerplexityBot for Perplexity, DuckAssistBot for DuckDuckGo's AI answers. When none of them made a verified request during the window although robots.txt allows them, none of them refreshed its copy of the site in that time.",
+    "fix": "Check that robots.txt and the CDN allow these crawlers (see ai-bots-blocked-at-edge), keep the sitemap current and get the site linked from pages they crawl. Small sites are crawled less often, so compare a longer window before acting.",
+    "maxSeverity": "low",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bot-activity",
+      "robots"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "robots.txt disallows every AI search crawler on /, which is a policy choice."
+    ],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "official-other-engine",
+    "thresholds": "Considers OAI-SearchBot, Claude-SearchBot, PerplexityBot, DuckAssistBot, MistralAI-Index and Amzn-SearchBot, the ones robots.txt allows on /. Low: none made a verified request in at least 14 days of data. Info: only requests that could not be verified. Pass when one of them made a verified request. Not evaluated with less than 14 days of data or without user agents in the data; not applicable when robots.txt disallows all of them. Tool convention: the 14 days.",
+    "sources": [
+      {
+        "url": "https://developers.openai.com/api/docs/bots",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://docs.perplexity.ai/guides/bots",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://docs.mistral.ai/robots",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developer.amazon.com/amazonbot",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Applebot is left out because Apple uses it for its own search and Siri, and meta-webindexer because Meta publishes no way to verify it. Spoofed requests never count as a visit. Logs from an origin behind a CDN miss the requests the CDN served from cache, which can hide real visits.",
+    "related": [
+      "ai-bots-blocked-at-edge",
+      "ai-robots-oai-searchbot",
+      "ai-robots-claude-searchbot",
+      "ai-robots-perplexitybot"
+    ],
+    "fixLocation": "owner-decision",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "ai-bots-referrals",
+    "category": "ai",
+    "title": "Visits referred by AI assistants (context)",
+    "why": "Clicks from AI assistants arrive with the assistant's host in the Referer header, and links from ChatGPT may carry utm_source=chatgpt.com. Counting them shows which assistants send visitors. Browsers send only the origin across sites by default, and apps or noreferrer links send nothing, so the counts are lower bounds.",
+    "fix": "Nothing to fix. Segment these referrers in analytics. Clicks from Google's AI Overviews and AI Mode are counted in Search Console's Web search type and arrive as Google Search, so no log can separate them.",
+    "maxSeverity": "info",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bot-activity"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "web-standard",
+    "thresholds": "Info: browser page requests (no crawler user agent, no script, style sheet, image or font) whose Referer host is chatgpt.com, chat.openai.com, perplexity.ai, copilot.microsoft.com, gemini.google.com or claude.ai, with or without www., and requests whose query has utm_source=chatgpt.com, counted apart. Pass when the data records referrers and none matches; not evaluated when it records none.",
+    "sources": [
+      {
+        "url": "https://w3c.github.io/webappsec-referrer-policy/",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/ai-features",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Hosts are compared exactly, never as substrings. utm_source is set by the link and anyone can type it, so tagged visits are reported apart from referrer counts and only as observed in the URL. Copilot answers grounded in Bing usually send visitors through bing.com and cannot be told apart from Bing search. Cloudflare's GraphQL data gives referrer hosts and query strings only when the zone's plan exposes those fields.",
+    "related": [
+      "ai-measurement-context"
+    ],
+    "fixLocation": "owner-decision",
+    "verifiableBy": "owner-data"
   }
 ]

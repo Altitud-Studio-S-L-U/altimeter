@@ -204,5 +204,32 @@
       "fail": "The page declares WebMCP tools, a proposed and experimental API.",
       "fail:declared": "The page declares WebMCP tools, a proposed API behind an origin trial or flag; sensitive actions should require user confirmation."
     }
+  },
+  "ai-bots-crawl-activity": {
+    "messages": {
+      "fail": "Verified AI crawlers fetched the site {verified} times ({crawlers}); {claims} more requests used AI crawler user agents without being verified.",
+      "fail:seen": "Verified AI crawlers fetched the site {verified} times in the window ({crawlers}); {claims} more requests used AI crawler user agents without being verified.",
+      "fail:claims-only": "{claims} requests used AI crawler user agents, but none could be verified, so the data does not show which AI crawlers really visited."
+    }
+  },
+  "ai-bots-blocked-at-edge": {
+    "messages": {
+      "fail": "{agent} was refused {blocked} of {total} times ({share}; {statuses}) although robots.txt allows it.",
+      "fail:refused": "Verified {agent} requests were refused {blocked} of {total} times ({share}; {statuses}) although robots.txt allows the crawler, so it cannot read those pages.",
+      "fail:payment-required": "Verified {agent} requests got HTTP 402 Payment Required or another refusal {blocked} of {total} times ({share}; {statuses}): the edge charges or blocks a crawler that robots.txt allows.",
+      "fail:unverified-claims": "Requests claiming to be {agent} were refused {blocked} of {total} times ({share}; {statuses}); they could not be verified, so the edge may be refusing impostors."
+    }
+  },
+  "ai-bots-search-not-seen": {
+    "messages": {
+      "fail": "No AI search crawler made a verified request in {days} days of data ({agents}).",
+      "fail:none-seen": "None of the AI search crawlers robots.txt allows ({agents}) made a verified request in {days} days of data.",
+      "fail:unverified-only": "Requests claimed to come from AI search crawlers ({agents}) in {days} days of data, but none could be verified."
+    }
+  },
+  "ai-bots-referrals": {
+    "messages": {
+      "fail": "{visits} visits came from AI assistants ({assistants}), and {tagged} carried utm_source=chatgpt.com. Clicks from Google's AI Overviews and AI Mode count as Google Search and cannot be seen here."
+    }
   }
 }

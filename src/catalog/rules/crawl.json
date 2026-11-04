@@ -2761,5 +2761,183 @@
     ],
     "fixLocation": "content",
     "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-bots-blocked-at-edge",
+    "category": "crawl",
+    "title": "Verified Googlebot or Bingbot requests refused or failing",
+    "why": "Google treats 401 and 403 like a missing page and removes such URLs from its index, and slows crawling on 429 and server errors. Requests verified as Googlebot or Bingbot that get these answers show a CDN, firewall or server rule blocking the real crawler, which a probe from outside cannot prove.",
+    "fix": "Find the rule that answers the crawler (WAF, bot protection, rate limiting, geographic blocking) and exempt verified crawlers by reverse DNS or their published IP ranges. Do not use 401 or 403 to limit the crawl rate, and fix the server errors the crawler gets.",
+    "maxSeverity": "high",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bot-activity"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The refused requests failed verification: refusing impostors that use a crawler's user agent is correct, and they are not counted here."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Among a crawler's verified requests for paths robots.txt allows: High when at least 10 and at least half are refused (401, 403, 429 or a challenge). Medium when at least 5 and at least 10% are. Low when at least 3 are. Server errors (5xx): medium when at least 10 and at least 10%, low when at least 3. Not evaluated when no request could be verified. Tool conventions: the counts and shares.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/crawling/docs/troubleshooting/http-status-codes",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://blogs.bing.com/webmaster/2012/08/31/how-to-verify-that-bingbot-is-bingbot",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Verified means the address is in Google's or Bing's published list or passes reverse DNS with forward confirmation (googlebot.com, search.msn.com), or Cloudflare flagged the request as a verified bot. Googlebot-Image and Googlebot-Video are counted as crawlers of their own. A challenge is counted once even when it is also logged as 403. Confirm the effect in Search Console's Crawl Stats report.",
+    "related": [
+      "crawl-bot-blocking",
+      "ai-bots-blocked-at-edge",
+      "crawl-server-errors-rate"
+    ],
+    "fixLocation": "cdn-dashboard",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-bots-robots-compliance",
+    "category": "crawl",
+    "title": "Verified crawlers fetched paths that robots.txt disallows",
+    "why": "RFC 9309 requires crawlers to follow the robots.txt rules they read and not to use a cached copy for more than 24 hours; some operators document longer windows (Amazon up to 30 days, DuckAssistBot 72 hours). Verified requests for disallowed paths after that window mean the crawler saw another robots.txt than the one served now, or ignores it.",
+    "fix": "Check that every host and protocol serves the same robots.txt and that the disallow patterns match the paths as logged (case and escaping). If a verified crawler keeps ignoring it, block it at the edge by its published IP ranges. Fetches a user asks for (ChatGPT-User, Claude-User, Perplexity-User) do not follow robots.txt and are not counted.",
+    "maxSeverity": "low",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bot-activity",
+      "robots"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The crawler fetches on a user's request (ChatGPT-User, Claude-User, Perplexity-User, Google's user-triggered fetchers, Amzn-User, MistralAI-User, meta-externalfetcher), which its operator says does not follow robots.txt.",
+      "robots.txt changed recently and the crawler is still inside its caching window."
+    ],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "web-standard",
+    "thresholds": "Low: a verified crawler that documents robots.txt support requested a path the current robots.txt disallows for it, after the crawler's caching window from the moment the file took effect (its Last-Modified date or a date the owner gives) or after the crawler fetched robots.txt again. Info: the same when that moment is unknown and robots.txt is assumed unchanged during the window. Caching windows: 24 hours (RFC 9309, and documented by Google, OpenAI, Perplexity and Meta), 72 hours for DuckAssistBot and 30 days for Amazon.",
+    "sources": [
+      {
+        "url": "https://www.rfc-editor.org/rfc/rfc9309.html",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developer.amazon.com/amazonbot",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Decisions use the same matching as the robots rules (longest match, allow wins ties), Applebot's documented fallback to the Googlebot group and Amazon's fallback to the groups of other search bots, counted as blocked only when every candidate group blocks it. Only requests for the audited host are compared. Requests inside a caching window are kept up to a bound and counted once the crawler fetched robots.txt; the count is a lower bound when the bound is reached. Unverified and spoofed requests never count.",
+    "related": [
+      "crawl-robots-blocks-page",
+      "ai-robots-policy-coherence"
+    ],
+    "fixLocation": "repo",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-bots-googlebot-sitemap-coverage",
+    "category": "crawl",
+    "title": "Verified Googlebot reached the sitemap URLs during the window",
+    "why": "A sitemap tells Google which pages the site considers important and helps it crawl them, though it does not guarantee crawling. Sitemap URLs that verified Googlebot never fetched successfully during the window were not refreshed in Google's index in that time, and new ones may not be indexed yet.",
+    "fix": "Inspect the missing URLs in Search Console. Link them from pages Googlebot crawls, keep their lastmod accurate and make sure they answer 200 quickly. Logs from an origin behind a CDN miss the requests the CDN served from cache, so use the CDN's logs when possible.",
+    "maxSeverity": "low",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bot-activity",
+      "sitemaps"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The sitemap URLs were published during the window.",
+      "The logs come from an origin behind a CDN that answers most crawler requests from its cache."
+    ],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "With at least 14 days of data: Low when verified Googlebot fetched with a 2xx or 304 answer less than half of the sitemap URLs on the audited host, or made no verified request at all. Info when it fetched less than 90% of them. Pass otherwise. Not evaluated with less than 14 days of data, without user agents, or when Googlebot's requests could not be verified. Tool conventions: the 14 days, half and 90%.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "Requested paths and sitemap URLs are compared without the query, with escapes normalised and without index.html or a trailing slash. Only Googlebot for web pages counts; Googlebot-Image fetches images. The evidence lists up to 25 sitemap URLs never requested.",
+    "related": [
+      "crawl-gsc-crawl-recency",
+      "crawl-gsc-sitemap-urls-without-impressions",
+      "crawl-sitemap-lastmod"
+    ],
+    "fixLocation": "content",
+    "verifiableBy": "owner-data"
+  },
+  {
+    "id": "crawl-bots-spoofed-crawlers",
+    "category": "crawl",
+    "title": "Requests that use a crawler's user agent but fail its operator's checks",
+    "why": "Anyone can send Googlebot's or GPTBot's user agent, and Google and Common Crawl warn that theirs are spoofed. Requests that claim a crawler but fail the IP list or reverse DNS check its operator publishes are impostors, often scrapers, and a firewall that trusts user agents serves them while it may refuse the real crawler.",
+    "fix": "Verify crawlers at the edge by reverse DNS or the operators' published IP lists (CDNs offer verified-bot rules) instead of allowing or blocking user agents, and refuse the requests that fail.",
+    "maxSeverity": "low",
+    "method": "owner-data",
+    "scope": "site",
+    "inputs": [
+      "bot-activity"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The impostors were refused, which is the intended behaviour; that is reported as info."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Over crawlers whose operators publish a check, spoofed requests (every check ran and failed) against all checked requests: Low when at least 20 spoofed requests are at least 20% and most of them got a 2xx or 3xx answer. Info when they were mostly refused, or when they are at least 5%. Pass below 5%. Not evaluated when no request could be checked (no client address). Tool conventions: the counts and shares.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://commoncrawl.org/ccbot",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "A request is spoofed only when its address is public, outside the proxy ranges Altimeter knows, absent from fresh copies of every list of the crawler, and fails reverse DNS where the operator documents it. Requests that could not be checked stay unverified and are not counted here.",
+    "related": [
+      "crawl-bots-blocked-at-edge",
+      "ai-edge-ua-block-probe"
+    ],
+    "fixLocation": "cdn-dashboard",
+    "verifiableBy": "owner-data"
   }
 ]
