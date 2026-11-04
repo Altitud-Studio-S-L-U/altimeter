@@ -1,0 +1,222 @@
+import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
+import { myths, rule } from '../src/catalog/index.ts';
+import { buildPack } from '../src/ai/pack.ts';
+import { packSections, passSchema, planPasses, type PassPlan } from '../src/ai/passes.ts';
+import { buildCorpus, collectSiteStrings, selectPages, sliceOf } from '../src/ai/site.ts';
+import type { Proposal } from '../src/ai/types.ts';
+import { defaultMythMatcher, distinctProposals, recommendsNewMarket, validateAnswer, type MythMatcher, type ValidationContext } from '../src/ai/validate.ts';
+import { homeUrl, hotelAudit, roomsTitle, roomsUrl } from './support/analysis.ts';
+
+const audit = hotelAudit();
+const siteFacts = audit.collected.site;
+const strings = collectSiteStrings(siteFacts, selectPages(siteFacts, 3));
+const pages = strings.pages.filter(entry => entry.role !== 'context');
+const corpus = buildCorpus(siteFacts, strings);
+const { plans } = planPasses({ report: audit.report, site: siteFacts, strings, pages });
+const rooms = pages.find(entry => entry.key === roomsUrl)!;
+
+function planned(pass: PassPlan['pass']): PassPlan {
+  return plans.find(entry => entry.pass === pass && entry.page.key === roomsUrl)!;
+}
+
+function context(plan: PassPlan, options: { incomplete?: string; mythMatches?: MythMatcher; keyword?: string[] } = {}): ValidationContext {
+  const sections = packSections(plan, strings, audit.report).map(section => (section.name === options.incomplete ? { ...section, complete: false } : section));
+  return {
+    plan,
+    pack: buildPack({ trusted: 'x', sections, nonce: 'n' }),
+    schema: passSchema(plan),
+    report: audit.report,
+    strings,
+    corpus,
+    keyword: options.keyword ?? [],
+    mythMatches: options.mythMatches ?? defaultMythMatcher(),
+  };
+}
+
+const id = (text: string) => [...strings.items.values()].find(item => item.page === roomsUrl && item.text.includes(text))!.id;
+const section = (name: 'text' | 'headings' | 'links') => sliceOf(strings, roomsUrl, name)!.id;
+const notes = { en: 'Observed on the page.', es: 'Observado en la pagina.', ca: 'Observat a la pagina.' };
+
+function finding(fields: Record<string, unknown>): Record<string, unknown> {
+  return { scope: roomsUrl, verdict: 'confirmed', reasonCode: 'observed', severity: 'low', confidence: 'high', absence: false, evidenceIds: [], quotes: [], notes, ...fields };
+}
+
+const quote = (phrase: string, text = phrase) => ({ evidenceIds: [id(phrase)], quotes: [{ evidenceId: id(phrase), text }] });
+
+const emptyAssessments = {
+  ymyl: { value: 'not_assessable', evidenceId: null, quote: null },
+  entityClarity: { value: 'not_assessable', evidenceId: null, quote: null },
+  nonCommodityValue: { value: 'not_assessable', evidenceId: null, quote: null },
+  intent: { value: 'not_assessable', evidenceId: null, quote: null, inferred: true },
+  selfAssessment: [],
+};
+
+function content(findings: readonly Record<string, unknown>[], options: Parameters<typeof context>[1] = {}) {
+  return validateAnswer({ findings, assessments: emptyAssessments }, context(planned('content'), options));
+}
+
+const reasons = (result: ReturnType<typeof validateAnswer>) => result.dropped.map(entry => entry.reason);
+
+describe('validating findings', () => {
+  test('keeps a well-founded finding and caps its severity', () => {
+    const result = content([finding({ ruleId: 'content-keyword-stuffing', severity: 'critical', ...quote('Our 45 rooms', 'Our 45 rooms look over the valley') })]);
+    assert.deepEqual(reasons(result), []);
+    assert.equal(result.findings[0]?.severity, 'medium');
+    assert.deepEqual(result.findings[0]?.adjustments, ['severity-capped:critical->medium']);
+  });
+
+  test('requires evidence and a quote that sits in the item it cites', () => {
+    const result = content([
+      finding({ ruleId: 'content-keyword-stuffing' }),
+      finding({ ruleId: 'content-title-stuffing', evidenceIds: [id('Our 45 rooms')] }),
+      finding({ ruleId: 'content-hidden-links', evidenceIds: [id('Our 45 rooms')], quotes: [{ evidenceId: id('Breakfast'), text: 'Breakfast is served from 7:00' }] }),
+      finding({ ruleId: 'content-ugc-link-qualifiers', ...quote('Our 45 rooms', 'the valley') }),
+      finding({ ruleId: 'content-spelling-grammar', ...quote('Our 45 rooms', 'Our 46 rooms look over the valley') }),
+      finding({ ruleId: 'content-img-alt-quality', ...quote('Our 45 rooms', 'Breakfast is served from 7:00 to 11:00') }),
+    ]);
+    assert.deepEqual(reasons(result), ['missing-evidence', 'missing-quote', 'quote-uncited-evidence', 'quote-too-short', 'quote-not-found', 'quote-other-evidence']);
+  });
+
+  test('allows a claim of absence only on a complete section', () => {
+    const claim = finding({ ruleId: 'content-subtopic-coverage', reasonCode: 'missing-prices', absence: true, evidenceIds: [section('text')] });
+    assert.deepEqual(reasons(content([claim])), []);
+    assert.deepEqual(reasons(content([claim], { incomplete: 'text' })), ['absence-on-incomplete-slice']);
+    const implied = finding({ ruleId: 'content-subtopic-coverage', reasonCode: 'no-prices', evidenceIds: [section('text')] });
+    assert.deepEqual(reasons(content([implied], { incomplete: 'text' })), ['absence-on-incomplete-slice'], 'a no- reason code is a claim of absence too');
+  });
+
+  test('refuses scopes that are not this call\'s audited page', () => {
+    const result = content([
+      finding({ ruleId: 'content-keyword-stuffing', scope: 'https://other.example/', ...quote('Our 45 rooms', 'Our 45 rooms look over') }),
+      finding({ ruleId: 'content-title-stuffing', scope: homeUrl, ...quote('Our 45 rooms', 'Our 45 rooms look over') }),
+    ]);
+    assert.deepEqual(reasons(result), ['scope-not-audited', 'scope-outside-call']);
+  });
+
+  test('drops notes that repeat a myth or recommend new markets, with any myth filter', () => {
+    const mythical = finding({ ruleId: 'content-keyword-stuffing', ...quote('Our 45 rooms', 'Our 45 rooms look over'), notes: { ...notes, en: 'Raise the keyword  DENSITY of the page.' } });
+    const markets = finding({ ruleId: 'content-title-stuffing', ...quote('Our 45 rooms', 'Our 45 rooms look over'), notes: { ...notes, es: 'Conviene anadir nuevos idiomas para llegar a otros paises.' } });
+    assert.deepEqual(reasons(content([mythical, markets])), ['myth', 'new-market']);
+    const strict: MythMatcher = text => (text.includes('Observed') ? [myths[0]!] : []);
+    assert.deepEqual(reasons(content([finding({ ruleId: 'content-hidden-links', ...quote('Our 45 rooms', 'Our 45 rooms look over') })], { mythMatches: strict })), ['myth']);
+    assert.equal(recommendsNewMarket('Consider launching in new markets such as France.'), true);
+    assert.equal(recommendsNewMarket('The page mixes English with other languages.'), false);
+  });
+
+  test('drops duplicates and claims that repeat or contradict code', () => {
+    const base = planned('content');
+    const plan: PassPlan = { ...base, rules: [...base.rules, rule('content-title-branding')!, rule('content-h1-missing')!] };
+    const result = validateAnswer({
+      findings: [
+        finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', ...quote('Double room', 'Double room with a balcony') }),
+        finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', ...quote('Double room', 'Double room with a balcony') }),
+        finding({ ruleId: 'content-title-branding', ...quote(roomsTitle) }),
+        finding({ ruleId: 'content-title-branding', verdict: 'not_confirmed', ...quote(roomsTitle) }),
+        finding({ ruleId: 'content-h1-missing', ...quote('Rooms with valley views') }),
+      ],
+      assessments: emptyAssessments,
+    }, context(plan));
+    assert.deepEqual(reasons(result), ['duplicate', 'duplicate-of-deterministic', 'contradicts-deterministic', 'contradicts-deterministic']);
+  });
+
+  test('records rules the model could not assess and refuses partial answers as a whole', () => {
+    const result = content([finding({ ruleId: 'content-intent-match', verdict: 'not_assessable', severity: 'info' })]);
+    assert.deepEqual(result.notAssessable, ['content-intent-match']);
+    const partial = validateAnswer({ findings: [] }, context(planned('content')));
+    assert.deepEqual(partial.dropped.map(entry => [entry.kind, entry.reason, entry.detail]), [['answer', 'schema', '$: missing assessments']]);
+    assert.equal(validateAnswer('not an object', context(planned('content'))).dropped[0]?.reason, 'schema');
+    assert.equal(validateAnswer({ findings: [], assessments: emptyAssessments, extra: true }, context(planned('content'))).dropped[0]?.reason, 'schema');
+  });
+
+  test('gives an inferred intent at most info severity', () => {
+    const result = content([finding({ ruleId: 'content-intent-match', severity: 'medium', ...quote('Our 45 rooms', 'Our 45 rooms look over') })]);
+    assert.equal(result.findings[0]?.severity, 'info');
+    const withKeyword = content([finding({ ruleId: 'content-intent-match', severity: 'medium', ...quote('Our 45 rooms', 'Our 45 rooms look over') })], { keyword: ['hotel rooms andorra'] });
+    assert.equal(withKeyword.findings[0]?.severity, 'medium');
+  });
+});
+
+describe('validating proposals', () => {
+  const serp = (proposals: readonly Record<string, unknown>[]) => validateAnswer({ proposals }, context(planned('serp')));
+  const proposal = (kind: string, text: string, language = 'en') => ({ kind, scope: roomsUrl, text, language, evidenceIds: [id('Our 45 rooms')], notes });
+
+  test('checks titles and descriptions for length, language, uniqueness, brand and new facts', () => {
+    const result = serp([
+      proposal('title', 'Rooms'),
+      proposal('title', 'Habitaciones con vistas al valle | Hotel Example', 'es'),
+      proposal('meta-description', 'A family hotel in the centre of Andorra la Vella with rooms over the valley.'),
+      proposal('meta-description', 'The best rooms in Andorra la Vella, all with valley views and breakfast in the garden room.'),
+    ]);
+    assert.deepEqual(reasons(result), ['length', 'wrong-language', 'not-unique', 'new-fact']);
+    const second = serp([proposal('title', roomsTitle), proposal('title', 'Rooms over the valley of Andorra la Vella')]);
+    assert.deepEqual(reasons(second), ['unchanged', 'brand-missing']);
+  });
+
+  test('allows two proposals of each kind and replaces unknown URLs with the owner placeholder', () => {
+    const result = serp([
+      proposal('title', 'Rooms with valley views | Hotel Example'),
+      proposal('title', 'Valley view rooms | Hotel Example'),
+      proposal('title', 'Rooms over the valley | Hotel Example'),
+      proposal('meta-description', 'Our 45 rooms look over the valley of Andorra la Vella. See https://booking.example/hotel for dates.'),
+    ]);
+    assert.deepEqual(reasons(result), ['too-many']);
+    const description = result.proposals.find(entry => entry.kind === 'meta-description')!;
+    assert.equal(description.kind === 'meta-description' && description.text, 'Our 45 rooms look over the valley of Andorra la Vella. See OWNER_TO_SUPPLY for dates.');
+    assert.equal(description.placeholders, 1);
+  });
+
+  test('keeps proposals for different pages distinct', () => {
+    const make = (scope: string): Proposal => ({ kind: 'title', pass: 'serp', scope, text: 'Rooms | Valley', language: 'en', evidenceIds: [], notes, placeholders: 0 });
+    const result = distinctProposals([make(roomsUrl), make(homeUrl), make(roomsUrl)]);
+    assert.equal(result.kept.length, 2);
+    assert.deepEqual(result.dropped.map(entry => entry.reason), ['not-unique']);
+  });
+
+  test('parses JSON-LD proposals, refuses invented facts and retired features, keeps known links', () => {
+    const plan = planned('schema');
+    const jsonLd = (value: unknown) => ({ kind: 'json-ld', scope: roomsUrl, jsonLd: typeof value === 'string' ? value : JSON.stringify(value), evidenceIds: [id('"@type":"Hotel"')], notes });
+    const result = validateAnswer({
+      findings: [],
+      proposals: [
+        jsonLd('{"@context": "https://schema.org", "@type": "Hotel", '),
+        jsonLd({ '@type': 'Hotel', name: 'Hotel Example' }),
+        jsonLd({ '@context': 'https://schema.org', '@type': 'Hotel', name: 'Hotel Example', telephone: '+376 999 999' }),
+      ],
+    }, context(plan));
+    assert.deepEqual(reasons(result), ['invalid-json-ld', 'invalid-json-ld', 'new-fact']);
+    const kept = validateAnswer({
+      findings: [],
+      proposals: [jsonLd({ '@context': 'https://schema.org', '@type': 'Hotel', '@id': `${roomsUrl}#hotel`, name: 'Hotel Example', url: roomsUrl, sameAs: ['https://www.instagram.com/hotelexample/'] })],
+    }, context(plan));
+    assert.deepEqual(reasons(kept), []);
+    assert.equal(kept.proposals[0]?.placeholders, 0);
+  });
+});
+
+describe('validating language claims', () => {
+  const plan: PassPlan = { pass: 'intl', page: rooms, sitePage: true, rules: [rule('intl-mixed-language-page')!], candidates: [], facts: [], contextPages: [] };
+  const claim = (words: readonly string[], extra: Record<string, unknown> = {}) => finding({
+    ruleId: 'intl-mixed-language-page', reasonCode: 'catalan-paragraph', severity: 'medium', language: 'en', discriminatingWords: words,
+    ...quote('Our 45 rooms', 'Our 45 rooms look over the valley'), ...extra,
+  });
+
+  test('needs two discriminating words that appear in the cited items', () => {
+    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['valley', 'rooms'])] }, context(plan))), []);
+    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['vall', 'habitacions'])] }, context(plan))), ['discriminating-words']);
+    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['valley', 'esmorzar'])] }, context(plan))), ['discriminating-words']);
+  });
+
+  test('never accepts a recommendation to add languages or markets', () => {
+    const result = validateAnswer({ findings: [claim(['valley', 'rooms'], { notes: { ...notes, en: 'Add new languages to reach visitors from more countries.' } })] }, context(plan));
+    assert.deepEqual(reasons(result), ['new-market']);
+  });
+});
+
+describe('default myth filter', () => {
+  test('matches each myth pattern as a lowercase substring after whitespace normalisation', () => {
+    const matcher = defaultMythMatcher();
+    assert.deepEqual(matcher('Aim for a  Keyword\nDensity of 2%').map(entry => entry.id), ['keyword-density']);
+    assert.deepEqual(matcher('The title reads naturally.'), []);
+  });
+});
