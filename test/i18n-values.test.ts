@@ -115,7 +115,7 @@ describe('the value catalogs', () => {
     const normalize = (template: string) => template.replace(/\{[a-zA-Z][a-zA-Z0-9]*\}/gu, '{}');
     const known = new Set(Object.keys(valueCatalogs.en.warning ?? {}).map(normalize));
     // Warnings whose wording code picks from a few fixed variants; the catalog lists each variant.
-    for (const variants of ['{} could not be read: {}', '{} later request{} not sent after Bing Webmaster Tools throttled the requests.', '{} records no user agent{}, so crawlers cannot be identified in it.']) known.add(variants);
+    for (const variants of ['{} could not be read: {}', '{} later request{} not sent after Bing Webmaster Tools throttled the requests.', '{} records no user agent{}, so crawlers cannot be identified in it.', '{} analysis call{} left out to stay within the call limit.', 'Cloudflare keeps {} day{} of this data for the zone, so the window starts on {}.', 'Cloudflare allows {} hour{} per query and Altimeter makes at most {} queries per run, so only the data from {} was read.']) known.add(variants);
     const pushed = /(?:warnings\.push|unavailable\.push)\(\s*(?:'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`)\s*\)|\.\.\.collected\.warnings, (?:'((?:[^'\\]|\\.)*)'|`((?:[^`\\]|\\.)*)`)\]/gu;
     const missing: string[] = [];
     let checked = 0;

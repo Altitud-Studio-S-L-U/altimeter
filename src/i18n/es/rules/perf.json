@@ -95,7 +95,7 @@
     "fix": "No aplica (metodología). No ejecutes nunca varias instancias de Lighthouse en paralelo en una misma máquina.",
     "messages": {
       "fail": "El protocolo de ejecución de Lighthouse limita la estabilidad de los valores de laboratorio.",
-      "fail:few-runs": "Los valores de laboratorio proceden de la mediana de {validRuns} ejecuciones válidas de Lighthouse de {runs}; {recommended} ejecuciones dan una mediana más estable.",
+      "fail:few-runs": "Los valores de laboratorio proceden de la mediana de {validRuns, plural, one {# ejecución válida} other {# ejecuciones válidas}} de Lighthouse de {runs}; {recommended} ejecuciones dan una mediana más estable.",
       "fail:run-warnings": "Lighthouse ha indicado {count} advertencia(s) de ejecución, así que los valores de laboratorio pueden no ser fiables."
     }
   },
@@ -195,9 +195,9 @@
     "why": "Los scripts y las hojas de estilos síncronos del head retrasan el primer renderizado. Lighthouse 13.6 los indica en render-blocking-insight, que sustituyó a render-blocking-resources.",
     "fix": "Aplica defer o async a los scripts; inserta en línea el CSS crítico pequeño y carga el resto sin bloquear; reduce el tamaño del CSS.",
     "messages": {
-      "fail": "{count} script(s) externo(s) del head bloquean el analizador: {scripts}.",
-      "fail:parser-blocking-script": "{count} script(s) externo(s) del head bloquean el analizador (sin async, defer ni type=module): {scripts}.",
-      "fail:consent-script": "{count} script(s) de consentimiento del head se cargan de forma síncrona: {scripts}. Algunas herramientas de consentimiento deben ejecutarse primero; comprueba si el proveedor ofrece un cargador asíncrono que siga bloqueando las etiquetas hasta que haya consentimiento.",
+      "fail": "{count, plural, one {# script externo del head bloquea} other {# scripts externos del head bloquean}} el analizador: {scripts}.",
+      "fail:parser-blocking-script": "{count, plural, one {# script externo del head bloquea} other {# scripts externos del head bloquean}} el analizador (sin async, defer ni type=module): {scripts}.",
+      "fail:consent-script": "{count, plural, one {# script de consentimiento del head se carga} other {# scripts de consentimiento del head se cargan}} de forma síncrona: {scripts}. Algunas herramientas de consentimiento deben ejecutarse primero; comprueba si el proveedor ofrece un cargador asíncrono que siga bloqueando las etiquetas hasta que haya consentimiento.",
       "fail:render-blocking-requests": "Lighthouse estima que quitar de la ruta crítica las solicitudes que bloquean el renderizado ahorra {savings} de FCP de laboratorio: {requests}."
     }
   },
@@ -206,7 +206,7 @@
     "why": "Cada redirección en la solicitud del documento añade un viaje de ida y vuelta completo antes de que llegue el HTML, que cuenta en el TTFB y el LCP. Lighthouse 13.6 lo indica en document-latency-insight.",
     "fix": "Enlaza internamente a las URLs finales y reduce las cadenas http->https->www a un solo salto.",
     "messages": {
-      "fail": "{from} pasa por {hops} redirección(es) antes de que responda {to}; cada salto se suma al TTFB y al LCP."
+      "fail": "{from} pasa por {hops, plural, one {# redirección} other {# redirecciones}} antes de que responda {to}; cada salto se suma al TTFB y al LCP."
     }
   },
   "perf-server-response-time": {
@@ -267,7 +267,7 @@
     "why": "Los detectores de unload dejan las páginas fuera de la caché de atrás y adelante en algunos navegadores. Chrome ha declarado obsoleto unload, así que el impacto que queda se da sobre todo en otros navegadores.",
     "fix": "Sustitúyelos por pagehide/visibilitychange. Opcionalmente, envía Permissions-Policy: unload=() (solo Chromium).",
     "messages": {
-      "fail": "La página registra {count} detector(es) de unload. Chrome ya no activa unload de forma predeterminada, pero estos detectores pueden seguir dejando la página fuera de la caché de atrás y adelante de otros navegadores."
+      "fail": "La página registra {count, plural, one {# detector} other {# detectores}} de unload. Chrome ya no activa unload de forma predeterminada, pero {count, plural, one {este detector puede} other {estos detectores pueden}} seguir dejando la página fuera de la caché de atrás y adelante de otros navegadores."
     }
   },
   "perf-unsized-images": {
@@ -275,8 +275,8 @@
     "why": "web.dev documenta que las imágenes sin atributos width y height (o sin aspect-ratio) provocan cambios de diseño al cargarse. Lighthouse 13.6 las indica en la auditoría unsized-images.",
     "fix": "Añade los atributos width y height (con la misma relación de aspecto en todas las candidatas de srcset) o establece aspect-ratio en CSS.",
     "messages": {
-      "fail": "{count} imagen(es) no tienen dimensiones explícitas; {aboveFold} de ellas están en el primer viewport de la ejecución de laboratorio.",
-      "fail:below-fold": "{count} imagen(es) no tienen dimensiones explícitas, ninguna en el primer viewport de la ejecución de laboratorio."
+      "fail": "{count, plural, one {# imagen no tiene} other {# imágenes no tienen}} dimensiones explícitas ({aboveFold} en el primer viewport de la ejecución de laboratorio).",
+      "fail:below-fold": "{count, plural, one {# imagen no tiene dimensiones explícitas y no está en el primer viewport de la ejecución de laboratorio.} other {# imágenes no tienen dimensiones explícitas, ninguna en el primer viewport de la ejecución de laboratorio.}}"
     }
   },
   "perf-cls-culprits": {
@@ -293,9 +293,9 @@
     "why": "web.dev recomienda reservar espacio para los anuncios, los iframes y los elementos insertados, porque el contenido que se carga en contenedores sin dimensiones desplaza la página.",
     "fix": "Reserva el tamaño más probable con min-height/aspect-ratio; mantén el marcador de posición cuando no se sirva ningún anuncio; coloca los espacios dinámicos más abajo en el viewport.",
     "messages": {
-      "fail": "{count} elemento(s) insertado(s) no tienen espacio reservado.",
-      "fail:attributed-shift": "{count} elemento(s) insertado(s) no tienen width y height ni una altura reservada, y Lighthouse atribuye un cambio de diseño de laboratorio a un iframe insertado.",
-      "fail:unsized-embed": "{count} elemento(s) insertado(s) no tienen width y height ni una altura reservada en línea; puede que una hoja de estilos o un contenedor reserven el espacio igualmente."
+      "fail": "{count, plural, one {# elemento insertado no tiene} other {# elementos insertados no tienen}} espacio reservado.",
+      "fail:attributed-shift": "{count, plural, one {# elemento insertado no tiene} other {# elementos insertados no tienen}} width y height ni una altura reservada, y Lighthouse atribuye un cambio de diseño de laboratorio a un iframe insertado.",
+      "fail:unsized-embed": "{count, plural, one {# elemento insertado no tiene} other {# elementos insertados no tienen}} width y height ni una altura reservada en línea; puede que una hoja de estilos o un contenedor reserven el espacio igualmente."
     }
   },
   "perf-non-composited-animations": {
@@ -303,7 +303,7 @@
     "why": "Las animaciones de propiedades que provocan un recálculo del diseño, como top, margin o width, se ejecutan en el hilo principal y pueden causar cambios de diseño. Lighthouse 13.6 las indica en non-composited-animations.",
     "fix": "Anima transform/opacity en su lugar; respeta prefers-reduced-motion.",
     "messages": {
-      "fail": "{count} elemento(s) ejecutan animaciones que el navegador no puede componer: {reasons}."
+      "fail": "{count, plural, one {# elemento ejecuta} other {# elementos ejecutan}} animaciones que el navegador no puede componer: {reasons}."
     }
   },
   "perf-font-display": {
@@ -327,8 +327,8 @@
     "why": "WOFF2 es el formato de fuente más pequeño con amplia compatibilidad, y muchos archivos de fuentes en la carga inicial compiten con los recursos críticos.",
     "fix": "Sirve solo WOFF2, crea subconjuntos con unicode-range y usa menos familias o pesos, o una fuente variable cuando ahorre bytes.",
     "messages": {
-      "fail": "{count} archivo(s) de fuentes no son WOFF2: {fonts}.",
-      "fail:not-woff2": "{count} archivo(s) de fuentes no son WOFF2: {fonts}.",
+      "fail": "{count, plural, one {# archivo de fuentes no es} other {# archivos de fuentes no son}} WOFF2: {fonts}.",
+      "fail:not-woff2": "{count, plural, one {# archivo de fuentes no es} other {# archivos de fuentes no son}} WOFF2: {fonts}.",
       "fail:many-files": "La página carga {count} archivos de fuentes ({size}) en el laboratorio; el umbral de más de seis es una heurística de la herramienta, no un límite."
     }
   },
@@ -359,7 +359,7 @@
     "messages": {
       "fail": "Las imágenes se podrían servir con menos bytes (estimación de laboratorio).",
       "fail:lcp-image": "La imagen del LCP {url} podría ser unos {savings} más pequeña mediante el tamaño, el formato o la compresión (estimación de laboratorio).",
-      "fail:images": "{count} imagen(es) podrían ahorrar unos {savings} en total mediante el tamaño, el formato o la compresión (estimación de laboratorio)."
+      "fail:images": "{count, plural, one {# imagen podría} other {# imágenes podrían}} ahorrar unos {savings} en total mediante el tamaño, el formato o la compresión (estimación de laboratorio)."
     }
   },
   "perf-long-tasks": {
@@ -458,7 +458,7 @@
     "why": "Servir el HTML desde un CDN o una caché perimetral reduce el TTFB para los usuarios lejanos. La detección se basa en las cabeceras de respuesta y es heurística, así que la regla dice que no se han detectado marcadores de CDN, no que no exista un CDN.",
     "fix": "Sirve el sitio a través de un CDN; almacena brevemente en la caché perimetral el HTML estático o anónimo; evita los parámetros de consulta únicos que se saltan la caché.",
     "messages": {
-      "fail": "No se han detectado marcadores de CDN en las cabeceras de respuesta de {count} páginas HTML auditadas. Algunos CDN eliminan sus marcadores, así que esto no demuestra que no se use un CDN."
+      "fail": "No se han detectado marcadores de CDN en las cabeceras de respuesta de {count, plural, one {# página HTML auditada} other {# páginas HTML auditadas}}. Algunos CDN eliminan sus marcadores, así que esto no demuestra que no se use un CDN."
     }
   },
   "perf-consent-lab-bias": {

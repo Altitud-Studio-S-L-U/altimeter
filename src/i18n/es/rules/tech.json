@@ -73,7 +73,7 @@
       "fail:missing": "La respuesta HTTPS no tiene cabecera Strict-Transport-Security. Es contexto de seguridad, no un factor de la Búsqueda.",
       "fail:invalid": "La cabecera Strict-Transport-Security no tiene un max-age válido, así que los navegadores la ignoran.",
       "fail:disabled": "La cabecera Strict-Transport-Security establece max-age=0, lo que elimina la política.",
-      "fail:short-max-age": "El max-age de Strict-Transport-Security es de {maxAge} segundos, menos de un año (includeSubDomains: {includeSubDomains}, preload: {preload})."
+      "fail:short-max-age": "El max-age de Strict-Transport-Security es de {maxAge, plural, one {# segundo} other {# segundos}}, menos de un año (includeSubDomains: {includeSubDomains}, preload: {preload})."
     }
   },
   "tech-hsts-preload-eligibility": {
@@ -123,7 +123,7 @@
     "messages": {
       "fail": "El banner de consentimiento retiene el contenido de la página a un visitante que no ha dado su consentimiento.",
       "fail:consent-redirect": "La página redirige a una página de consentimiento ({target}) antes de mostrar su contenido, así que los rastreadores que no dan su consentimiento nunca llegan a él.",
-      "fail:content-withheld": "Antes del consentimiento, el renderizado contiene {renderedWords} palabras frente a {rawWords} en el HTML servido, mientras se muestra un contenedor de consentimiento."
+      "fail:content-withheld": "Antes del consentimiento, el renderizado contiene {renderedWords, plural, one {# palabra} other {# palabras}} frente a {rawWords} en el HTML servido, mientras se muestra un contenedor de consentimiento."
     }
   },
   "tech-consent-mode-ordering": {
@@ -251,7 +251,7 @@
     "messages": {
       "fail": "Hay que revisar los iframes de esta página.",
       "fail:missing-title": "{count} iframe(s) visibles no tienen title, aria-label ni aria-labelledby.",
-      "fail:content-in-iframe": "La página tiene {words} palabras de texto propio y {count} iframe(s) que no son elementos insertados habituales; es posible que el contenido principal esté en un marco. Pendiente de que lo confirme el analista."
+      "fail:content-in-iframe": "La página tiene {words, plural, one {# palabra} other {# palabras}} de texto propio y {count, plural, one {# iframe que no es un elemento insertado habitual} other {# iframes que no son elementos insertados habituales}}; es posible que el contenido principal esté en un marco. Pendiente de que lo confirme el analista."
     }
   },
   "tech-noscript-content": {

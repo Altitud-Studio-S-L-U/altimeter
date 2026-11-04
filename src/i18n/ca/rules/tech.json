@@ -73,7 +73,7 @@
       "fail:missing": "La resposta HTTPS no té capçalera Strict-Transport-Security. Això és context de seguretat, no un factor de la Cerca.",
       "fail:invalid": "La capçalera Strict-Transport-Security no té un max-age vàlid, de manera que els navegadors l'ignoren.",
       "fail:disabled": "La capçalera Strict-Transport-Security estableix max-age=0, cosa que elimina la política.",
-      "fail:short-max-age": "El max-age de Strict-Transport-Security és de {maxAge} segons, per sota d'un any (includeSubDomains: {includeSubDomains}, preload: {preload})."
+      "fail:short-max-age": "El max-age de Strict-Transport-Security és de {maxAge, plural, one {# segon} other {# segons}}, per sota d'un any (includeSubDomains: {includeSubDomains}, preload: {preload})."
     }
   },
   "tech-hsts-preload-eligibility": {
@@ -123,7 +123,7 @@
     "messages": {
       "fail": "El bàner de consentiment reté el contingut de la pàgina a un visitant que no ha donat el consentiment.",
       "fail:consent-redirect": "La pàgina redirigeix a una pàgina de consentiment ({target}) abans de mostrar-ne el contingut, de manera que els rastrejadors que no donen el consentiment no hi arriben mai.",
-      "fail:content-withheld": "Abans del consentiment, la renderització conté {renderedWords} paraules enfront de {rawWords} a l'HTML servit, mentre es mostra un contenidor de consentiment."
+      "fail:content-withheld": "Abans del consentiment, la renderització conté {renderedWords, plural, one {# paraula} other {# paraules}} enfront de {rawWords} a l'HTML servit, mentre es mostra un contenidor de consentiment."
     }
   },
   "tech-consent-mode-ordering": {
@@ -251,7 +251,7 @@
     "messages": {
       "fail": "Cal revisar els iframes d'aquesta pàgina.",
       "fail:missing-title": "{count} iframe(s) visible(s) no tenen title, aria-label ni aria-labelledby.",
-      "fail:content-in-iframe": "La pàgina té {words} paraules de text propi i {count} iframe(s) que no són elements incrustats habituals; pot ser que el contingut principal sigui en un marc. Ho ha de confirmar l'analista."
+      "fail:content-in-iframe": "La pàgina té {words, plural, one {# paraula} other {# paraules}} de text propi i {count, plural, one {# iframe que no és un element incrustat habitual} other {# iframes que no són elements incrustats habituals}}; pot ser que el contingut principal sigui en un marc. Ho ha de confirmar l'analista."
     }
   },
   "tech-noscript-content": {

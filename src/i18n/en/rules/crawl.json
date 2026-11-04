@@ -18,7 +18,7 @@
     "messages": {
       "fail": "{url} cannot be read as intended.",
       "fail:html-body": "{url} returns an HTML page instead of plain-text rules, so no rules and no Sitemap lines are read from it.",
-      "fail:over-size-limit": "{url} is {bytes} bytes. Google reads only the first 500 KiB, so {lost} rule lines after that point are ignored.",
+      "fail:over-size-limit": "{url} is {bytes} bytes. Google reads only the first 500 KiB, so {lost, plural, one {# rule line after that point is ignored} other {# rule lines after that point are ignored}}.",
       "fail:invalid-utf8": "{count} allow or disallow lines in {url} contain bytes that are not valid UTF-8.",
       "fail:content-type": "{url} is served as {type}. Google reads its rules whatever the type, but the robots.txt standard asks for text/plain."
     }
@@ -128,7 +128,7 @@
     "messages": {
       "fail": "{url} declares unavailable_after {date}.",
       "fail:past": "{url} declares unavailable_after {date}, which has passed, so Google removes the page from results.",
-      "fail:soon": "{url} declares unavailable_after {date}, {days} days after it was served; Google will remove the page from results then.",
+      "fail:soon": "{url} declares unavailable_after {date}, {days, plural, one {# day} other {# days}} after it was served; Google will remove the page from results then.",
       "fail:unparseable": "{url} declares unavailable_after with a date Google cannot read ({date}), so the directive is ignored."
     }
   },
@@ -143,9 +143,9 @@
   },
   "crawl-page-nofollow": {
     "messages": {
-      "fail": "{url} tells crawlers not to follow its {links} internal links.",
-      "fail:hub-page": "{url} tells crawlers not to follow its {links} internal links, so this hub page does not help discover the pages it links to.",
-      "fail:leaf-page": "{url} tells crawlers not to follow its {links} internal links."
+      "fail": "{url} tells crawlers not to follow its {links, plural, one {# internal link} other {# internal links}}.",
+      "fail:hub-page": "{url} tells crawlers not to follow its {links, plural, one {# internal link} other {# internal links}}, so this hub page does not help discover the pages it links to.",
+      "fail:leaf-page": "{url} tells crawlers not to follow its {links, plural, one {# internal link} other {# internal links}}."
     }
   },
   "crawl-indexifembedded": {
@@ -164,7 +164,7 @@
     "messages": {
       "fail": "{url} declares no canonical URL.",
       "fail:missing": "{url} declares no canonical URL, so Google chooses one itself.",
-      "fail:duplicates-answer": "{url} declares no canonical URL while {variants} variants of it answer 200, so Google has to choose among duplicates."
+      "fail:duplicates-answer": "{url} declares no canonical URL while {variants, plural, one {# variant of it answers} other {# variants of it answer}} 200, so Google has to choose among duplicates."
     }
   },
   "crawl-canonical-multiple": {
@@ -225,7 +225,7 @@
   },
   "crawl-canonical-pagination": {
     "messages": {
-      "fail": "{count} paginated pages, such as {url}, name the first page as their canonical, so items on later pages are harder to discover."
+      "fail": "{count, plural, one {# paginated page, {url}, names the first page as its canonical} other {# paginated pages, such as {url}, name the first page as their canonical}}, so items on later pages are harder to discover."
     }
   },
   "crawl-canonical-chains": {
@@ -239,15 +239,15 @@
     "messages": {
       "fail": "Canonical signals for {url} disagree.",
       "fail:sitemap-non-canonical": "A sitemap lists {url}, which names {target} as its canonical.",
-      "fail:links-to-non-canonical": "Internal links point {otherLinks} times at URLs that canonicalise to {url} and {canonicalLinks} times at {url} itself."
+      "fail:links-to-non-canonical": "Internal links point {otherLinks, plural, one {once} other {# times}} at URLs that canonicalise to {url} and {canonicalLinks, plural, one {once} other {# times}} at {url} itself."
     }
   },
   "crawl-base-href": {
     "messages": {
       "fail": "The base element of {url} points to {base}.",
-      "fail:other-host": "The base element of {url} points to another site ({base}), so {count} relative URLs on the page resolve there.",
+      "fail:other-host": "The base element of {url} points to another site ({base}), so {count, plural, one {# relative URL on the page resolves} other {# relative URLs on the page resolve}} there.",
       "fail:other-host-unused": "The base element of {url} points to another site ({base}); no relative URLs on the page depend on it.",
-      "fail:other-host-same-site": "The base element of {url} points to another host of the same site ({base}), so {count} relative URLs resolve there.",
+      "fail:other-host-same-site": "The base element of {url} points to another host of the same site ({base}), so {count, plural, one {# relative URL resolves} other {# relative URLs resolve}} there.",
       "fail:relative-links-broken": "{count} relative links on {url}, resolved against the base {base}, answer an error.",
       "fail:unparseable": "The base element of {url} is not a valid URL ({base})."
     }
@@ -266,7 +266,7 @@
       "fail": "{url} goes through {hops} redirects.",
       "fail:two-hops": "{url} goes through {hops} redirects before the final page.",
       "fail:long-chain": "{url} goes through {hops} redirects before the final page.",
-      "fail:loop": "{url} redirects in a loop after {hops} hops.",
+      "fail:loop": "{url} redirects in a loop after {hops, plural, one {# hop} other {# hops}}.",
       "fail:too-many": "{url} goes through more than {hops} redirects; Googlebot stops after 10."
     }
   },
@@ -304,7 +304,7 @@
     "messages": {
       "fail": "{count} of {total} crawled URLs ({share, number, ::percent .0}) answered a server error, a 429 or a timeout.",
       "fail:error-rate": "{count} of {total} crawled URLs ({share, number, ::percent .0}) answered a server error, a 429 or a timeout.",
-      "fail:no-retry-after": "{count} crawled URLs answered 503 or 429 without a Retry-After header."
+      "fail:no-retry-after": "{count, plural, one {# crawled URL answered} other {# crawled URLs answered}} 503 or 429 without a Retry-After header."
     }
   },
   "crawl-host-variant-consolidation": {
@@ -317,9 +317,9 @@
   },
   "crawl-internal-links-broken-redirected": {
     "messages": {
-      "fail": "{count} internal links point to URLs that do not answer 200: {targets}.",
-      "fail:broken": "{count} internal links point to error pages: {targets}.",
-      "fail:redirected": "{count} internal links point to redirecting URLs instead of their destination: {targets}."
+      "fail": "{count, plural, one {# internal link points} other {# internal links point}} to URLs that do not answer 200: {targets}.",
+      "fail:broken": "{count, plural, one {# internal link points} other {# internal links point}} to error pages: {targets}.",
+      "fail:redirected": "{count, plural, one {# internal link points} other {# internal links point}} to redirecting URLs instead of their destination: {targets}."
     }
   },
   "crawl-conditional-requests": {
@@ -332,7 +332,7 @@
   "crawl-html-size-limit": {
     "messages": {
       "fail": "The HTML of {url} is {bytes} bytes uncompressed; Googlebot for Search reads only the first 2 MB.",
-      "fail:content-after-limit": "The HTML of {url} is {bytes} bytes uncompressed; Googlebot for Search reads only the first 2 MB, and content or {count} links, headings or metadata elements come after that point.",
+      "fail:content-after-limit": "The HTML of {url} is {bytes} bytes uncompressed; Googlebot for Search reads only the first 2 MB, and content or {count, plural, one {# link, heading or metadata element comes} other {# links, headings or metadata elements come}} after that point.",
       "fail:scripts-after-limit": "The HTML of {url} is {bytes} bytes uncompressed; Googlebot for Search reads only the first 2 MB, and only scripts or markup without content come after that point."
     }
   },
@@ -349,45 +349,45 @@
   },
   "crawl-sitemap-scope": {
     "messages": {
-      "fail": "{count} URLs in {sitemap} are outside its scope.",
-      "fail:out-of-scope": "{count} URLs in {sitemap} are outside the host or directory of the sitemap and it is not declared in that host's robots.txt, so they may be ignored unless submitted in Search Console.",
-      "fail:http-urls": "{count} URLs in {sitemap} use http on an https site."
+      "fail": "{count, plural, one {# URL in {sitemap} is} other {# URLs in {sitemap} are}} outside its scope.",
+      "fail:out-of-scope": "{count, plural, one {# URL in {sitemap} is} other {# URLs in {sitemap} are}} outside the host or directory of the sitemap, which is not declared in that host's robots.txt, so {count, plural, one {it} other {they}} may be ignored unless submitted in Search Console.",
+      "fail:http-urls": "{count, plural, one {# URL in {sitemap} uses} other {# URLs in {sitemap} use}} http on an https site."
     }
   },
   "crawl-sitemap-url-quality": {
     "messages": {
-      "fail": "{count} sitemap URLs are not indexable canonical pages ({share, number, percent} of {classified} classified).",
+      "fail": "{count, plural, one {# sitemap URL is not an indexable canonical page} other {# sitemap URLs are not indexable canonical pages}} ({share, number, percent} of {classified} classified).",
       "fail:high-share": "{count} of {classified} classified sitemap URLs ({share, number, percent}) are not indexable canonical pages.",
-      "fail:robots-blocked": "{count} sitemap URLs are not indexable canonical pages, including URLs disallowed in robots.txt.",
-      "fail:noindex": "{count} sitemap URLs are not indexable canonical pages, including URLs that carry noindex.",
-      "fail:error": "{count} sitemap URLs are not indexable canonical pages, including URLs that answer an error.",
-      "fail:redirect": "{count} sitemap URLs are not indexable canonical pages, including URLs that redirect.",
-      "fail:canonicalised": "{count} sitemap URLs are not indexable canonical pages, including URLs that name another canonical."
+      "fail:robots-blocked": "{count, plural, one {# sitemap URL is not an indexable canonical page: it is disallowed in robots.txt.} other {# sitemap URLs are not indexable canonical pages, including URLs disallowed in robots.txt.}}",
+      "fail:noindex": "{count, plural, one {# sitemap URL is not an indexable canonical page: it carries noindex.} other {# sitemap URLs are not indexable canonical pages, including URLs that carry noindex.}}",
+      "fail:error": "{count, plural, one {# sitemap URL is not an indexable canonical page: it answers an error.} other {# sitemap URLs are not indexable canonical pages, including URLs that answer an error.}}",
+      "fail:redirect": "{count, plural, one {# sitemap URL is not an indexable canonical page: it redirects.} other {# sitemap URLs are not indexable canonical pages, including URLs that redirect.}}",
+      "fail:canonicalised": "{count, plural, one {# sitemap URL is not an indexable canonical page: it names another canonical.} other {# sitemap URLs are not indexable canonical pages, including URLs that name another canonical.}}"
     }
   },
   "crawl-sitemap-lastmod": {
     "messages": {
-      "fail": "lastmod values in the sitemaps are not reliable ({count} entries, {value}).",
+      "fail": "lastmod values in the sitemaps are not reliable ({count, plural, one {# entry} other {# entries}}, {value}).",
       "fail:invalid-format": "{count} lastmod values are not W3C Datetime dates, for example {value}.",
       "fail:generation-time": "{count} URLs share the lastmod {value}, the time the sitemap was generated, so Google stops trusting the field.",
       "fail:uniform": "{count} URLs share the lastmod {value}. Confirm that it reflects real content changes rather than a rebuild date.",
       "fail:future-dates": "{count} lastmod values are in the future, for example {value}.",
-      "fail:missing": "None of the {count} URLs in the sitemaps has a lastmod date. Google uses lastmod when it is consistently accurate, and Bing calls it a key signal for scheduling recrawls."
+      "fail:missing": "{count, plural, one {The only URL in the sitemaps has no lastmod date.} other {None of the # URLs in the sitemaps has a lastmod date.}} Google uses lastmod when it is consistently accurate, and Bing calls it a key signal for scheduling recrawls."
     }
   },
   "crawl-sitemap-ignored-tags": {
     "messages": {
-      "fail": "{count} sitemap entries carry changefreq or priority, which Google and Bing ignore."
+      "fail": "{count, plural, one {# sitemap entry carries} other {# sitemap entries carry}} changefreq or priority, which Google and Bing ignore."
     }
   },
   "crawl-robots-blocks-render-resources": {
     "messages": {
-      "fail": "robots.txt blocks {count} requests that {url} needs to render ({resources}).",
-      "fail:metadata-changed": "robots.txt blocks {count} requests ({resources}) and, without them, the title, canonical, robots directives or h1 of {url} change.",
-      "fail:content-missing": "robots.txt blocks {count} requests ({resources}) and, without them, part of the main text of {url} does not render.",
-      "fail:links-missing": "robots.txt blocks {count} requests ({resources}) and, without them, internal links of {url} do not render.",
-      "fail:layout-break": "robots.txt blocks {count} requests ({resources}) and, without them, {url} becomes wider than the phone viewport.",
-      "fail:minor-differences": "robots.txt blocks {count} requests ({resources}) and, without them, some text of {url} does not render. Confirm whether it matters."
+      "fail": "robots.txt blocks {count, plural, one {# request} other {# requests}} that {url} needs to render ({resources}).",
+      "fail:metadata-changed": "robots.txt blocks {count, plural, one {# request} other {# requests}} ({resources}) and, without {count, plural, one {it} other {them}}, the title, canonical, robots directives or h1 of {url} change.",
+      "fail:content-missing": "robots.txt blocks {count, plural, one {# request} other {# requests}} ({resources}) and, without {count, plural, one {it} other {them}}, part of the main text of {url} does not render.",
+      "fail:links-missing": "robots.txt blocks {count, plural, one {# request} other {# requests}} ({resources}) and, without {count, plural, one {it} other {them}}, internal links of {url} do not render.",
+      "fail:layout-break": "robots.txt blocks {count, plural, one {# request} other {# requests}} ({resources}) and, without {count, plural, one {it} other {them}}, {url} becomes wider than the phone viewport.",
+      "fail:minor-differences": "robots.txt blocks {count, plural, one {# request} other {# requests}} ({resources}) and, without {count, plural, one {it} other {them}}, some text of {url} does not render. Confirm whether it matters."
     }
   },
   "crawl-js-links-crawlable": {
@@ -417,7 +417,7 @@
       "fail": "Part of {url} loads only after scrolling ({count}).",
       "fail:content-after-scroll": "{share, number, percent} of the text of {url} appears only after scrolling. Confirm that it is not the main content.",
       "fail:links-after-scroll": "{count} internal links of {url} appear only after scrolling. Confirm whether they are item or pagination links.",
-      "fail:images-without-src": "{count} images on {url} have no src in a render without scrolling, so they are not loaded for indexing."
+      "fail:images-without-src": "{count, plural, one {# image on {url} has no src in a render without scrolling, so it is not loaded for indexing.} other {# images on {url} have no src in a render without scrolling, so they are not loaded for indexing.}}"
     }
   },
   "crawl-dynamic-rendering": {
@@ -429,19 +429,19 @@
   },
   "crawl-parameter-urls": {
     "messages": {
-      "fail": "{count} internal links or sitemap URLs carry parameters that duplicate pages.",
-      "fail:session-id": "{count} internal links or sitemap URLs carry a session parameter, which creates a new URL for each visit.",
-      "fail:tracking-parameter": "{count} internal links or sitemap URLs carry tracking parameters, which create duplicate URLs.",
+      "fail": "{count, plural, one {# internal link or sitemap URL carries} other {# internal links or sitemap URLs carry}} parameters that duplicate pages.",
+      "fail:session-id": "{count, plural, one {# internal link or sitemap URL carries} other {# internal links or sitemap URLs carry}} a session parameter, which creates a new URL for each visit.",
+      "fail:tracking-parameter": "{count, plural, one {# internal link or sitemap URL carries} other {# internal links or sitemap URLs carry}} tracking parameters, which create duplicate URLs.",
       "fail:parameter-duplicate": "A URL with a tracking parameter answers 200 without a canonical to the clean URL."
     }
   },
   "crawl-url-hygiene": {
     "messages": {
-      "fail": "{count} internal URLs are malformed.",
-      "fail:too-long": "{count} internal URLs are longer than 2,048 characters.",
-      "fail:unencoded-characters": "{count} internal URLs contain unencoded spaces or backslashes.",
-      "fail:double-slash": "{count} internal URLs contain a double slash in the path.",
-      "fail:duplicate-parameters": "{count} internal URLs repeat a parameter key."
+      "fail": "{count, plural, one {# internal URL is} other {# internal URLs are}} malformed.",
+      "fail:too-long": "{count, plural, one {# internal URL is} other {# internal URLs are}} longer than 2,048 characters.",
+      "fail:unencoded-characters": "{count, plural, one {# internal URL contains} other {# internal URLs contain}} unencoded spaces or backslashes.",
+      "fail:double-slash": "{count, plural, one {# internal URL contains} other {# internal URLs contain}} a double slash in the path.",
+      "fail:duplicate-parameters": "{count, plural, one {# internal URL repeats} other {# internal URLs repeat}} a parameter key."
     }
   },
   "crawl-duplicate-clusters": {
@@ -485,8 +485,8 @@
   "crawl-gsc-sitemaps": {
     "messages": {
       "fail": "Search Console reports problems with the sitemap {sitemap}.",
-      "fail:errors": "Search Console found {count} error(s) in the sitemap {sitemap}.",
-      "fail:warnings": "Search Console found {count} warning(s) in the sitemap {sitemap}.",
+      "fail:errors": "Search Console found {count, plural, one {# error} other {# errors}} in the sitemap {sitemap}.",
+      "fail:warnings": "Search Console found {count, plural, one {# warning} other {# warnings}} in the sitemap {sitemap}.",
       "fail:not-submitted": "The sitemap {sitemap} is not submitted in Search Console, so its indexing report is not available there."
     }
   },
@@ -497,16 +497,16 @@
   },
   "crawl-bots-blocked-at-edge": {
     "messages": {
-      "fail": "Verified {agent} requests got {count} errors or refusals out of {total} ({share, number, percent}; {statuses}).",
+      "fail": "Verified {agent} requests got {count, plural, one {# error or refusal} other {# errors or refusals}} out of {total} ({share, number, percent}; {statuses}).",
       "fail:refused": "Verified {agent} requests were refused {count} of {total} times ({share, number, percent}; {statuses}), so the crawler could not read those pages.",
       "fail:server-errors": "Verified {agent} requests got a server error {count} of {total} times ({share, number, percent}; {statuses})."
     }
   },
   "crawl-bots-robots-compliance": {
     "messages": {
-      "fail": "Verified {agent} fetched paths robots.txt disallows {count} times.",
-      "fail:disallowed": "Verified {agent} fetched paths the current robots.txt disallows {count} times after its {hours}-hour caching window, counting from {since}, when the file took effect.",
-      "fail:assumed-unchanged": "Verified {agent} fetched paths the current robots.txt disallows {count} times, assuming robots.txt has not changed since {since}; give the date it changed if it did."
+      "fail": "Verified {agent} fetched paths robots.txt disallows {count, plural, one {once} other {# times}}.",
+      "fail:disallowed": "Verified {agent} fetched paths the current robots.txt disallows {count, plural, one {once} other {# times}} after its {hours}-hour caching window, counting from {since}, when the file took effect.",
+      "fail:assumed-unchanged": "Verified {agent} fetched paths the current robots.txt disallows {count, plural, one {once} other {# times}}, assuming robots.txt has not changed since {since}; give the date it changed if it did."
     }
   },
   "crawl-bots-googlebot-sitemap-coverage": {
@@ -527,16 +527,16 @@
   },
   "crawl-bing-crawl-issues": {
     "messages": {
-      "fail": "Bing lists {count} URL(s) with the crawl issue {issue}, for example {examples}.",
-      "fail:malware": "Bing flags {count} URL(s) as containing malware, for example {examples}.",
-      "fail:server-error": "Bing got server errors (5xx) for {count} URL(s), for example {examples}.",
-      "fail:dns-error": "Bing could not resolve the host name for {count} URL(s), for example {examples}.",
-      "fail:timeout": "Bing timed out fetching {count} URL(s), for example {examples}.",
-      "fail:client-error": "Bing got 4xx errors for {count} URL(s), {linked} of them with inbound links, for example {examples}.",
-      "fail:important-url-blocked": "robots.txt blocks Bingbot from {count} URL(s) that Bing considers important, for example {examples}.",
-      "fail:blocked-by-robots": "robots.txt blocks Bingbot from {count} URL(s), for example {examples}.",
-      "fail:permanent-redirect": "Bing found a 301 redirect at {count} URL(s), for example {examples}.",
-      "fail:temporary-redirect": "Bing found a 302 redirect at {count} URL(s), for example {examples}."
+      "fail": "Bing lists {count, plural, one {# URL} other {# URLs}} with the crawl issue {issue}, for example {examples}.",
+      "fail:malware": "Bing flags {count, plural, one {# URL} other {# URLs}} as containing malware, for example {examples}.",
+      "fail:server-error": "Bing got server errors (5xx) for {count, plural, one {# URL} other {# URLs}}, for example {examples}.",
+      "fail:dns-error": "Bing could not resolve the host name for {count, plural, one {# URL} other {# URLs}}, for example {examples}.",
+      "fail:timeout": "Bing timed out fetching {count, plural, one {# URL} other {# URLs}}, for example {examples}.",
+      "fail:client-error": "Bing got 4xx errors for {count, plural, one {# URL} other {# URLs}} ({linked} with inbound links), for example {examples}.",
+      "fail:important-url-blocked": "robots.txt blocks Bingbot from {count, plural, one {# URL} other {# URLs}} that Bing considers important, for example {examples}.",
+      "fail:blocked-by-robots": "robots.txt blocks Bingbot from {count, plural, one {# URL} other {# URLs}}, for example {examples}.",
+      "fail:permanent-redirect": "Bing found a 301 redirect at {count, plural, one {# URL} other {# URLs}}, for example {examples}.",
+      "fail:temporary-redirect": "Bing found a 302 redirect at {count, plural, one {# URL} other {# URLs}}, for example {examples}."
     }
   },
   "crawl-bing-page-issues": {

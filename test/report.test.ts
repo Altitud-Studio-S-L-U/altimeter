@@ -364,7 +364,8 @@ describe('the model analysis section', () => {
     assert.equal(analysisSummary(dryRun, 'en'), 'Model analysis: dry run, no call made (3 planned); the prompts and the call plan are in the --dry-run folder.');
     assert.match(analysisSummary(dryRun, 'es'), /^Análisis con modelo: simulación, sin ninguna llamada realizada \(previstas: 3\)/u);
     assert.match(analysisSummary(dryRun, 'ca'), /^Anàlisi amb model\. Simulació, sense cap crida feta \(previstes: 3\)/u);
-    assert.match(analysisSummary(analysis, 'en'), /in 1 calls \(0 from cache\), USD 0\.04\.$/u);
+    assert.equal(analysisSummary(analysis, 'en'), 'Model analysis: 1 problem and 1 proposal from 1 verified judgment in 1 call (0 from cache), USD 0.04.');
+    assert.equal(analysisSummary(analysis, 'es'), 'Análisis con modelo: 1 problema y 1 propuesta en 1 juicio verificado, con 1 llamada (0 desde la caché), 0,04 USD.');
     assert.match(renderMarkdown(mergeAnalysis(report, dryRun), 'en'), /^Model analysis: dry run, no call made \(3 planned\)/mu);
   });
 

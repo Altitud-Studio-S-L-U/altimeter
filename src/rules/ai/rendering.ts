@@ -26,7 +26,7 @@ const jsOnlyContent: RuleImplementation = {
     const params = { rawWords: rawMain.words, renderedWords: renderedMain.words, ratio };
     const counts = evidence.add({
       kind: 'render', url: page!.fetch.finalUrl,
-      label: evidenceLabel('main text in the raw HTML: {rawWords} words ({rawScope}); after rendering: {renderedWords} words ({renderedScope})', { rawWords: rawMain.words, rawScope: rawMain.scope, renderedWords: renderedMain.words, renderedScope: renderedMain.scope }),
+      label: evidenceLabel('main text in the raw HTML: {rawWords, plural, one {# word} other {# words}} ({rawScope}); after rendering: {renderedWords, plural, one {# word} other {# words}} ({renderedScope})', { rawWords: rawMain.words, rawScope: rawMain.scope, renderedWords: renderedMain.words, renderedScope: renderedMain.scope }),
     });
     const rawText = normalizeText(raw.parsed.bodyText);
     const missing = textBlocks(renderedMain).find(block => words(block).length >= 5 && !rawText.includes(normalizeText(block)));

@@ -171,7 +171,7 @@ const textualContentForMedia: RuleImplementation = {
     const kept = candidates.filter(candidate => candidate.kind === 'canvas' || (thin && !hasTranscript && (candidate.kind !== 'pdf' || main.words < 50)));
     if (kept.length === 0) return { outcome: 'pass' };
     const ids = kept.slice(0, 5).map(candidate => evidence.add({
-      kind: 'html', url: page!.fetch.finalUrl, label: evidenceLabel('{kind} in the main content without a text equivalent nearby ({words} words of main text)', { kind: candidate.kind, words: main.words }),
+      kind: 'html', url: page!.fetch.finalUrl, label: evidenceLabel('{kind} in the main content without a text equivalent nearby ({words, plural, one {# word} other {# words}} of main text)', { kind: candidate.kind, words: main.words }),
       excerpt: clip(candidate.excerpt, 300), ...(candidate.line ? { line: candidate.line } : {}),
     }));
     return {

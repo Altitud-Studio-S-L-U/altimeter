@@ -80,7 +80,7 @@
     "messages": {
       "fail": "Los enlaces hreflang del DOM renderizado difieren de los del HTML tal como se sirve.",
       "fail:rendered-only": "Los {count} elemento(s) link de hreflang solo existen después de que se ejecute JavaScript. Los rastreadores que no renderizan nunca los ven, y Google no documenta si lee el hreflang insertado.",
-      "fail:differs": "El renderizado cambia los enlaces hreflang: {added} añadidos y {removed} eliminados respecto al HTML tal como se sirve."
+      "fail:differs": "El renderizado cambia los enlaces hreflang: {added, plural, one {# añadido} other {# añadidos}} y {removed, plural, one {# eliminado} other {# eliminados}} respecto al HTML tal como se sirve."
     }
   },
   "intl-hreflang-combined-link-attributes": {

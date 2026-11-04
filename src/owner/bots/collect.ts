@@ -389,9 +389,10 @@ export async function collectBotActivity(options: CollectBotActivityOptions): Pr
     for (const reason of ['private-address', 'proxy-address'] as const) {
       const count = discarded.get(reason) ?? 0;
       if (count === 0) continue;
+      const one = count === 1;
       warnings.push(reason === 'private-address'
-        ? `${count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.`
-        : `${count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.`);
+        ? `${count} crawler ${one ? 'request carries a private or loopback address' : 'requests carry private or loopback addresses'}, so the logs record a proxy or load balancer; log the client address and pass --ip-source.`
+        : `${count} crawler ${one ? 'request comes' : 'requests come'} from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.`);
     }
     if (scans.length > 0 && scans.every(scan => scan.records === 0)) {
       const covered = scans.filter(scan => scan.lines > 0).map(scan => scan.name);

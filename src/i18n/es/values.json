@@ -435,7 +435,12 @@
     "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.": "Se declaran {declared} sitemaps y solo se han leído los {read} primeros, así que las comprobaciones que usan las URLs de los sitemaps solo ven una parte.",
     "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.": "Los índices de sitemaps enumeran {listed} sitemaps secundarios y solo se han leído {read}, así que las comprobaciones que usan las URLs de los sitemaps solo ven una parte.",
     "{file} is empty, so it was skipped.": "{file} está vacío, así que se ha omitido.",
-    "The format of {file} was not recognised, so it was skipped.": "No se ha reconocido el formato de {file}, así que se ha omitido."
+    "The format of {file} was not recognised, so it was skipped.": "No se ha reconocido el formato de {file}, así que se ha omitido.",
+    "{count} analysis call was left out to stay within the call limit.": "Se ha omitido {count} llamada del análisis para no superar el límite de llamadas.",
+    "Cloudflare keeps {days} day of this data for the zone, so the window starts on {date}.": "Cloudflare conserva {days} día de estos datos para la zona, así que la ventana empieza el {date}.",
+    "Cloudflare allows {hours} hour per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare permite {hours} hora por consulta y Altimeter hace como máximo {queries} consultas por ejecución, así que solo se han leído los datos desde el {date}.",
+    "{count} crawler request carries a private or loopback address, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} solicitud de rastreador lleva una dirección privada o de loopback, así que los registros recogen la dirección de un proxy o de un balanceador de carga; registra la dirección del cliente y usa --ip-source.",
+    "{count} crawler request comes from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} solicitud de rastreador viene de direcciones de Cloudflare, así que los registros recogen la dirección de Cloudflare en lugar de la del cliente; registra CF-Connecting-IP y usa --ip-source."
   },
   "where": {
     "title": "el título",

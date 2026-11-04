@@ -250,10 +250,10 @@
     "why": "Google renderiza JavaScript, pero un estudio basado en mediciones observó que GPTBot, ClaudeBot y PerplexityBot obtienen los archivos JavaScript sin ejecutarlos. El contenido principal que falta en el HTML del servidor es invisible para esos rastreadores.",
     "fix": "Renderiza en el servidor o genera de forma estática el contenido principal, los encabezados, los enlaces y el JSON-LD. Añade la interactividad después mediante hidratación.",
     "messages": {
-      "fail": "El HTML original contiene {rawWords} palabras de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}).",
-      "fail:mostly-rendered": "El HTML original contiene {rawWords} palabras de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}). Es probable que los rastreadores que no ejecutan JavaScript vean poco del contenido.",
+      "fail": "El HTML original contiene {rawWords, plural, one {# palabra} other {# palabras}} de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}).",
+      "fail:mostly-rendered": "El HTML original contiene {rawWords, plural, one {# palabra} other {# palabras}} de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}). Es probable que los rastreadores que no ejecutan JavaScript vean poco del contenido.",
       "fail:h1-missing": "El HTML original no tiene h1; el h1 solo aparece después del renderizado, así que es probable que los rastreadores que no ejecutan JavaScript no vean el encabezado principal.",
-      "fail:partly-rendered": "El HTML original contiene {rawWords} palabras de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}); es probable que parte del contenido solo exista tras ejecutar JavaScript."
+      "fail:partly-rendered": "El HTML original contiene {rawWords, plural, one {# palabra} other {# palabras}} de texto principal frente a {renderedWords} después del renderizado ({ratio, number, percent}); es probable que parte del contenido solo exista tras ejecutar JavaScript."
     }
   },
   "ai-textual-content-for-media": {

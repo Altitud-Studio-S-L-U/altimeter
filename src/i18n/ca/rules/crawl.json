@@ -95,12 +95,12 @@
     "why": "Google no obté ni executa el JavaScript i el CSS que bloqueja el robots.txt. Si aquests fitxers construeixen el contingut principal, els enllaços o les metadades, Google renderitza una pàgina diferent de la que veuen els usuaris.",
     "fix": "Permet /assets, /_next, /static i els punts finals de l'API que necessita la renderització. Revisa el robots.txt de cada amfitrió del CDN.",
     "messages": {
-      "fail": "El robots.txt bloqueja {count} sol·licitud(s) que {url} necessita per renderitzar-se ({resources}).",
-      "fail:metadata-changed": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, el títol, la canònica, les directives robots o l'h1 de {url} canvien.",
-      "fail:content-missing": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, part del text principal de {url} no es renderitza.",
-      "fail:links-missing": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, hi ha enllaços interns de {url} que no es renderitzen.",
-      "fail:layout-break": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, {url} passa a ser més ampla que l'àrea de visualització del telèfon.",
-      "fail:minor-differences": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, una part del text de {url} no es renderitza. Confirma si és important."
+      "fail": "El robots.txt bloqueja {count, plural, one {# sol·licitud} other {# sol·licituds}} que {url} necessita per renderitzar-se ({resources}).",
+      "fail:metadata-changed": "El robots.txt bloqueja {count, plural, one {# sol·licitud} other {# sol·licituds}} ({resources}) i, sense {count, plural, one {aquesta} other {aquestes}}, el títol, la canònica, les directives robots o l'h1 de {url} canvien.",
+      "fail:content-missing": "El robots.txt bloqueja {count, plural, one {# sol·licitud} other {# sol·licituds}} ({resources}) i, sense {count, plural, one {aquesta} other {aquestes}}, part del text principal de {url} no es renderitza.",
+      "fail:links-missing": "El robots.txt bloqueja {count, plural, one {# sol·licitud} other {# sol·licituds}} ({resources}) i, sense {count, plural, one {aquesta} other {aquestes}}, hi ha enllaços interns de {url} que no es renderitzen.",
+      "fail:layout-break": "El robots.txt bloqueja {count, plural, one {# sol·licitud} other {# sol·licituds}} ({resources}) i, sense {count, plural, one {aquesta} other {aquestes}}, {url} passa a ser més ampla que l'àrea de visualització del telèfon.",
+      "fail:minor-differences": "El robots.txt bloqueja {count, plural, one {# sol·licitud} other {# sol·licituds}} ({resources}) i, sense {count, plural, one {aquesta} other {aquestes}}, una part del text de {url} no es renderitza. Confirma si és important."
     }
   },
   "crawl-robots-sitemap-lines": {
@@ -179,7 +179,7 @@
     "messages": {
       "fail": "{url} declara unavailable_after {date}.",
       "fail:past": "{url} declara unavailable_after {date}, una data que ja ha passat, de manera que Google elimina la pàgina dels resultats.",
-      "fail:soon": "{url} declara unavailable_after {date}, {days} dia(es) després del moment en què es va servir; aleshores Google eliminarà la pàgina dels resultats.",
+      "fail:soon": "{url} declara unavailable_after {date}, {days, plural, one {# dia} other {# dies}} després del moment en què es va servir; aleshores Google eliminarà la pàgina dels resultats.",
       "fail:unparseable": "{url} declara unavailable_after amb una data que Google no pot llegir ({date}), de manera que la directiva s'ignora."
     }
   },
@@ -389,7 +389,7 @@
       "fail": "{url} passa per {hops} redireccions.",
       "fail:two-hops": "{url} passa per {hops} redireccions abans d'arribar a la pàgina final.",
       "fail:long-chain": "{url} passa per {hops} redireccions abans d'arribar a la pàgina final.",
-      "fail:loop": "{url} redirigeix en bucle després de {hops} salt(s).",
+      "fail:loop": "{url} redirigeix en bucle després de {hops, plural, one {# salt} other {# salts}}.",
       "fail:too-many": "{url} passa per més de {hops} redireccions; Googlebot s'atura després de 10."
     }
   },
@@ -553,7 +553,7 @@
       "fail": "Una part de {url} només es carrega després de desplaçar-se ({count}).",
       "fail:content-after-scroll": "Un {share, number, percent} del text de {url} només apareix després de desplaçar-se. Confirma que no és el contingut principal.",
       "fail:links-after-scroll": "Enllaços interns de {url} que només apareixen després de desplaçar-se: {count}. Confirma si són enllaços d'elements o de paginació.",
-      "fail:images-without-src": "{count} imatge(s) de {url} no tenen src en una renderització sense desplaçament, de manera que no es carreguen per a la indexació."
+      "fail:images-without-src": "{count, plural, one {# imatge de {url} no té src en una renderització sense desplaçament, de manera que no es carrega per a la indexació.} other {# imatges de {url} no tenen src en una renderització sense desplaçament, de manera que no es carreguen per a la indexació.}}"
     }
   },
   "crawl-dynamic-rendering": {
@@ -668,8 +668,8 @@
     "fix": "Corregeix els errors que Search Console indica per al mapa del lloc i torna'l a enviar. Envia els mapes del lloc que el lloc declara al robots.txt perquè els seus informes apareguin a Search Console.",
     "messages": {
       "fail": "Search Console indica problemes amb el mapa del lloc {sitemap}.",
-      "fail:errors": "Search Console ha trobat {count} error(s) al mapa del lloc {sitemap}.",
-      "fail:warnings": "Search Console ha trobat {count} advertiment(s) al mapa del lloc {sitemap}.",
+      "fail:errors": "Search Console ha trobat {count, plural, one {# error} other {# errors}} al mapa del lloc {sitemap}.",
+      "fail:warnings": "Search Console ha trobat {count, plural, one {# advertiment} other {# advertiments}} al mapa del lloc {sitemap}.",
       "fail:not-submitted": "El mapa del lloc {sitemap} no s'ha enviat a Search Console, de manera que el seu informe d'indexació no hi està disponible."
     }
   },

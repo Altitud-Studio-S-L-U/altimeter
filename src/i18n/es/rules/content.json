@@ -54,7 +54,7 @@
     "fix": "Pon primero las palabras más importantes para que el truncamiento solo elimine la marca o las palabras secundarias.",
     "messages": {
       "fail": "La longitud del título puede provocar una reescritura o un truncamiento.",
-      "fail:short": "El título tiene {characters} caracteres; los títulos muy cortos se reescriben con más frecuencia.",
+      "fail:short": "El título tiene {characters, plural, one {# carácter} other {# caracteres}}; los títulos muy cortos se reescriben con más frecuencia.",
       "fail:likely-truncated": "El título mide unos {width} px de ancho en Arial a 20 px, así que probablemente se trunque en los resultados para ordenador (es una estimación, no un límite de Google)."
     }
   },
@@ -129,7 +129,7 @@
       "fail:placeholder": "La metadescripción contiene un marcador de posición de plantilla sin rellenar.",
       "fail:same-as-title": "La metadescripción repite el título en lugar de resumir la página.",
       "fail:keyword-list": "La metadescripción parece una lista de {segments} frases cortas; el analista debería confirmar si es una lista de palabras clave.",
-      "fail:short": "La metadescripción tiene {words} palabras; el analista debería confirmar si resume la página."
+      "fail:short": "La metadescripción tiene {words, plural, one {# palabra} other {# palabras}}; el analista debería confirmar si resume la página."
     }
   },
   "content-data-nosnippet-invalid": {
@@ -260,7 +260,7 @@
     "why": "Las políticas de spam de Google prohíben el texto oculto para los usuarios pero presente para los buscadores, como el texto del color del fondo, detrás de imágenes o colocado fuera de la pantalla. Permiten de forma explícita las pestañas, los acordeones, los controles deslizantes, las descripciones emergentes y el texto para lectores de pantalla.",
     "fix": "Elimina el texto oculto o hazlo visible como contenido útil.",
     "messages": {
-      "fail": "{words} palabras en {blocks} bloques de texto están ocultas para los usuarios ({reasons}); el analista debería juzgar si esto encaja en la política sobre texto oculto."
+      "fail": "Texto oculto para los usuarios: {words, plural, one {# palabra} other {# palabras}} en {blocks, plural, one {# bloque} other {# bloques}} ({reasons}); el analista debería juzgar si esto encaja en la política sobre texto oculto."
     }
   },
   "content-hidden-links": {
@@ -306,9 +306,9 @@
     "fix": "Limpia la intrusión, aplica los parches al CMS y a los plugins, cambia las credenciales y, si hay una acción manual, solicita una revisión en Search Console.",
     "messages": {
       "fail": "Se han encontrado indicios compatibles con spam inyectado; el analista debería contrastarlos con la temática del sitio.",
-      "fail:spam-urls-in-sitemap": "{count} URLs del sitemap contienen vocabulario típico del spam inyectado.",
+      "fail:spam-urls-in-sitemap": "{count, plural, one {# URL del sitemap contiene} other {# URLs del sitemap contienen}} vocabulario típico del spam inyectado.",
       "fail:spam-vocabulary": "{count} enlace(s) o pasaje(s) contienen vocabulario típico del spam inyectado.",
-      "fail:foreign-script-block": "{count} páginas contienen grandes bloques de texto en chino, japonés o coreano, a diferencia del resto del sitio.",
+      "fail:foreign-script-block": "{count, plural, one {# página contiene} other {# páginas contienen}} grandes bloques de texto en chino, japonés o coreano, a diferencia del resto del sitio.",
       "fail:cloaked-spam": "«{term}» se sirve al user-agent de Googlebot, pero no a un user-agent de navegador."
     }
   },
@@ -526,7 +526,7 @@
     "why": "Las consultas para las que una página ya se posiciona entre las posiciones 11 y 20 son las más baratas de mejorar: la página es relevante, y una respuesta mejor o unos enlaces internos más sólidos pueden llevarla a la primera página.",
     "fix": "Para cada consulta, comprueba que la página la responde de forma completa y pronto, y enlázala desde páginas relacionadas con un texto del enlace descriptivo.",
     "messages": {
-      "fail": "{count} consultas se posicionan entre las posiciones 11 y 20, por ejemplo, «{query}» para {page} en la posición {position, number, ::.0}."
+      "fail": "{count, plural, one {# consulta se posiciona} other {# consultas se posicionan}} entre las posiciones 11 y 20, por ejemplo, «{query}» para {page} en la posición {position, number, ::.0}."
     }
   },
   "content-gsc-traffic-drop": {
@@ -534,7 +534,7 @@
     "why": "Una caída significativa de los clics de una página apunta a una pérdida de posicionamiento, un problema de indexación o un cambio en la demanda, y conviene comprobarla antes de que se extienda.",
     "fix": "Inspecciona la página en busca de cambios de indexación y de URL canónica, compara sus consultas entre los dos periodos en Search Console y revisa las modificaciones recientes de la página.",
     "messages": {
-      "fail": "{page} ha bajado de {before} a {now} clics respecto a los 28 días anteriores."
+      "fail": "{page} ha bajado de {before} a {now, plural, one {# clic} other {# clics}} respecto a los 28 días anteriores."
     }
   },
   "content-bing-low-ctr": {

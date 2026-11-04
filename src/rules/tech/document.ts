@@ -216,7 +216,7 @@ export const noscriptContent: RuleImplementation = {
       const sample = text.slice(0, 80).toLowerCase();
       const absent = renderedText === '' || (sample !== '' && !renderedText.includes(sample));
       if ((words >= 50 || links >= 3) && absent) {
-        candidates.push(cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('noscript block with {words} words and {links} links not found in the rendered page', { words, links }), excerpt: shorten(inner.trim(), 600), line: lineOf(block) }));
+        candidates.push(cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('noscript block with {words, plural, one {# word} other {# words}} and {links, plural, one {# link} other {# links}} not found in the rendered page', { words, links }), excerpt: shorten(inner.trim(), 600), line: lineOf(block) }));
       }
     }
     if (candidates.length === 0) return pass();

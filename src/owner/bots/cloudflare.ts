@@ -253,7 +253,8 @@ export async function fetchCloudflareActivity(options: CloudflareOptions): Promi
   let start = options.start.getTime();
   if (start < oldest) {
     start = oldest;
-    warnings.push(`Cloudflare keeps ${Math.floor(settings.notOlderThan / 86_400)} days of this data for the zone, so the window starts on ${time(start).slice(0, 10)}.`);
+    const retentionDays = Math.floor(settings.notOlderThan / 86_400);
+    warnings.push(`Cloudflare keeps ${retentionDays} day${retentionDays === 1 ? '' : 's'} of this data for the zone, so the window starts on ${time(start).slice(0, 10)}.`);
   }
   const sliceMs = Math.max(hourMs, Math.min(settings.maxDuration * 1000, end - start));
   const slices: Array<readonly [number, number]> = [];
@@ -328,7 +329,8 @@ export async function fetchCloudflareActivity(options: CloudflareOptions): Promi
   }
   if (read.length < slices.length) {
     start = read[0]![0];
-    warnings.push(`Cloudflare allows ${Math.round(sliceMs / hourMs)} hours per query and Altimeter makes at most ${maxQueries} queries per run, so only the data from ${time(start).slice(0, 10)} was read.`);
+    const sliceHours = Math.round(sliceMs / hourMs);
+    warnings.push(`Cloudflare allows ${sliceHours} hour${sliceHours === 1 ? '' : 's'} per query and Altimeter makes at most ${maxQueries} queries per run, so only the data from ${time(start).slice(0, 10)} was read.`);
   }
 
   let referrals: CloudflareData['referrals'];

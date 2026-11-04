@@ -167,10 +167,10 @@
   },
   "ai-js-only-content": {
     "messages": {
-      "fail": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio, number, percent}).",
-      "fail:mostly-rendered": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio, number, percent}). Crawlers that do not run JavaScript likely see little of the content.",
+      "fail": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}).",
+      "fail:mostly-rendered": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}). Crawlers that do not run JavaScript likely see little of the content.",
       "fail:h1-missing": "The raw HTML has no h1; the h1 appears only after rendering, so crawlers that do not run JavaScript likely miss the main heading.",
-      "fail:partly-rendered": "The raw HTML holds {rawWords} words of main text against {renderedWords} after rendering ({ratio, number, percent}); part of the content likely exists only after JavaScript."
+      "fail:partly-rendered": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}); part of the content likely exists only after JavaScript."
     }
   },
   "ai-textual-content-for-media": {
@@ -189,9 +189,9 @@
   },
   "ai-hidden-llm-instructions": {
     "messages": {
-      "fail": "{count} pieces of hidden, instruction-like text aimed at AI systems were found; the analyst confirms intent.",
-      "fail:hidden-instructions": "{count} pieces of hidden, instruction-like text aimed at AI systems were found in hidden elements, comments or attributes; the analyst confirms whether they try to steer AI answers.",
-      "fail:invisible-text": "{count} pieces of text hidden from readers were found, including text written in invisible Unicode tag characters, which models can still read; the analyst confirms whether they try to steer AI answers."
+      "fail": "{count, plural, one {# piece of hidden, instruction-like text aimed at AI systems was found} other {# pieces of hidden, instruction-like text aimed at AI systems were found}}; the analyst confirms intent.",
+      "fail:hidden-instructions": "{count, plural, one {# piece of hidden, instruction-like text aimed at AI systems was found} other {# pieces of hidden, instruction-like text aimed at AI systems were found}} in hidden elements, comments or attributes; the analyst confirms whether they try to steer AI answers.",
+      "fail:invisible-text": "{count, plural, one {# piece of text hidden from readers was found} other {# pieces of text hidden from readers were found}}, including text written in invisible Unicode tag characters, which models can still read; the analyst confirms whether they try to steer AI answers."
     }
   },
   "ai-agent-readiness": {
@@ -208,9 +208,9 @@
   },
   "ai-bots-crawl-activity": {
     "messages": {
-      "fail": "Verified AI crawlers fetched the site {verified} times ({crawlers}); {claims} more requests used AI crawler user agents without being verified.",
-      "fail:seen": "Verified AI crawlers fetched the site {verified} times in the window ({crawlers}); {claims} more requests used AI crawler user agents without being verified.",
-      "fail:claims-only": "{claims} requests used AI crawler user agents, but none could be verified, so the data does not show which AI crawlers really visited."
+      "fail": "Verified AI crawlers fetched the site {verified, plural, one {# time} other {# times}} ({crawlers}); {claims, plural, one {# more request used an AI crawler user agent without being verified} other {# more requests used AI crawler user agents without being verified}}.",
+      "fail:seen": "Verified AI crawlers fetched the site {verified, plural, one {# time} other {# times}} in the window ({crawlers}); {claims, plural, one {# more request used an AI crawler user agent without being verified} other {# more requests used AI crawler user agents without being verified}}.",
+      "fail:claims-only": "{claims, plural, one {# request used an AI crawler user agent, but it could not be verified} other {# requests used AI crawler user agents, but none could be verified}}, so the data does not show which AI crawlers really visited."
     }
   },
   "ai-bots-blocked-at-edge": {
@@ -230,7 +230,7 @@
   },
   "ai-bots-referrals": {
     "messages": {
-      "fail": "{visits} visits came from AI assistants ({assistants}), and {tagged} carried utm_source=chatgpt.com. Clicks from Google's AI Overviews and AI Mode count as Google Search and cannot be seen here."
+      "fail": "{visits, plural, one {# visit came} other {# visits came}} from AI assistants ({assistants}), and {tagged} carried utm_source=chatgpt.com. Clicks from Google's AI Overviews and AI Mode count as Google Search and cannot be seen here."
     }
   },
   "ai-google-genai-control-context": {

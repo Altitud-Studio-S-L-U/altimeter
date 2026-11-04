@@ -62,7 +62,7 @@
   "perf-lab-run-protocol": {
     "messages": {
       "fail": "The Lighthouse run protocol limits how stable the lab values are.",
-      "fail:few-runs": "Lab values come from the median of {validRuns} valid Lighthouse runs out of {runs}; {recommended} runs give a more stable median.",
+      "fail:few-runs": "Lab values come from the median of {validRuns, plural, one {# valid Lighthouse run} other {# valid Lighthouse runs}} out of {runs}; {recommended} runs give a more stable median.",
       "fail:run-warnings": "Lighthouse reported {count} run warnings, so the lab values may be unreliable."
     }
   },
@@ -129,15 +129,15 @@
   },
   "perf-render-blocking": {
     "messages": {
-      "fail": "{count} external scripts in the head block the parser: {scripts}.",
-      "fail:parser-blocking-script": "{count} external scripts in the head block the parser (no async, defer or type=module): {scripts}.",
-      "fail:consent-script": "{count} consent scripts in the head load synchronously: {scripts}. Some consent tools must run first; check whether the vendor offers an asynchronous loader that still blocks tags until consent.",
+      "fail": "{count, plural, one {# external script in the head blocks} other {# external scripts in the head block}} the parser: {scripts}.",
+      "fail:parser-blocking-script": "{count, plural, one {# external script in the head blocks} other {# external scripts in the head block}} the parser (no async, defer or type=module): {scripts}.",
+      "fail:consent-script": "{count, plural, one {# consent script in the head loads} other {# consent scripts in the head load}} synchronously: {scripts}. Some consent tools must run first; check whether the vendor offers an asynchronous loader that still blocks tags until consent.",
       "fail:render-blocking-requests": "Lighthouse estimates that removing render-blocking requests from the critical path saves {savings} of lab FCP: {requests}."
     }
   },
   "perf-document-redirects": {
     "messages": {
-      "fail": "{from} redirects {hops} time(s) before {to} answers; each hop adds to TTFB and LCP."
+      "fail": "{from} redirects {hops, plural, one {once} other {# times}} before {to} answers; each hop adds to TTFB and LCP."
     }
   },
   "perf-server-response-time": {
@@ -177,13 +177,13 @@
   },
   "perf-unload-handlers": {
     "messages": {
-      "fail": "The page registers {count} unload listener(s). Chrome no longer fires unload by default, but these listeners can still keep the page out of other browsers' back/forward cache."
+      "fail": "The page registers {count, plural, one {# unload listener} other {# unload listeners}}. Chrome no longer fires unload by default, but {count, plural, one {this listener} other {these listeners}} can still keep the page out of other browsers' back/forward cache."
     }
   },
   "perf-unsized-images": {
     "messages": {
-      "fail": "{count} images have no explicit dimensions; {aboveFold} of them are in the first viewport of the lab run.",
-      "fail:below-fold": "{count} images have no explicit dimensions, all below the first viewport of the lab run."
+      "fail": "{count, plural, one {# image has} other {# images have}} no explicit dimensions ({aboveFold} in the first viewport of the lab run).",
+      "fail:below-fold": "{count, plural, one {# image has no explicit dimensions and is below the first viewport of the lab run.} other {# images have no explicit dimensions, all below the first viewport of the lab run.}}"
     }
   },
   "perf-cls-culprits": {
@@ -194,14 +194,14 @@
   },
   "perf-embed-reserved-space": {
     "messages": {
-      "fail": "{count} embeds have no reserved space.",
-      "fail:attributed-shift": "{count} embeds have no width and height or reserved height, and Lighthouse attributes a lab layout shift to an injected iframe.",
-      "fail:unsized-embed": "{count} embeds have no width and height or inline reserved height; a stylesheet or container may still reserve the space."
+      "fail": "{count, plural, one {# embed has} other {# embeds have}} no reserved space.",
+      "fail:attributed-shift": "{count, plural, one {# embed has} other {# embeds have}} no width and height or reserved height, and Lighthouse attributes a lab layout shift to an injected iframe.",
+      "fail:unsized-embed": "{count, plural, one {# embed has} other {# embeds have}} no width and height or inline reserved height; a stylesheet or container may still reserve the space."
     }
   },
   "perf-non-composited-animations": {
     "messages": {
-      "fail": "{count} elements run animations the browser cannot composite: {reasons}."
+      "fail": "{count, plural, one {# element runs} other {# elements run}} animations the browser cannot composite: {reasons}."
     }
   },
   "perf-font-display": {
@@ -216,8 +216,8 @@
   },
   "perf-font-format": {
     "messages": {
-      "fail": "{count} font files are not WOFF2: {fonts}.",
-      "fail:not-woff2": "{count} font files are not WOFF2: {fonts}.",
+      "fail": "{count, plural, one {# font file is} other {# font files are}} not WOFF2: {fonts}.",
+      "fail:not-woff2": "{count, plural, one {# font file is} other {# font files are}} not WOFF2: {fonts}.",
       "fail:many-files": "The page loads {count} font files ({size}) in the lab; more than six is a tool heuristic, not a limit."
     }
   },
@@ -239,7 +239,7 @@
     "messages": {
       "fail": "Images could be delivered with fewer bytes (lab estimate).",
       "fail:lcp-image": "The LCP image {url} could be about {savings} smaller through size, format or compression (lab estimate).",
-      "fail:images": "{count} images could save about {savings} in total through size, format or compression (lab estimate)."
+      "fail:images": "{count, plural, one {# image could} other {# images could}} save about {savings} in total through size, format or compression (lab estimate)."
     }
   },
   "perf-long-tasks": {
@@ -305,7 +305,7 @@
   },
   "perf-html-cdn": {
     "messages": {
-      "fail": "No CDN markers were detected in the response headers of {count} audited HTML pages. Some CDNs strip their markers, so this does not show that no CDN is used."
+      "fail": "No CDN markers were detected in the response headers of {count, plural, one {# audited HTML page} other {# audited HTML pages}}. Some CDNs strip their markers, so this does not show that no CDN is used."
     }
   },
   "perf-consent-lab-bias": {

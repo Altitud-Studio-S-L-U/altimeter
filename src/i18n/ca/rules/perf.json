@@ -206,7 +206,7 @@
     "why": "Cada redirecció a la sol·licitud del document afegeix un viatge d'anada i tornada complet abans que arribi l'HTML, que compta en el TTFB i l'LCP. Lighthouse 13.6 ho indica a document-latency-insight.",
     "fix": "Enllaça internament a les URL finals i redueix les cadenes http->https->www a un sol salt.",
     "messages": {
-      "fail": "{from} redirigeix {hops} vegada(es) abans que respongui {to}; cada salt s'afegeix al TTFB i a l'LCP."
+      "fail": "{from} redirigeix {hops, plural, one {# vegada} other {# vegades}} abans que respongui {to}; cada salt s'afegeix al TTFB i a l'LCP."
     }
   },
   "perf-server-response-time": {
@@ -267,7 +267,7 @@
     "why": "Els detectors d'unload deixen les pàgines fora de la memòria cau endavant/enrere en alguns navegadors. Chrome ha declarat obsolet unload, de manera que l'impacte que queda és sobretot en altres navegadors.",
     "fix": "Substitueix-los per pagehide/visibilitychange. Opcionalment, envia Permissions-Policy: unload=() (només Chromium).",
     "messages": {
-      "fail": "La pàgina registra {count} detector(s) d'unload. Chrome ja no dispara unload per defecte, però aquests detectors encara poden deixar la pàgina fora de la memòria cau endavant/enrere d'altres navegadors."
+      "fail": "La pàgina registra {count, plural, one {# detector} other {# detectors}} d'unload. Chrome ja no dispara unload per defecte, però {count, plural, one {aquest detector encara pot} other {aquests detectors encara poden}} deixar la pàgina fora de la memòria cau endavant/enrere d'altres navegadors."
     }
   },
   "perf-unsized-images": {
@@ -275,8 +275,8 @@
     "why": "web.dev documenta que les imatges sense atributs width i height (o sense aspect-ratio) causen desplaçaments de disseny quan es carreguen. Lighthouse 13.6 les indica a l'auditoria unsized-images.",
     "fix": "Afegeix els atributs width i height (mantén la mateixa relació d'aspecte entre les opcions de srcset) o estableix aspect-ratio al CSS.",
     "messages": {
-      "fail": "{count} imatge(s) no tenen dimensions explícites (a la primera àrea de visualització de l'execució de laboratori: {aboveFold}).",
-      "fail:below-fold": "{count} imatge(s) no tenen dimensions explícites, i cap no és a la primera àrea de visualització de l'execució de laboratori."
+      "fail": "{count, plural, one {# imatge no té} other {# imatges no tenen}} dimensions explícites (a la primera àrea de visualització de l'execució de laboratori: {aboveFold}).",
+      "fail:below-fold": "{count, plural, one {# imatge no té dimensions explícites i no és a la primera àrea de visualització de l'execució de laboratori.} other {# imatges no tenen dimensions explícites, i cap no és a la primera àrea de visualització de l'execució de laboratori.}}"
     }
   },
   "perf-cls-culprits": {
@@ -303,7 +303,7 @@
     "why": "Les animacions de propietats que provoquen recàlculs de disseny, com top, margin o width, s'executen al fil principal i poden causar desplaçaments de disseny. Lighthouse 13.6 les indica a non-composited-animations.",
     "fix": "Anima transform/opacity en lloc seu; respecta prefers-reduced-motion.",
     "messages": {
-      "fail": "{count} element(s) executen animacions que el navegador no pot compondre: {reasons}."
+      "fail": "{count, plural, one {# element executa} other {# elements executen}} animacions que el navegador no pot compondre: {reasons}."
     }
   },
   "perf-font-display": {
@@ -327,8 +327,8 @@
     "why": "WOFF2 és el format de font més petit amb una compatibilitat àmplia, i molts fitxers de fonts a la càrrega inicial competeixen amb els recursos crítics.",
     "fix": "Serveix només WOFF2, fes subconjunts amb unicode-range i fes servir menys famílies o gruixos, o una font variable quan estalviï bytes.",
     "messages": {
-      "fail": "{count} fitxer(s) de fonts no són WOFF2: {fonts}.",
-      "fail:not-woff2": "{count} fitxer(s) de fonts no són WOFF2: {fonts}.",
+      "fail": "{count, plural, one {# fitxer de fonts no és} other {# fitxers de fonts no són}} WOFF2: {fonts}.",
+      "fail:not-woff2": "{count, plural, one {# fitxer de fonts no és} other {# fitxers de fonts no són}} WOFF2: {fonts}.",
       "fail:many-files": "La pàgina carrega {count} fitxers de fonts ({size}) al laboratori; el criteri de més de sis és una heurística de l'eina, no un límit."
     }
   },
@@ -359,7 +359,7 @@
     "messages": {
       "fail": "Les imatges es podrien lliurar amb menys bytes (estimació de laboratori).",
       "fail:lcp-image": "La imatge LCP {url} podria ser uns {savings} més petita amb canvis de mida, de format o de compressió (estimació de laboratori).",
-      "fail:images": "{count} imatge(s) podrien estalviar uns {savings} en total amb canvis de mida, de format o de compressió (estimació de laboratori)."
+      "fail:images": "{count, plural, one {# imatge podria} other {# imatges podrien}} estalviar uns {savings} en total amb canvis de mida, de format o de compressió (estimació de laboratori)."
     }
   },
   "perf-long-tasks": {

@@ -260,7 +260,7 @@
     "why": "Les polítiques de Google contra el contingut brossa prohibeixen el text ocult per als usuaris però present per als cercadors, com el text del color del fons, darrere d'imatges o posicionat fora de la pantalla. Permeten explícitament pestanyes, acordions, controls lliscants, indicadors de funció i text per a lectors de pantalla.",
     "fix": "Elimina el text ocult o fes-lo visible com a contingut útil.",
     "messages": {
-      "fail": "{words} paraules estan ocultes per als usuaris en {blocks} bloc(s) de text ({reasons}); l'analista hauria de jutjar si això correspon a la política sobre text ocult."
+      "fail": "Text ocult per als usuaris: {words, plural, one {# paraula} other {# paraules}} en {blocks, plural, one {# bloc} other {# blocs}} ({reasons}); l'analista hauria de jutjar si això correspon a la política sobre text ocult."
     }
   },
   "content-hidden-links": {

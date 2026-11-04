@@ -65,7 +65,7 @@ describe('crawl-bing-crawl-issues', () => {
     assert.equal(by('server-error')?.params?.examples, `${origin}/b, ${origin}/a`, 'most linked first');
     assert.equal(by('client-error')?.params?.linked, 1);
     for (const finding of findings) message(finding);
-    assert.match(message(by('client-error')), /^Bing got 4xx errors for 2 URL\(s\), 1 of them with inbound links/u);
+    assert.match(message(by('client-error')), /^Bing got 4xx errors for 2 URLs \(1 with inbound links\), for example/u);
     assert.ok(findings.every(finding => finding.origin === 'owner-data'));
   });
 

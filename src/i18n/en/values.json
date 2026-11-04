@@ -435,7 +435,12 @@
     "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.": "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.",
     "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.": "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.",
     "{file} is empty, so it was skipped.": "{file} is empty, so it was skipped.",
-    "The format of {file} was not recognised, so it was skipped.": "The format of {file} was not recognised, so it was skipped."
+    "The format of {file} was not recognised, so it was skipped.": "The format of {file} was not recognised, so it was skipped.",
+    "{count} analysis call was left out to stay within the call limit.": "{count} analysis call was left out to stay within the call limit.",
+    "Cloudflare keeps {days} day of this data for the zone, so the window starts on {date}.": "Cloudflare keeps {days} day of this data for the zone, so the window starts on {date}.",
+    "Cloudflare allows {hours} hour per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare allows {hours} hour per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.",
+    "{count} crawler request carries a private or loopback address, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} crawler request carries a private or loopback address, so the logs record a proxy or load balancer; log the client address and pass --ip-source.",
+    "{count} crawler request comes from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} crawler request comes from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source."
   },
   "where": {
     "title": "title",

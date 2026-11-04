@@ -391,7 +391,7 @@ export async function runAnalysis(options: AnalysisOptions): Promise<AnalysisRes
   }
   const verifying = (options.verifier ?? 'same') !== 'none';
   const budget = withinBudget(prepared, Math.max(0, Math.floor(options.maxCalls ?? defaults.maxCalls)), verifying);
-  if (budget.skipped.length > 0) warnings.push(`${budget.skipped.length} analysis calls were left out to stay within the call limit.`);
+  if (budget.skipped.length > 0) warnings.push(`${budget.skipped.length} analysis call${budget.skipped.length === 1 ? ' was' : 's were'} left out to stay within the call limit.`);
   const base = { pages: pages.map(page => page.key), skipped: planned.skipped, injectionCandidates: injections };
   if (options.dryRunDir) {
     const calls = await writeDryRun(options.dryRunDir, budget.selected, budget.skipped, planned.skipped, options, strings);

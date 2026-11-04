@@ -81,7 +81,7 @@
     "messages": {
       "fail": "The hreflang set of {url} does not include the page itself.",
       "fail:near-miss": "The hreflang set does not list {url} exactly; the closest entry ({value}) points to {closest}. A self entry must match the page URL, including scheme and trailing slash.",
-      "fail:absent": "None of the {count} hreflang entries points to the page itself, {url}. Each version must list itself as well as the other versions."
+      "fail:absent": "{count, plural, one {The only hreflang entry does not point to the page itself, {url}.} other {None of the # hreflang entries points to the page itself, {url}.}} Each version must list itself as well as the other versions."
     }
   },
   "intl-hreflang-one-url-many-languages": {
