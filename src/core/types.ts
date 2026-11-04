@@ -58,6 +58,12 @@ export const inputIds = [
 ] as const;
 export type InputId = (typeof inputIds)[number];
 
+export const fixLocations = ['repo', 'platform-config', 'cdn-dashboard', 'content', 'external-account', 'owner-decision'] as const;
+export type FixLocation = (typeof fixLocations)[number];
+
+export const verifications = ['local', 'deployed', 'field-28d', 'owner-data', 'manual'] as const;
+export type Verification = (typeof verifications)[number];
+
 export const ruleStatuses = ['v1', 'planned', 'requires-owner-data'] as const;
 export type RuleStatus = (typeof ruleStatuses)[number];
 
@@ -79,7 +85,10 @@ export interface RuleMeta {
   maxSeverity: Severity;
   method: Method;
   scope: 'page' | 'site';
+  /** Inputs that must have been collected for the rule to be evaluated at all. */
   inputs: InputId[];
+  /** Inputs the rule uses when present, for example to escalate severity; their absence never blocks evaluation. */
+  optionalInputs?: InputId[];
   appliesTo: PageType[] | 'all';
   /** Conditions under which a failing pattern is intentional or harmless, so the rule passes or does not apply. */
   exemptWhen: string[];
@@ -91,6 +100,10 @@ export interface RuleMeta {
   thresholds: string;
   sources: RuleSource[];
   status: RuleStatus;
+  /** Where a fix is usually made; external accounts and owner decisions are never handed to a coding agent. Default: repo. */
+  fixLocation?: FixLocation;
+  /** How a fix can be confirmed: against a local build, only once deployed, after 28 days of field data, with owner data, or by hand. */
+  verifiableBy?: Verification;
   /** False-positive traps and edge cases for implementers. */
   notes?: string;
   related?: string[];

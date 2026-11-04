@@ -49,6 +49,11 @@ describe('catalog validation', () => {
     assert.match(ruleProblems({ ...valid, id: 'content-example-rule' }).join('\n'), /id must be <category>-<kebab-slug>/u);
   });
 
+  test('accepts optional inputs that are not also required', () => {
+    assert.deepEqual(ruleProblems({ ...valid, optionalInputs: ['rendered-dom', 'sitemaps'] }), []);
+    assert.match(ruleProblems({ ...valid, optionalInputs: ['raw-html'] }).join('\n'), /not also required inputs/u);
+  });
+
   test('rejects unknown fields and inputs', () => {
     const problems = ruleProblems({ ...valid, weight: 3, inputs: ['html'] }).join('\n');
     assert.match(problems, /unknown field weight/u);

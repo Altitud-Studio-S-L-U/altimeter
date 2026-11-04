@@ -1,5 +1,7 @@
 import {
   categories,
+  fixLocations,
+  verifications,
   evidenceLevels,
   inputIds,
   methods,
@@ -11,8 +13,8 @@ import {
 } from '../core/types.ts';
 
 const ruleKeys = new Set([
-  'id', 'category', 'title', 'why', 'fix', 'maxSeverity', 'method', 'scope', 'inputs', 'appliesTo', 'exemptWhen',
-  'fpRisk', 'scored', 'evidenceLevel', 'thresholds', 'sources', 'status', 'notes', 'related',
+  'id', 'category', 'title', 'why', 'fix', 'maxSeverity', 'method', 'scope', 'inputs', 'optionalInputs', 'appliesTo', 'exemptWhen',
+  'fpRisk', 'scored', 'evidenceLevel', 'thresholds', 'sources', 'status', 'fixLocation', 'verifiableBy', 'notes', 'related',
 ]);
 const mythKeys = new Set(['id', 'claim', 'reality', 'sources', 'patterns']);
 const slug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
@@ -66,6 +68,10 @@ export function ruleProblems(entry: unknown): string[] {
   if (!Array.isArray(rule.inputs) || rule.inputs.length === 0 || !rule.inputs.every(input => oneOf(inputIds, input))) {
     problems.push(`${where}: inputs must be a non-empty list of known input ids`);
   }
+  if (rule.optionalInputs !== undefined && (!Array.isArray(rule.optionalInputs) || !rule.optionalInputs.every(input => oneOf(inputIds, input))
+    || (Array.isArray(rule.inputs) && rule.optionalInputs.some(input => (rule.inputs as unknown[]).includes(input))))) {
+    problems.push(`${where}: optionalInputs must be known input ids that are not also required inputs`);
+  }
   if (rule.appliesTo !== 'all' && (!Array.isArray(rule.appliesTo) || rule.appliesTo.length === 0
     || !rule.appliesTo.every(type => oneOf(pageTypes, type)))) {
     problems.push(`${where}: appliesTo must be "all" or a non-empty list of page types`);
@@ -79,6 +85,8 @@ export function ruleProblems(entry: unknown): string[] {
   if (!text(rule.thresholds, 900)) problems.push(`${where}: thresholds must be 1-900 characters`);
   problems.push(...sourcesProblems(where, rule.sources));
   if (!oneOf(ruleStatuses, rule.status)) problems.push(`${where}: invalid status`);
+  if (rule.fixLocation !== undefined && !oneOf(fixLocations, rule.fixLocation)) problems.push(`${where}: invalid fixLocation`);
+  if (rule.verifiableBy !== undefined && !oneOf(verifications, rule.verifiableBy)) problems.push(`${where}: invalid verifiableBy`);
   if (rule.notes !== undefined && !text(rule.notes, 1500)) problems.push(`${where}: notes must be 1-1500 characters`);
   if (rule.related !== undefined && (!Array.isArray(rule.related) || !rule.related.every(id => typeof id === 'string' && slug.test(id)))) {
     problems.push(`${where}: related must be a list of rule ids`);
