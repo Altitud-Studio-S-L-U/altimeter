@@ -3,6 +3,7 @@ import type { LookupAddress } from 'node:dns';
 import { createServer, request, type Server } from 'node:http';
 import { connect, type AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
+import { hostPort } from '../src/fetch/ip-guard.ts';
 import { startGuardedProxy } from '../src/render/proxy.ts';
 
 let origin: Server;
@@ -75,5 +76,29 @@ describe('guarded proxy', () => {
     assert.equal(allowed, 'HTTP/1.1 200 Connection Established');
     assert.equal(literal, 'HTTP/1.1 403 Forbidden');
     assert.equal(metadata, 'HTTP/1.1 403 Forbidden');
+  });
+
+  test('exempts a host of privateOrigins only on its port', async () => {
+    let reached = 0;
+    const other = createServer((_req, res) => {
+      reached += 1;
+      res.writeHead(200).end('another local service');
+    });
+    await new Promise<void>(resolve => other.listen(0, '127.0.0.1', resolve));
+    const otherPort = (other.address() as AddressInfo).port;
+    const proxy = await startGuardedProxy({ allowPrivate: false, privateOrigins: new Set([hostPort('site.test', originPort), hostPort('127.0.0.1', originPort)]) }, loopback);
+    try {
+      assert.equal((await viaProxy(proxy.url, `http://site.test:${originPort}/page`)).status, 200);
+      assert.equal(await tunnel(proxy.url, `127.0.0.1:${originPort}`), 'HTTP/1.1 200 Connection Established');
+      assert.equal((await viaProxy(proxy.url, `http://site.test:${otherPort}/page`)).status, 403);
+      assert.equal((await viaProxy(proxy.url, `http://127.0.0.1:${otherPort}/page`)).status, 403);
+      assert.equal(await tunnel(proxy.url, `site.test:${otherPort}`), 'HTTP/1.1 403 Forbidden');
+      assert.equal(await tunnel(proxy.url, `127.0.0.1:${otherPort}`), 'HTTP/1.1 403 Forbidden');
+      assert.equal(reached, 0);
+    } finally {
+      await proxy.close();
+      other.closeAllConnections();
+      await new Promise(resolve => other.close(resolve));
+    }
   });
 });

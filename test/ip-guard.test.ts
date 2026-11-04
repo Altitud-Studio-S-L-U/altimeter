@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressAllowed, classifyAddress, publicOnly } from '../src/fetch/ip-guard.ts';
+import { addressAllowed, classifyAddress, hostPort, publicOnly } from '../src/fetch/ip-guard.ts';
 
 test('classifies IPv4 special-purpose ranges', () => {
   const cases: Array<[string, string]> = [
@@ -57,4 +57,18 @@ test('allows private addresses only by explicit policy', () => {
   assert.equal(addressAllowed(local, 'localhost', '127.0.0.1'), true);
   assert.equal(addressAllowed(local, 'LOCALHOST', '::1'), true);
   assert.equal(addressAllowed(local, 'attacker.example', '127.0.0.1'), false);
+});
+
+test('allows a private address for a host of privateOrigins only on its port', () => {
+  const served = { allowPrivate: false, privateOrigins: new Set([hostPort('127.0.0.1', 4321), hostPort('[::1]', 4321), hostPort('LocalHost', 3000)]) };
+  assert.deepEqual([...served.privateOrigins], ['127.0.0.1:4321', '[::1]:4321', 'localhost:3000']);
+  assert.equal(addressAllowed(served, '127.0.0.1', '127.0.0.1', 4321), true);
+  assert.equal(addressAllowed(served, '127.0.0.1', '127.0.0.1', 6379), false);
+  assert.equal(addressAllowed(served, '127.0.0.1', '127.0.0.1'), false, 'a lookup that does not know the port never applies them');
+  assert.equal(addressAllowed(served, '::1', '::1', 4321), true);
+  assert.equal(addressAllowed(served, '[::1]', '::1', 4321), true);
+  assert.equal(addressAllowed(served, 'localhost', '::1', 3000), true);
+  assert.equal(addressAllowed(served, 'localhost', '127.0.0.1', 3001), false);
+  assert.equal(addressAllowed(served, 'attacker.example', '127.0.0.1', 3000), false);
+  assert.equal(addressAllowed(served, 'example.com', '8.8.8.8', 8080), true);
 });

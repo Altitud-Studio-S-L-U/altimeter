@@ -98,6 +98,26 @@ describe('verify', () => {
     }
   });
 
+  test('never reaches another port of the loopback address from the build it serves', async () => {
+    let reached = 0;
+    const other = createServer((_req, res) => {
+      reached += 1;
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end('<!doctype html><title>Another local service</title>');
+    });
+    await new Promise<void>(resolve => other.listen(0, '127.0.0.1', resolve));
+    const elsewhere = `http://127.0.0.1:${(other.address() as AddressInfo).port}`;
+    try {
+      await writeFile(join(build, 'index.html'), `<!doctype html><title>Home</title><link rel="icon" href="${elsewhere}/favicon.ico"><meta property="og:image" content="${elsewhere}/og.png">`
+        + `<a href="${elsewhere}/admin">Admin</a> <a href="${elsewhere}/settings">Settings</a>`);
+      const [result] = await verifyTasks({ report, staticDir: build, implementations, rules });
+      assert.equal(result?.verdict, 'pass');
+      assert.equal(reached, 0);
+    } finally {
+      other.closeAllConnections();
+      await new Promise(resolve => other.close(resolve));
+    }
+  });
+
   const keeping = (...ruleIds: string[]) => ({ ...report, tasks: report.tasks.map(task => ({ ...task, mustRemainPassing: ruleIds.map((ruleId): TaskCheck => ({ ruleId, scope: task.scopes[0]! })) })) });
   const withRules = (...extra: RuleImplementation[]) => new Map([...implementations, ...extra.map(entry => [entry.id, entry] as const)]);
 

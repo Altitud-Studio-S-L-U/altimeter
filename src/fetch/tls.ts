@@ -45,7 +45,7 @@ export function inspectTls(host: string, options: { port?: number; policy?: Netw
       port,
       servername: /^\d+\.\d+\.\d+\.\d+$/u.test(host) ? '' : host,
       rejectUnauthorized: false,
-      lookup: guardedLookup(policy, options.lookup) as never,
+      lookup: guardedLookup(policy, options.lookup, port) as never,
       timeout: options.timeoutMs ?? 10_000,
       ...(options.ca ? { ca: options.ca } : {}),
     }, () => {
@@ -70,6 +70,6 @@ export function inspectTls(host: string, options: { port?: number; policy?: Netw
       const code = (error as NodeJS.ErrnoException).code ?? 'TLS_ERROR';
       done({ host, port, authorized: false, error: code === 'ALTIMETER_BLOCKED_ADDRESS' ? 'BLOCKED_ADDRESS' : code, subjectAltNames: [], chainLength: 0 });
     });
-    if (/^\d+\.\d+\.\d+\.\d+$/u.test(host) && !addressAllowed(policy, host, host)) done({ host, port, authorized: false, error: 'BLOCKED_ADDRESS', subjectAltNames: [], chainLength: 0 });
+    if (/^\d+\.\d+\.\d+\.\d+$/u.test(host) && !addressAllowed(policy, host, host, port)) done({ host, port, authorized: false, error: 'BLOCKED_ADDRESS', subjectAltNames: [], chainLength: 0 });
   });
 }

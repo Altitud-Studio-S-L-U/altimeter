@@ -20,13 +20,13 @@ export interface GuardedProxy {
   close(): Promise<void>;
 }
 
-function resolveAllowed(policy: NetworkPolicy, lookup: Lookup, host: string): Promise<{ address?: string; reason?: ProxyDecision['reason'] }> {
+function resolveAllowed(policy: NetworkPolicy, lookup: Lookup, host: string, port: number): Promise<{ address?: string; reason?: ProxyDecision['reason'] }> {
   const bare = host.replace(/^\[|\]$/gu, '');
-  if (isIP(bare) !== 0) return Promise.resolve(addressAllowed(policy, bare, bare) ? { address: bare } : { reason: 'blocked-address' });
+  if (isIP(bare) !== 0) return Promise.resolve(addressAllowed(policy, bare, bare, port) ? { address: bare } : { reason: 'blocked-address' });
   return new Promise(resolve => {
     lookup(bare, { all: true }, (error: NodeJS.ErrnoException | null, addresses: LookupAddress[]) => {
       if (error || addresses.length === 0) return resolve({ reason: 'dns' });
-      const allowed = addresses.find(entry => addressAllowed(policy, bare, entry.address));
+      const allowed = addresses.find(entry => addressAllowed(policy, bare, entry.address, port));
       resolve(allowed ? { address: allowed.address } : { reason: 'blocked-address' });
     });
   });
@@ -64,7 +64,7 @@ export async function startGuardedProxy(policy: NetworkPolicy, lookup: Lookup = 
       return;
     }
     const port = Number(target.port) || 80;
-    void resolveAllowed(policy, lookup, target.hostname).then(({ address, reason }) => {
+    void resolveAllowed(policy, lookup, target.hostname, port).then(({ address, reason }) => {
       if (!address) {
         refuse({ host: target.hostname, port, allowed: false, reason: reason ?? 'blocked-address' });
         res.writeHead(403).end();
@@ -93,7 +93,7 @@ export async function startGuardedProxy(policy: NetworkPolicy, lookup: Lookup = 
       client.end('HTTP/1.1 400 Bad Request\r\n\r\n');
       return;
     }
-    void resolveAllowed(policy, lookup, authority.host).then(({ address, reason }) => {
+    void resolveAllowed(policy, lookup, authority.host, authority.port).then(({ address, reason }) => {
       if (!address) {
         refuse({ host: authority.host, port: authority.port, allowed: false, reason: reason ?? 'blocked-address' });
         client.end('HTTP/1.1 403 Forbidden\r\n\r\n');

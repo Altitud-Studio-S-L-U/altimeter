@@ -5,6 +5,7 @@ import type { AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
 import zlib from 'node:zlib';
 import { HttpClient, headerValue } from '../src/fetch/http.ts';
+import { hostPort } from '../src/fetch/ip-guard.ts';
 
 let server: Server;
 let port: number;
@@ -27,6 +28,7 @@ before(async () => {
       return void res.writeHead(301, { location: n > 0 ? `/chain-${n - 1}` : '/ok' }).end();
     }
     if (path === '/to-ftp') return void res.writeHead(301, { location: 'ftp://example.com/file' }).end();
+    if (path.startsWith('/redirect?to=')) return void res.writeHead(302, { location: decodeURIComponent(path.slice('/redirect?to='.length)) }).end();
     if (path === '/agent') return void res.writeHead(200).end(req.headers['user-agent'] ?? '');
     if (path === '/slow') return void setTimeout(() => res.writeHead(200).end('late'), 2000);
     res.writeHead(404).end('missing');
@@ -167,5 +169,29 @@ describe('network policy', () => {
     await client.close();
     assert.equal(result.hops[0]!.status, 302);
     assert.equal(result.error?.code, 'blocked-address');
+  });
+
+  test('exempts a host of privateOrigins only on its port, on every hop', async () => {
+    let reached = 0;
+    const other = createServer((_req, res) => {
+      reached += 1;
+      res.writeHead(200).end('another local service');
+    });
+    await new Promise<void>(resolve => other.listen(0, '127.0.0.1', resolve));
+    const otherPort = (other.address() as AddressInfo).port;
+    const client = new HttpClient({ policy: { allowPrivate: false, privateOrigins: new Set([hostPort('127.0.0.1', port), hostPort('site.test', port)]) }, lookup: loopbackLookup });
+    try {
+      assert.equal((await client.fetch(`http://127.0.0.1:${port}/ok`)).status, 200);
+      assert.equal((await client.fetch(`http://site.test:${port}/ok`)).status, 200);
+      assert.equal((await client.fetch(`http://127.0.0.1:${otherPort}/`)).error?.code, 'blocked-address');
+      assert.equal((await client.fetch(`http://site.test:${otherPort}/`)).error?.code, 'blocked-address');
+      const redirected = await client.fetch(`http://site.test:${port}/redirect?to=${encodeURIComponent(`http://site.test:${otherPort}/`)}`);
+      assert.deepEqual([redirected.hops.map(hop => hop.status), redirected.error?.code], [[302], 'blocked-address']);
+      assert.equal(reached, 0);
+    } finally {
+      await client.close();
+      other.closeAllConnections();
+      await new Promise(resolve => other.close(resolve));
+    }
   });
 });

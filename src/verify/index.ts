@@ -5,7 +5,7 @@ import { EvidenceStore } from '../core/evidence.ts';
 import type { PageFacts, SiteFacts } from '../core/facts.ts';
 import type { FetchResult } from '../fetch/http.ts';
 import type { RuleMeta, Verification } from '../core/types.ts';
-import { publicOnly } from '../fetch/ip-guard.ts';
+import { hostPort, publicOnly, type NetworkPolicy } from '../fetch/ip-guard.ts';
 import { runRules, type Finding, type FindingScope, type RuleImplementation } from '../rules/engine.ts';
 import { implementations as registered } from '../rules/registry.ts';
 import type { Report } from '../report/model.ts';
@@ -114,17 +114,20 @@ export async function verifyTasks(options: VerifyOptions): Promise<TaskVerificat
   const implementations = options.implementations ?? registered;
   const results: TaskVerification[] = [];
   try {
+    const served = new URL(origin);
+    // Only the host and port under test may be private, so its pages cannot reach other local services.
+    const policy: NetworkPolicy = isLocal
+      ? { allowPrivate: false, privateOrigins: new Set([hostPort(served.hostname, Number(served.port) || (served.protocol === 'https:' ? 443 : 80))]) }
+      : publicOnly;
     const byUrl = new Map<string, SiteFacts>();
     const factsFor = async (productionUrl: string): Promise<SiteFacts> => {
       const cached = byUrl.get(productionUrl);
       if (cached) return cached;
       const target = swapOrigin(productionUrl, production, origin);
-      // The policy compares host names without the brackets of an IPv6 literal.
-      const host = new URL(origin).hostname.replace(/^\[|\]$/gu, '');
       options.log?.(`Checking ${target}`);
       const collected = await collect({
         url: target,
-        policy: isLocal ? { allowPrivate: false, privateHosts: new Set([host]) } : publicOnly,
+        policy,
         render: options.render ?? false,
         lighthouse: false,
       });
