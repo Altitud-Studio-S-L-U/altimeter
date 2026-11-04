@@ -318,7 +318,7 @@
   },
   "content-gsc-low-ctr": {
     "messages": {
-      "fail": "{page} got {impressions} impressions at position {position} with a {ctr} CTR, against {expected} for the site at that position."
+      "fail": "{page} got {impressions} impressions at position {position, number, ::.0} with a {ctr, number, ::percent .0} CTR, against {expected, number, ::percent .0} for the site at that position."
     }
   },
   "content-gsc-cannibalization": {
@@ -328,7 +328,7 @@
   },
   "content-gsc-striking-distance": {
     "messages": {
-      "fail": "{count} queries rank in positions 11 to 20, for example \"{query}\" for {page} at position {position}."
+      "fail": "{count} queries rank in positions 11 to 20, for example \"{query}\" for {page} at position {position, number, ::.0}."
     }
   },
   "content-gsc-traffic-drop": {
@@ -338,7 +338,7 @@
   },
   "content-bing-low-ctr": {
     "messages": {
-      "fail": "{page} got {impressions} Bing impressions at position {position} with a {ctr} CTR, against {expected} for the site's other pages at that position, from {start} to {end}."
+      "fail": "{page} got {impressions} Bing impressions at position {position, number, ::.0} with a {ctr, number, ::percent .0} CTR, against {expected, number, ::percent .0} for the site's other pages at that position, from {start} to {end}."
     }
   },
   "content-bing-ai-performance": {

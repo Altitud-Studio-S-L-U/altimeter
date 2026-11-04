@@ -510,7 +510,7 @@
     "why": "Una pàgina que apareix sovint però que rep pocs clics en la seva posició sol tenir un títol o un fragment que no coincideix amb el que volen els usuaris que cerquen. La comparació fa servir el CTR del mateix lloc a cada posició, no una corba del sector.",
     "fix": "Reescriu el títol i la metadescripció per a les consultes de la llista, de manera que continuïn sent fidels a la pàgina. Comprova si un resultat enriquit o una pàgina del lloc que s'hi adequa millor s'emporta els clics.",
     "messages": {
-      "fail": "{page} ha obtingut {impressions} impressions a la posició {position} amb un CTR de {ctr}, enfront de {expected} per al lloc en aquesta posició."
+      "fail": "{page} ha obtingut {impressions} impressions a la posició {position, number, ::.0} amb un CTR de {ctr, number, ::percent .0}, enfront de {expected, number, ::percent .0} per al lloc en aquesta posició."
     }
   },
   "content-gsc-cannibalization": {
@@ -526,7 +526,7 @@
     "why": "Les consultes per a les quals una pàgina ja es posiciona entre les posicions 11 i 20 són les que costa menys millorar: la pàgina és rellevant, i una resposta millor o uns enllaços interns més forts la poden portar a la primera pàgina.",
     "fix": "Per a cada consulta, comprova que la pàgina la respon de manera completa i aviat, i enllaça-hi des de pàgines relacionades amb un text d'ancoratge descriptiu.",
     "messages": {
-      "fail": "Consultes entre les posicions 11 i 20: {count}; per exemple, «{query}» per a {page} a la posició {position}."
+      "fail": "Consultes entre les posicions 11 i 20: {count}; per exemple, «{query}» per a {page} a la posició {position, number, ::.0}."
     }
   },
   "content-gsc-traffic-drop": {
@@ -542,7 +542,7 @@
     "why": "Una pàgina que Bing mostra sovint però a la qual els usuaris rarament fan clic sol tenir un títol o un fragment que no coincideix amb el que busquen. La comparació fa servir el CTR de les altres pàgines del lloc en una posició semblant a Bing, no una corba del sector.",
     "fix": "Reescriu el títol i la metadescripció per a les consultes de la llista, de manera que continuïn sent fidels a la pàgina. Comprova a Bing si un resultat més complet o una altra pàgina del lloc s'emporta els clics.",
     "messages": {
-      "fail": "{page} ha obtingut {impressions} impressions a Bing a la posició {position} amb un CTR de {ctr}, enfront de {expected} de les altres pàgines del lloc en aquesta posició, del {start} al {end}."
+      "fail": "{page} ha obtingut {impressions} impressions a Bing a la posició {position, number, ::.0} amb un CTR de {ctr, number, ::percent .0}, enfront de {expected, number, ::percent .0} de les altres pàgines del lloc en aquesta posició, del {start} al {end}."
     }
   },
   "content-bing-ai-performance": {

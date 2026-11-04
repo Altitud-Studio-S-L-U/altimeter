@@ -1,4 +1,4 @@
-import { evidenceLabel } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts } from '../../core/facts.ts';
 import { severities, type Severity } from '../../core/types.ts';
 import { issueNames, lowCtrPages, onBingSite, recentRows, trafficTotals, type CrawlIssueName, type TrafficWindow } from '../../owner/bing-analyses.ts';
@@ -37,8 +37,7 @@ function displayUrl(url: string): string {
   return href.replace(/[[\]()`*!|\\]/gu, character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
 }
 
-const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
-const dayOf = (instant: string | undefined) => instant?.slice(0, 10) ?? 'unknown';
+const dayOf = (instant: string | undefined) => instant?.slice(0, 10) ?? '-';
 const gravity = (severity: Severity) => severities.indexOf(severity);
 
 interface IssueKind {
@@ -72,7 +71,7 @@ const kinds: Readonly<Record<CrawlIssueName, IssueKind>> = {
 const reportingOrder = Object.keys(kinds) as CrawlIssueName[];
 
 function issueLine(entry: BingCrawlIssue): string {
-  return `${entry.url} (${issueNames(entry.issues).join(', ')}; HTTP ${entry.httpCode ?? 'unknown'}; ${entry.inLinks} inbound links)`;
+  return `${entry.url} (${issueNames(entry.issues).join(', ')}; HTTP ${entry.httpCode ?? '-'}; ${entry.inLinks})`;
 }
 
 const crawlIssues: RuleImplementation = {
@@ -86,7 +85,10 @@ const crawlIssues: RuleImplementation = {
       if (listed.length === 0) continue;
       const kind = kinds[name];
       const linked = listed.filter(entry => entry.inLinks > 0).length;
-      const evidence = [context.evidence.add({ kind: 'owner-data', url: bing.site, label: evidenceLabel('URLs Bing lists with the crawl issue {issue}', { issue: name }), excerpt: listed.slice(0, 20).map(issueLine).join('\n') })];
+      const evidence = [context.evidence.add({
+        kind: 'owner-data', url: bing.site, excerpt: listed.slice(0, 20).map(issueLine).join('\n'),
+        label: evidenceLabel('URLs Bing lists with the crawl issue {issue}, one per line with its issues, HTTP status and inbound links', { issue: name }),
+      })];
       results.push({
         outcome: 'fail',
         // A missing URL that other pages link to loses visitors and link value; one nothing links to was usually removed on purpose.
@@ -97,21 +99,21 @@ const crawlIssues: RuleImplementation = {
       });
     }
     if (results.length > 0) return results;
-    return { outcome: 'pass', evidence: [context.evidence.add({ kind: 'owner-data', url: bing.site, label: evidenceLabel('crawl issue list Bing returned for the site'), excerpt: '0 URLs' })] };
+    return { outcome: 'pass', evidence: [context.evidence.add({ kind: 'owner-data', url: bing.site, label: evidenceLabel('crawl issue list Bing returned for the site: no URL') })] };
   },
 };
 
 function citeIssue(context: RuleContext, entry: BingCrawlIssue): string {
   return context.evidence.add({
     kind: 'owner-data', url: entry.url, label: evidenceLabel('crawl issues Bing lists for the URL'),
-    excerpt: `issues=${issueNames(entry.issues).join(', ')}; httpCode=${entry.httpCode ?? 'unknown'}; inLinks=${entry.inLinks}`,
+    excerpt: `issues=${issueNames(entry.issues).join(', ')}; httpCode=${entry.httpCode ?? '-'}; inLinks=${entry.inLinks}`,
   });
 }
 
 function citeDetails(context: RuleContext, details: BingUrlInfo): string {
   return context.evidence.add({
     kind: 'owner-data', url: details.url, label: evidenceLabel('index details Bing keeps for the URL'),
-    excerpt: `httpStatus=${details.httpStatus ?? 'unknown'}; lastCrawled=${dayOf(details.lastCrawled)}; discovered=${dayOf(details.discovered)}${details.documentSize === undefined ? '' : `; documentSize=${details.documentSize}`}`,
+    excerpt: `httpStatus=${details.httpStatus ?? '-'}; lastCrawled=${dayOf(details.lastCrawled)}; discovered=${dayOf(details.discovered)}${details.documentSize === undefined ? '' : `; documentSize=${details.documentSize}`}`,
   });
 }
 
@@ -183,12 +185,13 @@ const pageIssues: RuleImplementation = {
     if (kind.robots) {
       const decision = robotsDecision(context.site, worst.url, ['bingbot']);
       if (decision) {
-        evidence.push(context.evidence.add({
-          kind: 'robots', url: context.site.robots!.url,
-          label: decision.allowed ? evidenceLabel('robots.txt read by this audit lets Bingbot fetch the URL') : evidenceLabel('robots.txt rule that still disallows the URL for Bingbot'),
-          excerpt: decision.rule ? `${decision.rule.type}: ${decision.rule.pattern} (group ${decision.matchedToken ?? '*'})` : 'no rule matches the URL',
-          ...(decision.rule?.line === undefined ? {} : { line: decision.rule.line }),
-        }));
+        const verdict = decision.allowed ? evidenceLabel('robots.txt read by this audit lets Bingbot fetch the URL') : evidenceLabel('robots.txt rule that still disallows the URL for Bingbot');
+        evidence.push(decision.rule
+          ? context.evidence.add({
+            kind: 'robots', url: context.site.robots!.url, excerpt: `${decision.rule.type}: ${decision.rule.pattern}`, line: decision.rule.line,
+            label: joinLabels(verdict, evidenceLabel('(group {token})', { token: decision.matchedToken ?? '*' })),
+          })
+          : context.evidence.add({ kind: 'robots', url: context.site.robots!.url, label: joinLabels(verdict, evidenceLabel('(no rule matches the URL)')) }));
         if (decision.allowed) return { outcome: 'fail', severity: 'low', reason: 'robots-allows-now', evidence, params };
       }
     }
@@ -215,18 +218,19 @@ const lowCtr: RuleImplementation = {
     return analysis.pages.slice(0, 5).map(page => {
       const queries = topQueries(bing, page.page, window);
       const evidence = [context.evidence.add({
-        kind: 'owner-data', url: page.page, label: evidenceLabel('Bing performance of the page from {start} to {end}', { start: window.start, end: window.end }),
-        excerpt: `impressions=${page.impressions}; clicks=${page.clicks}; ctr=${percent(page.ctr)}; position=${page.position.toFixed(1)}; CTR of the site's other pages at that position=${percent(page.expectedCtr)}`,
-      })];
-      if (queries.length > 0) {
-        evidence.push(context.evidence.add({
-          kind: 'owner-data', url: page.page, label: evidenceLabel('queries with the most Bing impressions for the page'), path: searchQueriesPath,
-          excerpt: queries.map((query, index) => `${queryLabel(context, query.key, index)} (${query.impressions} impressions${query.position === undefined ? '' : `, position ${query.position.toFixed(1)}`})`).join('\n'),
-        }));
-      }
+        kind: 'owner-data', url: page.page,
+        label: evidenceLabel("Bing performance of the page from {start} to {end}: impressions: {impressions}; clicks: {clicks}; CTR: {ctr, number, ::percent .0}; average position: {position, number, ::.0}; CTR of the site's other pages at that position: {expected, number, ::percent .0}", {
+          start: window.start, end: window.end, impressions: page.impressions, clicks: page.clicks, ctr: page.ctr, position: page.position, expected: page.expectedCtr,
+        }),
+      }), ...queries.map((query, index) => context.evidence.add({
+        kind: 'owner-data', url: page.page, path: searchQueriesPath,
+        label: query.position === undefined
+          ? evidenceLabel('query with Bing impressions for the page: {query} (impressions: {impressions})', { query: queryLabel(context, query.key, index), impressions: query.impressions })
+          : evidenceLabel('query with Bing impressions for the page: {query} (impressions: {impressions}; average position: {position, number, ::.0})', { query: queryLabel(context, query.key, index), impressions: query.impressions, position: query.position }),
+      }))];
       return {
         outcome: 'fail' as const, severity: 'low' as const, evidence,
-        params: { page: displayUrl(page.page), impressions: page.impressions, position: page.position.toFixed(1), ctr: percent(page.ctr), expected: percent(page.expectedCtr), start: window.start, end: window.end },
+        params: { page: displayUrl(page.page), impressions: page.impressions, position: page.position, ctr: page.ctr, expected: page.expectedCtr, start: window.start, end: window.end },
       };
     });
   },

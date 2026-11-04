@@ -510,7 +510,7 @@
     "why": "Una página que aparece a menudo, pero recibe pocos clics para su posición, suele tener un título o un fragmento que no se ajusta a lo que buscan los usuarios. La comparación usa el CTR propio del sitio en cada posición, no una curva del sector.",
     "fix": "Reescribe el título y la metadescripción para las consultas indicadas, sin dejar de ser fiel a la página. Comprueba si un resultado enriquecido u otra página del sitio que se ajusta mejor se lleva los clics.",
     "messages": {
-      "fail": "{page} ha obtenido {impressions} impresiones en la posición {position} con un CTR de {ctr}, frente a {expected} en el sitio para esa posición."
+      "fail": "{page} ha obtenido {impressions} impresiones en la posición {position, number, ::.0} con un CTR de {ctr, number, ::percent .0}, frente a {expected, number, ::percent .0} en el sitio para esa posición."
     }
   },
   "content-gsc-cannibalization": {
@@ -526,7 +526,7 @@
     "why": "Las consultas para las que una página ya se posiciona entre las posiciones 11 y 20 son las más baratas de mejorar: la página es relevante, y una respuesta mejor o unos enlaces internos más sólidos pueden llevarla a la primera página.",
     "fix": "Para cada consulta, comprueba que la página la responde de forma completa y pronto, y enlázala desde páginas relacionadas con un texto del enlace descriptivo.",
     "messages": {
-      "fail": "{count} consultas se posicionan entre las posiciones 11 y 20, por ejemplo, «{query}» para {page} en la posición {position}."
+      "fail": "{count} consultas se posicionan entre las posiciones 11 y 20, por ejemplo, «{query}» para {page} en la posición {position, number, ::.0}."
     }
   },
   "content-gsc-traffic-drop": {
@@ -542,7 +542,7 @@
     "why": "Una página que Bing muestra a menudo pero en la que pocas personas hacen clic suele tener un título o un fragmento que no coincide con lo que buscan. La comparación usa el CTR de las demás páginas del sitio en una posición similar en Bing, no una curva del sector.",
     "fix": "Reescribe el título y la metadescripción para las consultas indicadas, sin dejar de describir la página con exactitud. Comprueba en Bing si un resultado más completo u otra página del sitio se lleva los clics.",
     "messages": {
-      "fail": "{page} ha obtenido {impressions} impresiones en Bing en la posición {position} con un CTR del {ctr}, frente al {expected} de las demás páginas del sitio en esa posición, del {start} al {end}."
+      "fail": "{page} ha obtenido {impressions} impresiones en Bing en la posición {position, number, ::.0} con un CTR del {ctr, number, ::percent .0}, frente al {expected, number, ::percent .0} de las demás páginas del sitio en esa posición, del {start} al {end}."
     }
   },
   "content-bing-ai-performance": {
