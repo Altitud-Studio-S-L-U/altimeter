@@ -19,6 +19,10 @@ function excerpt(result: ReturnType<typeof evaluate>, finding: Finding, index = 
   return result.evidence.get(finding.evidence[index]!)?.excerpt;
 }
 
+function label(result: ReturnType<typeof evaluate>, finding: Finding, index = 0): string | undefined {
+  return result.evidence.get(finding.evidence[index]!)?.label;
+}
+
 function png(width: number, height: number): Buffer {
   const bytes = Buffer.alloc(33);
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(bytes);
@@ -68,7 +72,8 @@ describe('tech-favicon-declared', () => {
     const result = evaluate(faviconDeclared, site({ pages: [page(home, { html: doc() })] }));
     const finding = outcomeOn(result.findings, home)!;
     assert.deepEqual([finding.outcome, finding.severity, finding.reason], ['fail', 'medium', 'missing']);
-    assert.equal(excerpt(result, finding), '<link rel="icon"> (absent)');
+    assert.equal(excerpt(result, finding), undefined);
+    assert.equal(label(result, finding), 'home page without a link element whose rel is icon, shortcut icon or apple-touch-icon');
   });
 
   test('reports an undeclared /favicon.ico as info only', () => {
@@ -92,7 +97,8 @@ describe('tech-favicon-file-valid', () => {
     const result = evaluate(faviconFileValid, declared('<link rel="icon" href="/icon.png">', [resource('/icon.png', png(192, 192), 'image/png')]));
     const finding = only(result.findings);
     assert.equal(finding.outcome, 'pass');
-    assert.equal(excerpt(result, finding), '200 image/png png 192x192');
+    assert.equal(excerpt(result, finding), '200 image/png');
+    assert.equal(label(result, finding), 'favicon file response (png, 192x192 px)');
   });
 
   test('passes SVG with a raster fallback and never measures the SVG', () => {
@@ -107,7 +113,8 @@ describe('tech-favicon-file-valid', () => {
     const result = evaluate(faviconFileValid, declared('<link rel="icon" href="/icon.svg">', [resource('/icon.svg', svg, 'image/svg+xml')]));
     const finding = only(result.findings);
     assert.deepEqual([finding.outcome, finding.severity, finding.reason], ['fail', 'medium', 'svg-only']);
-    assert.equal(excerpt(result, finding), '200 image/svg+xml svg');
+    assert.equal(excerpt(result, finding), '200 image/svg+xml');
+    assert.equal(label(result, finding), 'favicon file response (svg)');
   });
 
   test('fails medium on a non-square or missing file, and low on a small one', () => {
@@ -157,7 +164,8 @@ describe('tech-doctype-standards-mode', () => {
     const result = evaluate(doctypeStandardsMode, site({ pages: [page(url, { html: doc() })] }));
     const finding = outcomeOn(result.findings, url)!;
     assert.equal(finding.outcome, 'pass');
-    assert.equal(excerpt(result, finding), '<!doctype html>; mode=no-quirks');
+    assert.equal(excerpt(result, finding), '<!doctype html>');
+    assert.equal(label(result, finding), 'document type declaration, parsed in no-quirks mode');
   });
 
   test('fails low without a doctype or with a legacy one', () => {

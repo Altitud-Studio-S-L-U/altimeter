@@ -1,4 +1,4 @@
-import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels, type EvidenceLabel } from '../../core/evidence.ts';
 import type { Overlay } from '../../render/chrome.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { citer, fail, notEvaluated, pass, shorten } from './shared.ts';
@@ -30,12 +30,18 @@ export const intrusiveInterstitial: RuleImplementation = {
     if (render.overlays === undefined) return notEvaluated('no-overlay-data');
     const cite = citer(context);
     const covering = render.overlays.filter(overlay => overlay.position === 'fixed' && overlay.coverage >= candidateCoverage).map(overlay => ({ overlay, kind: kindOf(overlay) }));
-    const cited = (overlay: Overlay, label: EvidenceLabel) => cite({
-      kind: 'render', url: render.finalUrl, label, path: overlay.selector,
-      excerpt: `${Math.round(overlay.coverage * 100)}% of the screen, z-index ${overlay.zIndex ?? 'auto'}${overlay.dialog ? ', dialog' : ''}: ${shorten(overlay.text, 160) || '(no text)'}`,
-    });
-    const locked = render.scrollLocked ? [cite({ kind: 'render', url: render.finalUrl, label: evidenceLabel('page scrolling locked at load (overflow hidden on html or body)'), excerpt: 'scrollLocked=true' })] : [];
-    const params = (overlay: Overlay) => ({ coverage: Math.round(overlay.coverage * 100) });
+    const cited = (overlay: Overlay, label: EvidenceLabel) => {
+      const facts = { coverage: overlay.coverage, zIndex: String(overlay.zIndex ?? 'auto') };
+      const text = shorten(overlay.text, 160);
+      return cite({
+        kind: 'render', url: render.finalUrl, path: overlay.selector, ...(text ? { excerpt: text } : {}),
+        label: joinLabels(label, overlay.dialog
+          ? evidenceLabel('(a dialog covering {coverage, number, percent} of the screen, z-index {zIndex})', facts)
+          : evidenceLabel('(covering {coverage, number, percent} of the screen, z-index {zIndex})', facts)),
+      });
+    };
+    const locked = render.scrollLocked ? [cite({ kind: 'render', url: render.finalUrl, label: evidenceLabel('page scrolling locked at load (overflow hidden on html or body)') })] : [];
+    const params = (overlay: Overlay) => ({ coverage: overlay.coverage });
     const promotion = covering.find(entry => entry.kind === 'promotion' && entry.overlay.coverage >= mostOfScreen);
     if (promotion) return fail('medium', [cited(promotion.overlay, evidenceLabel('promotional overlay over most of the first screen at load')), ...locked], 'promotion', params(promotion.overlay));
     // Login dialogs are fine on content that is not public, and an unclassified overlay may be a notice the law requires.

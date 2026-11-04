@@ -24,6 +24,9 @@
   "assistants": {
     "none by referrer": "none by referrer"
   },
+  "audits": {
+    "none": "none"
+  },
   "band": {
     "good": "good",
     "needs improvement": "needs improvement",
@@ -183,8 +186,16 @@
     "{metric} {value} ({band})": "{metric} {value} ({band})",
     "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} vs {withSoftnavs} with soft navigations"
   },
+  "mode": {
+    "no-quirks": "no-quirks",
+    "quirks": "quirks",
+    "limited-quirks": "limited-quirks"
+  },
   "operators": {
     "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} blocked, {training} allowed)"
+  },
+  "otherAudits": {
+    "none": "none"
   },
   "outcome": {
     "failed": "failed",
@@ -279,6 +290,9 @@
     "not attributed": "not attributed",
     "{url} (first party, {time})": "{url} (first party, {time})",
     "{url} (third party, {time})": "{url} (third party, {time})"
+  },
+  "searchAudits": {
+    "none": "none"
   },
   "second": {
     "html": "html",

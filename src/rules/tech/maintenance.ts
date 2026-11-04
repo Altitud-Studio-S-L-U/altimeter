@@ -37,7 +37,9 @@ export const maintenance503: RuleImplementation = {
     for (const page of auditedPages(context.site)) {
       if (page.fetch.status === 503) {
         const retryAfter = firstHeader(page.fetch.headers, 'retry-after');
-        const evidence = cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('503 response and its Retry-After header'), excerpt: `503; Retry-After: ${retryAfter ?? '(absent)'}` });
+        const evidence = retryAfter === undefined
+          ? cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('503 response without a Retry-After header') })
+          : cite({ kind: 'header', url: page.fetch.finalUrl, label: evidenceLabel('503 response and its Retry-After header'), excerpt: `503; Retry-After: ${retryAfter}` });
         if (validRetryAfter(retryAfter)) passes.push(evidence);
         else results.push(fail('low', [evidence], retryAfter === undefined ? 'missing-retry-after' : 'invalid-retry-after', { url: page.fetch.finalUrl }));
         continue;

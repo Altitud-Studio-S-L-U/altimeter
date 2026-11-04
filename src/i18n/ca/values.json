@@ -24,6 +24,9 @@
   "assistants": {
     "none by referrer": "cap identificat pel referent"
   },
+  "audits": {
+    "none": "cap"
+  },
   "band": {
     "good": "bona",
     "needs improvement": "cal millorar",
@@ -183,8 +186,16 @@
     "{metric} {value} ({band})": "{metric} {value} ({band})",
     "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} enfront de {withSoftnavs} amb navegacions suaus"
   },
+  "mode": {
+    "no-quirks": "estàndard (no-quirks)",
+    "quirks": "quirks",
+    "limited-quirks": "gairebé estàndard (limited-quirks)"
+  },
   "operators": {
     "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloquejat, {training} permès)"
+  },
+  "otherAudits": {
+    "none": "cap"
   },
   "outcome": {
     "failed": "fallida",
@@ -279,6 +290,9 @@
     "not attributed": "sense atribuir",
     "{url} (first party, {time})": "{url} (propi, {time})",
     "{url} (third party, {time})": "{url} (de tercers, {time})"
+  },
+  "searchAudits": {
+    "none": "cap"
   },
   "second": {
     "html": "HTML",

@@ -112,7 +112,7 @@
   },
   "tech-legible-font-size": {
     "messages": {
-      "fail": "Only {share}% of the visible text in the phone render is 12px or larger."
+      "fail": "Only {share, number, percent} of the visible text in the phone render is 12px or larger."
     }
   },
   "tech-tap-target-size": {
@@ -258,10 +258,10 @@
   },
   "tech-intrusive-interstitial": {
     "messages": {
-      "fail": "An overlay covers {coverage}% of the phone screen as the page loads.",
-      "fail:promotion": "A promotional overlay covers {coverage}% of the phone screen as the page loads. Google asks that banners use a small fraction of the screen.",
-      "fail:access-dialog": "A login or subscription overlay covers {coverage}% of the phone screen at load. That is fine for content that is not public; confirm it does not hide content meant to be indexed.",
-      "fail:overlay": "An overlay covers {coverage}% of the phone screen at load. Confirm whether it is a notice the law requires, which Google exempts, or an interstitial that hides the content."
+      "fail": "An overlay covers {coverage, number, percent} of the phone screen as the page loads.",
+      "fail:promotion": "A promotional overlay covers {coverage, number, percent} of the phone screen as the page loads. Google asks that banners use a small fraction of the screen.",
+      "fail:access-dialog": "A login or subscription overlay covers {coverage, number, percent} of the phone screen at load. That is fine for content that is not public; confirm it does not hide content meant to be indexed.",
+      "fail:overlay": "An overlay covers {coverage, number, percent} of the phone screen at load. Confirm whether it is a notice the law requires, which Google exempts, or an interstitial that hides the content."
     }
   }
 }

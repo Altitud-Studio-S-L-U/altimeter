@@ -47,7 +47,7 @@ export const cmpBlocksContent: RuleImplementation = {
     const evidence = [cite({ kind: 'render', url: page.fetch.finalUrl, label: evidenceLabel('consent container in the render without interaction'), excerpt: shorten(container, 300) })];
     // The served HTML stands in for the content after consent; a pre-consent render with less than half of it withholds content.
     if (rawWords >= 100 && renderedWords < rawWords * 0.5) {
-      evidence.push(cite({ kind: 'text', url: page.fetch.finalUrl, label: evidenceLabel('body word count in the raw HTML and in the render before consent'), excerpt: `raw=${rawWords} rendered=${renderedWords}` }));
+      evidence.push(cite({ kind: 'text', url: page.fetch.finalUrl, label: evidenceLabel('body words in the raw HTML ({raw}) and in the render before consent ({rendered})', { raw: rawWords, rendered: renderedWords }) }));
       return fail('high', evidence, 'content-withheld', { rawWords, renderedWords });
     }
     return pass(evidence);

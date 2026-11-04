@@ -110,10 +110,10 @@
     "why": "La documentación de Google sobre la experiencia en la página pide a los sitios que eviten los intersticiales y los cuadros de diálogo que dificultan el acceso al contenido, sobre todo en móvil. Los intersticiales obligatorios por ley, como el consentimiento de cookies y la verificación de edad, están exentos.",
     "fix": "Sustituye las promociones a pantalla completa por banners pequeños. Superpón los avisos obligatorios por ley al contenido en lugar de redirigir a una página aparte.",
     "messages": {
-      "fail": "Una capa superpuesta cubre el {coverage} % de la pantalla del móvil mientras se carga la página.",
-      "fail:promotion": "Una capa promocional cubre el {coverage} % de la pantalla del móvil mientras se carga la página. Google pide que los banners ocupen una pequeña parte de la pantalla.",
-      "fail:access-dialog": "Una capa de inicio de sesión o de suscripción cubre el {coverage} % de la pantalla del móvil al cargar. Es aceptable para contenido que no es público; confirma que no oculta contenido que deba indexarse.",
-      "fail:overlay": "Una capa superpuesta cubre el {coverage} % de la pantalla del móvil al cargar. Confirma si es un aviso que exige la ley, que Google exime, o un intersticial que oculta el contenido."
+      "fail": "Una capa superpuesta cubre el {coverage, number, percent} de la pantalla del móvil mientras se carga la página.",
+      "fail:promotion": "Una capa promocional cubre el {coverage, number, percent} de la pantalla del móvil mientras se carga la página. Google pide que los banners ocupen una pequeña parte de la pantalla.",
+      "fail:access-dialog": "Una capa de inicio de sesión o de suscripción cubre el {coverage, number, percent} de la pantalla del móvil al cargar. Es aceptable para contenido que no es público; confirma que no oculta contenido que deba indexarse.",
+      "fail:overlay": "Una capa superpuesta cubre el {coverage, number, percent} de la pantalla del móvil al cargar. Confirma si es un aviso que exige la ley, que Google exime, o un intersticial que oculta el contenido."
     }
   },
   "tech-cmp-blocks-content": {
@@ -171,7 +171,7 @@
     "why": "El texto pequeño es difícil de leer en los móviles. Lighthouse eliminó su auditoría font-size en la versión 13 y Search Console ya no informa sobre la usabilidad en móviles, así que esto es solo contexto de experiencia de usuario.",
     "fix": "Usa un tamaño de fuente base de al menos 16 px para el texto del cuerpo en móvil.",
     "messages": {
-      "fail": "Solo el {share} % del texto visible en el renderizado para móvil tiene 12 px o más."
+      "fail": "Solo el {share, number, percent} del texto visible en el renderizado para móvil tiene 12 px o más."
     }
   },
   "tech-tap-target-size": {

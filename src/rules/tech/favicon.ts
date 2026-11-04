@@ -1,10 +1,10 @@
-import { evidenceLabel } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels } from '../../core/evidence.ts';
 import type { ResourceFacts, SiteFacts } from '../../core/facts.ts';
 import { isAllowed } from '../../fetch/robots.ts';
 import type { LinkRef } from '../../parse/html.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { absoluteUrl, directivesFor, pageDocument, robotsDirectives, sameSite } from '../helpers.ts';
-import { describeImage, imageInfo, type ImageInfo } from './image.ts';
+import { imageInfo, imageLabel, type ImageInfo } from './image.ts';
 import { citer, fail, firstHeader, homePage, notApplicable, pass, type Cite } from './shared.ts';
 
 /** rel values Google reads for favicons in Search. */
@@ -32,7 +32,7 @@ export const faviconDeclared: RuleImplementation = {
       return fail('low', evidence, 'outside-head');
     }
     const fallback = context.site.resources.find(resource => resource.purpose === 'favicon' && new URL(resource.url).pathname === '/favicon.ico' && sameSite(resource.url, page.fetch.finalUrl));
-    const absent = cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('home page without a link element whose rel is icon, shortcut icon or apple-touch-icon'), excerpt: '<link rel="icon"> (absent)' });
+    const absent = cite({ kind: 'html', url: page.fetch.finalUrl, label: evidenceLabel('home page without a link element whose rel is icon, shortcut icon or apple-touch-icon') });
     if (fallback && fallback.fetch.status === 200 && imageInfo(fallback.fetch.body).format !== undefined) {
       // Google documents only the link element; /favicon.ico alone is reported for context.
       return fail('info', [absent, cite({ kind: 'http', url: fallback.url, label: evidenceLabel('undeclared /favicon.ico response'), excerpt: `${fallback.fetch.status} ${firstHeader(fallback.fetch.headers, 'content-type') ?? ''}`.trim() })], 'favicon-ico-only');
@@ -69,7 +69,12 @@ function robotsProblem(site: SiteFacts, url: string): string | undefined {
 function candidate(site: SiteFacts, resource: ResourceFacts, cite: Cite): Candidate {
   const { fetch } = resource;
   const info = fetch.status === 200 ? imageInfo(fetch.body) : { format: undefined };
-  const evidence = cite({ kind: 'http', url: resource.url, label: evidenceLabel('favicon file response'), excerpt: `${fetch.status ?? fetch.error?.code ?? 'no response'} ${firstHeader(fetch.headers, 'content-type') ?? ''} ${fetch.status === 200 ? describeImage(info) : ''}`.replace(/\s+/gu, ' ').trim() });
+  const evidence = fetch.status === undefined
+    ? cite({ kind: 'http', url: resource.url, label: evidenceLabel('favicon request that got no response ({fetchError})', { fetchError: fetch.error?.code ?? 'connection' }) })
+    : cite({
+      kind: 'http', url: resource.url, excerpt: `${fetch.status} ${firstHeader(fetch.headers, 'content-type') ?? ''}`.trim(),
+      label: fetch.status === 200 ? joinLabels(evidenceLabel('favicon file response'), imageLabel(info)) : evidenceLabel('favicon file response'),
+    });
   const directives = directivesFor(robotsDirectives(fetch.headers, undefined), 'googlebot-image');
   let problem: string | undefined;
   if (fetch.status !== 200) problem = 'not-200';

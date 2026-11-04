@@ -24,6 +24,9 @@
   "assistants": {
     "none by referrer": "ninguna identificada por la URL de referencia"
   },
+  "audits": {
+    "none": "ninguna"
+  },
   "band": {
     "good": "«buena»",
     "needs improvement": "«necesita mejorar»",
@@ -183,8 +186,16 @@
     "{metric} {value} ({band})": "{metric} {value} ({band})",
     "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} frente a {withSoftnavs} con navegaciones suaves"
   },
+  "mode": {
+    "no-quirks": "estándar (no-quirks)",
+    "quirks": "quirks",
+    "limited-quirks": "casi estándar (limited-quirks)"
+  },
   "operators": {
     "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} bloqueado, {training} permitido)"
+  },
+  "otherAudits": {
+    "none": "ninguna"
   },
   "outcome": {
     "failed": "fallida",
@@ -279,6 +290,9 @@
     "not attributed": "sin atribuir",
     "{url} (first party, {time})": "{url} (propio, {time})",
     "{url} (third party, {time})": "{url} (de terceros, {time})"
+  },
+  "searchAudits": {
+    "none": "ninguna"
   },
   "second": {
     "html": "HTML",

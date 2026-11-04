@@ -91,6 +91,6 @@ export const framingProtection: RuleImplementation = {
     const xfoValue = xfo?.split(',')[0]?.trim().toLowerCase();
     if (xfoValue === 'deny' || xfoValue === 'sameorigin') return pass(evidence);
     if (xfoValue !== undefined) return fail('info', evidence, 'unsupported-x-frame-options', { value: xfo! });
-    return fail('info', [cite({ kind: 'header', url, label: evidenceLabel('HTML response without X-Frame-Options or a CSP frame-ancestors directive'), excerpt: 'X-Frame-Options: (absent); Content-Security-Policy frame-ancestors: (absent)' })], 'missing');
+    return fail('info', [cite({ kind: 'header', url, label: evidenceLabel('HTML response without X-Frame-Options or a CSP frame-ancestors directive') })], 'missing');
   },
 };

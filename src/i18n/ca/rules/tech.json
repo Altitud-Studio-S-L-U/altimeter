@@ -110,10 +110,10 @@
     "why": "Les directrius de Google sobre l'experiència de pàgina demanen als llocs que evitin els intersticials i els diàlegs que dificulten l'accés al contingut, sobretot al mòbil. Els intersticials que exigeix la llei, com el consentiment de galetes i les verificacions d'edat, n'estan exempts.",
     "fix": "Substitueix les promocions a pantalla completa per bàners petits. Superposa els avisos legalment obligatoris al contingut en lloc de redirigir a una pàgina separada.",
     "messages": {
-      "fail": "Una capa superposada cobreix un {coverage} % de la pantalla del telèfon mentre es carrega la pàgina.",
-      "fail:promotion": "Una capa superposada promocional cobreix un {coverage} % de la pantalla del telèfon mentre es carrega la pàgina. Google demana que els bàners ocupin una petita part de la pantalla.",
-      "fail:access-dialog": "Una capa superposada d'inici de sessió o de subscripció cobreix un {coverage} % de la pantalla del telèfon en carregar-se. Això és correcte per al contingut que no és públic; confirma que no amaga contingut pensat per indexar-se.",
-      "fail:overlay": "Una capa superposada cobreix un {coverage} % de la pantalla del telèfon en carregar-se. Confirma si és un avís que exigeix la llei, que Google eximeix, o un intersticial que amaga el contingut."
+      "fail": "Una capa superposada cobreix un {coverage, number, percent} de la pantalla del telèfon mentre es carrega la pàgina.",
+      "fail:promotion": "Una capa superposada promocional cobreix un {coverage, number, percent} de la pantalla del telèfon mentre es carrega la pàgina. Google demana que els bàners ocupin una petita part de la pantalla.",
+      "fail:access-dialog": "Una capa superposada d'inici de sessió o de subscripció cobreix un {coverage, number, percent} de la pantalla del telèfon en carregar-se. Això és correcte per al contingut que no és públic; confirma que no amaga contingut pensat per indexar-se.",
+      "fail:overlay": "Una capa superposada cobreix un {coverage, number, percent} de la pantalla del telèfon en carregar-se. Confirma si és un avís que exigeix la llei, que Google eximeix, o un intersticial que amaga el contingut."
     }
   },
   "tech-cmp-blocks-content": {
@@ -171,7 +171,7 @@
     "why": "El text petit és difícil de llegir als telèfons. Lighthouse va eliminar la seva auditoria font-size a la versió 13 i Search Console ja no informa sobre la usabilitat mòbil, de manera que això només és context d'experiència d'usuari.",
     "fix": "Fes servir una mida de lletra base d'almenys 16 px per al text del cos al mòbil.",
     "messages": {
-      "fail": "Només un {share} % del text visible a la renderització de telèfon és de 12 px o més."
+      "fail": "Només un {share, number, percent} del text visible a la renderització de telèfon és de 12 px o més."
     }
   },
   "tech-tap-target-size": {

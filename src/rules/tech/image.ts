@@ -1,3 +1,4 @@
+import { evidenceLabel, type EvidenceLabel } from '../../core/evidence.ts';
 import { startsLikeSvg } from '../helpers.ts';
 
 /** Image formats recognised from their leading bytes, independent of the Content-Type the server sends. */
@@ -90,7 +91,10 @@ export function imageInfo(bytes: Buffer): ImageInfo {
   return { format: undefined };
 }
 
-export function describeImage(info: ImageInfo): string {
-  if (info.format === undefined) return 'unrecognised format';
-  return info.width !== undefined && info.height !== undefined ? `${info.format} ${info.width}x${info.height}` : info.format;
+/** What the bytes of an image show, as a label part such as "(png, 32x32 px)". */
+export function imageLabel(info: ImageInfo): EvidenceLabel {
+  if (info.format === undefined) return evidenceLabel('(in a format that is not recognised)');
+  return info.width !== undefined && info.height !== undefined
+    ? evidenceLabel('({format}, {size} px)', { format: info.format, size: `${info.width}x${info.height}` })
+    : evidenceLabel('({format})', { format: info.format });
 }

@@ -1,9 +1,9 @@
-import { evidenceLabel } from '../../core/evidence.ts';
+import { evidenceLabel, joinLabels } from '../../core/evidence.ts';
 import type { DocumentFacts, PageFacts, SiteFacts } from '../../core/facts.ts';
 import { metaContent, type ElementRef } from '../../parse/html.ts';
 import type { RuleImplementation, RuleResult } from '../engine.ts';
 import { absoluteUrl, hreflangLinks, linksWithRel, pageDocument, summarizeList } from '../helpers.ts';
-import { describeImage, imageInfo } from './image.ts';
+import { imageInfo, imageLabel } from './image.ts';
 import { citer, fail, firstHeader, isHttps, notApplicable, notEvaluated, pass, worst } from './shared.ts';
 
 const requiredTags = ['og:title', 'og:type', 'og:image', 'og:url', 'og:description'] as const;
@@ -91,7 +91,13 @@ export const socialOgImage: RuleImplementation = {
     const { fetch } = resource;
     const info = fetch.status === 200 ? imageInfo(fetch.body) : { format: undefined };
     const bytes = fetch.body.length;
-    const evidence = [cite({ kind: 'http', url: image.url, label: evidenceLabel('og:image response'), excerpt: `${fetch.status ?? fetch.error?.code ?? 'no response'} ${firstHeader(fetch.headers, 'content-type') ?? ''} ${describeImage(info)} ${bytes} bytes${fetch.truncated ? ' (truncated)' : ''}`.replace(/\s+/gu, ' ').trim() })];
+    const evidence = [fetch.status === undefined
+      ? cite({ kind: 'http', url: image.url, label: evidenceLabel('og:image request that got no response ({fetchError})', { fetchError: fetch.error?.code ?? 'connection' }) })
+      : cite({
+        kind: 'http', url: image.url, excerpt: `${fetch.status} ${firstHeader(fetch.headers, 'content-type') ?? ''}`.trim(),
+        label: joinLabels(evidenceLabel('og:image response'), ...(fetch.status === 200 ? [imageLabel(info)] : []),
+          fetch.truncated ? evidenceLabel('(at least {bytes} bytes, as the fetch was cut)', { bytes }) : evidenceLabel('({bytes} bytes)', { bytes })),
+      })];
     const problems: Array<{ severity: 'low' | 'info'; reason: string }> = [];
     if (!isHttps(image.url)) problems.push({ severity: 'low', reason: 'not-https' });
     if (fetch.status !== 200) problems.push({ severity: 'low', reason: 'not-200' });
@@ -150,7 +156,7 @@ export const socialOgImageMeta: RuleImplementation = {
     const height = Number(group.get('og:image:height')?.attrs.content);
     if (info?.width !== undefined && info.height !== undefined && Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0
       && (Math.abs(info.width - width) > 1 || Math.abs(info.height - height) > 1)) {
-      const actual = cite({ kind: 'http', url: resource!.url, label: evidenceLabel('decoded size of the og:image file'), excerpt: describeImage(info) });
+      const actual = cite({ kind: 'http', url: resource!.url, label: joinLabels(evidenceLabel('decoded size of the og:image file'), imageLabel(info)) });
       return fail('low', [...declared, actual], 'dimension-mismatch', { declared: `${width}x${height}`, actual: `${info.width}x${info.height}` });
     }
     if (missing.length > 0) {

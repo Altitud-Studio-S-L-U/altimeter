@@ -24,6 +24,10 @@ function excerpt(result: ReturnType<typeof evaluate>, finding: Finding, index = 
   return result.evidence.get(finding.evidence[index]!)?.excerpt;
 }
 
+function label(result: ReturnType<typeof evaluate>, finding: Finding, index = 0): string | undefined {
+  return result.evidence.get(finding.evidence[index]!)?.label;
+}
+
 function lighthouse(categories: Record<string, number | null>, audits: Record<string, Partial<LighthouseAudit>>): LighthouseOutcome {
   const full = Object.fromEntries(Object.entries(audits).map(([id, audit]) => [id, { title: id, score: 1, scoreDisplayMode: 'binary', ...audit }]));
   return {
@@ -51,7 +55,7 @@ describe('tech-viewport-meta', () => {
     const missing = evaluate(viewportMeta, site({ pages: [page(url, { html: doc('<p>x</p>', '') })] }));
     const finding = outcomeOn(missing.findings, url)!;
     assert.deepEqual([finding.outcome, finding.severity, finding.reason], ['fail', 'high', 'missing']);
-    assert.equal(excerpt(missing, finding), '<meta name="viewport"> (absent)');
+    assert.equal(label(missing, finding), 'no viewport meta element in the raw HTML or rendered DOM');
     assert.equal(outcomeOn(evaluate(viewportMeta, site({ pages: [page(url, { html: doc('<p>x</p>', '<meta name="viewport" content="width=1024">') })] })).findings, url)?.reason, 'fixed-width');
   });
 
@@ -111,7 +115,7 @@ describe('tech-legible-font-size', () => {
     const result = evaluate(legibleFontSize, site({ pages: [page(url, { html: doc(), userRender: { html: doc(), textBlocks: [block(body, 10), block('Heading', 20)] } })] }));
     const finding = outcomeOn(result.findings, url)!;
     assert.deepEqual([finding.outcome, finding.severity], ['fail', 'low']);
-    assert.match(excerpt(result, finding)!, /^\d+% of \d+ characters$/u);
+    assert.match(label(result, finding)!, /^share of visible text at 12px or larger: \d+% of \d+ characters$/u);
   });
 
   test('is not applicable without a mobile viewport or with little text', () => {
@@ -180,7 +184,7 @@ describe('tech-cmp-blocks-content', () => {
     const result = evaluate(cmpBlocksContent, site({ pages: [page(url, { html: doc(`<main><p>${words(200)}</p></main>`), rendered: doc(`<div class="cookie-wall">${words(10)}</div>${banner}`) })] }));
     const finding = outcomeOn(result.findings, url)!;
     assert.deepEqual([finding.outcome, finding.severity, finding.reason], ['fail', 'high', 'content-withheld']);
-    assert.equal(excerpt(result, finding, 1), 'raw=200 rendered=14');
+    assert.equal(label(result, finding, 1), 'body words in the raw HTML (200) and in the render before consent (14)');
   });
 
   test('fails high on a redirect to a consent wall', () => {
@@ -298,7 +302,7 @@ describe('tech-maintenance-503', () => {
     const result = evaluate(maintenance503, site({ pages: [page(url, { html: doc(), status: 503 })] }));
     const finding = only(result.findings);
     assert.deepEqual([finding.outcome, finding.severity, finding.reason], ['fail', 'low', 'missing-retry-after']);
-    assert.equal(excerpt(result, finding), '503; Retry-After: (absent)');
+    assert.equal(label(result, finding), '503 response without a Retry-After header');
   });
 
   test('hands a short maintenance page served with 200 to the analyst', () => {
