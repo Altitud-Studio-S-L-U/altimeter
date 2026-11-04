@@ -298,6 +298,13 @@ function authorName(graph: PageGraph, review: GraphNode): string | undefined {
   return node ? text(graph, node, 'name') : undefined;
 }
 
+/** Fact-check markup: Review subtypes for Google's fact-check tools, never shown as review snippets. */
+function isFactCheck(graph: PageGraph, node: GraphNode): boolean {
+  if (isA(node.types, 'ClaimReview') || isA(node.types, 'MediaReview')) return true;
+  const subject = subjectOf(graph, node).node;
+  return subject !== undefined && (isA(subject.types, 'Claim') || isA(subject.types, 'MediaReviewItem'));
+}
+
 export const reviewSnippet: RuleImplementation = {
   id: 'schema-review-snippet',
   evaluate: context => perNode(context, ['Review', 'AggregateRating'], 'no-reviews', (graph, node) => {
@@ -338,7 +345,7 @@ export const reviewSnippet: RuleImplementation = {
       }
     }
     return problems;
-  }),
+  }, { select: (graph, node) => !isFactCheck(graph, node) }),
 };
 
 /** Whether an organization node describes the site that publishes the page. */
