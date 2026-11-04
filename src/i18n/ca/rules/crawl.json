@@ -26,8 +26,8 @@
     "messages": {
       "fail": "{url} no es pot llegir tal com es pretén.",
       "fail:html-body": "{url} retorna una pàgina HTML en lloc de regles en text pla, de manera que no se'n llegeix cap regla ni cap línia Sitemap.",
-      "fail:over-size-limit": "{url} fa {bytes} bytes. Google només llegeix els primers 500 KiB, de manera que s'ignoren {lost} línies de regles a partir d'aquest punt.",
-      "fail:invalid-utf8": "{count} línies allow o disallow de {url} contenen bytes que no són UTF-8 vàlid."
+      "fail:over-size-limit": "{url} fa {bytes} bytes. Google només llegeix els primers 500 KiB, de manera que ignora les línies de regles que hi ha a partir d'aquest punt ({lost}).",
+      "fail:invalid-utf8": "{count} línia(es) allow o disallow de {url} contenen bytes que no són UTF-8 vàlid."
     }
   },
   "crawl-robots-parse-errors": {
@@ -35,11 +35,11 @@
     "why": "Els analitzadors de l'RFC 9309 se salten les línies que no poden analitzar. Per tant, un nom de camp mal escrit o una regla fora de qualsevol grup no té cap efecte, mentre que el propietari creu que és vigent.",
     "fix": "Corregeix l'ortografia dels camps i posa cada regla sota una línia user-agent.",
     "messages": {
-      "fail": "{count} línies de {url} no es llegeixen tal com es pretén (línies {lines}).",
-      "fail:misspelled-field": "{count} línies de {url} no es llegeixen tal com es pretén (línies {lines}), entre les quals un nom de camp mal escrit.",
-      "fail:rule-outside-group": "{count} línies de {url} no es llegeixen tal com es pretén (línies {lines}), entre les quals regles abans de qualsevol línia user-agent, que no s'apliquen a cap rastrejador.",
-      "fail:missing-separator": "{count} línies de {url} no es llegeixen tal com es pretén (línies {lines}), entre les quals línies sense dos punts, que s'ignoren.",
-      "fail:path-without-slash": "{count} línies de {url} no es llegeixen tal com es pretén (línies {lines}), entre les quals camins que no comencen ni per / ni per *."
+      "fail": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}).",
+      "fail:misspelled-field": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}); hi ha, per exemple, un nom de camp mal escrit.",
+      "fail:rule-outside-group": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}); hi ha, per exemple, regles anteriors a qualsevol línia user-agent, que no s'apliquen a cap rastrejador.",
+      "fail:missing-separator": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}); hi ha, per exemple, línies sense dos punts, que s'ignoren.",
+      "fail:path-without-slash": "{count} línia(es) de {url} no es llegeixen tal com es pretén (línies: {lines}); hi ha, per exemple, camins que no comencen ni per / ni per *."
     }
   },
   "crawl-robots-unsupported-directives": {
@@ -48,7 +48,7 @@
     "fix": "Fes servir noindex a la metaetiqueta robots o a X-Robots-Tag a les URL rastrejables en lloc de noindex al robots.txt. Google no té cap directiva de freqüència de rastreig: en una emergència, retorna temporalment 503/429.",
     "messages": {
       "fail": "{url} fa servir camps que Google no admet: {fields}.",
-      "fail:noindex": "{url} conté {count} línies noindex. Google ignora noindex al robots.txt, de manera que aquestes URL no s'eliminen dels resultats. Camps no compatibles trobats: {fields}.",
+      "fail:noindex": "{url} conté {count} línia(es) noindex. Google ignora noindex al robots.txt, de manera que aquestes URL no s'eliminen dels resultats. Camps no admesos trobats: {fields}.",
       "fail:ignored-fields": "{url} fa servir camps que Google ignora: {fields}. Pot ser que alguns altres cercadors els llegeixin igualment."
     }
   },
@@ -82,9 +82,9 @@
     "why": "Segons l'RFC 9309, un rastrejador només obeeix el grup més específic que coincideix amb el seu agent d'usuari. Per tant, un grup per a Googlebot o per a qualsevol identificador de rastrejador d'IA substitueix completament les regles de *, i les regles Disallow que només existeixen sota * deixen d'aplicar-se a aquest rastrejador.",
     "fix": "Repeteix les regles compartides dins de cada grup específic. El grup * no s'hereta.",
     "messages": {
-      "fail": "{count} regles Disallow del grup * no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
-      "fail:crawl-trap": "{count} regles Disallow del grup *, incloses les de trampes de rastreig, no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
-      "fail:missing-rules": "{count} regles Disallow del grup * no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
+      "fail": "{count} regla(es) Disallow del grup * no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
+      "fail:crawl-trap": "{count} regla(es) Disallow del grup *, incloses les de trampes de rastreig, no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
+      "fail:missing-rules": "{count} regla(es) Disallow del grup * no es repeteixen als grups per a {tokens}; un rastrejador amb grup propi ignora el grup *.",
       "fail:intentional-allow": "El grup * prohibeix el rastreig de tot i el grup {token} el permet, cosa que funciona com una llista de permesos."
     }
   },
@@ -93,12 +93,12 @@
     "why": "Google no obté ni executa el JavaScript i el CSS que bloqueja el robots.txt. Si aquests fitxers construeixen el contingut principal, els enllaços o les metadades, Google renderitza una pàgina diferent de la que veuen els usuaris.",
     "fix": "Permet /assets, /_next, /static i els punts finals de l'API que necessita la renderització. Revisa el robots.txt de cada amfitrió del CDN.",
     "messages": {
-      "fail": "El robots.txt bloqueja {count} sol·licituds que {url} necessita per renderitzar-se ({resources}).",
-      "fail:metadata-changed": "El robots.txt bloqueja {count} sol·licituds ({resources}) i, sense aquestes, el títol, la canònica, les directives robots o l'h1 de {url} canvien.",
-      "fail:content-missing": "El robots.txt bloqueja {count} sol·licituds ({resources}) i, sense aquestes, part del text principal de {url} no es renderitza.",
-      "fail:links-missing": "El robots.txt bloqueja {count} sol·licituds ({resources}) i, sense aquestes, hi ha enllaços interns de {url} que no es renderitzen.",
-      "fail:layout-break": "El robots.txt bloqueja {count} sol·licituds ({resources}) i, sense aquestes, {url} passa a ser més ampla que l'àrea de visualització del telèfon.",
-      "fail:minor-differences": "El robots.txt bloqueja {count} sol·licituds ({resources}) i, sense aquestes, una part del text de {url} no es renderitza. Confirma si és important."
+      "fail": "El robots.txt bloqueja {count} sol·licitud(s) que {url} necessita per renderitzar-se ({resources}).",
+      "fail:metadata-changed": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, el títol, la canònica, les directives robots o l'h1 de {url} canvien.",
+      "fail:content-missing": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, part del text principal de {url} no es renderitza.",
+      "fail:links-missing": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, hi ha enllaços interns de {url} que no es renderitzen.",
+      "fail:layout-break": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, {url} passa a ser més ampla que l'àrea de visualització del telèfon.",
+      "fail:minor-differences": "El robots.txt bloqueja {count} sol·licitud(s) ({resources}) i, sense aquestes, una part del text de {url} no es renderitza. Confirma si és important."
     }
   },
   "crawl-robots-sitemap-lines": {
@@ -106,9 +106,9 @@
     "why": "El robots.txt pot declarar mapes del lloc amb URL absolutes a les línies Sitemap, que Google i altres cercadors llegeixen independentment dels grups d'agent d'usuari. Una URL de Sitemap relativa o trencada no es fa servir.",
     "fix": "Fes servir URL completes per als mapes del lloc. Es permeten diverses línies, i poden apuntar a un altre amfitrió (enviament entre llocs).",
     "messages": {
-      "fail": "{count} mapes del lloc declarats no es poden fer servir.",
-      "fail:relative-url": "{count} mapes del lloc declarats no es poden fer servir; una línia Sitemap ha de contenir una URL absoluta.",
-      "fail:declared-not-200": "{count} mapes del lloc declarats no responen 200.",
+      "fail": "Mapes del lloc declarats que no es poden fer servir: {count}.",
+      "fail:relative-url": "Mapes del lloc declarats que no es poden fer servir: {count}. Una línia Sitemap ha de contenir una URL absoluta.",
+      "fail:declared-not-200": "Mapes del lloc declarats que no responen 200: {count}.",
       "fail:no-sitemap": "No hi ha cap mapa del lloc declarat al robots.txt ni en un element link, i /sitemap.xml no respon amb un mapa del lloc. Encara pot estar enviat a Search Console, cosa que aquesta auditoria no pot veure."
     }
   },
@@ -177,7 +177,7 @@
     "messages": {
       "fail": "{url} declara unavailable_after {date}.",
       "fail:past": "{url} declara unavailable_after {date}, una data que ja ha passat, de manera que Google elimina la pàgina dels resultats.",
-      "fail:soon": "{url} declara unavailable_after {date}, {days} dies després del moment en què es va servir; aleshores Google eliminarà la pàgina dels resultats.",
+      "fail:soon": "{url} declara unavailable_after {date}, {days} dia(es) després del moment en què es va servir; aleshores Google eliminarà la pàgina dels resultats.",
       "fail:unparseable": "{url} declara unavailable_after amb una data que Google no pot llegir ({date}), de manera que la directiva s'ignora."
     }
   },
@@ -198,9 +198,9 @@
     "why": "Un nofollow per a tota la pàgina indica a Google que no segueixi cap enllaç de la pàgina, cosa que fa que la pàgina deixi de ser una via de descobriment per a les pàgines que enllaça.",
     "fix": "Elimina el nofollow de tota la pàgina. Fes servir atributs rel en enllaços concrets només on estigui justificat.",
     "messages": {
-      "fail": "{url} indica als rastrejadors que no segueixin els seus {links} enllaços interns.",
-      "fail:hub-page": "{url} indica als rastrejadors que no segueixin els seus {links} enllaços interns, de manera que aquesta pàgina central no ajuda a descobrir les pàgines que enllaça.",
-      "fail:leaf-page": "{url} indica als rastrejadors que no segueixin els seus {links} enllaços interns."
+      "fail": "{url} indica als rastrejadors que no segueixin els seus enllaços interns ({links}).",
+      "fail:hub-page": "{url} indica als rastrejadors que no segueixin els seus enllaços interns ({links}), de manera que aquesta pàgina central no ajuda a descobrir les pàgines que enllaça.",
+      "fail:leaf-page": "{url} indica als rastrejadors que no segueixin els seus enllaços interns ({links})."
     }
   },
   "crawl-indexifembedded": {
@@ -216,9 +216,9 @@
     "why": "Google documenta que deixa de llegir les metadades del head al primer element que no hi és vàlid, com un img o un div. Els enllaços canonical i hreflang posteriors a aquest punt s'ignoren. La metaetiqueta robots es continua respectant fora del head.",
     "fix": "Treu del head els píxels de seguiment, els iframes i els noscript>img, o col·loca primer el canonical, els hreflang i les metaetiquetes.",
     "messages": {
-      "fail": "A {url}, {cause} a la línia {line} tanca el head abans d'hora, i {count} elements de metadades posteriors acaben al body.",
+      "fail": "A {url}, {cause} a la línia {line} tanca el head abans d'hora, i els elements de metadades posteriors ({count}) acaben al body.",
       "fail:canonical-or-hreflang-ignored": "A {url}, {cause} a la línia {line} tanca el head abans d'hora, de manera que els enllaços canonical o hreflang posteriors acaben al body, on Google els ignora.",
-      "fail:metadata-displaced": "A {url}, {cause} a la línia {line} tanca el head abans d'hora, i {count} elements de metadades posteriors acaben al body."
+      "fail:metadata-displaced": "A {url}, {cause} a la línia {line} tanca el head abans d'hora, i els elements de metadades posteriors ({count}) acaben al body."
     }
   },
   "crawl-canonical-presence": {
@@ -228,7 +228,7 @@
     "messages": {
       "fail": "{url} no declara cap URL canònica.",
       "fail:missing": "{url} no declara cap URL canònica, de manera que Google en tria una pel seu compte.",
-      "fail:duplicates-answer": "{url} no declara cap URL canònica mentre que {variants} variants seves responen 200, de manera que Google ha de triar entre duplicats."
+      "fail:duplicates-answer": "{url} no declara cap URL canònica i té variants que responen 200 ({variants}), de manera que Google ha de triar entre duplicats."
     }
   },
   "crawl-canonical-multiple": {
@@ -313,7 +313,7 @@
     "why": "Google recomana que cada pàgina d'una sèrie paginada es canonicalitzi a si mateixa. Fer que la pàgina 2 i les següents apuntin a la pàgina 1 dificulta descobrir els elements que només apareixen a les pàgines més profundes.",
     "fix": "Dona a cada pàgina una URL única amb una canònica a si mateixa i enllaça les pàgines de manera seqüencial amb <a href>.",
     "messages": {
-      "fail": "{count} pàgines paginades, com {url}, indiquen la primera pàgina com a canònica, de manera que els elements de les pàgines posteriors són més difícils de descobrir."
+      "fail": "Pàgines paginades que indiquen la primera pàgina com a canònica: {count} (per exemple, {url}). Els elements de les pàgines posteriors són més difícils de descobrir."
     }
   },
   "crawl-canonical-chains": {
@@ -333,7 +333,7 @@
     "messages": {
       "fail": "Els senyals canònics de {url} no coincideixen.",
       "fail:sitemap-non-canonical": "Un mapa del lloc inclou {url}, que indica {target} com a canònica.",
-      "fail:links-to-non-canonical": "Els enllaços interns apunten {otherLinks} vegades a URL que es canonicalitzen a {url} i {canonicalLinks} vegades a la mateixa {url}."
+      "fail:links-to-non-canonical": "Enllaços interns a URL que es canonicalitzen a {url}: {otherLinks}; a la mateixa {url}: {canonicalLinks}."
     }
   },
   "crawl-host-variant-consolidation": {
@@ -361,9 +361,9 @@
     "why": "Google recomana mantenir els identificadors de sessió i els paràmetres de seguiment fora dels enllaços interns i dels mapes del lloc, perquè cada combinació de paràmetres és una URL diferent que malbarata rastreig i crea duplicats.",
     "fix": "Treu els paràmetres de seguiment dels enllaços interns, guarda les sessions en galetes i canonicalitza o redirigeix a la URL neta.",
     "messages": {
-      "fail": "{count} enllaços interns o URL del mapa del lloc porten paràmetres que dupliquen pàgines.",
-      "fail:session-id": "{count} enllaços interns o URL del mapa del lloc porten un paràmetre de sessió, que crea una URL nova per a cada visita.",
-      "fail:tracking-parameter": "{count} enllaços interns o URL del mapa del lloc porten paràmetres de seguiment, que creen URL duplicades.",
+      "fail": "Enllaços interns o URL del mapa del lloc amb paràmetres que dupliquen pàgines: {count}.",
+      "fail:session-id": "Enllaços interns o URL del mapa del lloc amb un paràmetre de sessió, que crea una URL nova per a cada visita: {count}.",
+      "fail:tracking-parameter": "Enllaços interns o URL del mapa del lloc amb paràmetres de seguiment, que creen URL duplicades: {count}.",
       "fail:parameter-duplicate": "Una URL amb un paràmetre de seguiment respon 200 sense cap canònica que apunti a la URL neta."
     }
   },
@@ -375,7 +375,7 @@
       "fail": "{url} respon HTTP {status}.",
       "fail:client-error": "{url} respon HTTP {status} mentre el lloc encara hi apunta, de manera que no s'indexa i, si estava indexada, surt dels resultats.",
       "fail:server-error": "{url} respon HTTP {status}. Els errors del servidor persistents fan que Google tregui la URL dels resultats.",
-      "fail:rate-limited": "{url} respon HTTP {status}, que Google tracta com un error del servidor i que li fa alentir el rastreig.",
+      "fail:rate-limited": "{url} respon HTTP {status}, que Google tracta com un error del servidor, i per això alenteix el rastreig.",
       "fail:no-content": "{url} respon HTTP {status}, que no porta cap contingut per indexar."
     }
   },
@@ -387,7 +387,7 @@
       "fail": "{url} passa per {hops} redireccions.",
       "fail:two-hops": "{url} passa per {hops} redireccions abans d'arribar a la pàgina final.",
       "fail:long-chain": "{url} passa per {hops} redireccions abans d'arribar a la pàgina final.",
-      "fail:loop": "{url} redirigeix en bucle després de {hops} salts.",
+      "fail:loop": "{url} redirigeix en bucle després de {hops} salt(s).",
       "fail:too-many": "{url} passa per més de {hops} redireccions; Googlebot s'atura després de 10."
     }
   },
@@ -408,7 +408,7 @@
     "messages": {
       "fail": "{url} envia els visitants a {location} des del client.",
       "fail:instant-refresh": "{url} redirigeix a {location} amb un meta refresh instantani en lloc d'una redirecció al servidor.",
-      "fail:delayed-refresh": "{url} redirigeix a {location} amb un meta refresh al cap de {delay} segons, que Google tracta com una redirecció temporal.",
+      "fail:delayed-refresh": "{url} redirigeix a {location} amb un meta refresh que espera {delay} s, que Google tracta com una redirecció temporal.",
       "fail:js-redirect": "{url} navega a {location} amb JavaScript, cosa que Google només veu quan la renderització té èxit."
     }
   },
@@ -440,7 +440,7 @@
     "messages": {
       "fail": "{count} de {total} URL rastrejades ({share}) han respost amb un error del servidor, un 429 o un temps d'espera esgotat.",
       "fail:error-rate": "{count} de {total} URL rastrejades ({share}) han respost amb un error del servidor, un 429 o un temps d'espera esgotat.",
-      "fail:no-retry-after": "{count} URL rastrejades han respost 503 o 429 sense capçalera Retry-After."
+      "fail:no-retry-after": "URL rastrejades que han respost 503 o 429 sense capçalera Retry-After: {count}."
     }
   },
   "crawl-internal-links-broken-redirected": {
@@ -448,9 +448,9 @@
     "why": "Els enllaços interns a URL 4xx o 5xx porten els usuaris i els rastrejadors a carrerons sense sortida, i els enllaços a redireccions afegeixen un salt a cada visita. Google recomana enllaçar directament a la URL canònica.",
     "fix": "Actualitza els enllaços perquè apuntin a les URL canòniques finals que responen 200.",
     "messages": {
-      "fail": "{count} enllaços interns apunten a URL que no responen 200: {targets}.",
-      "fail:broken": "{count} enllaços interns apunten a pàgines d'error: {targets}.",
-      "fail:redirected": "{count} enllaços interns apunten a URL que redirigeixen en lloc de la seva destinació: {targets}."
+      "fail": "Enllaços interns que apunten a URL que no responen 200: {count} ({targets}).",
+      "fail:broken": "Enllaços interns que apunten a pàgines d'error: {count} ({targets}).",
+      "fail:redirected": "Enllaços interns que apunten a URL que redirigeixen en lloc de la seva destinació: {count} ({targets})."
     }
   },
   "crawl-sitemap-validity": {
@@ -472,9 +472,9 @@
     "why": "Segons el protocol Sitemaps, un mapa del lloc només pot incloure URL del seu propi amfitrió i camí, tret que l'enviament entre llocs es demostri al robots.txt o a Search Console. Les URL fora d'abast es poden ignorar.",
     "fix": "Allotja els mapes del lloc a l'arrel de cada amfitrió, o referencia'ls des del robots.txt de cada amfitrió.",
     "messages": {
-      "fail": "{count} URL de {sitemap} són fora del seu abast.",
-      "fail:out-of-scope": "{count} URL de {sitemap} són fora de l'amfitrió o del directori del mapa del lloc, i el mapa no està declarat al robots.txt d'aquest amfitrió, de manera que es poden ignorar tret que s'enviïn a Search Console.",
-      "fail:http-urls": "{count} URL de {sitemap} fan servir http en un lloc https."
+      "fail": "URL de {sitemap} que són fora del seu abast: {count}.",
+      "fail:out-of-scope": "URL de {sitemap} que són fora de l'amfitrió o del directori del mapa del lloc: {count}. El mapa no està declarat al robots.txt d'aquest amfitrió, de manera que es poden ignorar tret que s'enviïn a Search Console.",
+      "fail:http-urls": "URL de {sitemap} que fan servir http en un lloc https: {count}."
     }
   },
   "crawl-sitemap-url-quality": {
@@ -482,13 +482,13 @@
     "why": "Google i Bing demanen mapes del lloc que només incloguin URL canòniques i indexables que responguin 200. Incloure-hi redireccions, errors, URL amb noindex o bloquejades envia senyals contradictoris i malbarata rastreig.",
     "fix": "Inclou-hi només les URL canòniques i indexables que responen 200 i que vols als resultats. Genera el mapa del lloc a partir de la mateixa font de veritat que les canòniques.",
     "messages": {
-      "fail": "{count} URL del mapa del lloc no són pàgines canòniques indexables ({share} de les {classified} classificades).",
+      "fail": "URL del mapa del lloc que no són pàgines canòniques indexables: {count} ({share} de les {classified} classificades).",
       "fail:high-share": "{count} de les {classified} URL classificades del mapa del lloc ({share}) no són pàgines canòniques indexables.",
-      "fail:robots-blocked": "{count} URL del mapa del lloc no són pàgines canòniques indexables, incloses URL amb el rastreig prohibit al robots.txt.",
-      "fail:noindex": "{count} URL del mapa del lloc no són pàgines canòniques indexables, incloses URL que tenen noindex.",
-      "fail:error": "{count} URL del mapa del lloc no són pàgines canòniques indexables, incloses URL que responen amb un error.",
-      "fail:redirect": "{count} URL del mapa del lloc no són pàgines canòniques indexables, incloses URL que redirigeixen.",
-      "fail:canonicalised": "{count} URL del mapa del lloc no són pàgines canòniques indexables, incloses URL que indiquen una altra canònica."
+      "fail:robots-blocked": "URL del mapa del lloc que no són pàgines canòniques indexables: {count}, incloses URL amb el rastreig prohibit al robots.txt.",
+      "fail:noindex": "URL del mapa del lloc que no són pàgines canòniques indexables: {count}, incloses URL que tenen noindex.",
+      "fail:error": "URL del mapa del lloc que no són pàgines canòniques indexables: {count}, incloses URL que responen amb un error.",
+      "fail:redirect": "URL del mapa del lloc que no són pàgines canòniques indexables: {count}, incloses URL que redirigeixen.",
+      "fail:canonicalised": "URL del mapa del lloc que no són pàgines canòniques indexables: {count}, incloses URL que indiquen una altra canònica."
     }
   },
   "crawl-sitemap-lastmod": {
@@ -496,12 +496,12 @@
     "why": "Google només fa servir lastmod quan és exacte de manera constant, és a dir, quan reflecteix canvis significatius del contingut principal. Quan totes les URL mostren l'hora de generació, Google deixa de confiar en el camp. Bing també fa servir lastmod per tornar a rastrejar i per valorar l'actualitat a Copilot.",
     "fix": "Estableix lastmod només quan hi hagi canvis significatius (contingut principal, dades estructurades, enllaços). Val més ometre'l que falsejar-lo. Bing prefereix l'ISO 8601 complet amb l'hora.",
     "messages": {
-      "fail": "Els valors de lastmod dels mapes del lloc no són fiables ({count} entrades, {value}).",
-      "fail:invalid-format": "{count} valors de lastmod no són dates W3C Datetime, per exemple {value}.",
+      "fail": "Els valors de lastmod dels mapes del lloc no són fiables (entrades: {count}; {value}).",
+      "fail:invalid-format": "{count} valor(s) de lastmod no són dates W3C Datetime, per exemple {value}.",
       "fail:generation-time": "{count} URL comparteixen el lastmod {value}, l'hora en què es va generar el mapa del lloc, de manera que Google deixa de confiar en el camp.",
       "fail:uniform": "{count} URL comparteixen el lastmod {value}. Confirma que reflecteix canvis reals del contingut i no una data de recompilació.",
-      "fail:future-dates": "{count} valors de lastmod són futurs, per exemple {value}.",
-      "fail:missing": "Cap de les {count} URL dels mapes del lloc no té data lastmod. Google fa servir lastmod quan és exacte de manera constant, i Bing el considera un senyal clau per programar nous rastrejos."
+      "fail:future-dates": "{count} valor(s) de lastmod són futurs, per exemple {value}.",
+      "fail:missing": "Cap de les URL dels mapes del lloc ({count}) no té data lastmod. Google fa servir lastmod quan és exacte de manera constant, i Bing el considera un senyal clau per programar nous rastrejos."
     }
   },
   "crawl-sitemap-ignored-tags": {
@@ -509,7 +509,7 @@
     "why": "Google ignora changefreq i priority als mapes del lloc, i Bing va anunciar el 2025 que també els ignora. La seva presència és inofensiva.",
     "fix": "Neteja opcional. Dedica l'esforç a un lastmod exacte.",
     "messages": {
-      "fail": "{count} entrades del mapa del lloc tenen changefreq o priority, que Google i Bing ignoren."
+      "fail": "Entrades del mapa del lloc amb changefreq o priority, que Google i Bing ignoren: {count}."
     }
   },
   "crawl-js-links-crawlable": {
@@ -517,9 +517,9 @@
     "why": "Google documenta que només segueix els enllaços dels elements <a> amb un atribut href que es resol en una URL. La navegació construïda amb botons, gestors onclick o ancoratges sense href no se segueix.",
     "fix": "Fes servir <a href='/real/url'> per a cada destinació de navegació. El text de l'enllaç (o l'alt de l'img) hauria de descriure la destinació.",
     "messages": {
-      "fail": "{url} té {count} elements clicables sense un href rastrejable.",
-      "fail:navigation": "{url} té {count} elements de navegació sense un href rastrejable. Confirma si porten a pàgines, que els rastrejadors només poden seguir mitjançant <a href>.",
-      "fail:isolated": "{url} té {count} elements clicables sense un href rastrejable. Confirma si algun porta a pàgines."
+      "fail": "{url} té elements clicables sense un href rastrejable ({count}).",
+      "fail:navigation": "{url} té elements de navegació sense un href rastrejable ({count}). Confirma si porten a pàgines, que els rastrejadors només poden seguir mitjançant <a href>.",
+      "fail:isolated": "{url} té elements clicables sense un href rastrejable ({count}). Confirma si algun porta a pàgines."
     }
   },
   "crawl-js-fragment-routing": {
@@ -550,8 +550,8 @@
     "messages": {
       "fail": "Una part de {url} només es carrega després de desplaçar-se ({count}).",
       "fail:content-after-scroll": "Un {count} del text de {url} només apareix després de desplaçar-se. Confirma que no és el contingut principal.",
-      "fail:links-after-scroll": "{count} enllaços interns de {url} només apareixen després de desplaçar-se. Confirma si són enllaços d'elements o de paginació.",
-      "fail:images-without-src": "{count} imatges de {url} no tenen src en una renderització sense desplaçament, de manera que no es carreguen per a la indexació."
+      "fail:links-after-scroll": "Enllaços interns de {url} que només apareixen després de desplaçar-se: {count}. Confirma si són enllaços d'elements o de paginació.",
+      "fail:images-without-src": "{count} imatge(s) de {url} no tenen src en una renderització sense desplaçament, de manera que no es carreguen per a la indexació."
     }
   },
   "crawl-dynamic-rendering": {
@@ -570,7 +570,7 @@
     "fix": "Mou els blocs de dades en línia (estat d'hidratació, imatges en base64, sprites SVG) a fitxers externs i mantén primer les metadades del head.",
     "messages": {
       "fail": "L'HTML de {url} fa {bytes} bytes sense comprimir; el Googlebot de la Cerca només en llegeix els primers 2 MB.",
-      "fail:content-after-limit": "L'HTML de {url} fa {bytes} bytes sense comprimir; el Googlebot de la Cerca només en llegeix els primers 2 MB, i hi ha contingut o {count} enllaços, encapçalaments o elements de metadades després d'aquest punt.",
+      "fail:content-after-limit": "L'HTML de {url} fa {bytes} bytes sense comprimir; el Googlebot de la Cerca només en llegeix els primers 2 MB, i després d'aquest punt hi ha contingut o enllaços, encapçalaments o elements de metadades ({count}).",
       "fail:scripts-after-limit": "L'HTML de {url} fa {bytes} bytes sense comprimir; el Googlebot de la Cerca només en llegeix els primers 2 MB, i després d'aquest punt només hi ha scripts o marcatge sense contingut."
     }
   },
@@ -589,11 +589,11 @@
     "why": "Google recomana URL senzilles i llegibles, amb guions, un ús coherent de majúscules i minúscules i caràcters codificats. Són bones pràctiques per a les URL noves; canviar les URL existents només per estil costa més del que aporta.",
     "fix": "Fes servir URL llegibles, en minúscules, amb guions, amb codificació percentual i amb paràmetres '=' i '&'.",
     "messages": {
-      "fail": "{count} URL internes estan mal formades.",
-      "fail:too-long": "{count} URL internes tenen més de 2048 caràcters.",
-      "fail:unencoded-characters": "{count} URL internes contenen espais o barres inverses sense codificar.",
-      "fail:double-slash": "{count} URL internes contenen una barra doble al camí.",
-      "fail:duplicate-parameters": "{count} URL internes repeteixen una clau de paràmetre."
+      "fail": "URL internes mal formades: {count}.",
+      "fail:too-long": "URL internes de més de 2048 caràcters: {count}.",
+      "fail:unencoded-characters": "URL internes amb espais o barres inverses sense codificar: {count}.",
+      "fail:double-slash": "URL internes amb una barra doble al camí: {count}.",
+      "fail:duplicate-parameters": "URL internes que repeteixen una clau de paràmetre: {count}."
     }
   },
   "crawl-base-href": {
@@ -602,10 +602,10 @@
     "fix": "Elimina <base> o fes-lo absolut i correcte. Prefereix enllaços relatius a l'arrel.",
     "messages": {
       "fail": "L'element base de {url} apunta a {base}.",
-      "fail:other-host": "L'element base de {url} apunta a un altre lloc ({base}), de manera que {count} URL relatives de la pàgina s'hi resolen.",
+      "fail:other-host": "L'element base de {url} apunta a un altre lloc ({base}), de manera que les URL relatives de la pàgina ({count}) s'hi resolen.",
       "fail:other-host-unused": "L'element base de {url} apunta a un altre lloc ({base}); cap URL relativa de la pàgina no en depèn.",
-      "fail:other-host-same-site": "L'element base de {url} apunta a un altre amfitrió del mateix lloc ({base}), de manera que {count} URL relatives s'hi resolen.",
-      "fail:relative-links-broken": "{count} enllaços relatius de {url}, resolts respecte de la base {base}, responen amb un error.",
+      "fail:other-host-same-site": "L'element base de {url} apunta a un altre amfitrió del mateix lloc ({base}), de manera que les URL relatives ({count}) s'hi resolen.",
+      "fail:relative-links-broken": "Enllaços relatius de {url} que, resolts respecte de la base {base}, responen amb un error: {count}.",
       "fail:unparseable": "L'element base de {url} no és una URL vàlida ({base})."
     }
   },
@@ -684,9 +684,9 @@
     "why": "Google tracta els codis 401 i 403 com una pàgina inexistent i elimina aquestes URL del seu índex, i redueix el rastreig quan rep 429 o errors del servidor. Les sol·licituds verificades com a Googlebot o Bingbot que reben aquestes respostes mostren que una regla del CDN, del tallafoc o del servidor bloqueja el rastrejador real, cosa que una prova des de fora no pot demostrar.",
     "fix": "Busca la regla que respon al rastrejador (WAF, protecció contra bots, limitació de freqüència, bloqueig geogràfic) i eximeix-ne els rastrejadors verificats pel DNS invers o pels intervals d'IP que publiquen. No facis servir 401 ni 403 per limitar la freqüència de rastreig, i corregeix els errors del servidor que rep el rastrejador.",
     "messages": {
-      "fail": "Les sol·licituds verificades com a {agent} han rebut errors o rebuigs {count} de {total} vegades ({share}; {statuses}).",
-      "fail:refused": "Les sol·licituds verificades com a {agent} s'han rebutjat {count} de {total} vegades ({share}; {statuses}), de manera que el rastrejador no ha pogut llegir aquestes pàgines.",
-      "fail:server-errors": "Les sol·licituds verificades com a {agent} han rebut un error del servidor {count} de {total} vegades ({share}; {statuses})."
+      "fail": "Sol·licituds verificades com a {agent} que han rebut errors o rebuigs: {count} de {total} ({share}; {statuses}).",
+      "fail:refused": "Sol·licituds verificades com a {agent} que s'han rebutjat: {count} de {total} ({share}; {statuses}), de manera que el rastrejador no ha pogut llegir aquestes pàgines.",
+      "fail:server-errors": "Sol·licituds verificades com a {agent} que han rebut un error del servidor: {count} de {total} ({share}; {statuses})."
     }
   },
   "crawl-bots-robots-compliance": {
@@ -694,9 +694,9 @@
     "why": "L'RFC 9309 requereix que els rastrejadors segueixin les regles del robots.txt que llegeixen i que no en facin servir una còpia de la memòria cau durant més de 24 hores; alguns operadors documenten terminis més llargs (Amazon, fins a 30 dies; DuckAssistBot, 72 hores). Les sol·licituds verificades de camins prohibits després d'aquest termini volen dir que el rastrejador ha vist un robots.txt diferent del que es serveix ara, o que l'ignora.",
     "fix": "Comprova que tots els amfitrions i protocols serveixen el mateix robots.txt i que els patrons Disallow coincideixen amb els camins tal com apareixen als registres (amb les mateixes majúscules i la mateixa codificació). Si un rastrejador verificat el continua ignorant, bloqueja'l a la vora de la xarxa pels intervals d'IP que publica. Les obtencions que demana un usuari (ChatGPT-User, Claude-User, Perplexity-User) no segueixen el robots.txt i no es compten.",
     "messages": {
-      "fail": "{agent} verificat ha obtingut {count} vegades camins que el robots.txt prohibeix.",
-      "fail:disallowed": "{agent} verificat ha obtingut {count} vegades camins que el robots.txt actual prohibeix després del seu termini de memòria cau de {hours} hores, comptant des del {since}, quan el fitxer va entrar en vigor.",
-      "fail:assumed-unchanged": "{agent} verificat ha obtingut {count} vegades camins que el robots.txt actual prohibeix, suposant que el robots.txt no ha canviat des del {since}; indica la data en què va canviar, si ho va fer."
+      "fail": "{agent} verificat ha obtingut camins que el robots.txt prohibeix (sol·licituds: {count}).",
+      "fail:disallowed": "{agent} verificat ha obtingut camins que el robots.txt actual prohibeix (sol·licituds: {count}) després del seu termini de memòria cau de {hours} hores, comptant des del {since}, quan el fitxer va entrar en vigor.",
+      "fail:assumed-unchanged": "{agent} verificat ha obtingut camins que el robots.txt actual prohibeix (sol·licituds: {count}), suposant que el robots.txt no ha canviat des del {since}; indica la data en què va canviar, si ho va fer."
     }
   },
   "crawl-bots-googlebot-sitemap-coverage": {
@@ -705,7 +705,7 @@
     "fix": "Inspecciona a Search Console les URL que falten. Enllaça-les des de pàgines que Googlebot rastreja, mantén-ne el lastmod exacte i assegura't que responen 200 ràpidament. Els registres d'un origen darrere d'un CDN no inclouen les sol·licituds que el CDN ha servit des de la memòria cau, de manera que fes servir els registres del CDN quan sigui possible.",
     "messages": {
       "fail": "Googlebot verificat ha obtingut {fetched} de {urls} URL del mapa del lloc ({share}) en {days} dies de dades.",
-      "fail:not-seen": "No apareix cap sol·licitud de Googlebot verificat en {days} dies de dades, de manera que no s'ha obtingut cap de les {urls} URL del mapa del lloc.",
+      "fail:not-seen": "No apareix cap sol·licitud de Googlebot verificat en {days} dies de dades, de manera que no s'ha obtingut cap de les URL del mapa del lloc ({urls}).",
       "fail:low-coverage": "Googlebot verificat només ha obtingut {fetched} de {urls} URL del mapa del lloc ({share}) en {days} dies de dades.",
       "fail:partial-coverage": "Googlebot verificat ha obtingut {fetched} de {urls} URL del mapa del lloc ({share}) en {days} dies de dades."
     }
@@ -715,10 +715,10 @@
     "why": "Qualsevol pot enviar l'agent d'usuari de Googlebot o de GPTBot, i Google i Common Crawl adverteixen que els seus se suplanten. Les sol·licituds que diuen ser d'un rastrejador però no superen la comprovació de la llista d'IP o del DNS invers que publica el seu operador són suplantacions, sovint de bots que extreuen contingut, i un tallafoc que es fia dels agents d'usuari les serveix i, en canvi, pot rebutjar el rastrejador real.",
     "fix": "Verifica els rastrejadors a la vora de la xarxa pel DNS invers o per les llistes d'IP que publiquen els operadors (els CDN ofereixen regles de bots verificats) en lloc de permetre o bloquejar agents d'usuari, i rebutja les sol·licituds que no superin la verificació.",
     "messages": {
-      "fail": "{spoofed} de {checked} sol·licituds de rastrejadors comprovades no han superat les comprovacions dels seus operadors ({share}; {agents}).",
-      "fail:served": "{spoofed} de {checked} sol·licituds de rastrejadors comprovades no han superat les comprovacions dels seus operadors ({share}; {agents}), i se n'han servit {served}, de manera que la vora de la xarxa es fia dels agents d'usuari.",
-      "fail:refused": "{spoofed} de {checked} sol·licituds de rastrejadors comprovades no han superat les comprovacions dels seus operadors ({share}; {agents}); la vora de la xarxa n'ha rebutjat la majoria.",
-      "fail:present": "{spoofed} de {checked} sol·licituds de rastrejadors comprovades no han superat les comprovacions dels seus operadors ({share}; {agents})."
+      "fail": "Sol·licituds de rastrejadors comprovades que no han superat les comprovacions dels seus operadors: {spoofed} de {checked} ({share}; {agents}).",
+      "fail:served": "Sol·licituds de rastrejadors comprovades que no han superat les comprovacions dels seus operadors: {spoofed} de {checked} ({share}; {agents}). Se n'han servit {served}, de manera que la vora de la xarxa es fia dels agents d'usuari.",
+      "fail:refused": "Sol·licituds de rastrejadors comprovades que no han superat les comprovacions dels seus operadors: {spoofed} de {checked} ({share}; {agents}). La vora de la xarxa n'ha rebutjat la majoria.",
+      "fail:present": "Sol·licituds de rastrejadors comprovades que no han superat les comprovacions dels seus operadors: {spoofed} de {checked} ({share}; {agents})."
     }
   },
   "crawl-bing-crawl-issues": {
@@ -727,11 +727,11 @@
     "fix": "Comença pel tipus més greu: elimina el programari maliciós i tanca la via per on va entrar, i després demana a Bing Webmaster Tools una nova avaluació de programari maliciós; corregeix els errors del servidor, els errors de DNS i els temps d'espera per a Bingbot; restaura o redirigeix les URL 4xx a què enllacen altres pàgines; fes que els enllaços apuntin a la URL final en lloc d'una redirecció. Bing indica que un problema corregit pot trigar uns quants dies a sortir de la seva llista.",
     "messages": {
       "fail": "Bing llista {count} URL amb el problema de rastreig {issue}, per exemple {examples}.",
-      "fail:malware": "Bing marca {count} URL perquè contenen programari maliciós, per exemple {examples}.",
+      "fail:malware": "Bing marca {count} URL per programari maliciós, per exemple {examples}.",
       "fail:server-error": "Bing ha rebut errors del servidor (5xx) per a {count} URL, per exemple {examples}.",
       "fail:dns-error": "Bing no ha pogut resoldre el nom d'amfitrió de {count} URL, per exemple {examples}.",
       "fail:timeout": "Bing ha esgotat el temps d'espera en obtenir {count} URL, per exemple {examples}.",
-      "fail:client-error": "Bing ha rebut errors 4xx per a {count} URL, {linked} de les quals tenen enllaços entrants, per exemple {examples}.",
+      "fail:client-error": "Bing ha rebut errors 4xx per a {count} URL (amb enllaços entrants: {linked}), per exemple {examples}.",
       "fail:important-url-blocked": "El robots.txt prohibeix a Bingbot el rastreig de {count} URL que Bing considera importants, per exemple {examples}.",
       "fail:blocked-by-robots": "El robots.txt prohibeix a Bingbot el rastreig de {count} URL, per exemple {examples}.",
       "fail:permanent-redirect": "Bing ha trobat una redirecció 301 a {count} URL, per exemple {examples}.",
