@@ -186,6 +186,7 @@ function entryOf(item: SiteItem): PackEntry {
     ...(item.href === undefined ? {} : { href: item.href }),
     ...(item.path === undefined ? {} : { path: item.path }),
     ...(item.hidden === undefined ? {} : { hidden: item.hidden }),
+    ...(item.kind === 'header' ? { header: true } : {}),
     complete: item.complete,
   };
 }
@@ -201,6 +202,7 @@ export function packSections(plan: PassPlan, strings: SiteStrings, report: Repor
     text: cleanText(item.excerpt ?? '', 2000),
     ...(item.url ? { href: cleanText(item.url, 2000) } : {}),
     ...(item.path ? { path: cleanText(item.path, 300) } : {}),
+    ...(item.kind === 'header' ? { header: true } : {}),
     complete: item.complete,
   }));
   if (entries.length > 0) sections.push({ name: 'deterministic-evidence', complete: true, entries });
@@ -409,7 +411,7 @@ const outputContract = `## Output contract
 
 This contract replaces the "Output per finding" section of the rubric. Altimeter writes the report text from its own templates, so notes stay short.
 
-- findings: one entry per rule in scope (for page rules, about the page named above). Fields:
+- findings: one entry per rule in scope (for page rules, about the page named above). When "Deterministic results" lists several candidates for one rule, give one entry per candidate and cite that candidate's evidence ids. Fields:
   - ruleId: a rule from "Rules in scope".
   - scope: the URL of the page, exactly as its section line gives it.
   - verdict: confirmed or likely when the problem is shown; not_confirmed when the evidence shows no problem or a legitimate pattern (for a candidate, this rejects it); not_assessable when the evidence cannot decide.
@@ -470,7 +472,7 @@ ${outputContract}`;
       return `Judge ${page} for the international rules in scope: translation parity with its alternates, mixed languages, and whether the content language matches what the page declares.${site}
 
 - Decide the content language from the text itself, never from lang, hreflang or the URL.
-- For every finding about the language of content, set language to the BCP 47 tag you detected and list in discriminatingWords at least two words, copied from the cited items, that only that language uses. Otherwise set language to null and discriminatingWords to [].
+- For every finding about the language of content, set language to the BCP 47 tag you detected and list in discriminatingWords at least two words, copied from the cited items, that only that language uses, such as articles, pronouns or conjunctions that neighbouring languages do not share. Otherwise set language to null and discriminatingWords to [].
 - Never recommend entering new markets, targeting new countries or adding languages; those are the owner's decisions.
 
 ${outputContract}`;

@@ -206,6 +206,16 @@ function toFinding(finding: VerifiedFinding, strings: SiteStrings, report: Repor
   };
 }
 
+/**
+ * What a report may say about a failure. Altimeter's own errors have path-free messages; any other error, such as
+ * one from the file system, can name local paths, so only its code is kept.
+ */
+function failureMessage(error: unknown, fallback: string): string {
+  if (error instanceof ProviderError) return cleanDisplay(error.message, 300);
+  const code = (error as { code?: unknown } | undefined)?.code;
+  return `${fallback}${typeof code === 'string' ? ` (${cleanDisplay(code, 40)})` : ''}.`;
+}
+
 interface CallPlan {
   readonly role: Role;
   readonly pass: PassId;
@@ -264,8 +274,7 @@ function executor(options: AnalysisOptions, keyword: readonly string[], deadline
         };
       } catch (error) {
         const code = error instanceof ProviderError ? error.code : 'provider-failed';
-        const message = error instanceof Error ? cleanDisplay(error.message, 300) : 'The call failed.';
-        return { record: { ...base, status: 'failed', durationMs: Math.round(performance.now() - started), error: { code, message } } };
+        return { record: { ...base, status: 'failed', durationMs: Math.round(performance.now() - started), error: { code, message: failureMessage(error, 'The call failed unexpectedly') } } };
       }
     },
   };
@@ -310,7 +319,7 @@ async function resolveProviders(options: AnalysisOptions, warnings: string[]): P
       analyst = await resolveProvider(name, { env });
       break;
     } catch (error) {
-      problems.push(error instanceof Error ? error.message : `${name} is unavailable.`);
+      problems.push(failureMessage(error, `${name === 'claude' ? 'Claude Code' : 'Codex CLI'} is unavailable`));
     }
   }
   if (!analyst) {
@@ -330,7 +339,7 @@ async function resolveProviders(options: AnalysisOptions, warnings: string[]): P
     warnings.push(...verifier.warnings);
     return { analyst, verifier };
   } catch (error) {
-    warnings.push(`${cleanDisplay(error instanceof Error ? error.message : 'The other provider is unavailable.', 300)} Findings stay unverified.`);
+    warnings.push(`${failureMessage(error, 'The other provider is unavailable')} Findings stay unverified.`);
     return { analyst };
   }
 }

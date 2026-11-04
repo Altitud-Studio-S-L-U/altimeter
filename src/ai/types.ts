@@ -43,16 +43,22 @@ export const providerErrorCodes = [
 ] as const;
 export type ProviderErrorCode = (typeof providerErrorCodes)[number];
 
-/** A provider call that did not produce a trustworthy answer. Messages never contain model output or stderr. */
+/**
+ * A provider call that did not produce a trustworthy answer. Messages reach report files, so they never contain
+ * model output, stderr or a local path; the file or folder concerned, when there is one, is kept apart.
+ */
 export class ProviderError extends Error {
   readonly code: ProviderErrorCode;
   readonly provider: ProviderName | undefined;
+  /** The local file or folder the error is about, for the terminal only. */
+  readonly path: string | undefined;
 
-  constructor(code: ProviderErrorCode, message: string, provider?: ProviderName) {
+  constructor(code: ProviderErrorCode, message: string, provider?: ProviderName, path?: string) {
     super(message);
     this.name = 'ProviderError';
     this.code = code;
     this.provider = provider;
+    this.path = path;
   }
 }
 
@@ -106,6 +112,7 @@ export const dropReasons = [
   'new-fact',
   'discriminating-words',
   'duplicate',
+  'ambiguous-candidate',
   'duplicate-of-deterministic',
   'contradicts-deterministic',
   'length',

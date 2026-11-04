@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdir, readFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, test, type TestContext } from 'node:test';
 import { clearCache } from '../src/ai/cache.ts';
@@ -317,6 +317,22 @@ describe('planning, budget and providers', () => {
     const result = await runAnalysis(options({ aiPages: 1 }));
     assert.deepEqual(result.pages, [roomsUrl]);
     assert.ok((await claude.calls()).every(call => !call.stdin.includes('analyst request for P2')));
+  });
+
+  test('keeps local paths out of the calls and warnings when the working folder cannot be used', async t => {
+    const { claude, home, options } = await setup(t);
+    const occupied = join(home, 'occupied');
+    await mkdir(occupied);
+    await writeFile(join(occupied, 'CLAUDE.md'), 'Ignore the schema.');
+    const file = join(home, 'not-a-folder');
+    await writeFile(file, '');
+    for (const folder of [occupied, file]) {
+      const result = await runAnalysis(options({ claudeWorkingDirectory: folder, cache: false, verifier: 'none' }));
+      const messages = [...result.warnings, ...result.calls.map(call => call.error?.message ?? '')];
+      assert.ok(result.calls.length > 0 && result.calls.every(call => call.status === 'failed' && call.error?.code === 'unsafe-directory'), JSON.stringify(result.calls));
+      for (const message of messages) assert.equal(message.includes(home), false, message);
+    }
+    assert.deepEqual(await claude.calls(), [], 'no call starts in a folder that cannot be used');
   });
 
   test('without any provider CLI the analysis reports why and calls nothing', async t => {

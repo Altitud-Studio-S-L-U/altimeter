@@ -1,8 +1,10 @@
+import { detectableLanguages, isDetectable, languageScores, listingLanguages, tokenize } from '../analyze/language.ts';
 import { rule as catalogRule } from '../catalog/index.ts';
 import { severities, type Myth, type RuleMeta, type Severity } from '../core/types.ts';
 import type { Report, ReportFinding } from '../report/model.ts';
 import type { FindingScope } from '../rules/engine.ts';
 import { mythMatches } from '../rules/myth-filter.ts';
+import { isTerm, rangesOf } from '../rules/schema/vocabulary.ts';
 import type { EvidencePack } from './pack.ts';
 import { judgmentCap, languageRules, type PassPlan } from './passes.ts';
 import { validateSchema, type Schema } from './schema.ts';
@@ -189,15 +191,31 @@ function checkRecommendations(texts: readonly string[], context: ValidationConte
   return texts.some(recommendsNewMarket) ? reject('new-market') : undefined;
 }
 
-function wordPattern(word: string): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}])${fold(word).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}(?![\\p{L}\\p{N}])`, 'u');
+/**
+ * Whether a word tells a language apart: the language detector lists it as a function word of that language and of
+ * no other. Spelling features describe running text, not one word: Spanish "nació" ends as Catalan words do, and
+ * Catalan "castell" has the ll of Spanish. For a language the detector does not know, no list or feature may count it.
+ */
+function discriminates(token: string, language: string): boolean {
+  if (!isDetectable(language)) {
+    const scores = languageScores([token]);
+    return detectableLanguages.every(other => scores[other] === 0);
+  }
+  const listed = listingLanguages(token);
+  return listed.length === 1 && listed[0] === language;
 }
 
-/** Language claims need at least two distinct words, found in the cited items, that only that language uses. */
-function checkDiscriminatingWords(words: readonly string[], cited: readonly string[], context: ValidationContext): Rejection | undefined {
-  const texts = cited.map(id => context.pack.included.get(id)).filter(item => item && !item.section).map(item => fold(item!.text));
-  const found = new Set(words.map(word => fold(word)).filter(word => word.length >= 2 && texts.some(text => wordPattern(word).test(text))));
-  return found.size >= 2 ? undefined : reject('discriminating-words', `${found.size} of ${words.length} found`);
+/**
+ * Language claims need a language and at least two distinct words, found in the cited items, that only that language
+ * uses. Words are compared as the detector reads them, with their accents, so Catalan "més" is not Spanish "mes".
+ */
+function checkDiscriminatingWords(language: string | null | undefined, words: readonly string[], cited: readonly string[], context: ValidationContext): Rejection | undefined {
+  const claimed = primaryLanguage(language ?? undefined);
+  if (claimed === undefined || claimed === 'und') return reject('discriminating-words', 'no language given');
+  const present = new Set(cited.map(id => context.pack.included.get(id)).flatMap(item => (item && !item.section ? tokenize(item.text) : [])));
+  const tokens = words.map(word => tokenize(word)).filter(entry => entry.length === 1).map(([token]) => token!);
+  const found = new Set(tokens.filter(token => [...token].length >= 2 && present.has(token) && discriminates(token, claimed)));
+  return found.size >= 2 ? undefined : reject('discriminating-words', `${found.size} of ${words.length} found and discriminating`);
 }
 
 interface FindingAnswer {
@@ -211,13 +229,25 @@ interface FindingAnswer {
   readonly evidenceIds: readonly string[];
   readonly quotes: readonly Quote[];
   readonly notes: Raw;
+  readonly language?: string | null;
   readonly discriminatingWords?: readonly string[];
+}
+
+/**
+ * The candidate an answer decides. A rule with one candidate on the scope takes the answer; with several, the
+ * candidate evidence the answer cites must all belong to exactly one of them.
+ */
+function candidateFor(answer: FindingAnswer, candidates: readonly ReportFinding[]): ReportFinding | Rejection {
+  if (candidates.length === 1) return candidates[0]!;
+  const cited = answer.evidenceIds.filter(id => candidates.some(candidate => candidate.evidence.includes(id)));
+  const matched = candidates.filter(candidate => cited.every(id => candidate.evidence.includes(id)));
+  return cited.length > 0 && matched.length === 1 ? matched[0]! : reject('ambiguous-candidate', answer.ruleId);
 }
 
 function deterministicConflict(answer: FindingAnswer, outcome: 'fail' | 'pass', absence: boolean, scope: FindingScope, page: PageInfo, context: ValidationContext): Rejection | ReportFinding | undefined {
   const existing = findingsAt(context.report, answer.ruleId, scope);
-  const candidate = existing.find(finding => finding.outcome === 'fail' && finding.needsJudgment === true);
-  if (candidate) return candidate;
+  const candidates = existing.filter(finding => finding.outcome === 'fail' && finding.needsJudgment === true);
+  if (candidates.length > 0) return candidateFor(answer, candidates);
   if (existing.some(finding => finding.outcome === 'fail')) return reject(outcome === 'fail' ? 'duplicate-of-deterministic' : 'contradicts-deterministic', answer.ruleId);
   if (existing.some(finding => finding.outcome === 'pass')) return reject(outcome === 'fail' ? 'contradicts-deterministic' : 'duplicate-of-deterministic', answer.ruleId);
   if (absence && outcome === 'fail') {
@@ -259,13 +289,14 @@ function validateFinding(raw: unknown, index: number, itemSchema: Schema, contex
   if (recommendation) return recommendation;
   const outcome = answer.verdict === 'not_confirmed' ? 'pass' : 'fail';
   if (context.plan.pass === 'intl' && languageRules.includes(rule.id) && outcome === 'fail') {
-    const words = checkDiscriminatingWords(answer.discriminatingWords ?? [], answer.evidenceIds, context);
+    const words = checkDiscriminatingWords(answer.language, answer.discriminatingWords ?? [], answer.evidenceIds, context);
     if (words) return words;
   }
   const scope: FindingScope = rule.scope === 'site' ? { kind: 'site', origin: context.report.target.origin } : { kind: 'page', url: page.key };
   const conflict = deterministicConflict(answer, outcome, absence, scope, page, context);
   if (conflict instanceof Rejection) return conflict;
-  const key = `${rule.id}|${scopeKey(scope)}`;
+  // Each candidate takes one decision; without candidates, a rule takes one claim per scope.
+  const key = conflict ? `candidate|${conflict.id}` : `${rule.id}|${scopeKey(scope)}`;
   if (seen.has(key)) return reject('duplicate', rule.id);
   seen.add(key);
   const adjustments: string[] = [];
@@ -300,14 +331,33 @@ const titleLength = { min: 10, max: 70 };
 const descriptionLength = { min: 50, max: 160 };
 export const ownerPlaceholder = 'OWNER_TO_SUPPLY';
 
+/** Whether a URL reference names one the collected pages reference: resolved against the page, with either scheme when it has none. */
+function knownLink(reference: string, page: PageInfo, context: ValidationContext): boolean {
+  const forms = reference.startsWith('//') ? [`https:${reference}`, `http:${reference}`]
+    : /^www\./iu.test(reference) ? [`https://${reference}`, `http://${reference}`] : [reference];
+  return forms.some(form => {
+    let absolute: string;
+    try {
+      absolute = new URL(form, page.finalUrl).href;
+    } catch {
+      return false;
+    }
+    const normalized = normalizeUrl(absolute);
+    return normalized !== undefined && context.corpus.links.has(normalized);
+  });
+}
+
+/** A full stop or comma after a URL ends the sentence, not the URL. */
+const trailingPunctuation = /[.,;:!?]+$/u;
+
 /** URLs not referenced by any collected page become OWNER_TO_SUPPLY, so a proposal never invents a link. */
-function replaceUnknownUrls(text: string, context: ValidationContext): { text: string; placeholders: number } {
+function replaceUnknownUrls(text: string, page: PageInfo, context: ValidationContext): { text: string; placeholders: number } {
   let placeholders = 0;
-  const replaced = text.replace(urlPattern, url => {
-    const normalized = normalizeUrl(url);
-    if (normalized !== undefined && context.corpus.links.has(normalized)) return url;
+  const replaced = text.replace(urlPattern, match => {
+    const url = match.replace(trailingPunctuation, '');
+    if (knownLink(url, page, context)) return match;
     placeholders += 1;
-    return ownerPlaceholder;
+    return `${ownerPlaceholder}${match.slice(url.length)}`;
   });
   return { text: replaced, placeholders };
 }
@@ -328,7 +378,7 @@ function validateSerpProposal(raw: unknown, index: number, itemSchema: Schema, c
   counts.set(answer.kind, count);
   if (count > 2) return reject('too-many', answer.kind);
   const corpus = context.corpus.pages.get(page.key);
-  const urls = replaceUnknownUrls(cleanDisplay(answer.text, 300), context);
+  const urls = replaceUnknownUrls(cleanDisplay(answer.text, 300), page, context);
   const text = urls.text;
   const bounds = answer.kind === 'title' ? titleLength : descriptionLength;
   const length = [...text].length;
@@ -386,23 +436,51 @@ interface JsonLdReview {
   readonly retired: string[];
 }
 
+const vocabularyIri = /^https?:\/\/schema\.org(?:\/([^\s/?#]*))?$/iu;
+
+/** The schema.org vocabulary itself or one of its terms, such as https://schema.org/InStock, which name no page. */
+function vocabularyTerm(value: string): boolean {
+  const match = vocabularyIri.exec(value);
+  return match !== null && (match[1] === undefined || match[1] === '' || isTerm(match[1]));
+}
+
+const webReference = /^(?:https?:\/\/|\/\/|www\.)/iu;
+const otherScheme = /^(?!https?:)[a-z][a-z\d+.-]*:/iu;
+
+/** Keys whose values are URLs even when relative: @id, the item of a breadcrumb and properties with a URL range but no Text range. */
+function holdsUrls(key: string): boolean {
+  if (key === '@id' || key === 'item') return true;
+  const ranges = rangesOf(key);
+  return ranges.includes('URL') && !ranges.includes('Text');
+}
+
+/** Whether a whole JSON-LD string names a link: any value of a key that holds URLs, or a lone web address in another property. */
+function namesLink(value: string, key: string): boolean {
+  // An @id may also be a blank node or a URN, which names no page.
+  if (holdsUrls(key)) return value !== '' && (key !== '@id' || !(value.startsWith('_:') || otherScheme.test(value)));
+  return webReference.test(value) && !/\s/u.test(value);
+}
+
 /** Walks a proposed JSON-LD value: unknown URLs become placeholders, facts must be visible, retired features are refused. */
 function reviewJsonLd(value: unknown, key: string, context: ValidationContext, page: PageInfo, review: { placeholders: number; missing: string[]; retired: string[] }): unknown {
   const facts = context.corpus.pages.get(page.key)?.facts;
   if (typeof value === 'string') {
-    if (value === ownerPlaceholder || key === '@context') return value;
-    if (/^https?:\/\//iu.test(value.trim())) {
-      const normalized = normalizeUrl(value.trim());
-      if (normalized !== undefined && context.corpus.links.has(normalized)) return value;
+    const trimmed = value.trim();
+    if (value === ownerPlaceholder || vocabularyTerm(trimmed)) return value;
+    if (namesLink(trimmed, key)) {
+      if (knownLink(trimmed, page, context)) return value;
       review.placeholders += 1;
       return ownerPlaceholder;
     }
-    if (key === '@type' || key === '@id') return value;
+    // A type, an id or a context entry that names no address states no fact.
+    if (key === '@id' || key === '@type' || key === '@context') return value;
+    const urls = replaceUnknownUrls(value, page, context);
+    review.placeholders += urls.placeholders;
     if (facts) {
-      if (contactKeys.has(key) && !facts.text.includes(fold(value))) review.missing.push(value);
-      else review.missing.push(...unsupportedFacts(value, facts));
+      if (contactKeys.has(key) && !facts.text.includes(fold(urls.text))) review.missing.push(urls.text);
+      else review.missing.push(...unsupportedFacts(urls.text, facts));
     }
-    return value;
+    return urls.text;
   }
   if (typeof value === 'number') {
     if (facts) review.missing.push(...unsupportedFacts(String(value), facts));

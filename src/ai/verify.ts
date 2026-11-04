@@ -43,7 +43,7 @@ function evidenceEntries(finding: DraftFinding, strings: SiteStrings, report: Re
   for (const id of finding.evidenceIds) {
     const item = strings.items.get(id);
     if (item) {
-      entries.push({ id, label: item.label, text: item.text, ...(item.href ? { href: item.href } : {}), ...(item.hidden ? { hidden: item.hidden } : {}), complete: item.complete });
+      entries.push({ id, label: item.label, text: item.text, ...(item.href ? { href: item.href } : {}), ...(item.hidden ? { hidden: item.hidden } : {}), ...(item.kind === 'header' ? { header: true } : {}), complete: item.complete });
       continue;
     }
     const slice = strings.slices.find(entry => entry.id === id);
@@ -53,7 +53,7 @@ function evidenceEntries(finding: DraftFinding, strings: SiteStrings, report: Re
     }
     const fact = deterministic.get(id);
     // Owner data never enters a request, not even when a claim names its id.
-    if (fact && fact.kind !== 'owner-data') entries.push({ id, label: cleanText(fact.label, 300), text: cleanText(fact.excerpt ?? '', 2000), complete: fact.complete });
+    if (fact && fact.kind !== 'owner-data') entries.push({ id, label: cleanText(fact.label, 300), text: cleanText(fact.excerpt ?? '', 2000), ...(fact.kind === 'header' ? { header: true } : {}), complete: fact.complete });
   }
   return entries;
 }

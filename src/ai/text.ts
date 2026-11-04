@@ -42,9 +42,31 @@ export function normalizeText(text: string): string {
   return catalanGeminates(mapped).replace(/\s+/gu, ' ').trim();
 }
 
-/** Normalised, without diacritics and lower case: for facts, brands and duplicates, where case carries no claim. */
+/** Latin ligatures, full-width and half-width forms, and mathematical letters and digits: the same characters drawn otherwise. */
+function drawnVariant(point: number): boolean {
+  return (point >= 0xfb00 && point <= 0xfb06) || (point >= 0xff01 && point <= 0xffee) || (point >= 0x1d400 && point <= 0x1d7ff);
+}
+
+const otherDigit = /[^\P{Nd}0-9]/gu;
+
+/** Decimal digits of other scripts as 0 to 9: Unicode encodes the digits of every script in runs of ten from zero. */
+function asciiDigits(text: string): string {
+  return text.replace(otherDigit, digit => {
+    const point = digit.codePointAt(0)!;
+    let start = point;
+    while (/\p{Nd}/u.test(String.fromCodePoint(start - 1))) start -= 1;
+    return String((point - start) % 10);
+  });
+}
+
+/**
+ * Normalised, without diacritics or drawn variants such as full-width letters, with the digits of every script as
+ * 0 to 9 and in lower case: for facts, brands and duplicates, where neither case nor a character's form carries a claim.
+ */
 export function fold(text: string): string {
-  return normalizeText(text).normalize('NFD').replace(/\p{M}+/gu, '').toLowerCase();
+  let plain = '';
+  for (const character of normalizeText(text)) plain += drawnVariant(character.codePointAt(0)!) ? character.normalize('NFKD') : character;
+  return asciiDigits(plain.normalize('NFD').replace(/\p{M}+/gu, '').toLowerCase());
 }
 
 export function wordCount(text: string): number {
@@ -82,7 +104,11 @@ export function checkQuote(quote: string, source: string): QuoteCheck {
 const phonePattern = /(?:\+|00)?\d[\d ()./-]{6,}\d/gu;
 const numberPattern = /\d+(?:[.,]\d+)*/gu;
 const emailPattern = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.\p{L}{2,}/gu;
-export const urlPattern = /https?:\/\/[^\s"'<>()]+/gu;
+/**
+ * Web addresses in text: with an http or https scheme in any case, or without one when they start with www. and are
+ * not part of a longer host name, path or email address.
+ */
+export const urlPattern = /(?:https?:\/\/|(?<![\p{L}\p{N}@./-])www\.)[^\s"'<>()]+/giu;
 
 /** Superlatives and comparative claims in English, Spanish and Catalan, folded (no accents, lower case). */
 const superlatives = [

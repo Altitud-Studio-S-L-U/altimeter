@@ -47,7 +47,7 @@ describe('evidence pack', () => {
 
   test('gives the same canonical prompt for any nonce, without volatile values', () => {
     const entries: PackSection = { name: 'http', complete: true, entries: [
-      { id: 'E1', label: 'response header date', text: 'Tue, 04 Nov 2026 10:00:00 GMT', complete: true },
+      { id: 'E1', label: 'response header date', text: 'Tue, 04 Nov 2026 10:00:00 GMT', header: true, complete: true },
       { id: 'E2', label: 'meta element', text: '<meta name="csrf-token" content="a8Fz09QpLm22xx">', complete: true },
     ] };
     const one = buildPack({ trusted: 'x', sections: [entries], nonce: 'aaaa' });
@@ -56,6 +56,25 @@ describe('evidence pack', () => {
     assert.equal(one.canonical, two.canonical);
     assert.doesNotMatch(one.canonical, /aaaa|a8Fz09/u);
     assert.equal(scrubVolatile('<script nonce="r4nd0mN0nc3value">'), '<script nonce="[volatile]">');
+  });
+
+  test('keeps site text that starts like a header name in the cache key, and leaves out only the values of volatile headers', () => {
+    const paragraphs = (texts: readonly string[]) => buildPack({ trusted: 'x', sections: [section('text', texts)], nonce: 'n3' }).canonical;
+    assert.notEqual(paragraphs(['Age verification: you must be 18 to buy wine here.']), paragraphs(['Age verification: anyone may buy wine here.']));
+    assert.notEqual(paragraphs(['Cookie policy: we never sell your data.']), paragraphs(['Cookie policy: we sell your data to partners.']));
+    assert.notEqual(paragraphs(['Nel 1990 abbiamo aperto il ristorante.']), paragraphs(['Nel 2024 abbiamo aperto il ristorante.']));
+    const headers = (date: string, ray: string) => buildPack({ trusted: 'x', nonce: 'n4', sections: [{ name: 'deterministic-evidence', complete: true, entries: [
+      { id: 'E1', label: 'Date response header', text: date, header: true, complete: true },
+      { id: 'E2', label: 'CDN markers on the HTML response', text: `cf-ray: ${ray}\nserver: cloudflare`, header: true, complete: true },
+    ] }] }).canonical;
+    assert.equal(headers('Tue, 04 Nov 2026 10:00:00 GMT', '8a1b2c3d4e5f-MAD'), headers('Wed, 05 Nov 2026 11:00:00 GMT', '9f8e7d6c5b4a-BCN'));
+    assert.match(headers('Tue, 04 Nov 2026 10:00:00 GMT', '8a1b2c3d4e5f-MAD'), /cf-ray: \[volatile\]\\nserver: cloudflare/u, 'other headers in the same item stay');
+    const { collected, report } = hotelAudit();
+    const strings = collectSiteStrings(collected.site, selectPages(collected.site, 1));
+    const intl = packSections({ pass: 'intl', page: strings.pages[0]!, sitePage: true, rules: [], candidates: [], facts: [], contextPages: [] }, strings, report);
+    const http = intl.find(entry => entry.name === 'http')?.entries ?? [];
+    assert.ok(http.length > 0 && http.every(entry => entry.header === true), 'response headers from the site are marked as headers');
+    assert.ok(intl.filter(entry => entry.name !== 'http').every(entry => entry.entries.every(item => item.header === undefined)));
   });
 });
 

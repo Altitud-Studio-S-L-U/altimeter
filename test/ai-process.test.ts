@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -53,6 +55,43 @@ describe('runProcess', () => {
     const pids = JSON.parse(await readFile(pidFile, 'utf8')) as number[];
     for (let attempt = 0; attempt < 20 && pids.some(alive); attempt += 1) await delay(100);
     for (const pid of pids) assert.equal(alive(pid), false, `process ${pid} survived`);
+  });
+
+  // On Windows the CLI is not detached: it stays in the job that closes with Altimeter.
+  test('Ctrl+C, a hang-up, a termination signal or an exit stops the detached tree of a running call first', { skip: process.platform === 'win32' && 'POSIX process groups only', timeout: 60_000 }, async t => {
+    const home = await sandbox(t);
+    const pidFile = join(home, 'cli.pid');
+    const cli = `require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));setInterval(()=>{},1000)`;
+    const parent = (then: string) => `import { childEnvironment, runProcess } from ${JSON.stringify(new URL('../src/ai/process.ts', import.meta.url).href)};
+void runProcess({ executable: process.execPath, args: ['-e', ${JSON.stringify(cli)}], cwd: process.cwd(), env: childEnvironment(process.env), timeoutMs: 60000 }).catch(() => {});
+const { readFileSync } = await import('node:fs');
+const started = () => { try { return Number(readFileSync(${JSON.stringify(pidFile)}, 'utf8')) > 0; } catch { return false; } };
+while (!started()) await new Promise(resolve => setTimeout(resolve, 50));
+${then}`;
+    const cases = [
+      { name: 'SIGINT', then: 'setInterval(() => {}, 1000);', signal: 'SIGINT' as const, ends: [null, 'SIGINT'] },
+      { name: 'SIGTERM', then: 'setInterval(() => {}, 1000);', signal: 'SIGTERM' as const, ends: [null, 'SIGTERM'] },
+      { name: 'SIGHUP', then: 'setInterval(() => {}, 1000);', signal: 'SIGHUP' as const, ends: [null, 'SIGHUP'] },
+      { name: 'exit', then: 'process.exit(3);', ends: [3, null] },
+    ];
+    for (const entry of cases) {
+      await rm(pidFile, { force: true });
+      const runner = spawn(process.execPath, ['--input-type=module', '-e', parent(entry.then)], { stdio: 'ignore', windowsHide: true });
+      const ended = once(runner, 'exit');
+      let pid = 0;
+      for (let attempt = 0; attempt < 400 && !(pid > 0); attempt += 1) {
+        pid = Number(await readFile(pidFile, 'utf8').catch(() => '0'));
+        if (!(pid > 0)) await delay(50);
+      }
+      assert.ok(pid > 0, `the CLI of the ${entry.name} case started`);
+      if (entry.signal) runner.kill(entry.signal);
+      assert.deepEqual(await ended, entry.ends, `the ${entry.name} case still ends Altimeter as before`);
+      for (let attempt = 0; attempt < 40 && alive(pid); attempt += 1) await delay(100);
+      const survived = alive(pid);
+      // A tree that was not stopped must not outlive the test either.
+      if (survived) process.kill(pid, 'SIGKILL');
+      assert.equal(survived, false, `the CLI outlived ${entry.name}`);
+    }
   });
 
   test('an abort stops a running call, and an aborted signal never starts one', async () => {

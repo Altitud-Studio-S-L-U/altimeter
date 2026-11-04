@@ -5,9 +5,11 @@ import { buildPack } from '../src/ai/pack.ts';
 import { packSections, passSchema, planPasses, type PassPlan } from '../src/ai/passes.ts';
 import { buildCorpus, collectSiteStrings, selectPages, sliceOf } from '../src/ai/site.ts';
 import type { Proposal } from '../src/ai/types.ts';
-import { defaultMythMatcher, distinctProposals, recommendsNewMarket, validateAnswer, type MythMatcher, type ValidationContext } from '../src/ai/validate.ts';
+import { defaultMythMatcher, distinctProposals, ownerPlaceholder, recommendsNewMarket, validateAnswer, type MythMatcher, type ValidationContext } from '../src/ai/validate.ts';
+import type { Report, ReportFinding } from '../src/report/model.ts';
 import { mythMatches } from '../src/rules/myth-filter.ts';
 import { homeUrl, hotelAudit, roomsTitle, roomsUrl } from './support/analysis.ts';
+import { page, site } from './support/facts.ts';
 
 const audit = hotelAudit();
 const siteFacts = audit.collected.site;
@@ -15,7 +17,6 @@ const strings = collectSiteStrings(siteFacts, selectPages(siteFacts, 3));
 const pages = strings.pages.filter(entry => entry.role !== 'context');
 const corpus = buildCorpus(siteFacts, strings);
 const { plans } = planPasses({ report: audit.report, site: siteFacts, strings, pages });
-const rooms = pages.find(entry => entry.key === roomsUrl)!;
 
 function planned(pass: PassPlan['pass']): PassPlan {
   return plans.find(entry => entry.pass === pass && entry.page.key === roomsUrl)!;
@@ -58,6 +59,9 @@ function content(findings: readonly Record<string, unknown>[], options: Paramete
 }
 
 const reasons = (result: ReturnType<typeof validateAnswer>) => result.dropped.map(entry => entry.reason);
+
+/** ASCII text in its full-width forms, which look alike but are other characters. */
+const fullWidth = (text: string) => [...text].map(character => (character === ' ' ? ' ' : String.fromCodePoint(character.codePointAt(0)! + 0xfee0))).join('');
 
 describe('validating findings', () => {
   test('keeps well-founded claims and caps judged severity, for the analyst\'s own rules and for candidates', () => {
@@ -139,6 +143,56 @@ describe('validating findings', () => {
     assert.deepEqual(reasons(result), ['duplicate', 'duplicate-of-deterministic', 'contradicts-deterministic', 'contradicts-deterministic']);
   });
 
+  test('binds each decision to the candidate whose evidence it cites when a rule has several on the page', () => {
+    const generic = audit.report.findings.find(entry => entry.ruleId === 'content-img-alt-quality' && entry.needsJudgment === true)!;
+    const longAlt = `Double room with a balcony over the valley${', with a view of the mountains'.repeat(8)}`;
+    const tooLong: ReportFinding = { ...generic, id: 'F-too-long', reason: 'too-long', evidence: ['E900'] };
+    const report: Report = {
+      ...audit.report,
+      findings: [...audit.report.findings, tooLong],
+      evidence: [...audit.report.evidence, { id: 'E900', kind: 'html', url: roomsUrl, label: 'alt text over 250 characters', excerpt: longAlt, complete: true }],
+    };
+    const base = planned('content');
+    const plan: PassPlan = { ...base, candidates: [...base.candidates, tooLong] };
+    const both: ValidationContext = { ...context(plan), report, pack: buildPack({ trusted: 'x', sections: packSections(plan, strings, report), nonce: 'n' }) };
+    const cited = generic.evidence[0]!;
+    const result = validateAnswer({
+      findings: [
+        finding({ ruleId: 'content-img-alt-quality', reasonCode: 'alt-text-too-long', evidenceIds: ['E900'], quotes: [{ evidenceId: 'E900', text: 'with a view of the mountains' }] }),
+        finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', reasonCode: 'descriptive-alt', evidenceIds: [cited], quotes: [{ evidenceId: cited, text: 'Double room with a balcony' }] }),
+        finding({ ruleId: 'content-img-alt-quality', ...quote('Double room', 'Double room with a balcony') }),
+        finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', evidenceIds: ['E900'], quotes: [{ evidenceId: 'E900', text: 'with a view of the mountains' }] }),
+      ],
+      assessments: emptyAssessments,
+    }, both);
+    assert.deepEqual(reasons(result), ['ambiguous-candidate', 'duplicate'], 'an answer that cites neither candidate decides neither, and each candidate takes one decision');
+    assert.deepEqual(result.findings.map(entry => [entry.candidate?.id, entry.outcome]), [['F-too-long', 'fail'], [generic.id, 'pass']]);
+  });
+
+  test('decides no candidate when an answer cites the evidence of several, however much of each', () => {
+    const generic = audit.report.findings.find(entry => entry.ruleId === 'content-img-alt-quality' && entry.needsJudgment === true)!;
+    const shared = ['E901', 'E902'];
+    const repeated: ReportFinding = { ...generic, id: 'F-repeated', reason: 'repeated', evidence: shared };
+    const report: Report = {
+      ...audit.report,
+      findings: [...audit.report.findings, repeated],
+      evidence: [...audit.report.evidence, ...shared.map(id => ({ id, kind: 'html' as const, url: roomsUrl, label: 'alt text shared by different images', excerpt: `<img src="/img/${id}.jpg" alt="Hotel Example">`, complete: true }))],
+    };
+    const base = planned('content');
+    const plan: PassPlan = { ...base, candidates: [...base.candidates, repeated] };
+    const both: ValidationContext = { ...context(plan), report, pack: buildPack({ trusted: 'x', sections: packSections(plan, strings, report), nonce: 'n' }) };
+    const cited = generic.evidence[0]!;
+    const result = validateAnswer({
+      findings: [
+        finding({ ruleId: 'content-img-alt-quality', evidenceIds: [cited, ...shared], quotes: [{ evidenceId: cited, text: 'Double room with a balcony' }] }),
+        finding({ ruleId: 'content-img-alt-quality', verdict: 'not_confirmed', evidenceIds: [shared[0]!], quotes: [{ evidenceId: shared[0]!, text: '<img src="/img/E901.jpg" alt="Hotel Example">' }] }),
+      ],
+      assessments: emptyAssessments,
+    }, both);
+    assert.deepEqual(reasons(result), ['ambiguous-candidate'], 'citing the images of both candidates says neither which one was judged');
+    assert.deepEqual(result.findings.map(entry => [entry.candidate?.id, entry.outcome]), [['F-repeated', 'pass']], 'part of one candidate\'s evidence is enough');
+  });
+
   test('records rules the model could not assess and refuses partial answers as a whole', () => {
     const result = content([finding({ ruleId: 'content-intent-match', verdict: 'not_assessable', severity: 'info' })]);
     assert.deepEqual(result.notAssessable, ['content-intent-match']);
@@ -185,6 +239,21 @@ describe('validating proposals', () => {
     assert.equal(description.placeholders, 1);
   });
 
+  test('replaces links without a scheme or with one in capitals too, and reads numbers in any digits', () => {
+    const result = serp([
+      proposal('title', 'Valley rooms | Hotel Example | HTTPS://EVIL.EXAMPLE'),
+      proposal('meta-description', 'Our 45 rooms look over the valley of Andorra la Vella. Book at www.evil.example today.'),
+      proposal('meta-description', `Our ${fullWidth('46')} rooms look over the valley of Andorra la Vella, with breakfast in the garden room.`),
+      proposal('title', 'Valley rooms, book:www.evil.example | Hotel Example'),
+    ]);
+    assert.deepEqual(reasons(result), ['new-fact']);
+    assert.deepEqual(result.proposals.map(entry => (entry.kind === 'json-ld' ? undefined : [entry.text, entry.placeholders])), [
+      [`Valley rooms | Hotel Example | ${ownerPlaceholder}`, 1],
+      [`Our 45 rooms look over the valley of Andorra la Vella. Book at ${ownerPlaceholder} today.`, 1],
+      [`Valley rooms, book:${ownerPlaceholder} | Hotel Example`, 1],
+    ]);
+  });
+
   test('keeps proposals for different pages distinct', () => {
     const make = (scope: string): Proposal => ({ kind: 'title', pass: 'serp', scope, text: 'Rooms | Valley', language: 'en', evidenceIds: [], notes, placeholders: 0 });
     const result = distinctProposals([make(roomsUrl), make(homeUrl), make(roomsUrl)]);
@@ -211,24 +280,109 @@ describe('validating proposals', () => {
     assert.deepEqual(reasons(kept), []);
     assert.equal(kept.proposals[0]?.placeholders, 0);
   });
+
+  test('replaces every link the crawled pages do not show, wherever a JSON-LD proposal puts it and however it is written', () => {
+    const plan = planned('schema');
+    const jsonLd = (value: unknown) => ({ kind: 'json-ld', scope: roomsUrl, jsonLd: JSON.stringify(value), evidenceIds: [id('"@type":"Hotel"')], notes });
+    const base = { '@context': 'https://schema.org', '@type': 'Hotel', name: 'Hotel Example' };
+    const invented = {
+      ...base, '@id': '//evil.example/#org', url: '/book-now', sameAs: ['www.evil.example', 'HTTPS://EVIL.EXAMPLE/'], slogan: 'www.evil.example',
+      description: 'Our 45 rooms look over the valley of Andorra la Vella, book at https://evil.example/book or www.evil.example.',
+    };
+    const known = {
+      ...base, '@id': '#hotel', url: roomsUrl, image: '/img/room.jpg', sameAs: ['//www.instagram.com/hotelexample/'],
+      description: 'Our 45 rooms look over the valley of Andorra la Vella; see https://www.instagram.com/hotelexample/.',
+      containsPlace: { '@id': '_:room', '@type': 'https://schema.org/HotelRoom', name: 'Double room' },
+      makesOffer: { '@type': 'Offer', availability: 'https://schema.org/InStock' },
+    };
+    const rated = { ...base, aggregateRating: { '@type': 'AggregateRating', ratingValue: fullWidth('4.9') } };
+    const result = validateAnswer({ findings: [], proposals: [jsonLd(invented), jsonLd(known), jsonLd(rated)] }, context(plan));
+    assert.deepEqual(reasons(result), ['new-fact'], 'a rating in full-width digits is a number the page does not show');
+    const [first, second] = result.proposals.map(entry => (entry.kind === 'json-ld' ? { value: JSON.parse(entry.jsonLd) as unknown, placeholders: entry.placeholders } : undefined));
+    assert.deepEqual(first, {
+      value: {
+        ...base, '@id': ownerPlaceholder, url: ownerPlaceholder, sameAs: [ownerPlaceholder, ownerPlaceholder], slogan: ownerPlaceholder,
+        description: `Our 45 rooms look over the valley of Andorra la Vella, book at ${ownerPlaceholder} or ${ownerPlaceholder}.`,
+      },
+      placeholders: 7,
+    });
+    assert.deepEqual(second, { value: known, placeholders: 0 }, 'links on the page stay, written relative to it or not');
+  });
+
+  test('takes as a schema.org term only a whole term, and checks the links a type or a context names', () => {
+    const plan = planned('schema');
+    const jsonLd = (value: unknown) => ({ kind: 'json-ld', scope: roomsUrl, jsonLd: JSON.stringify(value), evidenceIds: [id('"@type":"Hotel"')], notes });
+    const base = { '@context': 'https://schema.org', '@type': 'Hotel', name: 'Hotel Example' };
+    const result = validateAnswer({
+      findings: [],
+      proposals: [
+        jsonLd({ ...base, '@context': ['https://schema.org', { '@vocab': 'https://schema.org/' }, 'https://evil.example/context.jsonld'], '@type': ['Hotel', 'https://evil.example/Hotel'], url: 'https://schema.org/../book' }),
+        jsonLd({ ...base, description: 'https://schema.org/Hotel Our 45 rooms look over the valley of Andorra la Vella, book at https://evil.example/book' }),
+        jsonLd({ ...base, description: 'https://schema.org/Hotel The best rooms in Andorra la Vella, rated 4.9 by 2000 guests' }),
+      ],
+    }, context(plan));
+    assert.deepEqual(reasons(result), ['new-fact'], 'a superlative or a rating after a schema.org address is still a fact the page must show');
+    assert.deepEqual(result.proposals.map(entry => (entry.kind === 'json-ld' ? [JSON.parse(entry.jsonLd), entry.placeholders] : undefined)), [
+      [{ ...base, '@context': ['https://schema.org', { '@vocab': 'https://schema.org/' }, ownerPlaceholder], '@type': ['Hotel', ownerPlaceholder], url: ownerPlaceholder }, 3],
+      [{ ...base, description: `${ownerPlaceholder} Our 45 rooms look over the valley of Andorra la Vella, book at ${ownerPlaceholder}` }, 2],
+    ]);
+  });
 });
 
 describe('validating language claims', () => {
-  // A mixed-language rule reaches the analyst only as a candidate from code; confirming it is still a language claim.
-  const plan: PassPlan = { pass: 'intl', page: rooms, sitePage: true, rules: [rule('intl-mixed-language-page')!], candidates: [], facts: [], contextPages: [] };
-  const claim = (words: readonly string[], extra: Record<string, unknown> = {}) => finding({
-    ruleId: 'intl-mixed-language-page', reasonCode: 'catalan-paragraph', severity: 'medium', language: 'en', discriminatingWords: words,
-    ...quote('Our 45 rooms', 'Our 45 rooms look over the valley'), ...extra,
+  // A Spanish page with Catalan paragraphs and a Dutch sentence. A mixed-language rule reaches the analyst only as a
+  // candidate from code; confirming it is still a language claim.
+  const [eAcute, oGrave, oAcute] = [0x00e9, 0x00f2, 0x00f3].map(point => String.fromCodePoint(point));
+  const spanishUrl = 'https://hotel.example/es/habitaciones/';
+  const spanish = 'Nuestras habitaciones dan al valle y el desayuno se sirve en el patio.';
+  const history = `El hotel naci${oAcute} en 1990 y abri${oAcute} su terraza; las habitaciones son las mismas cada mes y el precio es el mismo.`;
+  const catalan = `Les habitacions donen a la vall i tamb${eAcute} tenen balc${oAcute}, per${oGrave} els preus s${oAcute}n els mateixos.`;
+  const castle = 'El castell de la vila vella mira cap a la vall.';
+  const dutch = 'Het hotel ligt in de vallei van Andorra.';
+  const paragraphs = [spanish, history, catalan, castle, dutch].map(text => `<p>${text}</p>`).join('');
+  const html = `<!doctype html><html lang="es"><head><title>Habitaciones | Hotel Example</title></head><body><main>${paragraphs}</main></body></html>`;
+  const facts = site({ pages: [page(spanishUrl, { html, pageType: 'other' })] });
+  const local = collectSiteStrings(facts, selectPages(facts, 1));
+  const plan: PassPlan = { pass: 'intl', page: local.pages[0]!, sitePage: true, rules: [rule('intl-mixed-language-page')!], candidates: [], facts: [], contextPages: [] };
+  const intl: ValidationContext = {
+    plan, pack: buildPack({ trusted: 'x', sections: packSections(plan, local, audit.report), nonce: 'n' }), schema: passSchema(plan),
+    report: audit.report, strings: local, corpus: buildCorpus(facts, local), keyword: [], mythMatches: defaultMythMatcher,
+  };
+  const cited = (text: string) => {
+    const item = [...local.items.values()].find(entry => entry.text === text)!.id;
+    return { evidenceIds: [item], quotes: [{ evidenceId: item, text: text.split(' ').slice(0, 5).join(' ') }] };
+  };
+  const claim = (language: string | null, words: readonly string[], text = catalan, extra: Record<string, unknown> = {}) => finding({
+    ruleId: 'intl-mixed-language-page', scope: spanishUrl, reasonCode: 'catalan-paragraph', severity: 'medium', language, discriminatingWords: words, ...cited(text), ...extra,
+  });
+  const check = (entry: Record<string, unknown>) => reasons(validateAnswer({ findings: [entry] }, intl));
+
+  test('needs two words of the cited items that tell the claimed language apart from every other the detector knows', () => {
+    assert.deepEqual(check(claim('ca', [`tamb${eAcute}`, `per${oGrave}`])), []);
+    assert.deepEqual(check(claim('ca-AD', ['els', `s${oAcute}n`])), [], 'a region subtag claims its language');
+    assert.deepEqual(check(claim('ca', ['la', 'les'])), ['discriminating-words'], 'Spanish uses these words too');
+    assert.deepEqual(check(claim('ca', ['el', 'en'], spanish)), ['discriminating-words'], 'a Spanish sentence with shared words shows no Catalan');
+    assert.deepEqual(check(claim('ca', ['nuestras', 'habitaciones'], spanish)), ['discriminating-words'], 'Spanish words show Spanish');
+    assert.deepEqual(check(claim('ca', [`tamb${eAcute}`, 'aquesta'])), ['discriminating-words'], 'a word must be in the cited items');
   });
 
-  test('needs two discriminating words that appear in the cited items', () => {
-    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['valley', 'rooms'])] }, context(plan))), []);
-    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['vall', 'habitacions'])] }, context(plan))), ['discriminating-words']);
-    assert.deepEqual(reasons(validateAnswer({ findings: [claim(['valley', 'esmorzar'])] }, context(plan))), ['discriminating-words']);
+  test('refuses a claim without a language, and takes for other languages only words no known language uses', () => {
+    assert.deepEqual(check(claim(null, [`tamb${eAcute}`, `per${oGrave}`])), ['discriminating-words']);
+    assert.deepEqual(check(claim('und', ['preus', 'mateixos'])), ['discriminating-words']);
+    assert.deepEqual(check(claim('nl', ['het', 'ligt'], dutch)), []);
+    assert.deepEqual(check(claim('nl', [`tamb${eAcute}`, `per${oGrave}`])), ['discriminating-words'], 'Catalan words do not show Dutch');
+  });
+
+  test('counts only words of the claimed language\'s list, one at a time and with their accents', () => {
+    assert.deepEqual(check(claim('ca', [`naci${oAcute}`, `abri${oAcute}`], history)), ['discriminating-words'], 'Spanish verbs that end like Catalan words show no Catalan');
+    assert.deepEqual(check(claim('es', ['castell', 'vella'], castle)), ['discriminating-words'], 'Catalan words written with ll show no Spanish');
+    assert.deepEqual(check(claim('ca', [`s${oAcute}n`, `m${eAcute}s`], history)), ['discriminating-words'], 'the Spanish son and mes are not the Catalan words');
+    assert.deepEqual(check(claim('ca', ['els preus', 'els mateixos'])), ['discriminating-words'], 'two phrases around one word show one word');
+    assert.deepEqual(check(claim('nl', ['hotel', '1990'], history)), ['discriminating-words'], 'a number is a word of no language');
   });
 
   test('never accepts a recommendation to add languages or markets', () => {
-    const result = validateAnswer({ findings: [claim(['valley', 'rooms'], { notes: { ...notes, en: 'Add new languages to reach visitors from more countries.' } })] }, context(plan));
+    const result = validateAnswer({ findings: [claim('ca', [`tamb${eAcute}`, `per${oGrave}`], catalan, { notes: { ...notes, en: 'Add new languages to reach visitors from more countries.' } })] }, intl);
     assert.deepEqual(reasons(result), ['new-market']);
   });
 });
