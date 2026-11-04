@@ -45,6 +45,7 @@ before(async () => {
         { siteUrl: 'https://example.com/', permissionLevel: 'siteFullUser' },
         { siteUrl: 'sc-domain:example.com', permissionLevel: 'siteOwner' },
         { siteUrl: 'sc-domain:other.org', permissionLevel: 'siteOwner' },
+        { siteUrl: 'https://pending.example.net/', permissionLevel: 'siteUnverifiedUser' },
       ] });
       if (url.pathname.endsWith('/searchAnalytics/query')) {
         queries += 1;
@@ -139,6 +140,28 @@ describe('Search Console data', () => {
     assert.equal(data.inspections[0]?.coverageState, 'Submitted and indexed');
     assert.equal(data.inspections[0]?.richResults[0]?.type, 'Breadcrumbs');
     assert.deepEqual([data.sitemaps[0]?.errors, data.truncated], [1, false]);
+  });
+
+  test('says why no property was read, naming an option only when the caller has one', async () => {
+    const http = client();
+    const token = { token: 'ok', expiresAt: Date.now() + 1000, source: 'environment' as const };
+    const read = (options: { url: string; siteUrl?: string; propertyOption?: string }) => fetchGscData(http, token, { ...options, endpoints: endpoints() });
+    try {
+      await assert.rejects(read({ url: 'https://unrelated.net/' }), (error: Error) => {
+        assert.equal(error.message, 'No verified Search Console property covers https://unrelated.net. Add and verify the site in Search Console.');
+        return true;
+      });
+      await assert.rejects(read({ url: 'https://unrelated.net/', propertyOption: '--gsc-property' }),
+        /Add and verify the site in Search Console, or pass the property that holds its data with --gsc-property, for example sc-domain:example\.com\.$/u);
+      for (const siteUrl of ['sc-domain:missing.example', 'https://pending.example.net/']) {
+        await assert.rejects(read({ url: 'https://example.com/', siteUrl, propertyOption: '--gsc-property' }), (error: Error) => {
+          assert.equal(error.message, `${siteUrl} is not a verified Search Console property this credential can read.`);
+          return true;
+        });
+      }
+    } finally {
+      await http.close();
+    }
   });
 
   test('turns an expired token into an authentication error', async () => {
