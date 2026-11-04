@@ -202,8 +202,9 @@ async function auditCommand(args: string[]): Promise<number> {
   const source = values.source === undefined ? undefined : resolve(values.source);
   if (source !== undefined) {
     if (!(await stat(source).then(info => info.isDirectory(), () => false))) throw new UsageError('--source must be the folder of the site\'s repository.');
-    // The repository is only read; a report folder inside it could end up committed with the site.
+    // The repository is only read; a report or prompt folder inside it could end up committed with the site.
     if (isInside(source, outRoot)) throw new UsageError('--out must be outside the --source repository.');
+    if (ai.dryRunDir !== undefined && isInside(source, ai.dryRunDir)) throw new UsageError('--dry-run must be outside the --source repository.');
   }
   const botActivity = botsFromCloudflare && botLogs.length > 0 ? 'cloudflare+logs' : botsFromCloudflare ? 'cloudflare' : botLogs.length > 0 ? 'logs' : 'none';
   const recordedOptions = {

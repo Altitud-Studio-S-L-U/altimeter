@@ -56,12 +56,16 @@ describe('altimeter audit', () => {
     assert.deepEqual([report.run.options.provider, report.ai], ['none', undefined]);
   });
 
-  test('never writes the report inside the --source repository', async () => {
+  test('never writes the report or a dry run inside the --source repository', async () => {
     const repo = join(work, 'site-repo');
     await mkdir(repo, { recursive: true });
     const inside = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--source', repo, '--out', join(repo, 'reports')]);
     assert.equal(inside.status, 2);
     assert.match(inside.stderr, /outside the --source repository/u);
+    const dryRun = await run(['audit', `${origin}/`, '--no-render', '--allow-private-network', '--source', repo, '--out', join(work, 'dry-run-out'), '--dry-run', join(repo, 'prompts')]);
+    assert.equal(dryRun.status, 2, dryRun.stderr);
+    assert.equal(dryRun.stderr, '--dry-run must be outside the --source repository.\n');
+    assert.deepEqual(await readdir(repo), [], 'nothing was written in the repository');
     assert.equal((await run(['audit', `${origin}/`, '--source', join(work, 'missing')])).status, 2);
   });
 
