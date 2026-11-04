@@ -95,8 +95,8 @@
     "fix": "No s'aplica (metodologia). No executis mai diverses instàncies de Lighthouse en paral·lel en una mateixa màquina.",
     "messages": {
       "fail": "El protocol d'execució de Lighthouse limita l'estabilitat dels valors de laboratori.",
-      "fail:few-runs": "Els valors de laboratori provenen de la mediana de {validRuns} execucions vàlides de Lighthouse de {runs}; {recommended} execucions donen una mediana més estable.",
-      "fail:run-warnings": "Lighthouse ha indicat {count} advertiments d'execució, de manera que pot ser que els valors de laboratori no siguin fiables."
+      "fail:few-runs": "Els valors de laboratori provenen de la mediana de les execucions vàlides de Lighthouse ({validRuns} de {runs}); {recommended} execucions donen una mediana més estable.",
+      "fail:run-warnings": "Lighthouse ha indicat {count} advertiment(s) d'execució, de manera que pot ser que els valors de laboratori no siguin fiables."
     }
   },
   "perf-lab-performance-score": {
@@ -195,9 +195,9 @@
     "why": "Els scripts i els fulls d'estil síncrons del head endarrereixen la primera renderització. Lighthouse 13.6 els indica a render-blocking-insight, que va substituir render-blocking-resources.",
     "fix": "Fes servir defer o async als scripts; insereix en línia el CSS crític petit i carrega la resta sense bloquejar; redueix la mida del CSS.",
     "messages": {
-      "fail": "{count} scripts externs del head bloquegen l'analitzador: {scripts}.",
-      "fail:parser-blocking-script": "{count} scripts externs del head bloquegen l'analitzador (sense async, defer ni type=module): {scripts}.",
-      "fail:consent-script": "{count} scripts de consentiment del head es carreguen de manera síncrona: {scripts}. Algunes eines de consentiment s'han d'executar primer; comprova si el proveïdor ofereix un carregador asíncron que continuï bloquejant les etiquetes fins al consentiment.",
+      "fail": "Scripts externs del head que bloquegen l'analitzador: {count} ({scripts}).",
+      "fail:parser-blocking-script": "Scripts externs del head que bloquegen l'analitzador (sense async, defer ni type=module): {count} ({scripts}).",
+      "fail:consent-script": "Scripts de consentiment del head que es carreguen de manera síncrona: {count} ({scripts}). Algunes eines de consentiment s'han d'executar primer; comprova si el proveïdor ofereix un carregador asíncron que continuï bloquejant les etiquetes fins al consentiment.",
       "fail:render-blocking-requests": "Lighthouse estima que treure del camí crític les sol·licituds que bloquegen la renderització estalvia {savings} d'FCP de laboratori: {requests}."
     }
   },
@@ -224,7 +224,7 @@
     "messages": {
       "fail": "Les respostes de text s'envien sense compressió gzip, Brotli ni zstd.",
       "fail:document": "La resposta HTML ({size} descodificada) s'envia sense compressió gzip, Brotli ni zstd.",
-      "fail:assets": "{count} recursos de text propis s'envien sense compressió: {urls}."
+      "fail:assets": "Recursos de text propis que s'envien sense compressió: {count} ({urls})."
     }
   },
   "perf-http-protocol": {
@@ -241,8 +241,8 @@
     "why": "Els recursos estàtics amb una vida de memòria cau curta o inexistent es tornen a baixar en les visites repetides. Lighthouse 13.6 ho indica a cache-insight. El benefici només s'aplica a les visites repetides.",
     "fix": "Afegeix una empremta als noms de fitxer dels recursos i serveix-los amb Cache-Control: public, max-age=31536000, immutable (immutable és opcional); serveix l'HTML amb no-cache més un ETag.",
     "messages": {
-      "fail": "{count} recursos estàtics propis tenen una vida de memòria cau inferior a 30 dies o no en tenen: {urls}.",
-      "fail:fingerprinted": "{count} recursos estàtics propis tenen una vida de memòria cau inferior a 30 dies o no en tenen: {urls}. {hashed} d'aquests tenen noms de fitxer amb empremta, que es poden emmagatzemar a la memòria cau durant un any."
+      "fail": "Recursos estàtics propis amb una vida de memòria cau inferior a 30 dies o sense: {count} ({urls}).",
+      "fail:fingerprinted": "Recursos estàtics propis amb una vida de memòria cau inferior a 30 dies o sense: {count} ({urls}). D'aquests, amb noms de fitxer amb empremta, que es poden emmagatzemar a la memòria cau durant un any: {hashed}."
     }
   },
   "perf-html-no-store": {
@@ -259,7 +259,7 @@
     "why": "web.dev inclou la memòria cau endavant/enrere entre les millores més efectives per a l'LCP i el CLS en les navegacions per l'historial. Lighthouse 13.6 en prova l'aptitud a l'auditoria bf-cache.",
     "fix": "Elimina els gestors d'unload, evita els no-store innecessaris, tanca IndexedDB/WebSocket/fetch a pagehide i evita window.opener (fes servir noopener).",
     "messages": {
-      "fail": "Lighthouse ha trobat {count} motius corregibles que deixen la pàgina fora de la memòria cau endavant/enrere: {reasons}."
+      "fail": "Motius corregibles que, segons Lighthouse, deixen la pàgina fora de la memòria cau endavant/enrere: {count} ({reasons})."
     }
   },
   "perf-unload-handlers": {
@@ -275,8 +275,8 @@
     "why": "web.dev documenta que les imatges sense atributs width i height (o sense aspect-ratio) causen desplaçaments de disseny quan es carreguen. Lighthouse 13.6 les indica a l'auditoria unsized-images.",
     "fix": "Afegeix els atributs width i height (mantén la mateixa relació d'aspecte entre les opcions de srcset) o estableix aspect-ratio al CSS.",
     "messages": {
-      "fail": "{count} imatges no tenen dimensions explícites; {aboveFold} són a la primera àrea de visualització de l'execució de laboratori.",
-      "fail:below-fold": "{count} imatges no tenen dimensions explícites, totes per sota de la primera àrea de visualització de l'execució de laboratori."
+      "fail": "{count} imatge(s) no tenen dimensions explícites (a la primera àrea de visualització de l'execució de laboratori: {aboveFold}).",
+      "fail:below-fold": "{count} imatge(s) no tenen dimensions explícites, i cap no és a la primera àrea de visualització de l'execució de laboratori."
     }
   },
   "perf-cls-culprits": {
@@ -284,8 +284,8 @@
     "why": "Lighthouse 13.6 atribueix a cls-culprits-insight els desplaçaments de disseny a causes com els elements multimèdia sense mida, el contingut injectat i les fonts web. Sovint, l'element desplaçat no n'és la causa.",
     "fix": "Corregeix la causa que indica l'anàlisi: dimensions, espai reservat, mètriques de les fonts de reserva, animacions amb transform.",
     "messages": {
-      "fail": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score} ({clusters} clústers per sobre de 0,05). Causes arrel que atribueix Lighthouse: {causes}.",
-      "fail:no-root-cause": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score} ({clusters} clústers per sobre de 0,05) i Lighthouse no hi ha atribuït cap causa arrel; l'element que s'ha mogut no n'és necessàriament la causa."
+      "fail": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score} (clústers per sobre de 0,05: {clusters}). Causes arrel que atribueix Lighthouse: {causes}.",
+      "fail:no-root-cause": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score} (clústers per sobre de 0,05: {clusters}) i Lighthouse no hi ha atribuït cap causa arrel; l'element que s'ha mogut no n'és necessàriament la causa."
     }
   },
   "perf-embed-reserved-space": {
@@ -293,9 +293,9 @@
     "why": "web.dev recomana reservar espai per als anuncis, els iframes i els elements incrustats, perquè el contingut que es carrega en contenidors sense mida desplaça la pàgina.",
     "fix": "Reserva la mida més probable amb min-height/aspect-ratio; mantén l'espai reservat quan no s'ompli cap anunci; col·loca els espais dinàmics més avall a l'àrea de visualització.",
     "messages": {
-      "fail": "{count} elements incrustats no tenen espai reservat.",
-      "fail:attributed-shift": "{count} elements incrustats no tenen width i height ni alçada reservada, i Lighthouse atribueix un desplaçament de disseny de laboratori a un iframe injectat.",
-      "fail:unsized-embed": "{count} elements incrustats no tenen width i height ni una alçada reservada en línia; un full d'estil o un contenidor encara pot reservar l'espai."
+      "fail": "Elements incrustats sense espai reservat: {count}.",
+      "fail:attributed-shift": "Elements incrustats sense width i height ni alçada reservada: {count}. Lighthouse atribueix un desplaçament de disseny de laboratori a un iframe injectat.",
+      "fail:unsized-embed": "Elements incrustats sense width i height ni una alçada reservada en línia: {count}. Un full d'estil o un contenidor encara pot reservar l'espai."
     }
   },
   "perf-non-composited-animations": {
@@ -303,7 +303,7 @@
     "why": "Les animacions de propietats que provoquen recàlculs de disseny, com top, margin o width, s'executen al fil principal i poden causar desplaçaments de disseny. Lighthouse 13.6 les indica a non-composited-animations.",
     "fix": "Anima transform/opacity en lloc seu; respecta prefers-reduced-motion.",
     "messages": {
-      "fail": "{count} elements executen animacions que el navegador no pot compondre: {reasons}."
+      "fail": "{count} element(s) executen animacions que el navegador no pot compondre: {reasons}."
     }
   },
   "perf-font-display": {
@@ -311,7 +311,7 @@
     "why": "Les fonts web sense font-display: swap o optional amaguen el text fins que es carrega la font. Lighthouse 13.6 ho indica a font-display-insight.",
     "fix": "Fes servir font-display: swap per a la marca i els titulars, i optional per al text del cos; afegeix size-adjust i substitucions de mètriques a la font de reserva per reduir el CLS.",
     "messages": {
-      "fail": "{count} fonts web mantenen el text invisible mentre es carreguen: {fonts}."
+      "fail": "{count} font(s) web mantenen el text invisible mentre es carreguen: {fonts}."
     }
   },
   "perf-font-preload-crossorigin": {
@@ -319,7 +319,7 @@
     "why": "Les fonts s'obtenen en mode CORS, de manera que una precàrrega o una preconnexió per a una font sense l'atribut crossorigin no es reutilitza i la font es baixa dues vegades.",
     "fix": "Afegeix crossorigin (anonymous) a les precàrregues de fonts i a la preconnexió a l'origen de les fonts.",
     "messages": {
-      "fail": "{count} indicacions de precàrrega o de preconnexió de fonts no tenen l'atribut crossorigin, de manera que la sol·licitud de la font no les pot reutilitzar."
+      "fail": "{count} indicació(ns) de precàrrega o de preconnexió de fonts no tenen l'atribut crossorigin, de manera que la sol·licitud de la font no en pot reutilitzar cap."
     }
   },
   "perf-font-format": {
@@ -327,8 +327,8 @@
     "why": "WOFF2 és el format de font més petit amb una compatibilitat àmplia, i molts fitxers de fonts a la càrrega inicial competeixen amb els recursos crítics.",
     "fix": "Serveix només WOFF2, fes subconjunts amb unicode-range i fes servir menys famílies o gruixos, o una font variable quan estalviï bytes.",
     "messages": {
-      "fail": "{count} fitxers de fonts no són WOFF2: {fonts}.",
-      "fail:not-woff2": "{count} fitxers de fonts no són WOFF2: {fonts}.",
+      "fail": "{count} fitxer(s) de fonts no són WOFF2: {fonts}.",
+      "fail:not-woff2": "{count} fitxer(s) de fonts no són WOFF2: {fonts}.",
       "fail:many-files": "La pàgina carrega {count} fitxers de fonts ({size}) al laboratori; el criteri de més de sis és una heurística de l'eina, no un límit."
     }
   },
@@ -339,7 +339,7 @@
     "messages": {
       "fail": "Les indicacions de preconnexió de la pàgina no corresponen a les sol·licituds que fa.",
       "fail:too-many": "La pàgina declara {count} indicacions de preconnexió. El criteri de més de quatre és una heurística: cadascuna obre una connexió que competeix amb les sol·licituds crítiques.",
-      "fail:combined-rel": "{count} elements link combinen preconnect i dns-prefetch en un sol atribut rel; es recomanen elements link separats.",
+      "fail:combined-rel": "{count} element(s) link combinen preconnect i dns-prefetch en un sol atribut rel; es recomanen elements link separats.",
       "fail:unused": "Els orígens amb preconnexió no han rebut cap sol·licitud de laboratori en els primers 10 segons: {origins}.",
       "fail:missing": "Lighthouse estima que una preconnexió acceleraria les sol·licituds a {origins}."
     }
@@ -359,7 +359,7 @@
     "messages": {
       "fail": "Les imatges es podrien lliurar amb menys bytes (estimació de laboratori).",
       "fail:lcp-image": "La imatge LCP {url} podria ser uns {savings} més petita amb canvis de mida, de format o de compressió (estimació de laboratori).",
-      "fail:images": "{count} imatges podrien estalviar uns {savings} en total amb canvis de mida, de format o de compressió (estimació de laboratori)."
+      "fail:images": "{count} imatge(s) podrien estalviar uns {savings} en total amb canvis de mida, de format o de compressió (estimació de laboratori)."
     }
   },
   "perf-long-tasks": {
@@ -367,7 +367,7 @@
     "why": "Les tasques del fil principal de més de 50 ms bloquegen la gestió de l'entrada i la renderització. web.dev documenta com dividir-les per millorar la capacitat de resposta.",
     "fix": "Divideix la feina i cedeix el control; divideix el codi; ajorna la hidratació dels components de sota la part visible; elimina les etiquetes en desús.",
     "messages": {
-      "fail": "{count} tasques llargues bloquegen el fil principal durant {blocking} més enllà dels 50 ms de cadascuna a la càrrega de laboratori. Scripts amb més temps d'execució: {scripts}."
+      "fail": "Les tasques llargues ({count}) bloquegen el fil principal durant {blocking} més enllà dels 50 ms de cadascuna a la càrrega de laboratori. Scripts amb més temps d'execució: {scripts}."
     }
   },
   "perf-forced-reflow": {
@@ -458,7 +458,7 @@
     "why": "Servir l'HTML des d'un CDN o d'una memòria cau a la vora de la xarxa escurça el TTFB per als usuaris llunyans. La detecció es basa en les capçaleres de resposta i és heurística, de manera que la regla diu que no s'han detectat marcadors de CDN, no que no hi hagi cap CDN.",
     "fix": "Serveix a través d'un CDN; emmagatzema breument l'HTML estàtic o anònim a la memòria cau de la vora de la xarxa; evita els paràmetres de consulta únics que eludeixen la memòria cau.",
     "messages": {
-      "fail": "No s'han detectat marcadors de CDN a les capçaleres de resposta de {count} pàgines HTML auditades. Alguns CDN eliminen els seus marcadors, de manera que això no demostra que no es faci servir cap CDN."
+      "fail": "No s'han detectat marcadors de CDN a les capçaleres de resposta de les pàgines HTML auditades ({count}). Alguns CDN eliminen els seus marcadors, de manera que això no demostra que no es faci servir cap CDN."
     }
   },
   "perf-consent-lab-bias": {
