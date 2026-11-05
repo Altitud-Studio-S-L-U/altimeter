@@ -2,6 +2,7 @@
 
 Evidence-based SEO audits for websites, with model analysis that is checked against the evidence before it reaches the report.
 
+[![npm](https://img.shields.io/npm/v/@altitud-studio/altimeter)](https://www.npmjs.com/package/@altitud-studio/altimeter)
 [![CI](https://github.com/Altitud-Studio-S-L-U/altimeter/actions/workflows/ci.yml/badge.svg)](https://github.com/Altitud-Studio-S-L-U/altimeter/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Altitud-Studio-S-L-U/altimeter/actions/workflows/codeql.yml/badge.svg)](https://github.com/Altitud-Studio-S-L-U/altimeter/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Altitud-Studio-S-L-U/altimeter/badge)](https://scorecard.dev/viewer/?uri=github.com/Altitud-Studio-S-L-U/altimeter)
@@ -9,8 +10,6 @@ Evidence-based SEO audits for websites, with model analysis that is checked agai
 [![Node.js 24](https://img.shields.io/badge/Node.js-%E2%89%A524-43853d?logo=node.js&logoColor=white)](package.json)
 [![Rules](https://img.shields.io/badge/rules-364%20with%20primary%20sources-2b4c7e)](docs/rules.md)
 [![Security policy](https://img.shields.io/badge/security-policy-44546a)](SECURITY.md)
-
-> **Status:** in development. Version 0.1.0 is not published yet; the commands below describe the interface as it is built.
 
 Altimeter collects the facts that search engines act on and checks them against a catalog of rules in which every rule cites a primary source, such as Google Search Central, web.dev, Bing Webmaster Guidelines, schema.org or an RFC, with the date that source was last verified. Claims that current guidance contradicts, such as keyword density, a minimum word count or fixed title lengths, are documented as myths and never reported.
 

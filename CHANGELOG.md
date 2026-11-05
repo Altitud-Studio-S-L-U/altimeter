@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-05
+
 ### Added
 
 - `altimeter audit`: the response and every redirect hop, robots.txt (RFC 9309), sitemaps, URL variants, an unknown URL, hreflang alternates, crawler user agent probes, TLS, language negotiation and referenced resources; a Googlebot-like render in Chrome plus a scrolled and an unblocked render; Lighthouse lab data and Chrome UX Report field data; and an optional polite crawl (`--crawl`).
