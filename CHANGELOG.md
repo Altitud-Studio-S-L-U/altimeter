@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+### Added
+
+- Releases attach the package that the release workflow builds from the tag, with its build provenance attestation; `gh attestation verify` checks a downloaded package against it.
+
 ## [0.1.0] - 2026-11-05
 
 ### Added

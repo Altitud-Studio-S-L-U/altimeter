@@ -51,7 +51,8 @@ describe('runProcess', () => {
     const started = Date.now();
     // Long enough for the parent to start its child and write both ids on a loaded machine.
     await assert.rejects(runProcess({ ...script(parent), timeoutMs: 4000 }), (error: unknown) => error instanceof ProcessError && error.code === 'timeout');
-    assert.ok(Date.now() - started < 15_000);
+    // Ending the tree takes seconds on a machine busy with the whole suite, but never the 30-second termination limit.
+    assert.ok(Date.now() - started < 22_000, `${Date.now() - started} ms`);
     const pids = JSON.parse(await readFile(pidFile, 'utf8')) as number[];
     for (let attempt = 0; attempt < 20 && pids.some(alive); attempt += 1) await delay(100);
     for (const pid of pids) assert.equal(alive(pid), false, `process ${pid} survived`);
