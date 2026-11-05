@@ -48,10 +48,6 @@ jobs:
         run: test "v$(node -p "require('./package.json').version")" = "$TAG"
       - run: npm run build
       - name: Publish to npm with provenance
-        # npm sets up trusted publishing only for a package that exists, so the first release publishes with the
-        # NPM_TOKEN secret of the npm environment; later releases use trusted publishing and need no secret.
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public
       - name: Create the GitHub release
         env:

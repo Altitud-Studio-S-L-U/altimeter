@@ -2,7 +2,7 @@
 
 Evidence-based SEO audits for websites, with model analysis that is checked against the evidence before it reaches the report.
 
-[![npm](https://img.shields.io/npm/v/@altitud-studio/altimeter)](https://www.npmjs.com/package/@altitud-studio/altimeter)
+[![Release](https://img.shields.io/github/v/release/Altitud-Studio-S-L-U/altimeter)](https://github.com/Altitud-Studio-S-L-U/altimeter/releases/latest)
 [![CI](https://github.com/Altitud-Studio-S-L-U/altimeter/actions/workflows/ci.yml/badge.svg)](https://github.com/Altitud-Studio-S-L-U/altimeter/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Altitud-Studio-S-L-U/altimeter/actions/workflows/codeql.yml/badge.svg)](https://github.com/Altitud-Studio-S-L-U/altimeter/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Altitud-Studio-S-L-U/altimeter/badge)](https://scorecard.dev/viewer/?uri=github.com/Altitud-Studio-S-L-U/altimeter)
@@ -28,10 +28,10 @@ Each failed check is also a task for a coding agent, with the files that most li
 
 ## Install
 
-Altimeter needs Node.js 24 or newer (26 is recommended) and, for rendering and Lighthouse, Chrome or Chromium. Set `CHROME_PATH` when Chrome is not found automatically.
+Altimeter needs Node.js 24 or newer (26 is recommended) and, for rendering and Lighthouse, Chrome or Chromium. Set `CHROME_PATH` when Chrome is not found automatically. Each [release](https://github.com/Altitud-Studio-S-L-U/altimeter/releases) attaches the built package, which npm installs from its URL:
 
 ```sh
-npm install --global @altitud-studio/altimeter
+npm install --global https://github.com/Altitud-Studio-S-L-U/altimeter/releases/download/v0.1.0/altitud-studio-altimeter-0.1.0.tgz
 altimeter doctor
 ```
 
