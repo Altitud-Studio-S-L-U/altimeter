@@ -1,0 +1,2285 @@
+[
+  {
+    "id": "schema-extract-inventory",
+    "category": "schema",
+    "title": "Extract every structured data item in all three syntaxes, raw and rendered",
+    "why": "Google reads JSON-LD, Microdata and RDFa, in the head or the body, from the raw and the rendered HTML. An inventory of every item in both versions is the input for every other structured data rule.",
+    "fix": "No fix; this is the evidence base every other schema-* rule cites.",
+    "maxSeverity": "info",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "none (inventory)",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://www.w3.org/TR/json-ld11/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Parse JSON-LD (<script> whose type MIME essence equals application/ld+json, case-insensitive, in head or body), Microdata (itemscope/itemtype/itemprop/itemref/itemid) and RDFa (vocab/typeof/property/resource/about/prefix) from BOTH the raw HTML and the rendered DOM. Normalize everything to one graph: expand @graph, arrays and nested nodes, and record syntax, source (raw|rendered|both), the JSON path or DOM selector, and an evidence id for each node. Google says all three syntaxes are equally fine when valid and that JSON-LD can sit in head or body. Do not flag markup for being in the body. Ignore Open Graph/Twitter meta (not schema.org) and microformats (h-card), but record them as context. Some CMSs emit multiple JSON-LD blocks; treat them as one page graph."
+  },
+  {
+    "id": "schema-jsonld-syntax-error",
+    "category": "schema",
+    "title": "JSON-LD block is not valid JSON",
+    "why": "A JSON-LD block that is not valid JSON is discarded whole, and Google's reports do not list items they cannot parse, so the failure is silent.",
+    "fix": "Serialize with a JSON encoder (JSON.stringify / json_encode) instead of string templates. Escape '</' as '<\\/' inside strings.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "web-standard",
+    "thresholds": "fail (high) = any JSON-LD block in the raw HTML or the rendered DOM that does not parse as JSON",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/generate-structured-data-with-javascript",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://www.w3.org/TR/json-ld11/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For each application/ld+json script, run a strict JSON parse on its text content after trimming whitespace. Fail on trailing commas, single quotes, unescaped control characters or newlines inside strings, JS comments, concatenated objects without an array, HTML entities in place of JSON escapes, a wrapping <!-- --> or CDATA, or an empty script. Google's URL Inspection API states that items that can't be parsed because of syntax problems are not listed, so a broken block is silent in Search Console. Severity is high whatever the block carries. Report the line and column of the parse error."
+  },
+  {
+    "id": "schema-jsonld-context",
+    "category": "schema",
+    "title": "JSON-LD has a missing or non-schema.org @context",
+    "why": "Under JSON-LD 1.1, terms expand to schema.org IRIs only through an @context. Without a resolvable schema.org context, types and properties have no defined meaning.",
+    "fix": "Use \"@context\": \"https://schema.org\" on each top-level object or once on the @graph wrapper.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "web-standard",
+    "thresholds": "fail = no resolvable schema.org context for a node with @type",
+    "sources": [
+      {
+        "url": "https://www.w3.org/TR/json-ld11/",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://schema.org/docs/developers.html",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Every top-level JSON-LD object, or its @graph container, must declare @context resolving to schema.org: 'https://schema.org', 'http://schema.org', with or without a trailing slash, or an object/array containing one of these. Fail if @context is absent, misspelled (e.g. 'schema.org' without a scheme, 'https://www.schema.org') or points elsewhere without mapping schema.org terms. http and https contexts are equivalent (schema.org publishes http and https vocabulary files). Nested nodes inherit context; do not flag them. A context of 'schema.org' without a scheme is a relative IRI and is not reliably expanded."
+  },
+  {
+    "id": "schema-microdata-rdfa-structure",
+    "category": "schema",
+    "title": "Microdata or RDFa is structurally broken",
+    "why": "Microdata and RDFa express items through attributes on HTML elements. Properties outside any item or unresolvable types are not read as part of the intended entity.",
+    "fix": "Wrap properties in the correct itemscope with itemtype=\"https://schema.org/Type\", or migrate to JSON-LD.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "web-standard",
+    "thresholds": "medium = an itemtype or RDFa typeof that names a Google feature type but does not resolve; low = an itemprop outside any itemscope, a top-level itemscope without itemtype, an itemref to a missing id, or any other unresolved type",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://schema.org/docs/datamodel.html",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Microdata: flag itemprop outside any itemscope (and not reached through itemref), itemtype that is not an absolute schema.org URL, itemref ids missing from the document, an itemscope with no itemtype at the top level, and properties whose value comes from the wrong attribute (e.g. a URL property on a non-link element without content/href). RDFa: flag typeof without vocab/prefix resolution and property values with no resolvable subject. Google's discussion forum docs recommend Microdata/RDFa over JSON-LD for forum threads, so Microdata is not a defect in itself. Theme frameworks often leave stray itemprop (e.g. hentry) that does no harm; when no feature type is involved, cap at low."
+  },
+  {
+    "id": "schema-unknown-type",
+    "category": "schema",
+    "title": "@type is not a term in the current schema.org vocabulary",
+    "why": "A @type that is not a term in the current schema.org vocabulary, often a misspelling, is not recognised by consumers, so the item does not qualify for features that require that type.",
+    "fix": "Use the exact case-sensitive schema.org type name; the validator's suggestion is usually correct.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "web-standard",
+    "thresholds": "fail = type not in current vocabulary; severity high if the intended type is a Google feature type, else medium",
+    "sources": [
+      {
+        "url": "https://schema.org/docs/developers.html",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://schema.org/docs/releases.html",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Resolve each @type, itemtype or typeof against schemaorg-current-https (release in use, e.g. 30.1). Fail if it is absent, including case errors ('Localbusiness', 'Blogposting'), plurals and invented types. Map near-misses with case-insensitive or Levenshtein ≤2 suggestions. Accept extension or external vocabularies only when explicitly namespaced. Terms in the 'all' file but not in 'current' are retired or attic terms; see schema-superseded-pending-term. Pin the vocabulary release in the report. Multiple types in an array are legal (the datamodel permits combining types, e.g. Book+Product)."
+  },
+  {
+    "id": "schema-unknown-property",
+    "category": "schema",
+    "title": "Property is not defined in schema.org",
+    "why": "A property that schema.org does not define is ignored. When it is a misspelled required property of a Google feature, the item becomes ineligible.",
+    "fix": "Rename to the defined property or remove it.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "web-standard",
+    "thresholds": "fail = property not in the vocabulary; medium when the closest defined property is required by a Google feature for that type, low otherwise",
+    "sources": [
+      {
+        "url": "https://schema.org/docs/developers.html",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For each property key (excluding JSON-LD keywords @id, @type, @context, @graph, @language, @value, @list, @reverse), check that it exists as a schema.org property in the current vocabulary. Flag typos and case errors ('dateModifed', 'SameAs', 'telephoneNumber', 'logoUrl'). Medium when the intended property is required by a Google feature (e.g. 'startdate' on Event), low otherwise. Custom properties under another declared namespace are not errors. The -input and -output annotations that schema.org defines for Action properties, such as query-input on a SearchAction, are not unknown properties."
+  },
+  {
+    "id": "schema-domain-range-mismatch",
+    "category": "schema",
+    "title": "Property used on a type outside its domain, or value of an unexpected type",
+    "why": "schema.org describes expected types as guidance and accepts text where an entity is expected. Mismatches matter only where a Google feature requires a specific type, which the feature rules check.",
+    "fix": "Move the property to the correct node or nest a properly typed node instead of a string.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "web-standard",
+    "thresholds": "domain mismatch = low; range mismatch between typed nodes = low. Type requirements of Google features (offers as Offer, address as PostalAddress, author as Person or Organization) are reported by the feature rules.",
+    "sources": [
+      {
+        "url": "https://schema.org/docs/datamodel.html",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Using the vocabulary's domainIncludes and rangeIncludes plus subclass inheritance, flag (a) a property on a type that is not in its domainIncludes or a subtype of one, and (b) a node value whose @type is not in rangeIncludes or a subtype of one. Treat Text, URL and Role values as acceptable for any Thing-expecting property (schema.org datamodel), but report them as info. schema.org's datamodel calls expected types 'guidelines' and accepts text where an entity is expected ('some data is better than none'). Do not report range mismatches as errors unless a consumer requirement makes them errors. Multi-typed nodes take the union of domains."
+  },
+  {
+    "id": "schema-superseded-pending-term",
+    "category": "schema",
+    "title": "Superseded, retired or pending schema.org term",
+    "why": "schema.org marks some terms as superseded or retired and others as pending. Superseded terms still work but have replacements; pending terms may change.",
+    "fix": "Replace with the superseding term.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "web-standard",
+    "thresholds": "superseded/attic = low; pending = info",
+    "sources": [
+      {
+        "url": "https://schema.org/docs/developers.html",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://schema.org/inLanguage",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Flag a type or property that exists only in schemaorg-all (retired/attic), or that carries supersededBy in the vocabulary (e.g. 'language' superseded by 'inLanguage'). Mark pending-section terms as info. Google sometimes documents pending terms (e.g. Dataset measurementTechnique/variableMeasured were marked pending). A pending term that Google documents is not a defect."
+  },
+  {
+    "id": "schema-url-values",
+    "category": "schema",
+    "title": "URL-valued properties are invalid, relative, non-canonical or leak staging hosts",
+    "why": "URL-valued properties such as url, image, logo and sameAs must resolve to the intended resource. Values pointing to staging hosts, non-canonical URLs or invalid URLs send consumers to the wrong place. Relative values resolve against the page and are valid.",
+    "fix": "Emit absolute https URLs built from the production canonical origin.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "Organization.url or WebSite.url points to a root URL that redirects by locale to the home page that carries the markup; that is reported as info at most.",
+      "The value is a fragment @id such as #organization, which is a deliberate identifier."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "web-standard",
+    "thresholds": "medium = (a) an unparsable value or a scheme other than http(s), (c) an http URL on an https site for a same-site URL, (d) a local, staging or IP host other than the audited one, (e) a WebPage url that differs from the canonical; low = (b) relative or protocol-relative values, including (f) sameAs entries",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/organization",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/site-names",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://www.w3.org/TR/json-ld11/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For url, @id (when an IRI), image, logo, sameAs, item, contentUrl, embedUrl, thumbnailUrl, acquireLicensePage, license, menu, mainEntityOfPage and target: parse with WHATWG URL against the document base. Flag (a) unparsable URLs, (b) relative or protocol-relative values (they resolve but are fragile, especially in JS injection), (c) http:// on an https site, (d) hosts like localhost, *.local, staging/dev/test subdomains or IP addresses, (e) url values that differ from the page's canonical when the node is the page's main entity, (f) sameAs entries that are not absolute http(s) URLs. JSON-LD resolves relative IRIs against the HTML base, so relative values are not invalid. Report them as low, never as errors. Fragment @ids ('#organization') are deliberate. Google switched its own examples to hashtag @ids in Jan 2024."
+  },
+  {
+    "id": "schema-iso8601-values",
+    "category": "schema",
+    "title": "Dates, times and durations are not valid ISO 8601",
+    "why": "Google requires ISO 8601 dates, times and durations in structured data. Without a timezone offset Google assumes one, which can shift dates.",
+    "fix": "Emit dates with an ISO formatter. For DateTime include an offset, e.g. 2026-11-03T09:00:00+01:00.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "fail = unparsable date, duration or time: medium when a Google feature of the item lists the property, low otherwise; a full date-time without offset = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/article",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/video",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/recipe",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/local-business",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Date/DateTime properties (datePublished, dateModified, dateCreated, uploadDate, startDate, endDate, validFrom, validThrough, priceValidUntil, datePosted, foundingDate, expires): must parse as ISO 8601 (YYYY-MM-DD or full date-time). Durations (duration, prepTime, cookTime, totalTime, timeRequired) must match ^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(?=\\d)(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$. opens/closes must be hh:mm or hh:mm:ss in 24-hour time. Also flag localized dates ('3 de noviembre de 2026'), Unix timestamps, 'PT' alone, and minutes written as 'PT90' without a unit. Google says that without a timezone it uses Googlebot's timezone (Article, Video). A missing offset on a full DateTime is therefore medium, not an error. A date-only value is valid for Date properties."
+  },
+  {
+    "id": "schema-date-logic",
+    "category": "schema",
+    "title": "Date relationships are impossible or stale",
+    "why": "Google documents that a product snippet may not show when priceValidUntil is in the past and that leaving expired job postings live can lead to a manual action. Impossible date orders also make markup unreliable.",
+    "fix": "Generate dates from the CMS's real publish and modify timestamps. Remove or refresh priceValidUntil. Expire jobs with a past validThrough, 404/410 or by removing the markup.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "A past event is shown on an archive page that does not present it as upcoming."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "medium = dateModified before datePublished, endDate before startDate, validThrough before validFrom, a datePublished or uploadDate more than a day after the fetch, a past priceValidUntil, or a past VideoObject expires. Dates of different precision compare at the coarser one and values without offset get a 26-hour margin. The fetch time is the HTTP Date header of the page; without it the past and future checks are skipped. Expired job postings belong to schema-jobposting; past events are left to the analyst.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/product-snippet",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/job-posting",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Flag dateModified < datePublished; endDate < startDate; validThrough < validFrom; datePublished or uploadDate in the future (more than 1 day after the fetch time); Offer.priceValidUntil in the past; JobPosting.validThrough in the past while the page is live (200, indexable); VideoObject.expires in the past; Event.startDate in the past with no endDate, or endDate in the past while eventStatus is not EventCancelled/EventPostponed. Google: a product snippet 'may not display if priceValidUntil indicates a past date', and leaving expired jobs live 'can lead to a manual action'. Past events on archive pages are not violations; scope the event check to pages presenting the event as upcoming."
+  },
+  {
+    "id": "schema-enumeration-values",
+    "category": "schema",
+    "title": "Enumerated values are not schema.org enumeration members",
+    "why": "Google requires schema.org enumeration members for properties such as availability, itemCondition and employmentType. Free text or several conflicting values are not understood.",
+    "fix": "Map CMS states to the schema.org enumeration URL.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "fail = value outside the allowed set; also fail if more than one availability/itemCondition is given",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/job-posting",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/local-business",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "availability ∈ {BackOrder, Discontinued, InStock, InStoreOnly, LimitedAvailability, OnlineOnly, OutOfStock, PreOrder, PreSale, SoldOut}; itemCondition ∈ {NewCondition, RefurbishedCondition, UsedCondition}; eventStatus ∈ {EventScheduled, EventCancelled, EventPostponed, EventRescheduled, EventMovedOnline}; dayOfWeek = full schema.org day URL or English day name; returnPolicyCategory, returnFees, returnMethod, priceType (StrikethroughPrice; ListPrice only during transition), employmentType ∈ {FULL_TIME, PART_TIME, CONTRACTOR, TEMPORARY, INTERN, VOLUNTEER, PER_DIEM, OTHER}, baseSalary unitText ∈ {HOUR, DAY, WEEK, MONTH, YEAR}. Accept 'https://schema.org/InStock', 'http://schema.org/InStock' or 'InStock'; reject localized strings ('En stock', 'Disponible'). Google requires English enumeration values for opening hours (Aug 2023). EventMovedOnline is a schema.org value, but Google Event results require a physical location (online event properties were removed from the docs in Jun 2025)."
+  },
+  {
+    "id": "schema-placeholder-junk-values",
+    "category": "schema",
+    "title": "Placeholder, template or junk values in markup",
+    "why": "Google's structured data policies require markup to describe the page accurately. Template tokens, example.com URLs or placeholder text show that markup was published unfilled.",
+    "fix": "Fix the template so fields without data are omitted, not emitted empty.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "high = template tokens, values printed from unset variables (null, undefined, NaN), lorem ipsum, example.com/org/net hosts; medium = empty or null values, placeholder text, placeholder phone numbers; low = HTML tags or entities in name, headline, alternateName or description (not JobPosting.description). Zero-filled GTINs belong to schema-gtin-validity and zero ratings to schema-review-snippet.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/video",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Flag string values that are empty, whitespace-only, 'null', 'undefined', 'NaN', '[object Object]', unrendered template tokens ({{...}}, {%...%}, ${...}, %s, [name]), 'Lorem ipsum', 'TODO', 'example.com' hosts, 'Your Company', '000-000-0000', zero-filled GTINs, '0' ratings with nonzero counts, and HTML markup or entities inside text fields other than JobPosting.description. Google video docs say HTML tags in description are ignored, so HTML in text is low. JobPosting.description legitimately takes HTML (<p>, <ul>, <li>)."
+  },
+  {
+    "id": "schema-js-only-markup",
+    "category": "schema",
+    "title": "Structured data and key meta tags exist only after JavaScript rendering",
+    "why": "Google supports structured data injected by JavaScript, but documents that dynamically generated Product markup makes Shopping crawls less frequent and less reliable. Crawlers that do not run JavaScript, including most AI crawlers, see none of it.",
+    "fix": "Server-render JSON-LD, especially Product price and availability.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html",
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "Product/Offer only in the rendered DOM = medium; other types only in the rendered DOM = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/generate-structured-data-with-javascript",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Compare the node inventory from raw HTML with the rendered DOM. Flag nodes present only in the rendered DOM. Report Product/Offer nodes separately. Google explicitly supports JS-injected markup that is present in the rendered DOM, so never call it invisible to Google. Its only documented caveat is Product: 'dynamically-generated markup can make Shopping crawls less frequent and less reliable'. Crawlers that don't render (some AI crawlers, social scrapers) miss it; that impact claim is speculative and must be labeled so.",
+    "related": [
+      "ai-js-only-content",
+      "schema-raw-rendered-conflict"
+    ]
+  },
+  {
+    "id": "schema-raw-rendered-conflict",
+    "category": "schema",
+    "title": "Raw and rendered markup disagree",
+    "why": "When the server HTML and the rendered DOM carry different structured data values, consumers that read different versions receive different facts, such as prices or dates.",
+    "fix": "Generate markup from one source of truth and avoid a client-side re-emit that diverges.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html",
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "Prices or currencies are personalised by location; the fetch locale is recorded."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "any differing commerce or date value = medium",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/generate-structured-data-with-javascript",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For nodes matched by @id or by (type + name/url) in both raw and rendered graphs, diff the values of price, priceCurrency, availability, name, ratingValue, reviewCount, datePublished, dateModified, startDate and url. Flag differences, and flag duplicate nodes created by hydration (the same entity emitted twice with different values). Personalized prices (geo/currency switching) can differ legitimately; record the fetch locale."
+  },
+  {
+    "id": "schema-id-dangling-or-conflicting",
+    "category": "schema",
+    "title": "@id references are unresolved or one @id carries conflicting data",
+    "why": "JSON-LD links nodes through @id. References to undefined @id values, or one @id with conflicting properties, leave the entity graph ambiguous.",
+    "fix": "Define each entity once with a stable IRI (e.g. https://example.com/#organization) and reference it elsewhere by @id.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The @id is defined on another page of the site; that is valid linked data, though Google does not document following it."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "(b) = medium; (a),(c) = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/profile-page",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://www.w3.org/TR/json-ld11/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Build an @id index for the page graph. (a) A node reference {\"@id\": X} where X is defined nowhere on the page and is a fragment of the current URL (dangling); (b) the same @id defined with incompatible @type sets (e.g. Organization vs Person) or contradicting scalar values (two different names, logos or urls); (c) @id values that are not IRIs (spaces, bare words). A reference to an @id defined on another page is valid linked data, but do not assume Google fetches it. Google's docs only show in-page @id linking (e.g. a recipe and its video, Article.author pointing to the Person). Merging partial definitions of the same @id across blocks is legal JSON-LD; flag only contradictions."
+  },
+  {
+    "id": "schema-entity-consistency-sitewide",
+    "category": "schema",
+    "title": "The site's Organization and WebSite entities are inconsistent across pages",
+    "why": "Google asks that the Organization name match the site name and that the site name be used consistently. Different names, URLs or logos for the same organization across pages make the entity ambiguous.",
+    "fix": "Emit one canonical Organization node (full data on home/about) and reference its @id from other pages' publisher/provider/author/brand.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "siblings",
+      "crawl"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The site belongs to a multi-brand group with distinct organizations.",
+      "Organization.url or WebSite.url points to a root URL that redirects by locale to the home page that carries the markup; that is reported as info at most."
+    ],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "industry-consensus",
+    "thresholds": "any conflicting name, legalName, logo, telephone or url origin of the site Organization between pages, or differing WebSite names = medium; several @id values for the site Organization = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/organization",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/site-names",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Across crawled pages, cluster Organization/LocalBusiness and WebSite nodes that describe the site owner (url host = site host, or @id on the site host). Flag (a) more than one distinct @id for the owner organization, (b) differing name, legalName, logo, url, telephone or address between pages, (c) differing WebSite name/alternateName, (d) a publisher/provider/brand on content pages pointing to an organization with a different name or url from the home page Organization. Google asks that Organization.name match the site name and that the site name be used consistently. Cross-page @id identity is a linked-data best practice that Google does not document; keep evidenceLevel industry-consensus for (a). Legit multi-brand groups have several organizations, so check parentOrganization/subOrganization before flagging.",
+    "related": [
+      "schema-organization",
+      "ai-brand-fact-consistency"
+    ]
+  },
+  {
+    "id": "schema-inlanguage",
+    "category": "schema",
+    "title": "Structured data inLanguage is missing or inconsistent with the page language",
+    "why": "schema.org defines inLanguage with BCP 47 codes. No Google feature requires it, but a value that contradicts the page language is wrong data for consumers.",
+    "fix": "Set inLanguage to the page's BCP 47 tag (e.g. \"es\", \"ca-AD\", \"en-GB\").",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "siblings",
+      "crawl"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "web-standard",
+    "thresholds": "contradiction = low; missing = info",
+    "sources": [
+      {
+        "url": "https://schema.org/inLanguage",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "On sites with more than one html@lang value or hreflang clusters, check CreativeWork/WebPage/WebSite/Event nodes for inLanguage. Flag values that are not valid BCP 47 tags, and values that contradict <html lang> or the page's hreflang self-reference (compare primary subtags). No Google feature requires inLanguage, so never present it as a ranking or rich-result factor. schema.org says 'language' is superseded by 'inLanguage'.",
+    "related": [
+      "intl-html-lang-missing-or-invalid"
+    ]
+  },
+  {
+    "id": "schema-main-entity-page-fit",
+    "category": "schema",
+    "title": "The primary markup type does not match the page's purpose",
+    "why": "Google's policies require markup to be representative of the page: JobPosting only on single-job pages, Event only for events at a physical location, QAPage only for user questions with answers. A type that does not match the page purpose is misuse.",
+    "fix": "Mark up the page's actual main thing. Use ItemList/CollectionPage on listings, and use carousel/ItemList markup only where Google documents it.",
+    "maxSeverity": "medium",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "ai"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "candidate = medium, pending the analyst: three or more top-level Product items on one page, Article or ProfilePage markup on the home page. The analyst confirms or rejects the candidate and cannot raise it.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/job-posting",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/event",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/qapage",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/profile-page",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
+    "notes": "Code finds candidates: Product/Offer on a listing or category page (several product cards, pagination, no single buy box); JobPosting on job listing or search pages; Article/BlogPosting on the home page or a category archive; Event used for coupons, business hours or promotions; QAPage on a site-authored FAQ; Recipe on non-recipe content; ProfilePage on a store home page; LocalBusiness on every page with differing addresses. The LLM then confirms or rejects each candidate from the visible content. Google: structured data must be 'representative' of the page, JobPosting only on single-job pages, and 'Events must take place in a physical location'. Product snippets for multiple products on a category page are not supported for merchant listings. Distinguish ItemList carousels (allowed on summary pages for Recipe, Course, Restaurant, Movie and, in EEA/TR/ZA beta, LocalBusiness/Product/Event)."
+  },
+  {
+    "id": "schema-visible-content-parity",
+    "category": "schema",
+    "title": "Marked-up values match content visible on the page",
+    "why": "Google's structured data policies prohibit marking up content that users cannot see and ask that markup match the visible text. Values such as ratings, prices or answers that are hidden or different are a policy violation.",
+    "fix": "Show the marked-up information to users, or remove it from the markup.",
+    "maxSeverity": "medium",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "ai"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The content is in tabs or accordions users can open.",
+      "The property is an identifier (vatID, sameAs, logo URL, iso6523Code) that need not be printed.",
+      "The content is present in the HTML and has opacity 0 only until an IntersectionObserver reveal (for example [data-reveal]) fires on scroll; Google renders with a tall viewport that triggers it."
+    ],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "candidate = medium, pending the analyst: a marked-up price, ratingValue, reviewCount or ratingCount that appears nowhere in the page text, element attributes or rendered text blocks, or a Question name (FAQPage, QAPage) whose words do not appear there. Hidden blocks count as present, so tabs, accordions and reveal-on-scroll sections never fail here.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://support.google.com/webmasters/answer/9044175",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/ai-features",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/fundamentals/ai-optimization-guide",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "local",
+    "notes": "Code: for each key scalar (name/headline, price + currency, availability, ratingValue, reviewCount/ratingCount, review text and author, datePublished, author names, address, telephone, openingHours, job title/salary, event date/venue), search the rendered visible text (excluding display:none, visibility:hidden, aria-hidden and off-canvas elements) using normalization (case, whitespace, number and currency formats, locale decimal comma, date formats). Unmatched values become candidates. LLM: judge whether each candidate is visible in another form (image, tab, accordion, modal reachable by user) or genuinely hidden. Content in tabs or accordions that users can open is visible. Organization/WebSite identifiers (vatID, iso6523Code, sameAs, logo URL) need not be printed verbatim. Google's guideline targets marked-up content users can't see, but don't flag identifier-only properties. A rating shown as a star image counts as visible when its alt or aria-label carries the value."
+  },
+  {
+    "id": "schema-misleading-or-spammy",
+    "category": "schema",
+    "title": "Markup is misleading, irrelevant or impersonating",
+    "why": "Google's structured data policies prohibit misleading, irrelevant or impersonating markup. A structured data manual action removes rich result eligibility; Google states that it does not affect ranking.",
+    "fix": "Remove the offending markup. If a manual action exists, fix it and request review in Search Console.",
+    "maxSeverity": "medium",
+    "method": "ai-judgment",
+    "scope": "page",
+    "inputs": [
+      "raw-html",
+      "rendered-dom",
+      "ai"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "high",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "any confirmed instance = medium (rich result eligibility only; Google states no ranking effect)",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://support.google.com/webmasters/answer/9044175",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "notes": "The LLM reviews the page graph against visible content for: fake or invented reviews and ratings, ratings on pages with no review mechanism, markup describing a different entity than the page, impersonation of another organization (name/logo/sameAs of a third party as the site owner), misstated ownership or affiliation, events that are promotions, jobs that are ads or require payment, and markup copied from another site (foreign url/@id hosts). Google states that a structured-data manual action makes the page lose rich-result eligibility; it does not affect ranking. Never claim de-ranking or de-indexing from markup issues. Only report this with quoted contradicting evidence."
+  },
+  {
+    "id": "schema-blocked-or-nonindexable-carrier",
+    "category": "schema",
+    "title": "Markup sits on a page Google cannot use, or its images are blocked",
+    "why": "Google asks not to block structured data pages with robots.txt, noindex or access controls, and requires image URLs in structured data to be crawlable and indexable.",
+    "fix": "Unblock the page and its images for Googlebot. Put identical markup on all duplicate versions.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html",
+      "http"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "robots",
+      "resources"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The page is a legal, privacy, cookie or similar policy page that carries noindex,follow, is linked from the footer and is absent from every sitemap.",
+      "The page is a utility page such as internal search results, a cart, a thank-you page or an account page, or an error page."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "page feature markup on a page that is not 200, carries noindex or is disallowed for Googlebot = medium; a feature image or video thumbnail disallowed for Googlebot-Image, or fetched with an error or a non-image type = high. A top-level LocalBusiness whose @id or url points to the home page is site identity that the template repeats, so it counts as feature markup only on the home page. Organization logos belong to schema-organization-logo.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/video",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/site-names",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed",
+    "notes": "Flag pages carrying feature markup that return non-200, have a noindex (meta or X-Robots-Tag), are disallowed for Googlebot in robots.txt, or canonicalize to another URL whose markup differs. Also fetch each image/logo/thumbnailUrl/contentUrl referenced by feature markup: fail if it is robots-disallowed for Googlebot or Googlebot-Image, returns non-200, returns a non-image Content-Type, or requires authentication. Also flag duplicates (canonical vs alternates, http/https, www/non-www) that do not carry the same markup. Google: 'Don't block your structured data pages to Googlebot using robots.txt, noindex, or any other access control methods' and 'All image URLs specified in structured data must be crawlable and indexable'. Paywalled pages are accessible to Googlebot by design (see schema-paywalled-content)."
+  },
+  {
+    "id": "schema-organization",
+    "category": "schema",
+    "title": "Organization markup completeness and correctness",
+    "why": "Google uses Organization markup on the home or about page to understand the organization, for example to choose a logo and for knowledge panels. It is not needed on every page and guarantees no visible feature.",
+    "fix": "Add one complete Organization node on the home page with a stable @id and reference it from other pages.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "crawl",
+      "siblings"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "Organization.url or WebSite.url points to a root URL that redirects by locale to the home page that carries the markup; that is reported as info at most."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing entirely = low; Organization url on another host = medium; missing name, url, logo or sameAs = low. A name that differs from the site name is reported by schema-site-name-website.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/organization",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://blogs.bing.com/webmaster/2026/2/Introducing-AI-Performance-in-Bing-Webmaster-Tools-Public-Preview/",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "On the home page or about page (one page is enough), find an Organization or most-specific subtype (OnlineStore, LocalBusiness subtype, Corporation, NGO, etc.). No property is required; score the recommended ones: name (Text, must equal the site name), url (URL of the site, host = site host), logo (URL/ImageObject), sameAs (URL[]), description, email, telephone (with country code, e.g. +376...), address (PostalAddress with streetAddress, addressLocality, addressRegion, postalCode, addressCountry = ISO 3166-1 alpha-2), contactPoint (ContactPoint with telephone/email), legalName, alternateName, foundingDate (ISO 8601), numberOfEmployees (QuantitativeValue value | minValue+maxValue), vatID, taxID, iso6523Code, duns, leiCode, naics, globalLocationNumber, hasMerchantReturnPolicy, hasShippingService, hasMemberProgram. Fail if no Organization exists anywhere on the home/about pages, if name ≠ WebSite.name, or if url's host ≠ site host. Google says Organization markup isn't needed on every page and that some properties are used behind the scenes (e.g. logo selection and knowledge panels), with no guaranteed visible feature. Do not over-penalize absence. LocalBusiness is an Organization subtype, so Organization properties apply to it too. sameAs links to official profiles help disambiguate the entity. The Organization documentation does not require url to avoid redirects.",
+    "related": [
+      "schema-organization-logo",
+      "schema-entity-consistency-sitewide",
+      "schema-site-name-website"
+    ]
+  },
+  {
+    "id": "schema-organization-logo",
+    "category": "schema",
+    "title": "Organization logo fails Google's requirements",
+    "why": "Google requires an Organization logo of at least 112 by 112 pixels that is crawlable and indexable, in a format Google Images supports. Google states no aspect-ratio requirement.",
+    "fix": "Use a square-ish raster or SVG logo ≥112×112 px that reads on white, at a stable crawlable URL.",
+    "maxSeverity": "medium",
+    "method": "hybrid",
+    "scope": "site",
+    "inputs": [
+      "http",
+      "resources"
+    ],
+    "optionalInputs": [
+      "robots"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The image is an SVG, so its pixel size cannot be measured: the size check is not_evaluated, never failed."
+    ],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "Fail (medium): the logo URL is not 200 or is blocked for Googlebot; a raster logo is smaller than 112x112 px. For SVG logos the pixel size is not_evaluated, never failed.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/organization",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/logo",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "deployed",
+    "notes": "Resolve Organization.logo (URL, or ImageObject.contentUrl/url). Fetch it: must return 200, a Google Images-supported format (BMP, GIF, JPEG, PNG, WebP, SVG, AVIF), not robots-blocked, and have intrinsic dimensions ≥112×112 px (for SVG use the viewBox/width/height; if neither is available, mark it unknown). The LLM checks the image (optional vision) for legibility on a plain white background (no white-on-transparent logo). The separate logo doc now redirects into the Organization doc. Google states no aspect-ratio requirement; do not invent one. The favicon is a separate feature with its own rules, out of scope here."
+  },
+  {
+    "id": "schema-organization-identifiers",
+    "category": "schema",
+    "title": "Business identifiers are malformed",
+    "why": "Google documents identifier properties such as vatID, taxID, duns, leiCode and iso6523Code, and address properties with ISO 3166-1 alpha-2 country codes. Malformed values are not usable.",
+    "fix": "Use the documented formats. Google prefers iso6523Code ('0199:<LEI>', '0060:<DUNS>') over duns/leiCode.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "siblings",
+      "crawl"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "low = a malformed iso6523Code, duns, leiCode, globalLocationNumber or naics, an addressCountry that is not a two-letter code, a telephone without international prefix, an invalid email, a tax ID without address country, or an EU VAT number whose prefix is not the address country. Values are reported by shape only.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/organization",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Validate formats: iso6523Code matches ^\\d{4}:.+$ (common ICDs 0060 DUNS, 0088 GLN, 0199 LEI); duns = 9 digits; leiCode = 20 alphanumerics (ISO 17442); globalLocationNumber = 13 digits with GS1 checksum; naics = 2–6 digits; addressCountry = ISO 3166-1 alpha-2; telephone parseable as E.164 with country code; email is a valid address; taxID/vatID non-empty and plausible for addressCountry (e.g. EU VAT starts with the country prefix). Flag vatID/taxID when no address/addressCountry is present (Google: taxID must match the country in address). Check identifier formats only where a reliable validator exists; record other formats as unverified rather than failing them. addressCountry must be an ISO 3166-1 alpha-2 code, not a country name. Never print identifier values in public reports."
+  },
+  {
+    "id": "schema-site-name-website",
+    "category": "schema",
+    "title": "WebSite site-name markup missing or misconfigured on the home page",
+    "why": "Google reads the site name from WebSite markup on the home page, meaning the root URI of the domain or subdomain, not a subdirectory. WebSite.url should be the canonical home page. When the root redirects, the site name reflects the page Googlebot reaches.",
+    "fix": "Add {\"@type\":\"WebSite\",\"name\":\"Brand\",\"alternateName\":[\"BRAND\",\"example.com\"],\"url\":\"https://example.com/\"} to the home page, merged into any existing WebSite node.",
+    "maxSeverity": "medium",
+    "method": "hybrid",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "variants"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The root URL redirects by country, cookie or language to locale home pages, every locale URL answers 200 when requested directly, and hreflang covers every locale.",
+      "The WebSite markup is on the locale home page that the root redirects to."
+    ],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "Missing WebSite markup with name on the home page Googlebot reaches = low (Google falls back to og:site_name, title and headings). Several WebSite items, or a WebSite url on another host = medium. A WebSite name that differs from og:site_name or the site Organization name, legal suffixes ignored = medium candidate for the analyst. No alternateName is not reported. WebSite.url pointing to a root that redirects by locale to the page carrying the markup passes.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/site-names",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "On the root URL of each crawled host (https://host/ only; not /es/ or /index.html), require a WebSite node with name (Text) and url (URL equal to the canonical home URL of that host). Recommend alternateName (Text or Text[], most preferred first). Fail on: missing WebSite; multiple WebSite nodes (should be one); url pointing to another host or a subdirectory; name that is a generic phrase, a URL path or a slogan; name inconsistent with og:site_name, <title> brand segment, the H1/logo alt and Organization.name. Also check that duplicate home pages (http/https, www/non-www) carry the same markup. Site names work only per domain or subdomain, not per subdirectory. www and m count as the root domain. The Rich Results Test does not support site names, so validate with the Schema Markup Validator or this rule. The LLM part judges whether the name is 'unique, concise, widely recognized'. Use the same WebSite markup on duplicate home pages. The Rich Results Test does not support site names.",
+    "related": [
+      "schema-sitelinks-searchbox-obsolete",
+      "schema-organization"
+    ]
+  },
+  {
+    "id": "schema-sitelinks-searchbox-obsolete",
+    "category": "schema",
+    "title": "SearchAction for the sitelinks search box is obsolete",
+    "why": "Google retired the sitelinks search box worldwide in November 2024. SearchAction markup is harmless, and its absence is never a problem.",
+    "fix": "Optional cleanup. Google says there is no need to remove it, and it causes no Search Console errors.",
+    "maxSeverity": "info",
+    "method": "deterministic",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Presence of WebSite potentialAction SearchAction = info. Absence = pass, always.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/blog/2024/10/sitelinks-search-box",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Detect WebSite.potentialAction of type SearchAction (query-input/target). The feature was removed globally from 2024-11-21. Never report the absence of SearchAction as an issue. Other consumers may still read SearchAction, so it is harmless."
+  },
+  {
+    "id": "schema-localbusiness",
+    "category": "schema",
+    "title": "LocalBusiness markup completeness and validity",
+    "why": "Google documents LocalBusiness markup with required name and address and recommended properties such as geo, telephone, openingHoursSpecification and priceRange, using the most specific subtype.",
+    "fix": "One LocalBusiness per physical location, on its location page, with full NAP matching the visible page and the Google Business Profile.",
+    "maxSeverity": "medium",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "home",
+      "contact",
+      "about",
+      "other"
+    ],
+    "exemptWhen": [
+      "The business is a service-area business without a public address; Organization markup is the alternative."
+    ],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing name or address = medium; address as plain text, geo with fewer than 5 decimal places, priceRange of 100 characters or more = low. Opening hours formats belong to schema-iso8601-values and day names to schema-enumeration-values.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/local-business",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://schema.org/ProfessionalService",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For each LocalBusiness (or subtype) node: required name (Text) and address (PostalAddress; check streetAddress, addressLocality, addressRegion, postalCode, addressCountry alpha-2). Recommended: geo.latitude/longitude as numbers with ≥5 decimal places; openingHoursSpecification (dayOfWeek English/schema.org, opens/closes hh:mm[:ss]; 24h = 00:00–23:59; closed = 00:00–00:00; validFrom/validThrough only for seasonal hours); telephone with country and area codes; url (fully qualified, returns 200, location-specific); priceRange < 100 chars; servesCuisine/menu (food); department (nested LocalBusiness). Flag additionalType as unsupported by Google, and the generic 'LocalBusiness' when a more specific subtype fits (the LLM suggests one from the content). Service-area businesses without a public address cannot meet 'address required'; report that as a limitation, not a defect, and suggest Organization instead. schema.org notes that 'the general ProfessionalService type for local businesses was deprecated due to confusion with Service'. It still exists; prefer a specific subtype (LegalService, AccountingService, etc.) when one fits, and don't flag ProfessionalService as invalid. Local pack ranking comes mainly from Google Business Profile, not markup; do not claim local ranking gains.",
+    "related": [
+      "intl-nap-consistency",
+      "intl-area-served-format"
+    ]
+  },
+  {
+    "id": "schema-self-serving-reviews",
+    "category": "schema",
+    "title": "Self-serving reviews or ratings on the site's own Organization or LocalBusiness",
+    "why": "Google does not show review rich results for reviews a business or organization publishes about itself, including reviews embedded from widgets.",
+    "fix": "Remove aggregateRating/review from the owner's Organization/LocalBusiness markup. Keep review markup on Product, Service-adjacent creative works or third-party entity reviews where eligible.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The reviews are about products the business sells, or the site reviews other businesses."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "presence = low (ineligible for review stars; no penalty)",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/review-snippet",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2019/09/making-review-rich-results-more-helpful",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/local-business",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Find Review/AggregateRating whose subject (parent node or itemReviewed) is an Organization/LocalBusiness (or subtype) that is the site owner: url host = site host, @id on the site host, or name = WebSite/Organization name. This includes ratings pulled in by third-party widgets (Trustpilot, Google reviews embeds) and emitted as markup on the owner's own pages. Google: self-serving reviews are not displayed for businesses and organizations, and widget-embedded reviews count. Reviews of products the business sells are a different case. A review site rating other local businesses is eligible. Fabricated reviews are a separate question for schema-review-authenticity."
+  },
+  {
+    "id": "schema-review-snippet",
+    "category": "schema",
+    "title": "Review and AggregateRating requirements",
+    "why": "Google documents required properties for Review and AggregateRating and the item types they may describe. Ratings outside the declared scale or missing required fields make the snippet ineligible.",
+    "fix": "Nest Review/AggregateRating inside the reviewed Product/Recipe/etc. and supply the scale explicitly if it isn't 1–5.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "product",
+      "article",
+      "listing",
+      "other"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing required = high; out-of-bounds rating = high; invalid itemReviewed type = high",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/review-snippet",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/product-snippet",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Review: required author (Person/Organization) with a valid name < 100 chars (not promotional text), itemReviewed with name (omit when nested), reviewRating.ratingValue (Number/Text); recommended datePublished, bestRating (default 5) and worstRating (default 1). AggregateRating: required ratingValue, ratingCount OR reviewCount, itemReviewed.name (or parent name). Check that worstRating ≤ ratingValue ≤ bestRating, that counts are integers ≥1, that decimals use a dot in JSON-LD, and that itemReviewed's type is in {Book, Course, CreativeWorkSeason, CreativeWorkSeries, Episode, Event, Game, HowTo, LocalBusiness, MediaObject, Movie, MusicPlaylist, MusicRecording, Organization, Product, Recipe, SoftwareApplication} or their subtypes. Flag multiple competing ways of identifying the reviewed item (nesting plus a conflicting itemReviewed). Google says ratings must come directly from users, not be compiled by editors (except editorial single reviews by a named critic). If individual reviews are marked up, an aggregateRating should also be present. Pros/cons (positiveNotes/negativeNotes, ≥2 statements total) is eligible only on editorial product review pages; flag it on merchant product pages."
+  },
+  {
+    "id": "schema-review-authenticity",
+    "category": "schema",
+    "title": "Reviews look fake, undisclosed-incentivized or not shown",
+    "why": "Since July 2026 Google's review snippet guidelines exclude fake reviews and incentivised reviews without disclosure. The rule reports signals consistent with that, never an accusation.",
+    "fix": "Mark up only genuine user reviews that are visible on the page. Disclose incentives clearly and prominently.",
+    "maxSeverity": "medium",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "ai"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "high",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "candidate = medium, pending the analyst: placeholder author names, review text repeated across reviews, an aggregate rating that differs by more than 0.15 from the average of the marked-up reviews it counts. Signals only, never an accusation.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/review-snippet",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "manual",
+    "notes": "Code collects review nodes plus visible review DOM. The LLM judges: reviews in markup absent from the page; identical or templated texts; author names that are placeholders ('Admin', 'Customer'); ratings all 5.0 with tiny counts; an AggregateRating that is not the average of visible reviews; incentivized reviews without a clear, prominent disclosure; reviews without comment text or author (Google recommends accepting only reviews with both). The fake/undisclosed-incentivized review guideline was added 2026-07-24. Never accuse a site of fabricating reviews without quoted evidence; phrase findings as 'signals consistent with'."
+  },
+  {
+    "id": "schema-product-snippet",
+    "category": "schema",
+    "title": "Product snippet (review/price enhancements) requirements",
+    "why": "Google requires a product name and at least one of review, aggregateRating or offers for product snippets, with prices in a valid format.",
+    "fix": "Emit price as a plain number (\"price\": 1299.00) with priceCurrency \"EUR\". Use Offer for a single seller and ProductGroup for variants.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "product"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing name or all three of review/aggregateRating/offers = high; malformed price = high",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/product-snippet",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For Product nodes on product or editorial review pages: required name (Text) plus at least one of review, aggregateRating or offers. Offer requires price or priceSpecification.price (Number, not a currency-formatted string). Recommended: availability, priceCurrency (ISO 4217, 3 uppercase letters), priceValidUntil (not past). AggregateOffer requires lowPrice and priceCurrency; recommended highPrice and offerCount. Flag AggregateOffer used to describe the merchant's own variants, and Offer price strings containing symbols or thousands separators ('1.299,00 €'). The Rich Results Test may warn when offers is present without review/aggregateRating; that is a warning, not an error. Price-drop enhancements require Offer, not AggregateOffer."
+  },
+  {
+    "id": "schema-merchant-listing",
+    "category": "schema",
+    "title": "Merchant listing (Shopping surfaces) requirements",
+    "why": "Google documents required and recommended properties for merchant listings in Shopping surfaces, including a price above zero, availability and product identifiers.",
+    "fix": "Server-render a complete Product + Offer node matching the visible buy box. Add a GTIN where the product has one.",
+    "maxSeverity": "high",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "resources"
+    ],
+    "appliesTo": [
+      "product"
+    ],
+    "exemptWhen": [
+      "The site showcases products without selling them; product snippet rules apply instead."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing image, missing priceCurrency or a price of 0 or less = high; missing all of gtin, mpn and brand = medium; missing availability = low. Name and price presence and format belong to schema-product-snippet.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/generate-structured-data-with-javascript",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For Product pages where the site sells the item: required name, image (≥1, crawlable; recommended multiple with ≥50,000 px each, at 16:9, 4:3 and 1:1), offers as Offer (not AggregateOffer) with price > 0 and priceCurrency ISO 4217. Recommended: availability (single enum), itemCondition, brand.name (one value), gtin/gtin8/12/13/14 (numeric only, no URL form), mpn, sku (single, no whitespace), description, color, size (one value), material, pattern, audience (suggestedGender Male|Female|Unisex; suggestedMinAge/MaxAge ∈ {0, 0.25, 1, 5, 13}), category (Text or CategoryCode with inCodeSet = Google Product Taxonomy), shippingDetails, hasMerchantReturnPolicy, hasCertification (≤10), hasAdultConsideration (only SexualContentConsideration), subjectOf 3DModel (.gltf/.glb), url (one), validFrom ≤ validThrough. A price of 0 is valid for product snippets and SoftwareApplication but not for merchant listings. Merchant Center or Search Console shipping/return settings override markup. Sites that only showcase products without selling them should be judged on product snippet rules only."
+  },
+  {
+    "id": "schema-gtin-validity",
+    "category": "schema",
+    "title": "GTIN values fail length or check digit",
+    "why": "Google accepts GTIN-8, 12, 13 and 14 in structured data. GS1 defines the lengths and the check digit; invalid values identify no product.",
+    "fix": "Use the manufacturer-assigned GTIN or omit the property. Never invent one.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "crawl"
+    ],
+    "appliesTo": [
+      "product"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "invalid check digit, wrong length, non-digit characters or one repeated digit = medium; the same GTIN on two different top-level products of a page = medium",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For gtin, gtin8, gtin12, gtin13 and gtin14: strip nothing, require digits only, length 8/12/13/14 (and matching the property name when specific), and a valid GS1 mod-10 check digit. Flag all-zero or repeated-digit values and GTINs duplicated across different products in the crawl. Variants legitimately have different GTINs, and the same GTIN on a product and its AMP/duplicate URL is fine."
+  },
+  {
+    "id": "schema-product-variants",
+    "category": "schema",
+    "title": "ProductGroup and variant markup",
+    "why": "Google documents ProductGroup with hasVariant, variesBy and productGroupID for products sold in variants. Mismatched IDs or invalid variesBy values break the grouping.",
+    "fix": "Model variants as ProductGroup.hasVariant[Product] with isVariantOf back-references and per-variant Offers.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "crawl"
+    ],
+    "appliesTo": [
+      "product"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "ID mismatch, invalid variesBy, a variant without sku or gtin, or two variants with the same identifier = medium; a variant without offers = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/product-variants",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "ProductGroup: required name; productGroupID on the group and/or inProductGroupWithID on the variants (must match if both are given); recommended hasVariant, variesBy (only https://schema.org/color, size, suggestedAge, suggestedGender, material, pattern), brand, description, aggregateRating, review. Each variant Product needs a unique sku or gtin and its own Offer. For single-page variant UIs, ProductGroup.url must be the base URL and each variant must have a distinct preselecting URL. For multi-page variants, the ProductGroup must NOT have url and must be repeated on every variant page. Do not require ProductGroup on single-SKU products. AggregateOffer must not substitute for variants."
+  },
+  {
+    "id": "schema-offer-price-specification",
+    "category": "schema",
+    "title": "Sale, strikethrough and member pricing are encoded incorrectly",
+    "why": "Google documents how to mark up sale prices, strikethrough prices and member pricing with UnitPriceSpecification and validity dates. Incorrect encoding shows the wrong price.",
+    "fix": "Put the active price in offers.price and the former price in a UnitPriceSpecification with priceType StrikethroughPrice.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "product"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "any violation = medium",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "In priceSpecification (UnitPriceSpecification): priceType only 'StrikethroughPrice' ('ListPrice' tolerated during transition) and never on the active price; validForMemberTier not combined with priceType (if both are present Google ignores the spec); membershipPointsEarned only with validForMemberTier; referenceQuantity requires value + unitCode; priceValidUntil not inside PriceSpecification; validFrom ≤ validThrough; the active price must be lower than the strikethrough price. The sale-duration guidance (validFrom/validThrough/priceValidUntil) was added 2026-07-07. Member-tier pricing is beta."
+  },
+  {
+    "id": "schema-shipping-details",
+    "category": "schema",
+    "title": "Shipping markup (offer-level OfferShippingDetails and organization-level ShippingService)",
+    "why": "Google documents offer-level OfferShippingDetails and organization-level shipping policies. Merchant Center and Search Console settings take precedence over markup.",
+    "fix": "Define the standard policy once under Organization (on a shipping policy page). Use offer-level shippingDetails only for exceptions.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "product",
+      "home",
+      "legal",
+      "other"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing required sub-properties or currency mismatch = medium",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/shipping-policy",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "OfferShippingDetails: exactly one deliveryTime (ShippingDeliveryTime with handlingTime and/or transitTime as QuantitativeValue: non-negative integer minValue/maxValue, unitCode DAY or d), shippingDestination DefinedRegion with addressCountry alpha-2 (addressRegion as an ISO 3166-2 subdivision code without country prefix, OR postalCode, not both in one instance), and shippingRate MonetaryAmount with value or maxValue (0 = free) and currency equal to the offer's priceCurrency. Organization-level: Organization.hasShippingService → ShippingService with required shippingConditions; DefinedRegion addressRegion only for US/AU/JP and postalCode only for AU/CA/US; ShippingRateSettings percentages between 0 and 1; shippingRate/transitTime absent when doesNotShip is true; seasonalOverride needs validFrom or validThrough. Precedence, strongest first: Content API settings, then Merchant Center/Search Console settings, then offer markup, then Organization markup. If Search Console settings exist, markup may be ignored, so report impact as conditional."
+  },
+  {
+    "id": "schema-return-policy",
+    "category": "schema",
+    "title": "MerchantReturnPolicy markup",
+    "why": "Google documents MerchantReturnPolicy at offer or organization level. Offer-level markup overrides organization-level, and Merchant Center settings override both.",
+    "fix": "Add one organization-level policy on the returns page. Override per offer only for exceptions.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "siblings",
+      "crawl"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "neither option satisfied = medium; inconsistent fee fields = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/return-policy",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/merchant-listing",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Organization-level (Organization.hasMerchantReturnPolicy) or offer-level. Option A: applicableCountry (alpha-2, ≤50) + returnPolicyCategory ∈ {MerchantReturnFiniteReturnWindow, MerchantReturnNotPermitted, MerchantReturnUnlimitedWindow}, plus merchantReturnDays (Integer) when finite. Option B: merchantReturnLink (URL). returnFees ∈ {FreeReturn, ReturnFeesCustomerResponsibility, ReturnShippingFees}; returnShippingFeesAmount only with ReturnShippingFees and non-zero; returnMethod ∈ {ReturnByMail, ReturnInStore, ReturnAtKiosk}; returnPolicyCountry recommended. Offer-level markup overrides organization-level; Search Console/Merchant Center settings override both. Loyalty programs (MemberProgram/MemberProgramTier) must be defined under Organization.hasMemberProgram and referenced via validForMemberTier; flag a MemberProgram defined elsewhere."
+  },
+  {
+    "id": "schema-article",
+    "category": "schema",
+    "title": "Article / NewsArticle / BlogPosting markup",
+    "why": "Google documents Article, NewsArticle and BlogPosting markup with recommended headline, image, author and dates. It is not required for Top Stories or Discover.",
+    "fix": "Emit BlogPosting/NewsArticle with headline, image array, ISO dates with offset, and author Person nodes linking to author pages.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "article"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "no image = medium; NewsArticle or BlogPosting without datePublished = medium; author written as text, an author that is not a Person or Organization, or several names in one Person = low. Image crawlability belongs to schema-blocked-or-nonindexable-carrier.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/article",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "No required properties. Recommended: headline (Text; no length limit since Jan 2023; warn >110 chars as a truncation risk only), image (≥1 crawlable image representing the article, not a logo; recommended multiple at 16:9/4:3/1:1, each ≥50,000 px), datePublished and dateModified (ISO 8601 with timezone; dateModified ≥ datePublished), author (one entry per author; Person or Organization, never Thing; author.name = name only; author.url or sameAs to a unique author page). Check that headline roughly matches the visible H1/title and that dates match visible bylines. Use the most specific type (NewsArticle for news, BlogPosting for blogs). Article markup is not required for Top Stories or Discover eligibility; do not claim it is."
+  },
+  {
+    "id": "schema-author-entity-quality",
+    "category": "schema",
+    "title": "Author entities are vague, merged or inconsistent",
+    "why": "Google recommends one Person or Organization per author with a name and a url or sameAs that identifies them. Merged names or placeholder authors prevent disambiguation. It is not a ranking mechanism.",
+    "fix": "One Person node per author with a stable @id, url to the author profile page and sameAs to external profiles.",
+    "maxSeverity": "low",
+    "method": "hybrid",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "siblings",
+      "crawl"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "low candidates for the analyst: byline words in the name, placeholder authors, several names in one Person, one author identity with different names; an author url known to fail = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/article",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/profile-page",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Code collects author/creator nodes across the crawl. The LLM flags: names containing roles or prefixes ('Posted by', 'Dr.' as a separate honorific is acceptable in honorificPrefix), several people in one name string, publisher names used as Person authors, 'Admin'/'Staff' placeholders, and the same person with different names or urls across pages. Check that author.url resolves (200) to a page about that author, ideally with ProfilePage markup. Don't present author markup as an 'E-E-A-T ranking factor'; Google documents no such mechanism. It is a disambiguation aid."
+  },
+  {
+    "id": "schema-breadcrumb",
+    "category": "schema",
+    "title": "BreadcrumbList requirements",
+    "why": "Google documents BreadcrumbList with at least two items and positions. Since January 2025 Google shows breadcrumbs in results on desktop only, so the impact is limited to desktop.",
+    "fix": "Generate the trail from the site hierarchy users navigate, with absolute canonical URLs.",
+    "maxSeverity": "low",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "crawl"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The page is the home page or a top-level page."
+    ],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "low (desktop display only): fewer than two items on a page below the top level, a missing or repeated position, a missing name or item, an item URL known to fail or redirect, a step after the first whose name joins a page title to the site name with a separator (\"Fractional CTO | Altitud Studio\"), since Google shows each name as one step of the trail",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/breadcrumb",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/visual-elements-gallery",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "BreadcrumbList.itemListElement must contain ≥2 ListItem. Each ListItem needs position (integer, starting at 1, strictly increasing by 1 in array order) and name (unless item is a Thing with a name); item (URL or Thing with @id/href/itemid) is required for all but the last item. Item URLs must be absolute or resolvable, same site, return 200 and be indexable (not redirecting, not noindex). The LLM optionally checks that the trail matches the visible breadcrumb. Since 2025-01-22 Google shows breadcrumb rich results on desktop only. Rate the impact accordingly and never claim a mobile display effect. Multiple breadcrumb trails on one page are allowed. Trails needn't mirror the URL structure, and including the home/current page is optional. Item names that repeat the full SEO title including the brand suffix read poorly in a trail; report them as low."
+  },
+  {
+    "id": "schema-profile-page",
+    "category": "schema",
+    "title": "ProfilePage markup requirements and eligibility",
+    "why": "Google documents ProfilePage for pages about a single person or organization, with mainEntity required. Team pages listing many people are not profile pages.",
+    "fix": "Add ProfilePage + Person (with @id) on author/team pages and reference that @id from Article.author.",
+    "maxSeverity": "medium",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "about",
+      "other"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing mainEntity, a mainEntity that is not a Person or Organization, or one without name = medium; several people described on the page = medium candidate for the analyst",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/profile-page",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2023/11/discussion-and-profile-markup",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "ProfilePage.mainEntity must be a Person or Organization with name (or alternateName). Recommended: dateCreated/dateModified (ISO 8601; modified reflects human edits), and on the entity alternateName, description, identifier, image (not a placeholder), sameAs, interactionStatistic, agentInteractionStatistic. The LLM checks eligibility: the page's primary focus is one person or organization affiliated with the site (author pages, team member pages, forum/social user profiles, About Me). It is not a store home page and not a third-party organization review page. An agency's team page listing many people is not a single-entity profile page; per-person pages are."
+  },
+  {
+    "id": "schema-video",
+    "category": "schema",
+    "title": "VideoObject requirements",
+    "why": "Google documents required VideoObject properties, including name, thumbnailUrl and uploadDate, and indexes videos only on watch pages. A blocked thumbnail makes the video ineligible.",
+    "fix": "Provide a stable thumbnail URL and contentUrl. Place markup on the page where the video is the main content.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing name, thumbnailUrl or uploadDate = medium; no contentUrl or embedUrl, both ineligibleRegion and regionsAllowed, or an incomplete Clip = low. Thumbnail crawlability belongs to schema-blocked-or-nonindexable-carrier.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/video",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/video",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Required: name, thumbnailUrl (≥1; fetchable, 200, supported format BMP/GIF/JPEG/PNG/WebP/SVG/AVIF, ≥60×30 px, not blocked for Googlebot/Googlebot-Image), uploadDate (ISO 8601 with timezone). Recommended: contentUrl (direct file in a supported format, no data: URLs) or embedUrl, description (no longer required since May 2023), duration (ISO 8601), expires (omit if not expiring; must not be past while live), creator/author (Person/Organization with name/url), interactionStatistic (InteractionCounter with WatchAction|LikeAction|CommentAction|ShareAction and integer userInteractionCount), ineligibleRegion OR regionsAllowed (not both), hasPart Clip (name, startOffset seconds, url on same path with a time parameter, unique start times; endOffset recommended), SeekToAction (startOffset-input 'required name=seek_to_second_number', target with {seek_to_second_number}), publication BroadcastEvent (isLiveBroadcast, startDate, endDate). Video results need a watch page (the video is the main content). Pages with a secondary embedded video can carry markup, but don't promise video-mode visibility; the LLM judges whether it's a watch page. The creator property was documented 2026-09-24.",
+    "related": [
+      "content-video-indexability"
+    ]
+  },
+  {
+    "id": "schema-image-metadata",
+    "category": "schema",
+    "title": "ImageObject license and credit metadata",
+    "why": "Google shows licensing details in Google Images when ImageObject markup or IPTC metadata provides a license, acquire-license page, creator or credit. It is relevant only for sites that license images.",
+    "fix": "Add license and acquireLicensePage for licensable photography. Add creditText/creator for attribution.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "an ImageObject with licensing details but no contentUrl, or with none of creator, creditText, copyrightNotice or license = low. ImageObjects without any licensing property are not applicable.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For ImageObject nodes intended for Google Images: required contentUrl (url accepted as a fallback) plus at least one of creator, creditText, copyrightNotice, license. Recommended: acquireLicensePage (URL) and the remaining ones. license is required for the 'Licensable' badge. URLs must be absolute and resolvable. Optionally read IPTC from image bytes (Web Statement of Rights, Licensor URL, Digital Source Type); when both exist and conflict, Google uses the structured data, so report the conflict. Only relevant for sites that license or credit images (photographers, publishers, agencies with portfolios). Don't recommend it on generic sites. digitalSourceType (AI-generated disclosure) belongs to IPTC/schema; record it as info."
+  },
+  {
+    "id": "schema-event",
+    "category": "schema",
+    "title": "Event requirements",
+    "why": "Google documents Event markup with required name, startDate and location, for events at a physical location. Using Event for promotions or business hours is misuse.",
+    "fix": "One Event node per performance/date with a full venue address. Use eventStatus for cancellations and reschedules instead of deleting the event.",
+    "maxSeverity": "high",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "article",
+      "listing",
+      "other"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing name, startDate or location, or a physical location without address = high; a location that is only virtual = medium. Misuse for promotions is judged under schema-main-entity-page-fit.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/event",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Required: name, startDate (ISO 8601; include a time and offset when known), location as Place with address PostalAddress (physical venue). Recommended: description, endDate (≥ startDate), eventStatus (enum), image, location.name, offers (Offer with availability, price, priceCurrency, validFrom, url), organizer (name, url), performer (name), previousStartDate only when eventStatus = EventRescheduled. The LLM verifies it's a real scheduled event, not a promotion, coupon, business hours, a trip package or a members-only/invite-only event. Online-event properties (VirtualLocation/eventAttendanceMode guidance) were removed from Google's docs on 2025-06-05, and 'Events must take place in a physical location'. The schema.org vocabulary still has them; don't call them invalid schema, only out of scope for Google event results."
+  },
+  {
+    "id": "schema-jobposting",
+    "category": "schema",
+    "title": "JobPosting requirements and policy",
+    "why": "Google documents JobPosting for single job pages, with required properties and validThrough. Leaving expired jobs live can lead to a manual action.",
+    "fix": "Remove the markup, set a past validThrough or return 404/410 when a job closes, and notify via the Indexing API (supported for JobPosting).",
+    "maxSeverity": "high",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html",
+      "http"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "other",
+      "listing"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "validThrough before the fetch date on a 200, indexable page = high (manual-action risk); missing required = high; more than one JobPosting on a page = high",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/job-posting",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "content",
+    "verifiableBy": "deployed",
+    "notes": "Required: title (job title only; no codes, salary or company), description (HTML, complete, different from title), datePosted (ISO 8601), hiringOrganization (Organization with name), jobLocation (Place with address including addressCountry), or for 100% remote jobs jobLocationType = 'TELECOMMUTE' plus applicantLocationRequirements (AdministrativeArea). Recommended: baseSalary (MonetaryAmount; unitText HOUR|DAY|WEEK|MONTH|YEAR; value or minValue/maxValue), employmentType (enum, multiple allowed), identifier (PropertyValue), directApply (Boolean), validThrough (DateTime); beta: educationRequirements, experienceRequirements.monthsOfExperience, experienceInPlaceOfEducation. Fail if validThrough is past and the page is live and indexable, if more than one JobPosting is on a listing page, or if applying needs a login or payment (LLM). Job search availability varies by country; record the region before rating impact."
+  },
+  {
+    "id": "schema-course-list",
+    "category": "schema",
+    "title": "Course list (carousel) requirements",
+    "why": "Google retired the course info rich result in 2025; the course list carousel remains, with an ItemList of at least three courses.",
+    "fix": "Add an ItemList on the course catalogue page linking ≥3 Course detail pages, each with name, description and provider.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "siblings",
+      "crawl"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "a course list with fewer than three courses, or a Course without name or description = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/course",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Course nodes: required name and description (display truncates around 60 chars); recommended provider (Organization). Eligibility needs ≥3 courses marked up and Carousel ItemList markup (itemListElement ListItem with position and a unique canonical url) on a summary or all-in-one page. Flag names with promotional phrases, prices or discounts. 'Course info' (the richer course result with offers/instances) was retired in Jun 2025 and its docs removed on 2025-09-09. Only the Course list carousel remains, in English. Don't recommend courseMode/hasCourseInstance for Google display."
+  },
+  {
+    "id": "schema-dataset",
+    "category": "schema",
+    "title": "Dataset requirements",
+    "why": "Google phased Dataset results out of Search in 2025 and clarified that Dataset markup is used by Dataset Search. Its guidelines require a name and a description of 50 to 5000 characters.",
+    "fix": "Add Dataset with a 50–5000 char description and a DataDownload distribution.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing name or description, or a description outside 50-5000 characters = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/dataset",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Required: name (Text) and description (Text, 50–5000 characters). Recommended: alternateName, creator (with sameAs ORCID/ROR), citation, funder, hasPart/isPartOf, identifier (e.g. DOI), isAccessibleForFree, keywords, license (URL to a specific version), measurementTechnique, sameAs, spatialCoverage, temporalCoverage, variableMeasured, version, url, includedInDataCatalog, distribution DataDownload with contentUrl and encodingFormat. Google clarified on 2025-11-05 that Dataset markup is used by Dataset Search; don't promise web-results rich snippets."
+  },
+  {
+    "id": "schema-software-app",
+    "category": "schema",
+    "title": "SoftwareApplication requirements",
+    "why": "Google requires a rating or review and an offer price for software app rich results. Pages without genuine user ratings cannot qualify.",
+    "fix": "Add Offer price and genuine user ratings that are visible on the page.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing name, offers.price, or both aggregateRating and review, or VideoGame used alone = medium (ineligible)",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/software-app",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Required: name, offers.price (0 if free; include priceCurrency when > 0), and one of aggregateRating or review (following review snippet rules). Recommended: applicationCategory (a Google-supported value such as GameApplication, BusinessApplication, DeveloperApplication...), operatingSystem. Accept MobileApplication/WebApplication subtypes. Flag VideoGame used alone (must be co-typed, e.g. [\"VideoGame\",\"MobileApplication\"]). SaaS marketing pages without genuine user ratings cannot qualify. Do not suggest adding ratings without a real review source (see schema-review-authenticity)."
+  },
+  {
+    "id": "schema-qapage",
+    "category": "schema",
+    "title": "QAPage requirements and eligibility",
+    "why": "Google documents QAPage for pages where users ask a question and others answer. It is not for site-authored FAQs; relabelling an FAQ as QAPage is misuse.",
+    "fix": "Use QAPage only on community Q&A threads. For general discussion use DiscussionForumPosting.",
+    "maxSeverity": "high",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing required, or more than one question = high; a question and answers without any author = medium candidate for the analyst (site-authored FAQ)",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/qapage",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "QAPage.mainEntity = Question with name, answerCount (Integer; 0 when no answers), and at least one acceptedAnswer or suggestedAnswer; each Answer requires text and is strongly recommended to have url. Recommended on Question/Answer: text, author (+url), upvoteCount, datePublished, dateModified, commentCount, comment, image, video, digitalSourceType. The LLM confirms eligibility: one question per page with user-submitted answers possible. It is not a site-authored FAQ, how-to, blog post or multi-question page, and not advertising. A common anti-pattern after the FAQ retirement is relabelling FAQPage as QAPage; treat it as misuse. More supported properties were added 2026-03-24."
+  },
+  {
+    "id": "schema-discussion-forum",
+    "category": "schema",
+    "title": "DiscussionForumPosting / SocialMediaPosting requirements",
+    "why": "Google documents DiscussionForumPosting and SocialMediaPosting for forum and social content created by users, not for site-authored articles.",
+    "fix": "Use for forum/community threads. Use Article/BlogPosting for editorial content.",
+    "maxSeverity": "medium",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing author, author name, datePublished, or all of text, image and video = medium",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/discussion-forum",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "DiscussionForumPosting (or SocialMediaPosting) and each Comment: required author (Person/Organization) with name, datePublished (ISO 8601), and one of text, image or video (not required when the post points to another page via url, e.g. later thread pages). Recommended: author.url, comment, commentCount, creativeWorkStatus ('Deleted' for removed posts kept for context), dateModified, digitalSourceType, headline, image, interactionStatistic, isPartOf, sharedContent, text, url, video. Mark the main post via mainEntity/mainEntityOfPage only on that post's page. The LLM checks that content is user-generated, not staff-written articles or product reviews. Google recommends Microdata/RDFa for forums where possible, so JSON-LD is fine but not preferred here. Q&A forums should use QAPage instead; both on one page isn't needed."
+  },
+  {
+    "id": "schema-paywalled-content",
+    "category": "schema",
+    "title": "Paywalled content markup",
+    "why": "Google documents paywall markup with isAccessibleForFree and cssSelector so that serving full content to Googlebot but not to users is not treated as cloaking.",
+    "fix": "Wrap the gated section in a class (e.g. .paywall) and declare hasPart {WebPageElement, isAccessibleForFree:false, cssSelector:'.paywall'}.",
+    "maxSeverity": "high",
+    "method": "hybrid",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "article"
+    ],
+    "exemptWhen": [
+      "The server never sends the gated content; the markup is optional then."
+    ],
+    "fpRisk": "medium",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "a cssSelector that is not a class selector, matches nothing, or sits inside another paywalled section = medium. Paywalls without markup need the analyst and are not detected here.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/paywalled-content",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "If the rendered page hides content behind a paywall or registration wall (detected by the LLM from the DOM, or code detecting truncated article bodies, subscriber overlays or common paywall classes), require the CreativeWork with isAccessibleForFree: false. Recommended hasPart: WebPageElement nodes with isAccessibleForFree false and cssSelector using only .class selectors. Each selector must match ≥1 element in the rendered DOM. Flag ID or attribute selectors, nested sections, and AMP/non-AMP mismatch. Only relevant when Googlebot receives the full content that users don't. If the server never sends gated content, the markup is optional."
+  },
+  {
+    "id": "schema-recipe",
+    "category": "schema",
+    "title": "Recipe requirements (publishers)",
+    "why": "Google documents Recipe markup with required name and image and recommended properties for recipe rich results.",
+    "fix": "Use HowToStep instructions and ISO durations. Provide 3 aspect-ratio images.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": [
+      "article"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "missing name or image = medium; nutrition.calories without recipeYield = medium",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/recipe",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Required: name and image (crawlable, supported format; recommended multiple at 16:9/4:3/1:1, ≥50,000 px). Recommended: author, datePublished, description, prepTime+cookTime or totalTime (ISO 8601 durations), recipeIngredient, recipeInstructions (HowToStep/HowToSection preferred; step text without 'Step 1' labels), recipeYield (required if nutrition.calories is present), nutrition.calories, aggregateRating, video, keywords (no cuisine/category duplication), recipeCategory, recipeCuisine. Guided recipes were removed from the docs on 2024-03-06. Recipe.image does not influence text-result thumbnails (clarified 2025-06-05)."
+  },
+  {
+    "id": "schema-service-offercatalog",
+    "category": "schema",
+    "title": "Service / OfferCatalog markup is vocabulary-only (no Google rich result)",
+    "why": "Service and OfferCatalog are schema.org types without a Google rich result. They describe the business for other consumers; self-serving ratings on them are not shown.",
+    "fix": "Keep Service markup accurate and linked to the Organization. Don't expect or promise a SERP feature.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "a rating on a Service the site itself provides = low. Vocabulary errors on Service nodes belong to the vocabulary rules.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/search-gallery",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/review-snippet",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://schema.org/Service",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For Service nodes: validate vocabulary (provider Organization|Person, ideally an @id reference to the site Organization; serviceType Text; areaServed AdministrativeArea|GeoShape|Place|Text; hasOfferCatalog OfferCatalog, an ItemList subtype, with itemListElement Offer/Service; offers Offer|Demand; category). Flag aggregateRating/review on Service nodes describing the site owner's own services (they are self-serving and Service is not a valid itemReviewed type for review snippets). Service is not in Google's Search Gallery. Report its value as entity description for other consumers (speculative for LLMs), never as a rich-result opportunity."
+  },
+  {
+    "id": "schema-faqpage-retired",
+    "category": "schema",
+    "title": "FAQPage markup no longer produces Google rich results (info)",
+    "why": "Google limited FAQ rich results to well-known government and health sites in August 2023, stopped showing them in Search from 7 May 2026 and removed the documentation on 15 June 2026. Valid FAQPage markup is harmless; other consumers may read it.",
+    "fix": "No action is required. Keep it if it is accurate and visible (other consumers may read it). Never add it to win Google rich results.",
+    "maxSeverity": "info",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "Presence of valid FAQPage markup = info, never an error. Markup that does not match visible content is reported by schema-visible-content-parity, not here.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Detect FAQPage (and Question/acceptedAnswer under it). Never claim FAQ rich-result eligibility and never call valid FAQPage markup an error or spam. Never recommend adding FAQPage for Google features. Search Console and Rich Results Test support ending after the removal is reported only by third parties."
+  },
+  {
+    "id": "schema-retired-feature-markup",
+    "category": "schema",
+    "title": "Markup for retired or removed Google features",
+    "why": "Google has retired several rich results, including HowTo, special announcement, course info, ClaimReview, estimated salary, learning video, vehicle listing and practice problems. Markup for them is harmless and earns no Google feature.",
+    "fix": "No removal is needed. Google says unsupported markup causes no issues and use outside Google Search is unaffected. Remove it only to reduce maintenance.",
+    "maxSeverity": "info",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "presence = info",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/blog/2025/06/simplifying-search-results",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/blog/2023/08/howto-faq-changes",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/updates",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Detect types tied to retired features: HowTo (as a page's main markup), ClaimReview, SpecialAnnouncement, Occupation/estimated salary markup, LearningResource/learning video markup, Course info properties (hasCourseInstance/offers aimed at the course info result), Car/Vehicle listing markup, practice problem (Quiz) markup and home activities. Report each with its retirement date. HowTo removed 2023-09-13 (desktop and mobile). Special Announcement effective 2025-07-31. Course info, ClaimReview, Estimated salary, Learning video, Special announcement and Vehicle listing were removed from Search reporting on 2025-09-09. Practice problems were deprecated 2025-11-05 and their docs removed 2026-01-06. Home activities docs removed 2024-06-11. Book actions were in the June 2025 list, but the deprecation banner was removed on 2025-11-05; treat Book actions as an active partner feature. ClaimReview still feeds Google's Fact Check tools."
+  },
+  {
+    "id": "schema-carousel-itemlist",
+    "category": "schema",
+    "title": "Carousel ItemList markup on summary pages",
+    "why": "Google documents ItemList markup for carousels on summary pages, a beta limited by region and query type, with at least three items on distinct URLs.",
+    "fix": "Put ItemList only on the summary page, referencing detail-page URLs.",
+    "maxSeverity": "low",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom",
+      "crawl"
+    ],
+    "appliesTo": [
+      "listing"
+    ],
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "low = invalid positions, url-only and full items mixed, repeated or foreign URLs in a summary list; in the region-limited beta (LocalBusiness, Product, Event items) fewer than three items, items without image, name or url, or items pointing to an anchor on the list page",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/search-gallery",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/carousels-beta",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "For ItemList used for carousels: itemListElement ListItem with position (1-based integers). Use either url-only ListItems (summary page linking to detail pages) or full items (all-in-one page), not both. Valid only combined with Recipe, Course, Restaurant or Movie. For the structured data carousels beta (EEA, Türkiye, South Africa), items must be LocalBusiness/Product/Event with image, name and url, ≥3 items, detail URLs on the same site (no same-page anchors), on a summary/category page. The carousel beta is limited by region and query type and has an interest form; report regional eligibility as context. Items must be distinct URLs, not anchors on one page."
+  },
+  {
+    "id": "schema-feature-opportunity",
+    "category": "schema",
+    "title": "Applicable Google features are missing for the page type",
+    "why": "Google's search gallery lists the structured data features currently supported. When a page clearly qualifies for one, such as merchant listings on a product page, missing markup is an opportunity.",
+    "fix": "Implement the eligible feature with all required and accurate recommended properties. Google prefers 'fewer but complete and accurate' properties over many incomplete ones.",
+    "maxSeverity": "low",
+    "method": "hybrid",
+    "scope": "site",
+    "inputs": [
+      "http"
+    ],
+    "optionalInputs": [
+      "crawl"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "The feature is retired, region-limited or partner-only."
+    ],
+    "fpRisk": "medium",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "low candidates for the analyst: og:type article without Article markup, og:type product without Product markup, a page two or more levels deep without BreadcrumbList. Organization and WebSite are covered by schema-organization and schema-site-name-website.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/search-gallery",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Code classifies each page (home, about, contact/location, service, product, category, article/blog, author, job, event, video watch page, forum thread, Q&A, recipe, course catalogue) from URL, DOM and existing markup. Then it lists the gallery features that apply and are absent or incomplete. The LLM validates the classification and ranks opportunities by real eligibility (genuine reviews exist, physical location exists, the site sells products, etc.). Never recommend FAQPage, HowTo, SearchAction or retired types for Google features. Never recommend review markup on the site's own business. Region- or partner-limited features (Vacation rental, Restaurant carousel, Book actions, carousels beta, Job search in some countries) must be labeled as such. Never recommend FAQPage, HowTo, SearchAction or other retired types, and never recommend review markup about the site's own business."
+  },
+  {
+    "id": "schema-url-inspection-rich-results",
+    "category": "schema",
+    "title": "Google's own rich-result verdict for the indexed URL",
+    "why": "The Search Console URL Inspection API returns Google's rich result verdict for the indexed version of a URL. Items with errors cannot appear as rich results.",
+    "fix": "Fix ERROR items first, then re-request indexing in Search Console.",
+    "maxSeverity": "high",
+    "method": "owner-data",
+    "scope": "page",
+    "inputs": [
+      "gsc"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [],
+    "fpRisk": "low",
+    "scored": false,
+    "evidenceLevel": "official-google",
+    "thresholds": "any ERROR issue = high (Google states items with ERROR cannot appear as rich results); WARNING = low",
+    "sources": [
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/urlInspection.index/inspect",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/webmaster-tools/v1/urlInspection.index/UrlInspectionResult",
+        "verified": "2026-11-03"
+      }
+    ],
+    "status": "requires-owner-data",
+    "notes": "If the user provides Search Console OAuth for a verified property, call urlInspection.index.inspect for sampled URLs and read inspectionResult.richResultsResult: verdict (PASS/FAIL/NEUTRAL), detectedItems[].richResultType, items[].name, items[].issues[] (issueMessage, severity WARNING|ERROR). Compare with the tool's own findings and report disagreements. It reflects the indexed version, not the live page, and is subject to Search Console API quotas. No public Rich Results Test API is documented by Google. Do not scrape search.google.com/test/rich-results. validator.schema.org has no documented API either; the tool's own vocabulary validation replaces both."
+  },
+  {
+    "id": "schema-duplicate-feature-nodes",
+    "category": "schema",
+    "title": "Multiple conflicting nodes for the same feature entity on one page",
+    "why": "Several nodes describing the same entity with different values, such as two Product nodes with different prices, leave consumers to choose. Google asks to add properties to the existing node.",
+    "fix": "Disable the duplicate emitter (theme vs plugin vs tag manager) and keep one complete node per entity, linked by @id.",
+    "maxSeverity": "medium",
+    "method": "deterministic",
+    "scope": "page",
+    "inputs": [
+      "raw-html"
+    ],
+    "optionalInputs": [
+      "rendered-dom"
+    ],
+    "appliesTo": "all",
+    "exemptWhen": [
+      "A comparison page describes several distinct products."
+    ],
+    "fpRisk": "low",
+    "scored": true,
+    "evidenceLevel": "official-google",
+    "thresholds": "conflicting values between duplicates = medium; exact duplicates = low. Nodes with different sku, gtin or url are distinct items. Duplicate WebSite items belong to schema-site-name-website.",
+    "sources": [
+      {
+        "url": "https://developers.google.com/search/docs/appearance/structured-data/sd-policies",
+        "verified": "2026-11-03"
+      },
+      {
+        "url": "https://developers.google.com/search/docs/appearance/site-names",
+        "verified": "2026-11-04"
+      }
+    ],
+    "status": "v1",
+    "fixLocation": "repo",
+    "verifiableBy": "local",
+    "notes": "Within a page, group feature nodes by type and identity (@id, url, sku/gtin, or name). Flag groups with >1 node whose key values conflict (e.g. two Product nodes for the same SKU with different prices or ratings; two Organization nodes for the owner with different logos; WebSite defined twice; Article defined by both the theme and an SEO plugin with different dates or authors). Google asks site-name properties to be added to the existing WebSite node rather than a second block. Multiple distinct products on a comparison page are not duplicates."
+  }
+]

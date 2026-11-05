@@ -1,0 +1,762 @@
+{
+  "crawl-robots-fetch-status": {
+    "title": "Resultado de la obtención de robots.txt en cada origen",
+    "why": "Google documenta que, si robots.txt responde con un 5xx o un 429, o falla a nivel de red, deja de rastrear todo el sitio durante las primeras 12 horas y después recurre a su última copia en caché durante un máximo de 30 días. Un 4xx distinto de 429 significa que no hay restricciones. Cada origen tiene su propio robots.txt, y los rastreadores de búsqueda con IA siguen las mismas reglas del RFC 9309.",
+    "fix": "robots.txt debe responder 200 (con reglas) o 404 (sin reglas), y nunca 5xx ni 429. Comprueba que el CDN o el WAF no presenta desafíos ni limita la frecuencia de las solicitudes a /robots.txt.",
+    "messages": {
+      "fail": "{url} ha respondido {status}.",
+      "fail:server-error": "{url} ha respondido {status}. Google trata un error del servidor en robots.txt como un bloqueo total: deja de rastrear el sitio durante 12 horas y después usa su última copia en caché durante un máximo de 30 días.",
+      "fail:network-error": "No se ha podido obtener {url} ({fetchError}). Google trata un robots.txt inaccesible como un error del servidor y deja de rastrear el sitio.",
+      "fail:access-denied": "{url} ha respondido {status}. Google lo trata como si no hubiera robots.txt, así que no se aplica ninguna restricción de rastreo."
+    }
+  },
+  "crawl-robots-redirects": {
+    "title": "Cadena de redirecciones de robots.txt",
+    "why": "El RFC 9309 y Google siguen al menos cinco redirecciones de robots.txt y tratan una cadena más larga como un 404, lo que significa que no se aplica ninguna regla. Las reglas del destino de una redirección a otro host se aplican al host solicitado.",
+    "fix": "Sirve robots.txt directamente en cada host. Si rediriges (por ejemplo, de http a https), usa un solo salto.",
+    "messages": {
+      "fail": "{url} redirige {hops} veces. Google sigue como máximo 5 redirecciones de robots.txt y después trata el archivo como inexistente, así que no se aplica ninguna regla.",
+      "fail:too-many-hops": "{url} redirige {hops} veces. Google sigue como máximo 5 redirecciones de robots.txt y después trata el archivo como inexistente, así que no se aplica ninguna regla.",
+      "fail:loop": "{url} redirige en bucle y vuelve a una URL que ya había visitado tras {hops, plural, one {# salto} other {# saltos}}. Google sigue como máximo 5 redirecciones de robots.txt y después trata el archivo como inexistente, así que no se aplica ninguna regla."
+    }
+  },
+  "crawl-robots-format": {
+    "title": "Tamaño, codificación y tipo de contenido de robots.txt",
+    "why": "Google solo lee los primeros 500 KiB de robots.txt e ignora las reglas posteriores. Un robots.txt que devuelve una página HTML no suele producir ninguna regla. En ambos casos, el propietario tiene restricciones que no se aplican sin ningún aviso.",
+    "fix": "Sirve texto sin formato en UTF-8 de menos de 500 KiB. Consolida los patrones en lugar de enumerar miles de rutas. Asegúrate de que el enrutador del framework no responde a /robots.txt con el shell de la aplicación.",
+    "messages": {
+      "fail": "{url} no se puede leer como se pretende.",
+      "fail:html-body": "{url} devuelve una página HTML en lugar de reglas en texto sin formato, así que no se lee ninguna regla ni ninguna línea Sitemap.",
+      "fail:over-size-limit": "{url} ocupa {bytes} bytes. Google solo lee los primeros 500 KiB, así que se {lost, plural, one {ignora # línea de reglas posterior} other {ignoran # líneas de reglas posteriores}}.",
+      "fail:invalid-utf8": "{count} línea(s) allow o disallow de {url} contienen bytes que no son UTF-8 válido.",
+      "fail:content-type": "{url} se sirve como {type}. Google lee sus reglas sea cual sea el tipo, pero el estándar de robots.txt pide text/plain."
+    }
+  },
+  "crawl-robots-parse-errors": {
+    "title": "Problemas de sintaxis en robots.txt",
+    "why": "Los analizadores del RFC 9309 omiten las líneas que no pueden analizar. Por tanto, un nombre de campo mal escrito o una regla fuera de cualquier grupo no tiene efecto, aunque el propietario crea que está en vigor.",
+    "fix": "Corrige la ortografía de los campos y pon cada regla debajo de una línea user-agent.",
+    "messages": {
+      "fail": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}).",
+      "fail:misspelled-field": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}), incluido un nombre de campo mal escrito.",
+      "fail:rule-outside-group": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}), incluidas reglas anteriores a cualquier línea user-agent, que no se aplican a ningún rastreador.",
+      "fail:missing-separator": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}), incluidas líneas sin dos puntos, que se ignoran.",
+      "fail:path-without-slash": "{count, plural, one {# línea de {url} no se lee} other {# líneas de {url} no se leen}} como se pretende ({count, plural, one {línea} other {líneas}}: {lines}), incluidas rutas que no empiezan ni por / ni por *."
+    }
+  },
+  "crawl-robots-unsupported-directives": {
+    "title": "Se confía en directivas de robots.txt no admitidas",
+    "why": "Google solo admite user-agent, allow, disallow y sitemap en robots.txt y ha declarado que ignora los demás campos, incluido noindex. Una línea noindex en robots.txt deja las URLs indexables. Google ignora crawl-delay, pero Bing lo respeta.",
+    "fix": "Usa noindex en la etiqueta meta robots o en X-Robots-Tag en URLs rastreables en lugar de noindex en robots.txt. Google no tiene ninguna directiva de frecuencia de rastreo: en caso de emergencia, devuelve temporalmente 503/429.",
+    "messages": {
+      "fail": "{url} usa campos que Google no admite: {fields}.",
+      "fail:noindex": "{url} contiene {count, plural, one {# línea noindex} other {# líneas noindex}}. Google ignora noindex en robots.txt, así que esas URLs no se retiran de los resultados. Campos no admitidos encontrados: {fields}.",
+      "fail:ignored-fields": "{url} usa campos que Google ignora: {fields}. Es posible que otros buscadores sí los lean."
+    }
+  },
+  "crawl-robots-blocks-site": {
+    "title": "robots.txt bloquea todo el sitio a Googlebot o Bingbot",
+    "why": "Una regla disallow que abarca la página de inicio o la mayoría de las URLs para Googlebot o Bingbot impide que esos rastreadores obtengan el contenido. Google documenta que las Vistas creadas con IA y el Modo IA se basan en páginas que Googlebot puede rastrear, y Bing usa su propio índice para las respuestas de Copilot, así que un bloqueo de todo el sitio también lo retira de esas superficies.",
+    "fix": "Elimina la regla disallow general (a menudo un resto del entorno de preproducción). Mantén bloqueos solo para trampas de rastreo reales.",
+    "messages": {
+      "fail": "robots.txt bloquea la página de inicio {url} a {crawler}.",
+      "fail:home-googlebot": "robots.txt bloquea la página de inicio {url} a {crawler}, así que Google no puede rastrear el sitio desde su punto de entrada.",
+      "fail:home-bingbot": "robots.txt bloquea la página de inicio {url} a {crawler}, mientras que Googlebot tiene permiso.",
+      "fail:most-pages": "robots.txt bloquea a Googlebot {blocked} de las {total} URLs que parecen indexables y que ha encontrado el rastreo."
+    }
+  },
+  "crawl-robots-blocks-page": {
+    "title": "URL auditada bloqueada por robots.txt",
+    "why": "Google no rastrea una URL bloqueada, así que no puede leer su contenido ni su etiqueta meta robots. Si la URL está enlazada, Google puede indexarla igualmente sin contenido y mostrar solo la URL.",
+    "fix": "Elimina la regla o restringe su alcance. Para mantener una página fuera de los resultados, permite el rastreo y usa noindex.",
+    "messages": {
+      "fail": "robots.txt bloquea {url} a {crawler}.",
+      "fail:disallowed": "robots.txt bloquea {url} a {crawler}. Si está enlazada, la URL puede aparecer igualmente en los resultados sin su contenido.",
+      "fail:conflict-home": "robots.txt bloquea la página de inicio {url} a {crawler}.",
+      "fail:conflict-sitemap": "robots.txt bloquea {url} a {crawler}, mientras que un sitemap la incluye para rastrearla.",
+      "fail:conflict-canonical": "robots.txt bloquea {url} a {crawler}, mientras que otra página la indica como su URL canónica.",
+      "fail:conflict-hreflang": "robots.txt bloquea {url} a {crawler}, mientras que otra página la incluye como alternativa hreflang.",
+      "fail:bingbot-only": "robots.txt bloquea {url} a {crawler}, mientras que Googlebot tiene permiso."
+    }
+  },
+  "crawl-robots-group-override": {
+    "title": "Un grupo específico de Googlebot descarta sin avisar las reglas de *",
+    "why": "Según el RFC 9309, un rastreador solo obedece el grupo más específico que coincide con su user-agent. Por tanto, un grupo para Googlebot o para cualquier token de rastreador de IA sustituye por completo las reglas de *, y las reglas disallow que solo existen en * dejan de aplicarse a ese rastreador.",
+    "fix": "Repite las reglas comunes dentro de cada grupo específico. El grupo * no se hereda.",
+    "messages": {
+      "fail": "{count, plural, one {# regla disallow del grupo * no se repite} other {# reglas disallow del grupo * no se repiten}} en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
+      "fail:crawl-trap": "{count, plural, one {# regla disallow del grupo *, que es una trampa de rastreo, no se repite} other {# reglas disallow del grupo *, incluidas trampas de rastreo, no se repiten}} en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
+      "fail:missing-rules": "{count, plural, one {# regla disallow del grupo * no se repite} other {# reglas disallow del grupo * no se repiten}} en los grupos de {tokens}; un rastreador con grupo propio ignora el grupo *.",
+      "fail:intentional-allow": "El grupo * bloquea todo y el grupo de {token} lo permite, lo que funciona como una lista de permitidos."
+    }
+  },
+  "crawl-robots-blocks-render-resources": {
+    "title": "Recursos imprescindibles para el renderizado bloqueados por robots.txt",
+    "why": "Google no obtiene ni ejecuta el JavaScript y el CSS que robots.txt bloquea. Si esos archivos generan el contenido principal, los enlaces o los metadatos, Google renderiza una página distinta de la que ven los usuarios.",
+    "fix": "Permite /assets, /_next, /static y los endpoints de API que necesita el renderizado. Revisa el robots.txt de cada host del CDN.",
+    "messages": {
+      "fail": "robots.txt bloquea {count, plural, one {# solicitud} other {# solicitudes}} que {url} necesita para renderizarse ({resources}).",
+      "fail:metadata-changed": "robots.txt bloquea {count, plural, one {# solicitud} other {# solicitudes}} ({resources}) y, sin {count, plural, one {ella} other {ellas}}, cambian el título, la URL canónica, las directivas robots o el h1 de {url}.",
+      "fail:content-missing": "robots.txt bloquea {count, plural, one {# solicitud} other {# solicitudes}} ({resources}) y, sin {count, plural, one {ella} other {ellas}}, parte del texto principal de {url} no se renderiza.",
+      "fail:links-missing": "robots.txt bloquea {count, plural, one {# solicitud} other {# solicitudes}} ({resources}) y, sin {count, plural, one {ella} other {ellas}}, no se renderizan enlaces internos de {url}.",
+      "fail:layout-break": "robots.txt bloquea {count, plural, one {# solicitud} other {# solicitudes}} ({resources}) y, sin {count, plural, one {ella} other {ellas}}, {url} se vuelve más ancha que el viewport del móvil.",
+      "fail:minor-differences": "robots.txt bloquea {count, plural, one {# solicitud} other {# solicitudes}} ({resources}) y, sin {count, plural, one {ella} other {ellas}}, parte del texto de {url} no se renderiza. Confirma si es importante."
+    }
+  },
+  "crawl-robots-sitemap-lines": {
+    "title": "Directivas Sitemap en robots.txt",
+    "why": "robots.txt puede declarar sitemaps con URLs absolutas en líneas Sitemap, que Google y otros buscadores leen con independencia de los grupos de user-agent. Una URL de Sitemap relativa o rota no se usa.",
+    "fix": "Usa URLs de sitemap completas. Se permiten varias líneas, y pueden apuntar a otro host (envío entre sitios).",
+    "messages": {
+      "fail": "Sitemaps declarados que no se pueden usar: {count}.",
+      "fail:relative-url": "Sitemaps declarados que no se pueden usar: {count}. Una línea Sitemap debe contener una URL absoluta.",
+      "fail:declared-not-200": "Sitemaps declarados que no responden 200: {count}.",
+      "fail:no-sitemap": "No se declara ningún sitemap en robots.txt ni en un elemento link, y /sitemap.xml no responde con un sitemap. Aun así, es posible que se haya enviado en Search Console, algo que esta auditoría no puede ver."
+    }
+  },
+  "crawl-noindex-blocked-by-robots": {
+    "title": "noindex inaccesible porque robots.txt bloquea la URL",
+    "why": "Google documenta que una regla noindex solo funciona si el rastreador puede obtener la página. Si robots.txt bloquea la URL, el noindex nunca se ve y la URL puede indexarse igualmente a partir de los enlaces.",
+    "fix": "Elige una opción: mantén noindex y permite el rastreo hasta que la URL desaparezca del índice, o bloquea el rastreo y acepta que se indexe solo la URL.",
+    "messages": {
+      "fail": "{url} lleva noindex, pero robots.txt la bloquea a Googlebot ({rule}), así que Google nunca lee el noindex y puede indexar la URL sin su contenido si está enlazada."
+    }
+  },
+  "crawl-meta-robots-noindex": {
+    "title": "La página lleva noindex",
+    "why": "Un noindex en una etiqueta meta robots o en una cabecera X-Robots-Tag retira la página de la Búsqueda de Google y de todas las funciones de IA que dependen del índice, como las Vistas creadas con IA, el Modo IA y Copilot. A menudo es intencionado, así que la regla solo eleva la gravedad cuando otras señales del sitio lo contradicen.",
+    "fix": "Quita noindex de las páginas pensadas para posicionarse. Revisa en el CMS los interruptores del tipo «disuadir a los motores de búsqueda» y las cabeceras que dependen del entorno.",
+    "messages": {
+      "fail": "{url} indica a {crawler} que no la indexe.",
+      "fail:conflict-home": "La página de inicio {url} indica a {crawler} que no la indexe.",
+      "fail:conflict-sitemap": "{url} indica a {crawler} que no la indexe, mientras que un sitemap la incluye.",
+      "fail:conflict-canonical": "{url} indica a {crawler} que no la indexe, mientras que otra página la indica como su URL canónica.",
+      "fail:conflict-hreflang": "{url} indica a {crawler} que no la indexe, mientras que otra página la incluye como alternativa hreflang.",
+      "fail:content-page": "{url} indica a {crawler} que no la indexe. Confirma que esta página de contenido debe quedar fuera de los resultados de búsqueda.",
+      "fail:bingbot-only": "{url} indica a {crawler} que no la indexe, mientras que Googlebot sí puede indexarla."
+    }
+  },
+  "crawl-noindex-raw-vs-rendered": {
+    "title": "noindex difiere entre el HTML original y el DOM renderizado",
+    "why": "Google documenta que, cuando el HTML del servidor contiene noindex, puede omitir el renderizado, así que es posible que nunca se ejecute el JavaScript que quita el noindex. Un noindex que solo añade JavaScript tiene un comportamiento indefinido.",
+    "fix": "Pon la directiva robots definitiva en el HTML del servidor. No publiques un noindex que pienses quitar en el cliente.",
+    "messages": {
+      "fail": "Las directivas robots de {url} difieren entre el HTML original y el DOM renderizado.",
+      "fail:removed-by-js": "El HTML original de {url} lleva noindex y JavaScript lo quita. Google puede omitir el renderizado de una página que tiene noindex en el HTML, así que la página queda fuera del índice.",
+      "fail:added-by-js": "JavaScript añade noindex a {url}; el HTML original no lo lleva. Que Google lo aplique depende del renderizado.",
+      "fail:error-view": "JavaScript añade noindex a {url}, que muestra una vista de error; es una forma documentada de mantener las vistas de error de una aplicación fuera del índice."
+    }
+  },
+  "crawl-robots-directives-conflict": {
+    "title": "Directivas robots contradictorias o duplicadas",
+    "why": "Cuando se aplican varias etiquetas meta robots o cabeceras, Google las combina y prevalece la regla más restrictiva. Los valores contradictorios producen un resultado que puede no ser el que pretende el propietario.",
+    "fix": "Usa una única fuente de verdad: una etiqueta meta o una política de cabeceras.",
+    "messages": {
+      "fail": "Las directivas robots de {url} se contradicen; se aplica el valor más restrictivo: {effective}.",
+      "fail:index-noindex": "{url} declara a la vez index y noindex; se aplica el valor más restrictivo: {effective}.",
+      "fail:snippet": "{url} declara límites de fragmento contradictorios; se aplica el valor más restrictivo: {effective}.",
+      "fail:follow-nofollow": "{url} declara a la vez follow y nofollow; se aplica el valor más restrictivo: {effective}.",
+      "fail:differing-values": "{url} declara límites de vista previa distintos; se aplica el valor más restrictivo: {effective}.",
+      "fail:duplicate": "{url} repite las mismas directivas robots en más de un lugar; el resultado efectivo es {effective}."
+    }
+  },
+  "crawl-robots-directive-validity": {
+    "title": "Valores robots no válidos, obsoletos o específicos de un buscador",
+    "why": "Google enumera los valores de la etiqueta meta robots que admite. Los valores desconocidos o mal formados se ignoran. noarchive y nocache no tienen efecto en Google, pero siguen restringiendo Copilot de Bing.",
+    "fix": "Usa los tokens y formatos documentados. Elimina los tokens sin efecto salvo que estén dirigidos a Bing.",
+    "messages": {
+      "fail": "Google ignora estos valores robots de {url}: {tokens}.",
+      "fail:unknown-token": "Google no reconoce estos valores robots de {url}, así que no tienen efecto: {tokens}.",
+      "fail:malformed-value": "Estos valores robots de {url} están mal formados y Google los ignora: {tokens}.",
+      "fail:space-separated": "Estos valores robots de {url} están separados por espacios en lugar de comas: {tokens}.",
+      "fail:no-op": "Estos valores robots de {url} no tienen efecto en la Búsqueda de Google: {tokens}."
+    }
+  },
+  "crawl-unavailable-after": {
+    "title": "Fecha unavailable_after",
+    "why": "Google documenta que unavailable_after retira la página de los resultados después de la fecha indicada. Una fecha pasada en una página activa que debería posicionarse la retira.",
+    "fix": "Elimina o actualiza la fecha en el contenido atemporal.",
+    "messages": {
+      "fail": "{url} declara unavailable_after {date}.",
+      "fail:past": "{url} declara unavailable_after {date}, una fecha que ya ha pasado, así que Google retira la página de los resultados.",
+      "fail:soon": "{url} declara unavailable_after {date}, {days, plural, one {# día} other {# días}} después de que se sirviera; Google retirará entonces la página de los resultados.",
+      "fail:unparseable": "{url} declara unavailable_after con una fecha que Google no puede leer ({date}), así que la directiva se ignora."
+    }
+  },
+  "crawl-snippet-restrictions": {
+    "title": "nosnippet, max-snippet o max-image-preview restringe los fragmentos y las funciones de IA en páginas indexables",
+    "why": "Google documenta que nosnippet y max-snippet:0 eliminan el fragmento de texto y además impiden que la página se use como entrada directa para las Vistas creadas con IA y el Modo IA; un max-snippet pequeño limita cuánto texto pueden usar esas funciones. Un max-image-preview inferior a large impide las vistas previas de imagen grandes, también en Discover.",
+    "fix": "Elimina las restricciones de fragmentos en todo el sitio salvo que sean una política deliberada del editor. Usa data-nosnippet para pasajes concretos.",
+    "messages": {
+      "fail": "{url} restringe su fragmento con {directive}.",
+      "fail:nosnippet": "{url} usa {directive}, así que Google no muestra ningún fragmento de texto y no usa el contenido como entrada directa para las funciones de IA. Confirma que es intencionado.",
+      "fail:short-snippet": "{url} limita los fragmentos con {directive}, por debajo de 50 caracteres. Confirma que es intencionado.",
+      "fail:image-preview": "{url} limita las vistas previas de imagen con {directive}.",
+      "fail:video-preview": "{url} desactiva las vistas previas de vídeo con {directive}."
+    }
+  },
+  "crawl-page-nofollow": {
+    "title": "nofollow a nivel de página en páginas indexables",
+    "why": "Un nofollow a nivel de página indica a Google que no siga ningún enlace de la página, lo que elimina esa página como vía de descubrimiento de las páginas a las que enlaza.",
+    "fix": "Elimina el nofollow a nivel de página. Usa atributos rel a nivel de enlace solo donde estén justificados.",
+    "messages": {
+      "fail": "{url} indica a los rastreadores que no sigan {links, plural, one {su # enlace interno} other {sus # enlaces internos}}.",
+      "fail:hub-page": "{url} indica a los rastreadores que no sigan {links, plural, one {su # enlace interno} other {sus # enlaces internos}}, así que esta página central no ayuda a descubrir las páginas a las que enlaza.",
+      "fail:leaf-page": "{url} indica a los rastreadores que no sigan {links, plural, one {su # enlace interno} other {sus # enlaces internos}}."
+    }
+  },
+  "crawl-indexifembedded": {
+    "title": "indexifembedded sin noindex",
+    "why": "Google documenta indexifembedded solo en combinación con noindex, para el contenido insertado mediante iframes. Por sí solo no tiene efecto.",
+    "fix": "Combínalo con noindex en el recurso insertado o elimínalo.",
+    "messages": {
+      "fail": "{url} declara indexifembedded sin noindex, así que la directiva no tiene efecto."
+    }
+  },
+  "crawl-head-invalid-element": {
+    "title": "Un elemento no válido en el head trunca los metadatos",
+    "why": "Google documenta que deja de leer los metadatos del head en el primer elemento que no es válido en él, como un img o un div. Los enlaces canonical y hreflang posteriores se ignoran. La etiqueta meta robots se sigue respetando fuera del head.",
+    "fix": "Saca del head los píxeles de seguimiento, los iframes y los noscript>img, o coloca primero las etiquetas canonical, hreflang y meta.",
+    "messages": {
+      "fail": "En {url}, {cause} en la línea {line} cierra el head antes de tiempo, y los elementos de metadatos posteriores ({count}) acaban en el body.",
+      "fail:canonical-or-hreflang-ignored": "En {url}, {cause} en la línea {line} cierra el head antes de tiempo, así que los enlaces canonical o hreflang posteriores acaban en el body, donde Google los ignora.",
+      "fail:metadata-displaced": "En {url}, {cause} en la línea {line} cierra el head antes de tiempo, y los elementos de metadatos posteriores ({count}) acaban en el body."
+    }
+  },
+  "crawl-canonical-presence": {
+    "title": "Declaración canónica presente y autorreferenciada",
+    "why": "Google recomienda un rel=canonical autorreferenciado para poder consolidar las URLs duplicadas, como las variantes con parámetros o de host, en la preferida. Sin él, Google elige una URL canónica por su cuenta.",
+    "fix": "Añade una URL canónica absoluta y autorreferenciada a cada página indexable.",
+    "messages": {
+      "fail": "{url} no declara ninguna URL canónica.",
+      "fail:missing": "{url} no declara ninguna URL canónica, así que Google elige una por su cuenta.",
+      "fail:duplicates-answer": "{url} no declara ninguna URL canónica, mientras que {variants, plural, one {# variante suya responde} other {# variantes suyas responden}} 200, así que Google tiene que elegir entre duplicados."
+    }
+  },
+  "crawl-canonical-multiple": {
+    "title": "Declaraciones canónicas múltiples o contradictorias",
+    "why": "Google documenta que, cuando una página declara varias URLs canónicas distintas, puede ignorarlas todas y elegir una URL canónica por su cuenta.",
+    "fix": "Declara exactamente una URL canónica, en el HTML o en la cabecera, pero no en los dos. Causa habitual: el tema más un plugin de SEO.",
+    "messages": {
+      "fail": "{url} declara {count} destinos canónicos distintos: {targets}.",
+      "fail:conflicting-targets": "{url} declara {count} destinos canónicos distintos ({targets}); Google puede ignorarlos todos.",
+      "fail:repeated": "{url} declara el mismo destino canónico más de una vez: {targets}."
+    }
+  },
+  "crawl-canonical-js-changed": {
+    "title": "URL canónica cambiada por JavaScript",
+    "why": "Google documenta que JavaScript no debería cambiar una URL canónica que ya está en el HTML del servidor, porque puede usar cualquiera de los dos valores. Una URL canónica que solo añade JavaScript funciona, pero no se recomienda.",
+    "fix": "Renderiza la URL canónica definitiva en el servidor. Si tiene que establecerla JS, no la incluyas en absoluto en el HTML.",
+    "messages": {
+      "fail": "JavaScript cambia la URL canónica de {url} de {raw} a {rendered}.",
+      "fail:changed": "JavaScript cambia la URL canónica de {url} de {raw} a {rendered}, lo que envía a Google dos señales distintas.",
+      "fail:removed": "JavaScript elimina la URL canónica {raw} de {url}.",
+      "fail:added": "La URL canónica {rendered} de {url} solo existe después de que se ejecute JavaScript."
+    }
+  },
+  "crawl-canonical-format": {
+    "title": "URL canónica mal formada",
+    "why": "Google recomienda URLs canónicas absolutas. Los valores relativos se resuelven respecto a la URL de la página o a un elemento base y pueden apuntar a una URL equivocada, y los identificadores de fragmento o los marcadores de posición no sirven como URLs canónicas.",
+    "fix": "Usa URLs canónicas completas y normalizadas.",
+    "messages": {
+      "fail": "La URL canónica de {url} no se puede usar tal como está escrita: {href}.",
+      "fail:relative": "La URL canónica de {url} es una URL relativa ({href}); Google recomienda una URL absoluta.",
+      "fail:fragment": "La URL canónica de {url} contiene un identificador de fragmento ({href}).",
+      "fail:placeholder": "La URL canónica de {url} contiene un marcador de posición de plantilla ({href}).",
+      "fail:empty": "La URL canónica de {url} tiene un href vacío.",
+      "fail:unparseable": "La URL canónica de {url} no es una URL válida ({href}).",
+      "fail:not-http": "La URL canónica de {url} no es una URL http ni https ({href})."
+    }
+  },
+  "crawl-canonical-ignored-attributes-placement": {
+    "title": "URL canónica que Google no usará",
+    "why": "Google solo usa rel=canonical si procede de un elemento link en el head o de una cabecera HTTP Link. Las URLs canónicas en el body, o combinadas con atributos como hreflang o media en el mismo elemento, no se usan.",
+    "fix": "Pon un <link rel=canonical href> simple en el head. Usa rel=alternate para las variantes de móvil, idioma o formato.",
+    "messages": {
+      "fail": "Google ignora un rel=canonical de {url} ({problem}).",
+      "fail:only-unusable": "Google ignora el único rel=canonical de {url} ({problem}).",
+      "fail:extra-unusable": "Google ignora un rel=canonical adicional de {url} ({problem})."
+    }
+  },
+  "crawl-canonical-target-health": {
+    "title": "Destino canónico no indexable",
+    "why": "Un destino canónico que redirige, devuelve un error, lleva noindex o está bloqueado por robots.txt envía a Google señales contradictorias, así que tiende a ignorar la URL canónica.",
+    "fix": "Haz que la URL canónica apunte a la URL final que responde 200, es indexable y se puede rastrear.",
+    "messages": {
+      "fail": "El destino canónico {target} de {url} no es una página indexable.",
+      "fail:target-error": "El destino canónico {target} de {url} responde HTTP {status}.",
+      "fail:target-redirects": "El destino canónico {target} de {url} redirige (HTTP {status}) a {location}; la URL canónica debería indicar la URL final.",
+      "fail:target-blocked": "El destino canónico {target} de {url} está bloqueado para Googlebot en robots.txt.",
+      "fail:target-noindex": "El destino canónico {target} de {url} lleva noindex."
+    }
+  },
+  "crawl-canonical-protocol-host": {
+    "title": "Las URLs canónicas, de hreflang, de og:url, del sitemap y de las redirecciones coinciden en HTTPS y en el host preferido",
+    "why": "Google prefiere las URLs HTTPS como canónicas, pero las señales que apuntan a HTTP o a otro host, como las URLs canónicas, las redirecciones o las entradas del sitemap, compiten con esa preferencia. Un certificado no válido empuja a Google hacia la versión HTTP.",
+    "fix": "Redirige con un 301 todas las variantes al host canónico https, haz que la URL canónica coincida con él, sirve un certificado válido que cubra el host y añade HSTS.",
+    "messages": {
+      "fail": "La URL canónica de {url} apunta a {target}.",
+      "fail:canonical-to-http": "La página HTTPS {url} indica la URL HTTP {target} como su URL canónica.",
+      "fail:canonical-host-mismatch": "La URL canónica de {url} usa el host de {target}, mientras que el sitio redirige las variantes de host a {host}."
+    }
+  },
+  "crawl-canonical-cross-domain": {
+    "title": "URL canónica a otro dominio",
+    "why": "Google respeta las URLs canónicas entre dominios cuando el contenido es el mismo. Una URL canónica a un dominio no relacionado o a un contenido distinto suele ser un error de configuración y puede sacar la página de los resultados.",
+    "fix": "Elimina la URL canónica si la página es la original, o investiga si el sitio está comprometido. Para la sindicación, Google recomienda que los socios bloqueen la indexación en lugar de usar una URL canónica.",
+    "messages": {
+      "fail": "{url} indica una URL canónica de otro dominio: {target}.",
+      "fail:cross-domain": "{url} indica una URL canónica de otro dominio ({host}). Confirma que {target} es el mismo contenido en una propiedad que controla el propietario.",
+      "fail:canonical-to-staging": "{url} indica una URL canónica en lo que parece un host de preproducción ({host}): {target}."
+    }
+  },
+  "crawl-canonical-pagination": {
+    "title": "Páginas de una serie paginada canonicalizadas a la página 1",
+    "why": "Google recomienda que cada página de una serie paginada se canonicalice a sí misma. Hacer que la página 2 y las siguientes apunten a la página 1 dificulta descubrir los elementos que solo aparecen en las páginas más profundas.",
+    "fix": "Da a cada página una URL única con una URL canónica autorreferenciada y enlaza las páginas de forma secuencial con <a href>.",
+    "messages": {
+      "fail": "{count, plural, one {# página paginada, {url}, indica la primera página como su URL canónica} other {# páginas paginadas, como {url}, indican la primera página como su URL canónica}}, así que los elementos de las páginas posteriores son más difíciles de descubrir."
+    }
+  },
+  "crawl-canonical-chains": {
+    "title": "Cadenas y bucles de URLs canónicas",
+    "why": "Una URL canónica que apunta a una página que se canonicaliza a otra, o un bucle, envía señales contradictorias. Google no documenta ningún límite de saltos, así que esta regla se basa en su recomendación general de que las URLs canónicas apunten a la URL final.",
+    "fix": "Haz que cada duplicado apunte directamente a la URL canónica final.",
+    "messages": {
+      "fail": "Las URLs canónicas forman una cadena de {hops} saltos que empieza en {url}: {path}.",
+      "fail:chain": "Las URLs canónicas forman una cadena de {hops} saltos que empieza en {url}: {path}. Cada página debería indicar directamente la URL canónica final.",
+      "fail:loop": "Las URLs canónicas forman un bucle que empieza en {url}: {path}."
+    }
+  },
+  "crawl-canonical-signal-consistency": {
+    "title": "Las señales de canonicalización no coinciden entre métodos",
+    "why": "Google combina las redirecciones, rel=canonical, la inclusión en el sitemap y los enlaces internos para elegir una URL canónica. Cuando no coinciden, es más probable que elija una URL que el propietario no pretendía.",
+    "fix": "Alinea todas las señales en una sola URL: enlázala internamente, inclúyela en el sitemap, úsala en hreflang y redirige a ella los duplicados.",
+    "messages": {
+      "fail": "Las señales de canonicalización de {url} no coinciden.",
+      "fail:sitemap-non-canonical": "Un sitemap incluye {url}, que indica {target} como su URL canónica.",
+      "fail:links-to-non-canonical": "Enlaces internos a URLs que se canonicalizan a {url}: {otherLinks}; a la propia {url}: {canonicalLinks}."
+    }
+  },
+  "crawl-host-variant-consolidation": {
+    "title": "Variantes de host, protocolo y ruta sin consolidar",
+    "why": "Google trata como URLs distintas las variantes http y https, con y sin www, y con y sin barra final. Las variantes que responden 200 sin redirigir ni canonicalizarse a la URL preferida reparten las señales entre duplicados.",
+    "fix": "Usa un solo salto 301/308 desde cada variante a la forma canónica. Haz que el servidor devuelva 404 para las variantes de mayúsculas y minúsculas, o que las redirija con un 301 a minúsculas.",
+    "messages": {
+      "fail": "La variante {variant} {url} no se consolida en {preferred}.",
+      "fail:duplicate-200": "La variante {variant} {url} responde 200 con el mismo contenido que {preferred} y sin una URL canónica hacia ella.",
+      "fail:temporary-redirect": "La variante {variant} {url} llega a {preferred} mediante una redirección temporal.",
+      "fail:multiple-hops": "La variante {variant} {url} llega a {preferred} mediante más de una redirección."
+    }
+  },
+  "crawl-duplicate-clusters": {
+    "title": "Grupos de contenido duplicado o casi duplicado",
+    "why": "Google agrupa las páginas duplicadas y casi duplicadas y muestra una URL canónica de cada grupo. Sin una URL canónica clara, puede mostrar una URL distinta de la que quiere el propietario, y las páginas traducidas nunca son duplicados entre sí.",
+    "fix": "Consolida con redirecciones 301 o rel=canonical, o haz que las páginas sean significativamente distintas.",
+    "messages": {
+      "fail": "{count} páginas comparten el mismo texto principal sin una URL canónica común: {urls}.",
+      "fail:not-consolidated": "{count} páginas comparten el mismo texto principal y el mismo idioma sin una URL canónica común: {urls}. Confirma que son duplicados reales."
+    }
+  },
+  "crawl-parameter-urls": {
+    "title": "Parámetros de seguimiento, de sesión e irrelevantes expuestos a los rastreadores",
+    "why": "Google recomienda mantener los ID de sesión y los parámetros de seguimiento fuera de los enlaces internos y los sitemaps, porque cada combinación de parámetros es una URL distinta que desperdicia rastreo y crea duplicados.",
+    "fix": "Quita los parámetros de seguimiento de los enlaces internos, guarda las sesiones en cookies y canonicaliza o redirige a la URL limpia.",
+    "messages": {
+      "fail": "Enlaces internos o URLs del sitemap con parámetros que duplican páginas: {count}.",
+      "fail:session-id": "Enlaces internos o URLs del sitemap con un parámetro de sesión, que crea una URL nueva en cada visita: {count}.",
+      "fail:tracking-parameter": "Enlaces internos o URLs del sitemap con parámetros de seguimiento, que crean URLs duplicadas: {count}.",
+      "fail:parameter-duplicate": "Una URL con un parámetro de seguimiento responde 200 sin una URL canónica hacia la URL limpia."
+    }
+  },
+  "crawl-status-final": {
+    "title": "Estado HTTP final de la URL auditada",
+    "why": "Google solo indexa las URLs que responden 2xx con contenido. Las respuestas finales 4xx no se indexan y, si lo estaban, se retiran; las respuestas 5xx y 429 persistentes ralentizan el rastreo y acaban provocando la retirada.",
+    "fix": "Devuelve 200 para las páginas activas, 404/410 para las eliminadas y 301 para las trasladadas. Corrige los errores del servidor.",
+    "messages": {
+      "fail": "{url} responde HTTP {status}.",
+      "fail:client-error": "{url} responde HTTP {status} mientras el sitio sigue apuntando a ella, así que no se indexa y, si estaba indexada, desaparece de los resultados.",
+      "fail:server-error": "{url} responde HTTP {status}. Los errores del servidor persistentes hacen que Google retire la URL de los resultados.",
+      "fail:rate-limited": "{url} responde HTTP {status}; Google lo trata como un error del servidor y ralentiza su rastreo.",
+      "fail:no-content": "{url} responde HTTP {status}, que no lleva contenido que indexar."
+    }
+  },
+  "crawl-redirect-chain": {
+    "title": "Cadenas y bucles de redirecciones",
+    "why": "Google sigue hasta 10 saltos de redirección y después desiste. Cada salto añade latencia para los usuarios y los rastreadores, y los bucles hacen que la URL sea inaccesible.",
+    "fix": "Redirige directamente a la URL final y actualiza los enlaces internos para que apunten a ella.",
+    "messages": {
+      "fail": "{url} pasa por {hops} redirecciones.",
+      "fail:two-hops": "{url} pasa por {hops} redirecciones antes de la página final.",
+      "fail:long-chain": "{url} pasa por {hops} redirecciones antes de la página final.",
+      "fail:loop": "{url} redirige en bucle después de {hops, plural, one {# salto} other {# saltos}}.",
+      "fail:too-many": "{url} pasa por más de {hops} redirecciones; Googlebot se detiene después de 10."
+    }
+  },
+  "crawl-redirect-type": {
+    "title": "Redirección temporal usada para traslados permanentes",
+    "why": "Google trata los 301 y 308 como señales fuertes de que el destino debería ser la URL canónica, y los 302 y 307 como señales débiles. Una redirección temporal para un traslado permanente, como de HTTP a HTTPS o una migración, mantiene la URL antigua como candidata.",
+    "fix": "Usa 301/308 cuando el traslado no se vaya a revertir.",
+    "messages": {
+      "fail": "{url} redirige a {location} con un {status} temporal.",
+      "fail:temporary-consolidation": "{url} redirige a {location} con un {status} temporal, que es una señal débil para una normalización permanente de URL.",
+      "fail:temporary-move": "{url} redirige a {location} con un {status} temporal. Si el traslado es permanente, un 301 o un 308 lo indica con claridad."
+    }
+  },
+  "crawl-meta-refresh-js-redirect": {
+    "title": "Redirecciones meta refresh y de JavaScript",
+    "why": "Google solo sigue las redirecciones meta refresh y de JavaScript cuando lee o renderiza la página. Trata el meta refresh instantáneo como permanente y el meta refresh con retraso como temporal, y recomienda redirecciones del lado del servidor siempre que sea posible.",
+    "fix": "Sustitúyelas por redirecciones 301/308 del lado del servidor.",
+    "messages": {
+      "fail": "{url} envía a los visitantes a {location} desde el lado del cliente.",
+      "fail:instant-refresh": "{url} redirige a {location} con un meta refresh instantáneo en lugar de una redirección del servidor.",
+      "fail:delayed-refresh": "{url} redirige a {location} con un meta refresh al cabo de {delay} segundos, que Google trata como una redirección temporal.",
+      "fail:js-redirect": "{url} navega a {location} con JavaScript, algo que Google solo ve cuando el renderizado funciona."
+    }
+  },
+  "crawl-soft-404": {
+    "title": "Las URLs inexistentes devuelven 404 o 410, y las páginas de error no se sirven con 200 (soft 404)",
+    "why": "Google documenta que una página que responde 200 con contenido de error o vacío es un soft 404: se excluye del índice y desperdicia rastreo. Un sitio que responde 200 para rutas aleatorias también oculta las páginas que de verdad no existen.",
+    "fix": "Devuelve un 404/410 real. Las SPA deberían redirigir con JS a una URL que devuelva 404 o insertar noindex en la vista de error.",
+    "messages": {
+      "fail": "{url} responde 200 para un contenido que no existe.",
+      "fail:probe-200": "Una ruta desconocida ({url}) responde 200, así que, para los rastreadores, cualquier URL mal escrita o eliminada parece una página real.",
+      "fail:error-page-200": "{url} responde 200, aunque su título o su encabezado dicen que la página no existe. Confírmalo y devuelve 404 o 410."
+    }
+  },
+  "crawl-redirect-to-home": {
+    "title": "URLs eliminadas redirigidas a la página de inicio",
+    "why": "Google documenta que puede tratar como soft 404 las redirecciones de páginas eliminadas a la página de inicio, porque el destino no sustituye al contenido.",
+    "fix": "Redirige a la página equivalente más cercana; si no la hay, devuelve 404/410.",
+    "messages": {
+      "fail": "{url} redirige a la página de inicio {location}.",
+      "fail:probe-to-home": "Una ruta desconocida ({url}) redirige a la página de inicio {location}, lo que Google trata como un soft 404.",
+      "fail:variant-to-home": "La variante de URL {url} redirige a la página de inicio {location} en lugar de a la página de la que es variante.",
+      "fail:page-to-home": "{url} redirige a la página de inicio {location}. Confirma si debería redirigir a una página relacionada o responder 404."
+    }
+  },
+  "crawl-server-errors-rate": {
+    "title": "Errores del servidor y limitación de frecuencia durante el rastreo",
+    "why": "Google reduce su frecuencia de rastreo cuando un sitio devuelve respuestas 5xx o 429, y las URLs que siguen fallando acaban retiradas del índice.",
+    "fix": "Resuelve la falta de capacidad del servidor. Usa 503/429 con Retry-After solo durante poco tiempo (de un par de horas a 1-2 días). Los errores durante varios días pueden hacer que las URLs se retiren del índice.",
+    "messages": {
+      "fail": "{count} de {total} URLs rastreadas ({share, number, ::percent .0}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
+      "fail:error-rate": "{count} de {total} URLs rastreadas ({share, number, ::percent .0}) han respondido con un error del servidor, un 429 o un tiempo de espera agotado.",
+      "fail:no-retry-after": "URLs rastreadas que han respondido 503 o 429 sin una cabecera Retry-After: {count}."
+    }
+  },
+  "crawl-internal-links-broken-redirected": {
+    "title": "Los enlaces internos apuntan a errores o redirecciones en lugar de a las URLs finales",
+    "why": "Los enlaces internos a URLs 4xx o 5xx llevan a los usuarios y a los rastreadores a callejones sin salida, y los enlaces a redirecciones añaden un salto en cada visita. Google recomienda enlazar directamente a la URL canónica.",
+    "fix": "Actualiza los enlaces para que apunten a las URLs canónicas finales que responden 200.",
+    "messages": {
+      "fail": "{count, plural, one {# enlace interno apunta} other {# enlaces internos apuntan}} a URLs que no responden 200: {targets}.",
+      "fail:broken": "{count, plural, one {# enlace interno apunta} other {# enlaces internos apuntan}} a páginas de error: {targets}.",
+      "fail:redirected": "{count, plural, one {# enlace interno apunta} other {# enlaces internos apuntan}} a URLs que redirigen en lugar de a su destino: {targets}."
+    }
+  },
+  "crawl-sitemap-validity": {
+    "title": "Validez del protocolo de sitemaps",
+    "why": "El protocolo de sitemaps limita cada archivo a 50.000 URLs y 50 MB sin comprimir y define el espacio de nombres XML. Google rechaza los archivos que superan estos límites o que no se pueden analizar.",
+    "fix": "Divide los archivos y usa un índice. Escapa &, <, >, ' y \". Sirve XML válido.",
+    "messages": {
+      "fail": "El sitemap {url} no es válido: {detail}.",
+      "fail:unparseable": "El sitemap {url} no se puede analizar: {detail}.",
+      "fail:wrong-namespace": "El sitemap {url} usa el espacio de nombres {detail} en lugar del espacio de nombres de sitemaps.org.",
+      "fail:over-limit": "El sitemap {url} supera los límites del protocolo de 50.000 entradas o 50 MB sin comprimir ({detail}).",
+      "fail:invalid-urls": "El sitemap {url} tiene {count, plural, one {# entrada que no es una URL http(s) absoluta} other {# entradas que no son URLs http(s) absolutas}} de menos de 2048 caracteres.",
+      "fail:nested-index": "El sitemap {url} es un índice de sitemaps incluido dentro de otro índice.",
+      "fail:child-unreachable": "El sitemap secundario {url} incluido en un índice de sitemaps no responde 200 ({detail})."
+    }
+  },
+  "crawl-sitemap-scope": {
+    "title": "Ámbito de las URLs del sitemap (host, protocolo, ruta)",
+    "why": "Según el protocolo de sitemaps, un sitemap solo puede incluir URLs de su propio host y de su ruta, salvo que el envío entre sitios se demuestre en robots.txt o en Search Console. Las URLs fuera de ámbito pueden ignorarse.",
+    "fix": "Aloja los sitemaps en la raíz de cada host o haz referencia a ellos desde el robots.txt de cada host.",
+    "messages": {
+      "fail": "{count, plural, one {# URL de {sitemap} está} other {# URLs de {sitemap} están}} fuera de su ámbito.",
+      "fail:out-of-scope": "{count, plural, one {# URL de {sitemap} está} other {# URLs de {sitemap} están}} fuera del host o del directorio del sitemap, y este no está declarado en el robots.txt de ese host, así que {count, plural, one {puede ignorarse salvo que se envíe} other {pueden ignorarse salvo que se envíen}} en Search Console.",
+      "fail:http-urls": "{count, plural, one {# URL de {sitemap} usa} other {# URLs de {sitemap} usan}} http en un sitio https."
+    }
+  },
+  "crawl-sitemap-url-quality": {
+    "title": "El sitemap incluye URLs no canónicas o no indexables",
+    "why": "Google y Bing piden sitemaps que incluyan solo URLs canónicas e indexables que respondan 200. Incluir redirecciones, errores o URLs con noindex o bloqueadas envía señales contradictorias y desperdicia rastreo.",
+    "fix": "Incluye solo las URLs canónicas e indexables que responden 200 y que quieres en los resultados. Genera el sitemap a partir de la misma fuente de verdad que las URLs canónicas.",
+    "messages": {
+      "fail": "{count, plural, one {# URL del sitemap no es una página canónica indexable} other {# URLs del sitemap no son páginas canónicas indexables}} ({share, number, percent} de las {classified} que se han podido clasificar).",
+      "fail:high-share": "{count} de las {classified} URLs del sitemap que se han podido clasificar ({share, number, percent}) no son páginas canónicas indexables.",
+      "fail:robots-blocked": "{count, plural, one {# URL del sitemap no es una página canónica indexable: está bloqueada en robots.txt.} other {# URLs del sitemap no son páginas canónicas indexables, incluidas URLs bloqueadas en robots.txt.}}",
+      "fail:noindex": "{count, plural, one {# URL del sitemap no es una página canónica indexable: lleva noindex.} other {# URLs del sitemap no son páginas canónicas indexables, incluidas URLs que llevan noindex.}}",
+      "fail:error": "{count, plural, one {# URL del sitemap no es una página canónica indexable: responde con un error.} other {# URLs del sitemap no son páginas canónicas indexables, incluidas URLs que responden con un error.}}",
+      "fail:redirect": "{count, plural, one {# URL del sitemap no es una página canónica indexable: redirige.} other {# URLs del sitemap no son páginas canónicas indexables, incluidas URLs que redirigen.}}",
+      "fail:canonicalised": "{count, plural, one {# URL del sitemap no es una página canónica indexable: indica otra URL canónica.} other {# URLs del sitemap no son páginas canónicas indexables, incluidas URLs que indican otra URL canónica.}}"
+    }
+  },
+  "crawl-sitemap-lastmod": {
+    "title": "Exactitud y formato de lastmod",
+    "why": "Google solo usa lastmod cuando es exacto de forma constante, es decir, cuando refleja cambios significativos en el contenido principal. Cuando todas las URLs muestran la hora de generación, Google deja de confiar en el campo. Bing también usa lastmod para volver a rastrear y para la actualidad en Copilot.",
+    "fix": "Establece lastmod solo cuando haya cambios significativos (contenido principal, datos estructurados, enlaces). Es mejor omitirlo que falsearlo. Bing prefiere el formato ISO 8601 completo con la hora.",
+    "messages": {
+      "fail": "Los valores lastmod de los sitemaps no son fiables ({count, plural, one {# entrada} other {# entradas}}, {value}).",
+      "fail:invalid-format": "{count} valor(es) lastmod no son fechas en formato W3C Datetime, por ejemplo, {value}.",
+      "fail:generation-time": "{count} URLs comparten el lastmod {value}, la hora en que se generó el sitemap, así que Google deja de confiar en el campo.",
+      "fail:uniform": "{count} URLs comparten el lastmod {value}. Confirma que refleja cambios reales del contenido y no una fecha de recompilación.",
+      "fail:future-dates": "{count} valor(es) lastmod son fechas futuras, por ejemplo, {value}.",
+      "fail:missing": "Ninguna de las URLs de los sitemaps ({count}) tiene fecha lastmod. Google usa lastmod cuando es exacto de forma constante, y Bing lo considera una señal clave para programar nuevos rastreos."
+    }
+  },
+  "crawl-sitemap-ignored-tags": {
+    "title": "Presencia de changefreq o priority",
+    "why": "Google ignora changefreq y priority en los sitemaps, y Bing anunció en 2025 que también los ignora. Su presencia es inofensiva.",
+    "fix": "Limpieza opcional. Dedica el esfuerzo a que lastmod sea exacto.",
+    "messages": {
+      "fail": "{count, plural, one {# entrada del sitemap lleva} other {# entradas del sitemap llevan}} changefreq o priority, que Google y Bing ignoran."
+    }
+  },
+  "crawl-js-links-crawlable": {
+    "title": "La navegación y la paginación usan enlaces <a href> rastreables",
+    "why": "Google documenta que solo sigue los enlaces de elementos <a> con un atributo href que se resuelve en una URL. La navegación hecha con botones, controladores onclick o anclas sin href no se sigue.",
+    "fix": "Usa <a href='/real/url'> para cada destino de navegación. El texto del enlace (o el alt del img) debería describir el destino.",
+    "messages": {
+      "fail": "{url} tiene {count} elemento(s) clicable(s) sin un href rastreable.",
+      "fail:navigation": "{url} tiene {count} elemento(s) de navegación sin un href rastreable. Confirma si llevan a páginas, que los rastreadores solo pueden seguir mediante <a href>.",
+      "fail:isolated": "{url} tiene {count} elemento(s) clicable(s) sin un href rastreable. Confirma si alguno de ellos lleva a páginas."
+    }
+  },
+  "crawl-js-fragment-routing": {
+    "title": "Enrutamiento con fragmentos hash",
+    "why": "Google ignora el fragmento de la URL al rastrear, así que las rutas que solo existen después de # no son URLs distintas y su contenido no se puede indexar por separado.",
+    "fix": "Cambia a un enrutamiento con la History API y rutas reales que devuelvan 200 desde el servidor.",
+    "messages": {
+      "fail": "Los enlaces internos enrutan a través del fragmento de la URL ({routes}), que Google ignora.",
+      "fail:hash-routes": "{count} rutas internas están en el fragmento de la URL ({routes}); Google ignora los fragmentos, así que estas vistas no tienen URL propia.",
+      "fail:single-hash-route": "Un enlace interno enruta a través del fragmento de la URL ({routes}), que Google ignora."
+    }
+  },
+  "crawl-js-content-dependency": {
+    "title": "El contenido principal, los enlaces o los metadatos críticos solo aparecen después del renderizado",
+    "why": "Google renderiza JavaScript, pero el renderizado puede retrasarse y falla cuando los scripts dan error o están bloqueados. Muchos otros rastreadores, incluida la mayoría de los rastreadores de IA, no ejecutan JavaScript. Los títulos, las URLs canónicas, la etiqueta meta robots, hreflang y los datos estructurados que difieren entre el HTML original y el renderizado ofrecen a los rastreadores dos versiones entre las que elegir.",
+    "fix": "Usa el renderizado del lado del servidor, el renderizado estático o la hidratación.",
+    "messages": {
+      "fail": "{url} depende de JavaScript para el {share, number, percent} de lo que muestra.",
+      "fail:content-after-js": "El {share, number, percent} del texto renderizado de {url} no está en el HTML original. Google lo renderiza, más tarde; los rastreadores que no ejecutan JavaScript no lo ven.",
+      "fail:links-after-js": "El {share, number, percent} de los enlaces internos de {url} solo existe después de que se ejecute JavaScript.",
+      "fail:metadata-differs": "Hay diferencias entre el HTML original y el DOM renderizado de {url}: {fields}."
+    }
+  },
+  "crawl-js-lazy-content": {
+    "title": "Contenido que necesita interacción del usuario para cargarse",
+    "why": "Google no hace clic ni se desplaza como los usuarios. El contenido y los enlaces que solo se cargan tras un clic o un evento de desplazamiento, en lugar de cuando entran en el viewport, pueden no indexarse.",
+    "fix": "Carga el contenido cuando entre en el viewport (loading=lazy nativo, IntersectionObserver). Da URLs únicas, enlazadas de forma secuencial, a los bloques del desplazamiento infinito.",
+    "messages": {
+      "fail": "Parte de {url} solo se carga después de desplazarse por la página ({count}).",
+      "fail:content-after-scroll": "El {share, number, percent} del texto de {url} solo aparece después de desplazarse por la página. Confirma que no es el contenido principal.",
+      "fail:links-after-scroll": "{count} enlaces internos de {url} solo aparecen después de desplazarse por la página. Confirma si son enlaces a elementos o de paginación.",
+      "fail:images-without-src": "{count, plural, one {# imagen de {url} no tiene src en un renderizado sin desplazamiento, así que no se carga para la indexación.} other {# imágenes de {url} no tienen src en un renderizado sin desplazamiento, así que no se cargan para la indexación.}}"
+    }
+  },
+  "crawl-dynamic-rendering": {
+    "title": "HTML que depende del user-agent (renderizado dinámico o encubrimiento)",
+    "why": "Google describe el renderizado dinámico, que consiste en servir HTML prerrenderizado a los bots, como una solución alternativa obsoleta. No es encubrimiento cuando el contenido es equivalente, pero puede acabar alejándose de lo que ven los usuarios.",
+    "fix": "Migra a SSR, renderizado estático o hidratación.",
+    "messages": {
+      "fail": "{url} sirve un HTML distinto al user-agent de Googlebot y a un navegador.",
+      "fail:prerendered-for-bots": "{url} sirve HTML prerrenderizado al user-agent de Googlebot y un shell de aplicación a un navegador; el renderizado dinámico es una solución alternativa obsoleta.",
+      "fail:different-content": "{url} sirve un texto sustancialmente distinto al user-agent de Googlebot y a un navegador. Confirma que la diferencia no es encubrimiento."
+    }
+  },
+  "crawl-html-size-limit": {
+    "title": "El HTML o un recurso supera el límite de obtención de Googlebot",
+    "why": "Desde febrero de 2026, Google documenta que Googlebot para la Búsqueda solo lee los primeros 2 MB de un archivo HTML o de texto sin comprimir, y de cada archivo CSS o JavaScript. El contenido y los enlaces posteriores al corte no se indexan. Los demás rastreadores de Google mantienen un valor predeterminado de 15 MB, y los PDF tienen 64 MB.",
+    "fix": "Mueve a archivos externos los bloques de datos insertados (estado de hidratación, imágenes en base64, sprites SVG) y mantén primero los metadatos del head.",
+    "messages": {
+      "fail": "El HTML de {url} ocupa {bytes} bytes sin comprimir; Googlebot para la Búsqueda solo lee los primeros 2 MB.",
+      "fail:content-after-limit": "El HTML de {url} ocupa {bytes} bytes sin comprimir; Googlebot para la Búsqueda solo lee los primeros 2 MB, y después de ese punto hay contenido o enlaces, encabezados o elementos de metadatos ({count}).",
+      "fail:scripts-after-limit": "El HTML de {url} ocupa {bytes} bytes sin comprimir; Googlebot para la Búsqueda solo lee los primeros 2 MB, y después de ese punto solo hay scripts o marcado sin contenido."
+    }
+  },
+  "crawl-conditional-requests": {
+    "title": "Compatibilidad con solicitudes condicionales (ETag / Last-Modified)",
+    "why": "Los rastreadores de Google admiten solicitudes condicionales con ETag y Last-Modified. Una respuesta 304 ahorra ancho de banda a ambas partes y permite volver a rastrear los sitios grandes de forma más eficiente.",
+    "fix": "Envía un ETag fuerte (el que prefiere Google) y un Last-Modified en formato IMF-fixdate. Devuelve 304 cuando no haya cambios.",
+    "messages": {
+      "fail": "Las respuestas HTML no admiten solicitudes condicionales.",
+      "fail:malformed-last-modified": "{url} envía una cabecera Last-Modified que no es una fecha HTTP: {value}.",
+      "fail:no-validators": "Las páginas HTML como {url} no envían ni ETag ni Last-Modified, así que los rastreadores no pueden revalidarlas con poco coste."
+    }
+  },
+  "crawl-url-hygiene": {
+    "title": "Higiene de la estructura de las URLs",
+    "why": "Google recomienda URLs sencillas y legibles, con guiones, un uso coherente de mayúsculas y minúsculas y caracteres codificados. Son prácticas recomendadas para URLs nuevas; cambiar las URLs existentes solo por estilo cuesta más de lo que aporta.",
+    "fix": "Usa URLs legibles, en minúsculas, con guiones, con codificación porcentual y con parámetros con «=» y «&».",
+    "messages": {
+      "fail": "{count, plural, one {# URL interna está mal formada} other {# URLs internas están mal formadas}}.",
+      "fail:too-long": "{count, plural, one {# URL interna tiene} other {# URLs internas tienen}} más de 2048 caracteres.",
+      "fail:unencoded-characters": "{count, plural, one {# URL interna contiene} other {# URLs internas contienen}} espacios o barras invertidas sin codificar.",
+      "fail:double-slash": "{count, plural, one {# URL interna contiene} other {# URLs internas contienen}} una doble barra en la ruta.",
+      "fail:duplicate-parameters": "{count, plural, one {# URL interna repite} other {# URLs internas repiten}} la clave de un parámetro."
+    }
+  },
+  "crawl-base-href": {
+    "title": "Riesgos de <base href>",
+    "why": "Según el estándar HTML, el primer <base href> cambia cómo se resuelve cada URL relativa de la página, incluidos los enlaces, las URLs canónicas y hreflang. Un base incorrecto hace que los enlaces relativos apunten a un lugar equivocado.",
+    "fix": "Elimina <base> o haz que sea absoluto y correcto. Es preferible usar enlaces relativos a la raíz.",
+    "messages": {
+      "fail": "El elemento base de {url} apunta a {base}.",
+      "fail:other-host": "El elemento base de {url} apunta a otro sitio ({base}), así que {count, plural, one {# URL relativa de la página se resuelve} other {# URLs relativas de la página se resuelven}} allí.",
+      "fail:other-host-unused": "El elemento base de {url} apunta a otro sitio ({base}); ninguna URL relativa de la página depende de él.",
+      "fail:other-host-same-site": "El elemento base de {url} apunta a otro host del mismo sitio ({base}), así que {count, plural, one {# URL relativa se resuelve} other {# URLs relativas se resuelven}} allí.",
+      "fail:relative-links-broken": "{count} enlace(s) relativo(s) de {url}, resueltos respecto al base {base}, responden con un error.",
+      "fail:unparseable": "El elemento base de {url} no es una URL válida ({base})."
+    }
+  },
+  "crawl-bing-crawl-delay": {
+    "title": "crawl-delay ralentiza a Bing y a algunos rastreadores de IA (Google lo ignora)",
+    "why": "Google ignora crawl-delay, pero Bing y varios rastreadores de IA documentan que lo admiten. Un retraso grande en un sitio grande limita mucho cuántas páginas obtienen esos rastreadores al día.",
+    "fix": "Elimina crawl-delay salvo que el servidor lo necesite de verdad. En su lugar, usa el control de rastreo de Bing Webmaster Tools.",
+    "messages": {
+      "fail": "robots.txt establece crawl-delay {delay} para Bingbot. Google ignora el campo.",
+      "fail:present": "robots.txt establece crawl-delay {delay} para Bingbot. Google ignora el campo.",
+      "fail:slow-for-size": "robots.txt establece crawl-delay {delay} para Bingbot mientras los sitemaps incluyen {urls} URLs, lo que limita la velocidad a la que Bing puede rastrearlas."
+    }
+  },
+  "crawl-gsc-index-status": {
+    "title": "Estado de indexación de Google de las páginas auditadas",
+    "why": "La Inspección de URLs indica si Google ha indexado la página y, si no, por qué, según su último rastreo. Una página que la auditoría considera indexable, pero que Google no indexa, no recibe tráfico de búsqueda.",
+    "fix": "Corrige la causa que indica el estado (errores del servidor, bloqueos, soft 404, duplicados sin URL canónica) y después solicita la indexación en la Inspección de URLs. En el caso de «Rastreada: actualmente sin indexar», mejora la página antes de volver a solicitarla.",
+    "messages": {
+      "fail": "Google indica que {url} está en el estado «{state}» (último rastreo: {lastCrawl}).",
+      "fail:soft-404": "Google trata {url} como un soft 404: la página responde 200, pero parece que no existe (último rastreo: {lastCrawl}).",
+      "fail:not-found": "La última vez, Google recibió un 404 para {url} (último rastreo: {lastCrawl}).",
+      "fail:server-error": "Google ha recibido un error del servidor para {url} (último rastreo: {lastCrawl}).",
+      "fail:redirect-error": "Google no ha podido seguir las redirecciones de {url} (último rastreo: {lastCrawl}).",
+      "fail:blocked-by-robots": "robots.txt ha impedido a Google acceder a {url} (último rastreo: {lastCrawl}).",
+      "fail:noindex": "Google ha encontrado noindex en {url} (último rastreo: {lastCrawl}).",
+      "fail:access-blocked": "Se ha denegado a Google el acceso a {url}: «{state}» (último rastreo: {lastCrawl}).",
+      "fail:indexed-without-content": "Google ha indexado {url} sin poder leer su contenido (último rastreo: {lastCrawl}).",
+      "fail:crawled-not-indexed": "Google ha rastreado {url}, pero ha decidido no indexarla (último rastreo: {lastCrawl}).",
+      "fail:discovered-not-indexed": "Google conoce {url}, pero aún no la ha rastreado.",
+      "fail:duplicate-without-canonical": "Google considera {url} un duplicado sin URL canónica declarada e indexa otra URL.",
+      "fail:indexed-blocked-by-robots": "Google ha indexado {url} aunque robots.txt la bloquea, así que se muestra sin descripción.",
+      "fail:unknown-to-google": "Google aún no conoce {url}."
+    }
+  },
+  "crawl-gsc-google-canonical": {
+    "title": "La URL canónica que elige Google coincide con la declarada",
+    "why": "Google elige la URL canónica a partir de varias señales y muestra su elección en la Inspección de URLs. Cuando difiere de la URL canónica declarada, la página declarada no es la que se posiciona.",
+    "fix": "Haz que todas las señales apunten a una sola URL: el rel=canonical, los enlaces internos, el sitemap, las redirecciones y hreflang. Si las dos páginas no son duplicadas, haz que su contenido sea claramente distinto.",
+    "messages": {
+      "fail": "Google ha elegido {chosen} como URL canónica de {url}.",
+      "fail:differs": "{url} declara {declared} como URL canónica, pero Google ha elegido {chosen}.",
+      "fail:chosen-without-declared": "{url} no declara ninguna URL canónica y Google ha elegido {chosen}."
+    }
+  },
+  "crawl-gsc-crawl-recency": {
+    "title": "Google ha rastreado hace poco las páginas indexables, con su rastreador para smartphones",
+    "why": "La Inspección de URLs indica la fecha y el rastreador del último rastreo. Una página que Google no rastrea desde hace meses muestra contenido antiguo en la búsqueda, y Google indexa con su rastreador para smartphones.",
+    "fix": "Enlaza la página desde páginas que Google rastrea, inclúyela en el sitemap con un lastmod exacto y solicita la indexación después de cambios significativos. Un rastreo para ordenador es poco habitual desde la indexación centrada en los móviles; comprueba que los móviles reciben el mismo contenido.",
+    "messages": {
+      "fail": "Google rastreó {url} por última vez {days} días antes de que se leyeran los datos.",
+      "fail:stale-crawl": "Google rastreó {url} por última vez {days} días antes de que se leyeran los datos.",
+      "fail:desktop-crawler": "Google rastreó {url} por última vez con su rastreador para ordenador."
+    }
+  },
+  "crawl-gsc-sitemaps": {
+    "title": "Search Console lee los sitemaps sin errores",
+    "why": "Search Console indica, para cada sitemap enviado, los errores y las advertencias que encontró la última vez que lo leyó. Enviar los sitemaps también da acceso a informes de indexación por sitemap.",
+    "fix": "Corrige los errores que Search Console indica para el sitemap y vuelve a enviarlo. Envía los sitemaps que el sitio declara en robots.txt para que sus informes aparezcan en Search Console.",
+    "messages": {
+      "fail": "Search Console indica problemas con el sitemap {sitemap}.",
+      "fail:errors": "Search Console ha encontrado {count, plural, one {# error} other {# errores}} en el sitemap {sitemap}.",
+      "fail:warnings": "Search Console ha encontrado {count, plural, one {# advertencia} other {# advertencias}} en el sitemap {sitemap}.",
+      "fail:not-submitted": "El sitemap {sitemap} no está enviado en Search Console, así que su informe de indexación no está disponible allí."
+    }
+  },
+  "crawl-gsc-sitemap-urls-without-impressions": {
+    "title": "URLs del sitemap sin impresiones",
+    "why": "Una URL incluida en el sitemap sin impresiones en 28 días o no está indexada o nunca se muestra para ninguna consulta. En ambos casos, conviene saberlo antes de escribir más páginas como esa.",
+    "fix": "Inspecciona las URLs en Search Console. Si no están indexadas, consulta crawl-gsc-index-status; si lo están, mejora su contenido y sus enlaces internos, o quítalas del sitemap si no deberían indexarse.",
+    "messages": {
+      "fail": "{count} de {total} URLs del sitemap no han tenido impresiones en los 28 días leídos, por ejemplo, {examples}."
+    }
+  },
+  "crawl-bots-blocked-at-edge": {
+    "title": "Solicitudes verificadas de Googlebot o Bingbot rechazadas o con errores",
+    "why": "Google trata los códigos 401 y 403 como una página inexistente y elimina esas URLs de su índice, y reduce el rastreo cuando recibe 429 o errores del servidor. Las solicitudes verificadas como Googlebot o Bingbot que reciben estas respuestas muestran que una regla del CDN, del cortafuegos o del servidor bloquea al rastreador real, algo que un sondeo desde fuera no puede demostrar.",
+    "fix": "Busca la regla que responde al rastreador (WAF, protección contra bots, limitación de frecuencia, bloqueo geográfico) y exime a los rastreadores verificados por su DNS inverso o por los rangos de IP que publican. No uses 401 ni 403 para limitar la frecuencia de rastreo, y corrige los errores del servidor que recibe el rastreador.",
+    "messages": {
+      "fail": "Solicitudes verificadas de {agent} con errores o rechazos: {count} de {total} ({share, number, percent}; {statuses}).",
+      "fail:refused": "Las solicitudes verificadas de {agent} se han rechazado {count} de {total} veces ({share, number, percent}; {statuses}), así que el rastreador no ha podido leer esas páginas.",
+      "fail:server-errors": "Las solicitudes verificadas de {agent} han recibido un error del servidor {count} de {total} veces ({share, number, percent}; {statuses})."
+    }
+  },
+  "crawl-bots-robots-compliance": {
+    "title": "Rastreadores verificados que han obtenido rutas que robots.txt bloquea",
+    "why": "El RFC 9309 exige que los rastreadores sigan las reglas de robots.txt que leen y que no usen una copia en caché durante más de 24 horas; algunos operadores documentan plazos más largos (Amazon, hasta 30 días; DuckAssistBot, 72 horas). Las solicitudes verificadas de rutas bloqueadas después de ese plazo significan que el rastreador ha visto un robots.txt distinto del que se sirve ahora, o que lo ignora.",
+    "fix": "Comprueba que todos los hosts y protocolos sirven el mismo robots.txt y que los patrones disallow coinciden con las rutas tal como aparecen en los registros (mayúsculas y codificación). Si un rastreador verificado lo sigue ignorando, bloquéalo en el perímetro por los rangos de IP que publica. Las solicitudes que inicia un usuario (ChatGPT-User, Claude-User, Perplexity-User) no siguen robots.txt y no se cuentan.",
+    "messages": {
+      "fail": "{agent} verificado ha obtenido {count, plural, one {una vez} other {# veces}} rutas que robots.txt bloquea.",
+      "fail:disallowed": "{agent} verificado ha obtenido {count, plural, one {una vez} other {# veces}} rutas que el robots.txt actual bloquea después de su plazo de caché de {hours} horas, contando desde el {since}, cuando el archivo entró en vigor.",
+      "fail:assumed-unchanged": "{agent} verificado ha obtenido {count, plural, one {una vez} other {# veces}} rutas que el robots.txt actual bloquea, suponiendo que robots.txt no ha cambiado desde el {since}; indica la fecha en que cambió, si lo hizo."
+    }
+  },
+  "crawl-bots-googlebot-sitemap-coverage": {
+    "title": "Googlebot verificado ha llegado a las URLs del sitemap durante la ventana",
+    "why": "Un sitemap indica a Google qué páginas considera importantes el sitio y le ayuda a rastrearlas, aunque no garantiza el rastreo. Las URLs del sitemap que Googlebot verificado no ha obtenido correctamente durante la ventana no se han actualizado en el índice de Google en ese tiempo, y puede que las nuevas aún no estén indexadas.",
+    "fix": "Inspecciona en Search Console las URLs que faltan. Enlázalas desde páginas que Googlebot rastrea, mantén su lastmod exacto y asegúrate de que responden 200 rápidamente. Los registros de un origen detrás de un CDN no incluyen las solicitudes que el CDN ha servido desde la caché, así que usa los registros del CDN cuando sea posible.",
+    "messages": {
+      "fail": "Googlebot verificado ha obtenido {fetched} de {urls} URLs del sitemap ({share, number, percent}) en {days} días de datos.",
+      "fail:not-seen": "No aparece ninguna solicitud de Googlebot verificado en {days} días de datos, así que no se ha obtenido ninguna de las URLs del sitemap ({urls}).",
+      "fail:low-coverage": "Googlebot verificado solo ha obtenido {fetched} de {urls} URLs del sitemap ({share, number, percent}) en {days} días de datos.",
+      "fail:partial-coverage": "Googlebot verificado ha obtenido {fetched} de {urls} URLs del sitemap ({share, number, percent}) en {days} días de datos."
+    }
+  },
+  "crawl-bots-spoofed-crawlers": {
+    "title": "Solicitudes que usan el user-agent de un rastreador pero no superan las comprobaciones de su operador",
+    "why": "Cualquiera puede enviar el user-agent de Googlebot o de GPTBot, y Google y Common Crawl advierten de que los suyos se suplantan. Las solicitudes que dicen ser de un rastreador pero no superan la comprobación de la lista de IP o del DNS inverso que publica su operador son impostores, a menudo bots que extraen contenido, y un cortafuegos que confía en los user-agents las sirve mientras puede rechazar al rastreador real.",
+    "fix": "Verifica los rastreadores en el perímetro por su DNS inverso o por las listas de IP que publican los operadores (los CDN ofrecen reglas de bots verificados) en lugar de permitir o bloquear user-agents, y rechaza las solicitudes que no superen la verificación.",
+    "messages": {
+      "fail": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share, number, percent}; {agents}).",
+      "fail:served": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share, number, percent}; {agents}), y {served} de ellas se han servido, así que el perímetro confía en los user-agents.",
+      "fail:refused": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share, number, percent}; {agents}); el perímetro ha rechazado la mayoría.",
+      "fail:present": "{spoofed} de {checked} solicitudes de rastreadores comprobadas no han superado las comprobaciones de sus operadores ({share, number, percent}; {agents})."
+    }
+  },
+  "crawl-bing-crawl-issues": {
+    "title": "Problemas de rastreo que Bing indica para el sitio",
+    "why": "Bing Webmaster Tools enumera las URLs con las que Bingbot ha tenido problemas: errores del servidor y del cliente, fallos de DNS, tiempos de espera agotados, bloqueos de robots.txt, redirecciones y malware. Bing no puede indexar el contenido actual de una URL que no puede obtener, y avisa a quienes buscan antes de que visiten una página que marca como malware.",
+    "fix": "Empieza por el tipo más grave: elimina el malware y cierra la vía por la que entró, y después solicita una nueva evaluación de malware en Bing Webmaster Tools; corrige los errores del servidor, los fallos de DNS y los tiempos de espera para Bingbot; restaura o redirige las URLs 4xx a las que enlazan otras páginas; apunta los enlaces a la URL final en lugar de a una redirección. Bing indica que un problema corregido puede tardar unos días en salir de su lista.",
+    "messages": {
+      "fail": "Bing indica {count, plural, one {# URL} other {# URLs}} con el problema de rastreo {issue}, por ejemplo, {examples}.",
+      "fail:malware": "Bing indica que {count, plural, one {# URL contiene} other {# URLs contienen}} malware, por ejemplo, {examples}.",
+      "fail:server-error": "Bing ha recibido errores del servidor (5xx) para {count, plural, one {# URL} other {# URLs}}, por ejemplo, {examples}.",
+      "fail:dns-error": "Bing no ha podido resolver el nombre de host de {count, plural, one {# URL} other {# URLs}}, por ejemplo, {examples}.",
+      "fail:timeout": "Bing ha agotado el tiempo de espera al obtener {count, plural, one {# URL} other {# URLs}}, por ejemplo, {examples}.",
+      "fail:client-error": "Bing ha recibido errores 4xx para {count, plural, one {# URL} other {# URLs}} ({linked} con enlaces entrantes), por ejemplo, {examples}.",
+      "fail:important-url-blocked": "robots.txt impide a Bingbot acceder a {count, plural, one {# URL que Bing considera importante} other {# URLs que Bing considera importantes}}, por ejemplo, {examples}.",
+      "fail:blocked-by-robots": "robots.txt impide a Bingbot acceder a {count, plural, one {# URL} other {# URLs}}, por ejemplo, {examples}.",
+      "fail:permanent-redirect": "Bing ha encontrado una redirección 301 en {count, plural, one {# URL} other {# URLs}}, por ejemplo, {examples}.",
+      "fail:temporary-redirect": "Bing ha encontrado una redirección 302 en {count, plural, one {# URL} other {# URLs}}, por ejemplo, {examples}."
+    }
+  },
+  "crawl-bing-page-issues": {
+    "title": "Bing no indica problemas de rastreo en las páginas auditadas",
+    "why": "La lista de problemas de rastreo de Bing y los detalles de su índice indican qué ha recibido Bingbot para cada URL. Una página auditada pensada para la búsqueda que Bingbot no ha podido obtener, o que robots.txt le bloquea, puede faltar o estar desactualizada en Bing aunque funcione en un navegador.",
+    "fix": "Corrige lo que ha encontrado Bingbot: busca sus solicitudes a la página en los registros del servidor y del CDN (errores, tiempos de espera, bloqueos del cortafuegos) y revisa las reglas de robots.txt que se aplican a Bingbot. Después, envía la URL en Bing Webmaster Tools para que Bing la vuelva a rastrear.",
+    "messages": {
+      "fail": "Bing indica {issues} para {url}.",
+      "fail:malware": "Bing indica que {url} contiene malware ({issues}).",
+      "fail:server-error": "Bing ha recibido un error del servidor para {url} (estado HTTP {status}; {issues}); en esta auditoría: {live}.",
+      "fail:dns-error": "Bing no ha podido resolver el nombre de host de {url} ({issues}); en esta auditoría: {live}.",
+      "fail:timeout": "Bing ha agotado el tiempo de espera al obtener {url} ({issues}); en esta auditoría: {live}.",
+      "fail:client-error": "Bing ha recibido un error del cliente para {url} (estado HTTP {status}; {issues}); en esta auditoría: {live}.",
+      "fail:important-url-blocked": "Bing considera importante {url}, pero robots.txt impide a Bingbot acceder a ella ({issues}).",
+      "fail:blocked-by-robots": "robots.txt impide a Bingbot acceder a {url} ({issues}).",
+      "fail:permanent-redirect": "Bing ha encontrado una redirección 301 en {url} ({issues}); en esta auditoría: {live}.",
+      "fail:temporary-redirect": "Bing ha encontrado una redirección 302 en {url} ({issues}); en esta auditoría: {live}.",
+      "fail:not-reproduced": "Bing indica {issues} para {url}, pero esta auditoría no lo ha reproducido ({live}): el problema se ha corregido después del rastreo de Bing, es intermitente o solo afecta a Bingbot.",
+      "fail:robots-allows-now": "Bing indica {issues} para {url}, pero el robots.txt que ha leído esta auditoría permite a Bingbot obtenerla, así que el problema debería desaparecer cuando Bing vuelva a leer robots.txt."
+    }
+  }
+}

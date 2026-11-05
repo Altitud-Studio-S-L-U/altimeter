@@ -1,0 +1,473 @@
+{
+  "aiItem": {
+    "title element": "title element",
+    "title element outside the head": "title element outside the head",
+    "meta description": "meta description",
+    "{property} meta property": "{property} meta property",
+    "html lang attribute": "html lang attribute",
+    "canonical link": "canonical link",
+    "{tag} text": "{tag} text",
+    "text hidden by {method}": "text hidden by {method}",
+    "text hidden by {method} inside main": "text hidden by {method} inside main",
+    "img without an alt attribute": "img without an alt attribute",
+    "img with empty alt (decorative)": "img with empty alt (decorative)",
+    "img alt text": "img alt text",
+    "{direction} link": "{direction} link",
+    "{direction} link (rel {rel})": "{direction} link (rel {rel})",
+    "JSON-LD block that does not parse": "JSON-LD block that does not parse",
+    "JSON-LD block": "JSON-LD block",
+    "microdata item": "microdata item",
+    "response header {name}": "response header {name}",
+    "h{level} heading": "h{level} heading",
+    "hreflang link": "hreflang link"
+  },
+  "assistants": {
+    "none by referrer": "none by referrer"
+  },
+  "audits": {
+    "none": "none"
+  },
+  "band": {
+    "good": "good",
+    "needs improvement": "needs improvement",
+    "poor": "poor"
+  },
+  "caller": {
+    "analyst": "analyst",
+    "verifier": "verifier"
+  },
+  "causes": {
+    "none attributed": "none attributed"
+  },
+  "collector": {
+    "not measured": "not measured"
+  },
+  "conditions": {
+    "lab, Lighthouse {version}, {formFactor}, {throttling} throttling": "lab, Lighthouse {version}, {formFactor}, {throttling} throttling"
+  },
+  "contentType": {
+    "(none)": "(none)"
+  },
+  "crawl-js-content-dependency/fields": {
+    "title": "title",
+    "meta description": "meta description",
+    "structured data types": "structured data types"
+  },
+  "crawlers": {
+    "none": "none"
+  },
+  "detail": {
+    "HTTP error": "HTTP error",
+    "{count} URLs": "{count} URLs",
+    "{entries} entries, {bytes} bytes": "{entries} entries, {bytes} bytes",
+    "not a sitemap": "not a sitemap",
+    "index inside an index": "index inside an index",
+    "(none)": "(none)"
+  },
+  "direction": {
+    "internal": "internal",
+    "outbound": "outbound"
+  },
+  "duration": {
+    "unknown": "unknown"
+  },
+  "embeds": {
+    "{name}: {requests} requests, {size}, main thread {time}": "{name}: {requests} requests, {size}, main thread {time}",
+    "{name}: {requests} request, {size}, main thread {time}": "{name}: {requests} request, {size}, main thread {time}"
+  },
+  "entities": {
+    "{entity}: main thread {time}, transfer {size}": "{entity}: main thread {time}, transfer {size}"
+  },
+  "error": {
+    "no answer": "no answer",
+    "unknown error": "unknown error"
+  },
+  "fetchError": {
+    "invalid-url": "invalid-url",
+    "unsupported-protocol": "unsupported-protocol",
+    "blocked-address": "blocked-address",
+    "dns": "dns",
+    "connection": "connection",
+    "tls": "tls",
+    "timeout": "timeout",
+    "redirect-loop": "redirect-loop",
+    "too-many-redirects": "too-many-redirects",
+    "decode": "decode",
+    "aborted": "aborted"
+  },
+  "field": {
+    "title": "title",
+    "meta description": "meta description",
+    "image alt texts": "image alt texts",
+    "structured data types": "structured data types"
+  },
+  "fileReason": {
+    "contains {token}": "contains {token}",
+    "contains the observed text": "contains the observed text",
+    "named after .{name}": "named after .{name}",
+    "uses {name}": "uses {name}",
+    "configures how the platform answers": "configures how the platform answers"
+  },
+  "files": {
+    "not listed": "not listed"
+  },
+  "first": {
+    "html": "html",
+    "header": "header",
+    "sitemap": "sitemap"
+  },
+  "formFactor": {
+    "PHONE": "PHONE",
+    "DESKTOP": "DESKTOP",
+    "mobile": "mobile",
+    "desktop": "desktop"
+  },
+  "formFactors": {
+    "PHONE": "PHONE",
+    "DESKTOP": "DESKTOP"
+  },
+  "format": {
+    "unknown": "unknown"
+  },
+  "includeSubDomains": {
+    "yes": "yes",
+    "no": "no"
+  },
+  "intl-hreflang-outside-head/cause": {
+    "<{tag}> element": "<{tag}> element",
+    "text content": "text content",
+    "not determined": "not determined"
+  },
+  "issuer": {
+    "unknown": "unknown"
+  },
+  "issues": {
+    "HTTP {status} in its index details": "HTTP {status} in its index details"
+  },
+  "kind": {
+    "canvas": "canvas",
+    "video": "video",
+    "embed": "embed",
+    "pdf": "pdf"
+  },
+  "kinds": {
+    "canvas": "canvas",
+    "video": "video",
+    "embed": "embed",
+    "pdf": "pdf"
+  },
+  "lastCrawl": {
+    "never": "never"
+  },
+  "live": {
+    "no response": "no response"
+  },
+  "location": {
+    "hidden element": "hidden element",
+    "comment": "comment",
+    "attribute": "attribute",
+    "meta": "meta",
+    "rendered hidden": "rendered hidden"
+  },
+  "maxAge": {
+    "invalid": "invalid"
+  },
+  "method": {
+    "display-none": "display-none",
+    "visibility-hidden": "visibility-hidden",
+    "opacity-zero": "opacity-zero",
+    "visually-hidden": "visually-hidden",
+    "zero-size": "zero-size",
+    "offscreen": "offscreen",
+    "tiny-font": "tiny-font",
+    "same-color": "same-color"
+  },
+  "metrics": {
+    "{metric} {value} ({band})": "{metric} {value} ({band})",
+    "{metric} {stable} vs {withSoftnavs} with soft navigations": "{metric} {stable} vs {withSoftnavs} with soft navigations"
+  },
+  "mode": {
+    "no-quirks": "no-quirks",
+    "quirks": "quirks",
+    "limited-quirks": "limited-quirks"
+  },
+  "operators": {
+    "{operator} ({search} blocked, {training} allowed)": "{operator} ({search} blocked, {training} allowed)"
+  },
+  "otherAudits": {
+    "none": "none"
+  },
+  "outcome": {
+    "failed": "failed",
+    "skipped": "skipped"
+  },
+  "preload": {
+    "yes": "yes",
+    "no": "no"
+  },
+  "presence": {
+    "raw": "raw",
+    "raw only": "raw only",
+    "rendered only": "rendered only"
+  },
+  "problem": {
+    "in the body": "in the body",
+    "carries {attributes}": "carries {attributes}"
+  },
+  "problems": {
+    "the file is empty": "the file is empty",
+    "the first line is not an H1 heading": "the first line is not an H1 heading",
+    "it has {count} H1 headings": "it has {count} H1 headings",
+    "empty member": "empty member",
+    "invalid key \"{key}\"": "invalid key \"{key}\"",
+    "{key} needs y or n": "{key} needs y or n"
+  },
+  "progress": {
+    "Fetching {url}": "Fetching {url}",
+    "Reading sitemaps": "Reading sitemaps",
+    "Probing URL variants and an unknown path": "Probing URL variants and an unknown path",
+    "Probing crawler user agents": "Probing crawler user agents",
+    "Fetching referenced resources and language probes": "Fetching referenced resources and language probes",
+    "Fetching the hreflang alternates of the page": "Fetching the hreflang alternates of the page",
+    "Crawling the site": "Crawling the site",
+    "Crawled {done}/{max}": "Crawled {done}/{max}",
+    "Rendering {url}": "Rendering {url}",
+    "Running Lighthouse": "Running Lighthouse",
+    "Querying Chrome UX Report field data": "Querying Chrome UX Report field data",
+    "Reading Cloudflare analytics for {zone}": "Reading Cloudflare analytics for {zone}",
+    "Reading {file}": "Reading {file}",
+    "Checking {count} crawler address in reverse DNS": "Checking {count} crawler address in reverse DNS",
+    "Checking {count} crawler addresses in reverse DNS": "Checking {count} crawler addresses in reverse DNS",
+    "Reading robots.txt and the sitemaps of {origin}": "Reading robots.txt and the sitemaps of {origin}",
+    "No --site given: robots.txt and sitemaps are not compared.": "No --site given: robots.txt and sitemaps are not compared.",
+    "Asking {engine} ({caller}, {pass})": "Asking {engine} ({caller}, {pass})",
+    "Asking {engine}: {queryId}, run {run} of {runs}": "Asking {engine}: {queryId}, run {run} of {runs}",
+    "Checking {target}": "Checking {target}"
+  },
+  "purpose": {
+    "search": "search",
+    "training": "training",
+    "user-triggered": "user-triggered"
+  },
+  "query": {
+    "query {number}": "query {number}"
+  },
+  "raw": {
+    "(none)": "(none)"
+  },
+  "reasons": {
+    "not stated": "not stated",
+    "display-none": "display-none",
+    "visibility-hidden": "visibility-hidden",
+    "opacity-zero": "opacity-zero",
+    "visually-hidden": "visually-hidden",
+    "zero-size": "zero-size",
+    "offscreen": "offscreen",
+    "tiny-font": "tiny-font",
+    "same-color": "same-color"
+  },
+  "rendered": {
+    "(none)": "(none)"
+  },
+  "resource": {
+    "script": "script",
+    "stylesheet": "stylesheet",
+    "image": "image",
+    "img": "img",
+    "font": "font",
+    "media": "media",
+    "audio": "audio",
+    "video": "video",
+    "frame": "frame",
+    "object": "object",
+    "embed": "embed",
+    "form": "form",
+    "document": "document",
+    "fetch": "fetch",
+    "xhr": "xhr",
+    "other": "other"
+  },
+  "role": {
+    "stylesheet": "stylesheet",
+    "script": "script",
+    "fetch": "fetch",
+    "font": "font",
+    "image": "image",
+    "document": "document",
+    "other": "other"
+  },
+  "schema-breadcrumb/items": {
+    "none": "none"
+  },
+  "schema-product-variants/items": {
+    "variant": "variant"
+  },
+  "schemes": {
+    "cctld": "cctld",
+    "subdomain": "subdomain",
+    "subdirectory": "subdirectory",
+    "parameter": "parameter",
+    "same-path": "same-path"
+  },
+  "scope": {
+    "URL-level": "URL-level",
+    "origin-level": "origin-level"
+  },
+  "scripts": {
+    "not attributed": "not attributed",
+    "{url} (first party, {time})": "{url} (first party, {time})",
+    "{url} (third party, {time})": "{url} (third party, {time})"
+  },
+  "searchAudits": {
+    "none": "none"
+  },
+  "second": {
+    "html": "html",
+    "header": "header",
+    "sitemap": "sitemap"
+  },
+  "signal": {
+    "title": "title",
+    "canonical": "canonical",
+    "robots": "robots",
+    "h1": "h1"
+  },
+  "snippet": {
+    "async-hide class": "async-hide class",
+    "Adobe Target pre-hiding snippet": "Adobe Target pre-hiding snippet",
+    "Kameleoon loading style sheet": "Kameleoon loading style sheet",
+    "style rule that hides the page": "style rule that hides the page",
+    "{tag} element hidden in the server HTML": "{tag} element hidden in the server HTML"
+  },
+  "sources": {
+    "not attributed": "not attributed",
+    "html": "html",
+    "rendered": "rendered",
+    "header": "header",
+    "sitemap": "sitemap"
+  },
+  "state": {
+    "Crawled - currently not indexed": "Crawled - currently not indexed",
+    "Discovered - currently not indexed": "Discovered - currently not indexed",
+    "Excluded by ‘noindex’ tag": "Excluded by ‘noindex’ tag",
+    "Excluded by 'noindex' tag": "Excluded by 'noindex' tag",
+    "Blocked by robots.txt": "Blocked by robots.txt",
+    "Indexed, though blocked by robots.txt": "Indexed, though blocked by robots.txt",
+    "Not found (404)": "Not found (404)",
+    "Soft 404": "Soft 404",
+    "Server error (5xx)": "Server error (5xx)",
+    "Redirect error": "Redirect error",
+    "Duplicate without user-selected canonical": "Duplicate without user-selected canonical",
+    "URL is unknown to Google": "URL is unknown to Google",
+    "Blocked due to unauthorized request (401)": "Blocked due to unauthorized request (401)",
+    "Blocked due to access forbidden (403)": "Blocked due to access forbidden (403)",
+    "Blocked due to other 4xx issue": "Blocked due to other 4xx issue",
+    "Page indexed without content": "Page indexed without content"
+  },
+  "status": {
+    "none": "none",
+    "unknown": "unknown",
+    "invalid-url": "invalid-url",
+    "unsupported-protocol": "unsupported-protocol",
+    "blocked-address": "blocked-address",
+    "dns": "dns",
+    "connection": "connection",
+    "tls": "tls",
+    "timeout": "timeout",
+    "redirect-loop": "redirect-loop",
+    "too-many-redirects": "too-many-redirects",
+    "decode": "decode",
+    "aborted": "aborted",
+    "error": "error"
+  },
+  "subparts": {
+    "time to first byte {share}%": "time to first byte {share}%",
+    "resource load delay {share}%": "resource load delay {share}%",
+    "element render delay {share}%": "element render delay {share}%"
+  },
+  "tech-favicon-file-valid/problem": {
+    "not-200": "not-200",
+    "not-an-image": "not-an-image",
+    "svg": "svg",
+    "unsupported-format": "unsupported-format",
+    "not-square": "not-square",
+    "too-small": "too-small",
+    "noindex": "noindex",
+    "blocked-for-googlebot-image": "blocked-for-googlebot-image"
+  },
+  "throttling": {
+    "simulate": "simulate",
+    "devtools": "devtools",
+    "provided": "provided"
+  },
+  "url": {
+    "unknown": "unknown"
+  },
+  "variant": {
+    "trailing-slash": "trailing-slash",
+    "index-file": "index-file",
+    "uppercase": "uppercase",
+    "tracking-parameter": "tracking-parameter",
+    "double-slash": "double-slash",
+    "http": "http",
+    "www": "www"
+  },
+  "warning": {
+    "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.": "Search Console was requested but no credential was found. Run \"altimeter gsc login --client <client_secret.json> --remember <dpapi|file>\" or set ALTIMETER_GSC_ACCESS_TOKEN.",
+    "Search Console data was not used: {error}": "Search Console data was not used: {error}",
+    "Crawler activity: {warning}": "Crawler activity: {warning}",
+    "Crawler activity was not read: {error}": "Crawler activity was not read: {error}",
+    "Chrome was not found, so rendered checks were not evaluated.": "Chrome was not found, so rendered checks were not evaluated.",
+    "Lighthouse did not complete: {error}": "Lighthouse did not complete: {error}",
+    "Bing Webmaster Tools data was requested but BING_WEBMASTER_API_KEY is not set. Generate a key in Bing Webmaster Tools under Settings > API Access.": "Bing Webmaster Tools data was requested but BING_WEBMASTER_API_KEY is not set. Generate a key in Bing Webmaster Tools under Settings > API Access.",
+    "Bing Webmaster Tools data is incomplete. {warning}": "Bing Webmaster Tools data is incomplete. {warning}",
+    "Bing Webmaster Tools data was not used: {error}": "Bing Webmaster Tools data was not used: {error}",
+    "The crawl issues could not be read: {error}": "The crawl issues could not be read: {error}",
+    "The page traffic could not be read: {error}": "The page traffic could not be read: {error}",
+    "The queries of {page} could not be read: {error}": "The queries of {page} could not be read: {error}",
+    "The index details of {url} could not be read: {error}": "The index details of {url} could not be read: {error}",
+    "{count} later request was not sent after Bing Webmaster Tools throttled the requests.": "{count} later request was not sent after Bing Webmaster Tools throttled the requests.",
+    "{count} later requests were not sent after Bing Webmaster Tools throttled the requests.": "{count} later requests were not sent after Bing Webmaster Tools throttled the requests.",
+    "Cloudflare keeps {days} days of this data for the zone, so the window starts on {date}.": "Cloudflare keeps {days} days of this data for the zone, so the window starts on {date}.",
+    "Cloudflare allows {hours} hours per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare allows {hours} hours per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.",
+    "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.": "Some Cloudflare queries returned their maximum rows, so rare crawlers or paths may be missing and counts are lower bounds.",
+    "{name}: reading stopped early ({error}).": "{name}: reading stopped early ({error}).",
+    "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.": "{name}: {share}% of its requests come from one or two addresses, which looks like a proxy or load balancer, so its addresses were not used to verify crawlers. Log the client address and pass --ip-source.",
+    "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.": "{name} uses the Common Log Format, which has no user agent, so crawlers cannot be identified in it.",
+    "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.": "{name} records no user agent (Netlify removes client_ip and user_agent when PII is excluded), so crawlers cannot be identified in it.",
+    "{name} records no user agent, so crawlers cannot be identified in it.": "{name} records no user agent, so crawlers cannot be identified in it.",
+    "{name} ({format}) records the client address itself; --ip-source applies to server logs only.": "{name} ({format}) records the client address itself; --ip-source applies to server logs only.",
+    "Cloudflare analytics and access logs may count the same requests twice.": "Cloudflare analytics and access logs may count the same requests twice.",
+    "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.": "The address list {id} could not be read ({error}); a log that records Cloudflare's addresses cannot be recognised.",
+    "The address list {id} could not be read ({error}); requests it would verify stay unverified.": "The address list {id} could not be read ({error}); requests it would verify stay unverified.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.": "The address list {id} could not be refreshed ({error}); the cached copy from {date} was used.",
+    "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.": "The address list {id} could not be refreshed ({error}); the cached copy from an earlier run was used.",
+    "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.": "Reverse DNS was limited to the {limit} busiest addresses; requests from the others stay unverified when their lists do not verify them.",
+    "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} crawler requests carry private or loopback addresses, so the logs record a proxy or load balancer; log the client address and pass --ip-source.",
+    "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} crawler requests come from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.",
+    "No request falls within the window ({start} to {end}); check the dates of {files}.": "No request falls within the window ({start} to {end}); check the dates of {files}.",
+    "No request falls within the window ({start} to {end}).": "No request falls within the window ({start} to {end}).",
+    "Cloudflare reported no request from a known crawler in the window.": "Cloudflare reported no request from a known crawler in the window.",
+    "The analysis did not run because no provider CLI is available.": "The analysis did not run because no provider CLI is available.",
+    "Verification was turned off, so every analysis finding stays unverified.": "Verification was turned off, so every analysis finding stays unverified.",
+    "{error} Findings stay unverified.": "{error} Findings stay unverified.",
+    "{count} analysis calls were left out to stay within the call limit.": "{count} analysis calls were left out to stay within the call limit.",
+    "{caller} call {id} ({pass}) {outcome}: {error}": "{caller} call {id} ({pass}) {outcome}: {error}",
+    "{name} {version} is not a verified version; it runs with {flags}.": "{name} {version} is not a verified version; it runs with {flags}.",
+    "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.": "{declared} sitemaps are declared and only the first {read} were read, so checks that use sitemap URLs see only part of them.",
+    "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.": "The sitemap indexes list {listed} child sitemaps and only {read} were read, so checks that use sitemap URLs see only part of them.",
+    "{file} is empty, so it was skipped.": "{file} is empty, so it was skipped.",
+    "The format of {file} was not recognised, so it was skipped.": "The format of {file} was not recognised, so it was skipped.",
+    "{count} analysis call was left out to stay within the call limit.": "{count} analysis call was left out to stay within the call limit.",
+    "Cloudflare keeps {days} day of this data for the zone, so the window starts on {date}.": "Cloudflare keeps {days} day of this data for the zone, so the window starts on {date}.",
+    "Cloudflare allows {hours} hour per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.": "Cloudflare allows {hours} hour per query and Altimeter makes at most {queries} queries per run, so only the data from {date} was read.",
+    "{count} crawler request carries a private or loopback address, so the logs record a proxy or load balancer; log the client address and pass --ip-source.": "{count} crawler request carries a private or loopback address, so the logs record a proxy or load balancer; log the client address and pass --ip-source.",
+    "{count} crawler request comes from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source.": "{count} crawler request comes from Cloudflare's own addresses, so the logs record Cloudflare rather than the client; log CF-Connecting-IP and pass --ip-source."
+  },
+  "where": {
+    "title": "title",
+    "meta description": "meta description",
+    "page text": "page text",
+    "image alt text": "image alt text"
+  }
+}

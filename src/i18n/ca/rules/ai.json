@@ -1,0 +1,370 @@
+{
+  "ai-robots-wildcard-disallow-all": {
+    "title": "El grup comodí prohibeix el rastreig de tot el lloc als rastrejadors d'IA que no tenen un grup específic",
+    "why": "Segons l'RFC 9309, un rastrejador sense grup propi segueix el grup *. Per tant, un grup * que prohibeix el rastreig de tot el lloc bloqueja tots els rastrejadors de cerca i de respostes amb IA que no tenen un grup propi, sovint sense que el propietari ho pretengui.",
+    "fix": "Afegeix grups explícits que permetin els rastrejadors de cerca i de respostes que vulguis, o elimina la regla Disallow global.",
+    "messages": {
+      "fail": "El grup * del robots.txt prohibeix el rastreig de tot el lloc, i els rastrejadors de cerca o de respostes amb IA sense grup propi hereten aquest bloqueig.",
+      "fail:ai-search-inherits-block": "El grup * prohibeix el rastreig de /, de manera que hereten el bloqueig els rastrejadors de cerca o de respostes amb IA sense grup propi ({count}; {agents}), mentre que un cercador té un grup propi que permet el rastreig."
+    }
+  },
+  "ai-robots-oai-searchbot": {
+    "title": "OAI-SearchBot permès (inclusió a la cerca de ChatGPT)",
+    "why": "OpenAI documenta que els llocs que prohibeixen el rastreig a OAI-SearchBot no es mostren a les respostes de la cerca de ChatGPT, tot i que encara poden aparèixer com a enllaços de navegació. Aquesta configuració és independent de la de GPTBot, que s'utilitza per a l'entrenament.",
+    "fix": "Permet OAI-SearchBot (i, al WAF, les IP que OpenAI publica a openai.com/searchbot.json) si el lloc vol que el citin a la cerca de ChatGPT. OpenAI diu que els canvis triguen unes 24 hores.",
+    "messages": {
+      "fail": "El robots.txt deixa {agent} fora del lloc.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i hereta una regla Disallow (camins de la mostra bloquejats: {blocked} de {sampled}). OpenAI diu que els llocs que exclouen OAI-SearchBot no es mostren a les respostes de la cerca de ChatGPT.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i li prohibeix el rastreig (camins de la mostra bloquejats: {blocked} de {sampled}). Sembla una decisió deliberada; OpenAI diu que aquests llocs no es mostren a les respostes de la cerca de ChatGPT."
+    }
+  },
+  "ai-robots-gptbot": {
+    "title": "Política sobre GPTBot (només entrenament d'OpenAI)",
+    "why": "OpenAI documenta GPTBot com el rastrejador per entrenar els seus models. Prohibir-li el rastreig no afecta la cerca de ChatGPT, que fa servir OAI-SearchBot.",
+    "fix": "No cal cap canvi per a la visibilitat. Prohibeix-li el rastreig només per expressar una preferència contra l'entrenament.",
+    "messages": {
+      "fail": "El robots.txt prohibeix el rastreig a {agent}.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig a {agent}, el rastrejador d'entrenament d'OpenAI. Això expressa una preferència contra l'entrenament i no afecta la cerca de ChatGPT, que controla OAI-SearchBot."
+    }
+  },
+  "ai-robots-chatgpt-user": {
+    "title": "Regles per a ChatGPT-User (obtencions iniciades per usuaris)",
+    "why": "OpenAI documenta ChatGPT-User per a les obtencions que inicia un usuari i diu que les regles del robots.txt poden no aplicar-s'hi. Les seves regles es registren sense prometre cap dels dos comportaments.",
+    "fix": "Fes servir OAI-SearchBot per gestionar la inclusió a la cerca de ChatGPT. ChatGPT-User no s'utilitza per decidir l'elegibilitat per a la cerca.",
+    "messages": {
+      "fail": "El robots.txt prohibeix el rastreig a {agent}.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig a {agent}. OpenAI diu que les regles del robots.txt poden no aplicar-se a les obtencions que inicia un usuari de ChatGPT, de manera que l'efecte no està garantit en cap sentit."
+    }
+  },
+  "ai-robots-claude-searchbot": {
+    "title": "Claude-SearchBot permès (índex de cerca de Claude)",
+    "why": "Anthropic documenta Claude-SearchBot com el rastrejador que indexa contingut per als resultats de cerca de Claude, i diu que prohibir-li el rastreig pot reduir la visibilitat en aquests resultats.",
+    "fix": "Permet Claude-SearchBot per continuar sent indexable per a la cerca de Claude.",
+    "messages": {
+      "fail": "El robots.txt deixa {agent} fora del lloc.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i hereta una regla Disallow (camins de la mostra bloquejats: {blocked} de {sampled}). Anthropic diu que bloquejar-lo impedeix la indexació per a la cerca de Claude.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i li prohibeix el rastreig (camins de la mostra bloquejats: {blocked} de {sampled}). Sembla una decisió deliberada; Anthropic diu que això impedeix la indexació per a la cerca de Claude."
+    }
+  },
+  "ai-robots-claude-user": {
+    "title": "Claude-User permès (obtencions fetes per a usuaris de Claude)",
+    "why": "Anthropic documenta Claude-User per a les obtencions fetes en nom d'usuaris de Claude i diu que respecta el robots.txt, de manera que una regla Disallow impedeix que Claude recuperi la pàgina quan els usuaris en pregunten.",
+    "fix": "Permet Claude-User si les pàgines s'han de poder recuperar quan els usuaris de Claude en pregunten.",
+    "messages": {
+      "fail": "El robots.txt prohibeix el rastreig de / a {agent}.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i hereta una regla Disallow per a /. Anthropic diu que Claude-User respecta el robots.txt, de manera que les pàgines no es poden obtenir quan els usuaris de Claude en pregunten.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i prohibeix el rastreig de /. Sembla una decisió deliberada; Anthropic diu que Claude-User ho respecta."
+    }
+  },
+  "ai-robots-claudebot": {
+    "title": "Política sobre ClaudeBot (entrenament d'Anthropic)",
+    "why": "Anthropic documenta ClaudeBot com el rastrejador que recull dades d'entrenament. Prohibir-li el rastreig exclou el contingut futur de l'entrenament i no atura Claude-SearchBot ni Claude-User.",
+    "fix": "Només és una preferència sobre l'entrenament; no hi ha documentat cap impacte en la visibilitat.",
+    "messages": {
+      "fail": "El robots.txt prohibeix el rastreig a {agent}.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig a {agent}, el rastrejador d'entrenament d'Anthropic. Això indica l'exclusió de les dades d'entrenament futures i no atura Claude-SearchBot ni Claude-User."
+    }
+  },
+  "ai-robots-legacy-tokens": {
+    "title": "El robots.txt s'adreça a identificadors d'IA obsolets o mal escrits",
+    "why": "Els operadors documenten els identificadors actuals dels seus rastrejadors. Els grups per a identificadors que ja no llisten, com anthropic-ai o Claude-Web, o per a identificadors mal escrits, probablement no coincideixen amb cap rastrejador actual, de manera que la regla prevista no s'aplica.",
+    "fix": "Substitueix-los pels identificadors actuals: ClaudeBot, Claude-SearchBot, Claude-User, GPTBot, OAI-SearchBot, ChatGPT-User, Google-GeminiNotebook (agent d'obtenció per a usuaris, que en general ignora el robots.txt igualment).",
+    "messages": {
+      "fail": "El robots.txt esmenta l'identificador {token}, que no figura en cap documentació actual de rastrejadors; l'identificador actual és {current}.",
+      "fail:legacy-token": "El robots.txt té un grup per a {token}, un identificador que ja no està documentat, i no en té cap per al seu identificador actual, {current}.",
+      "fail:near-miss-token": "El robots.txt esmenta {token}, que sembla una variant ortogràfica de l'identificador {current}; els rastrejadors comparen els identificadors de producte de manera exacta, de manera que pot ser que el grup no s'apliqui a {current}."
+    }
+  },
+  "ai-robots-perplexitybot": {
+    "title": "PerplexityBot permès (índex de cerca de Perplexity)",
+    "why": "Perplexity documenta PerplexityBot com el rastrejador del seu índex de cerca, no per a l'entrenament de models. Prohibir-li el rastreig elimina les pàgines de l'índex de Perplexity; les obtencions de Perplexity-User per a usuaris en general ignoren el robots.txt.",
+    "fix": "Permet PerplexityBot (IP a perplexity.ai/perplexitybot.json) per aparèixer i ser enllaçat a Perplexity.",
+    "messages": {
+      "fail": "El robots.txt deixa {agent} fora del lloc.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i hereta una regla Disallow (camins de la mostra bloquejats: {blocked} de {sampled}), de manera que pot ser que les pàgines no apareguin ni s'enllacin a Perplexity.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i li prohibeix el rastreig (camins de la mostra bloquejats: {blocked} de {sampled}). Sembla una decisió deliberada."
+    }
+  },
+  "ai-robots-google-extended": {
+    "title": "Política sobre Google-Extended (entrenament i fonamentació de Gemini, no la Cerca de Google)",
+    "why": "Google documenta Google-Extended com l'identificador del robots.txt que controla l'ús del contingut per a l'entrenament i la fonamentació de Gemini. No afecta la inclusió ni el posicionament a la Cerca de Google, incloses les AI Overviews i l'AI Mode, que segueixen Googlebot.",
+    "fix": "Mantén-lo permès si es volen cites i clics procedents de la fonamentació de les Gemini Apps. Una regla Disallow només exclou el contingut de l'entrenament i la fonamentació de Gemini.",
+    "messages": {
+      "fail": "El robots.txt restringeix Google-Extended.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig a {agent}. Això només exclou el contingut de l'entrenament i la fonamentació de Gemini; no afecta la Cerca de Google ni les AI Overviews.",
+      "fail:usage-ai-training": "El robots.txt té un grup __usage_ai-training amb una regla Disallow i no té cap grup Google-Extended. Google preveu interpretar aquest grup com una regla Disallow per a Google-Extended."
+    }
+  },
+  "ai-robots-applebot": {
+    "title": "Applebot permès (Siri, Spotlight, Safari); Applebot-Extended és només per a l'entrenament",
+    "why": "Apple documenta Applebot com el rastrejador dels suggeriments de Siri, Spotlight i Safari, i Applebot-Extended com un control només per a l'entrenament que no rastreja. Quan Applebot no té cap grup, recorre a les regles de Googlebot.",
+    "fix": "Permet Applebot. Afegeix una regla Disallow per a Applebot-Extended només per excloure el contingut de l'entrenament dels models fundacionals d'Apple.",
+    "messages": {
+      "fail": "El robots.txt restringeix els rastrejadors d'Apple.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i hereta una regla Disallow per a / (del grup de Googlebot o de *), cosa que deixa les pàgines fora dels resultats de Siri, Spotlight i Safari.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i prohibeix el rastreig de /. Sembla una decisió deliberada.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig a {agent}. Applebot-Extended no rastreja; només exclou el contingut de l'entrenament dels models fundacionals d'Apple."
+    }
+  },
+  "ai-robots-amazon": {
+    "title": "Amzn-SearchBot permès (Alexa i cerca d'Amazon)",
+    "why": "Amazon documenta Amzn-SearchBot per a les funcions de cerca d'Alexa i Amazon, i Amazonbot per a altres usos que poden incloure l'entrenament.",
+    "fix": "Permet Amzn-SearchBot per a l'elegibilitat a Alexa. Amazonbot es pot bloquejar per a l'entrenament sense que això l'afecti.",
+    "messages": {
+      "fail": "El robots.txt restringeix els rastrejadors d'Amazon.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i tots els grups que pot seguir prohibeixen el rastreig de /, cosa que afecta l'elegibilitat per a Alexa i per a la cerca d'Amazon.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i prohibeix el rastreig de /. Sembla una decisió deliberada.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig de / a {agent}. Això no afecta Amzn-SearchBot."
+    }
+  },
+  "ai-robots-meta": {
+    "title": "Rastrejadors de Meta: meta-webindexer (cerca de Meta AI) enfront de meta-externalagent (entrenament)",
+    "why": "Meta documenta meta-webindexer per a la cerca de Meta AI i meta-externalagent per a l'entrenament. facebookexternalhit genera les previsualitzacions d'enllaços; bloquejar-lo inutilitza les previsualitzacions.",
+    "fix": "Permet meta-webindexer si es volen cites a Meta AI. Bloqueja meta-externalagent per excloure el contingut de l'entrenament.",
+    "messages": {
+      "fail": "El robots.txt restringeix els rastrejadors de Meta.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i hereta una regla Disallow per a /, cosa que deixa les pàgines fora de les cites de la cerca de Meta AI.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i prohibeix el rastreig de /. Sembla una decisió deliberada.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig de / a {agent}. Meta documenta que els agents d'obtenció que actuen a petició dels usuaris i les previsualitzacions d'enllaços poden eludir el robots.txt, i que bloquejar facebookexternalhit inutilitza les previsualitzacions d'enllaços."
+    }
+  },
+  "ai-robots-duckassistbot": {
+    "title": "DuckAssistBot permès (respostes de DuckDuckGo assistides per IA)",
+    "why": "DuckDuckGo documenta DuckAssistBot per a les respostes assistides per IA i diu que les dades no s'utilitzen per a l'entrenament i que excloure-se'n no afecta el posicionament orgànic.",
+    "fix": "Permet-lo per a les cites de DuckAssist. Els canvis fan efecte al cap de 72 hores.",
+    "messages": {
+      "fail": "El robots.txt prohibeix el rastreig de / a {agent}.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i hereta una regla Disallow per a /, de manera que les pàgines no es poden citar a les respostes de DuckAssist. DuckDuckGo diu que això no afecta el posicionament orgànic.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i prohibeix el rastreig de /. Sembla una decisió deliberada."
+    }
+  },
+  "ai-robots-mistral": {
+    "title": "Rastrejadors de Mistral: MistralAI-Index (cerca) enfront de MistralAI-Training",
+    "why": "Mistral documenta MistralAI-Index per al seu índex de cerca i identificadors separats per a l'entrenament. Com tracta el robots.txt MistralAI-Index no està documentat en detall.",
+    "fix": "Permet MistralAI-Index per a les cites de la cerca de Mistral. Bloqueja MistralAI-Training per excloure el contingut de l'entrenament.",
+    "messages": {
+      "fail": "El robots.txt restringeix els rastrejadors de Mistral.",
+      "fail:blocked-by-inheritance": "{agent} no té cap grup propi i hereta una regla Disallow per a /, cosa que pot deixar les pàgines fora de les cites de la cerca de Mistral. Mistral no documenta com interpreta el robots.txt.",
+      "fail:blocked-by-name": "El robots.txt esmenta {agent} i prohibeix el rastreig de /. Sembla una decisió deliberada.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig de / a {agent}."
+    }
+  },
+  "ai-robots-training-only-crawlers": {
+    "title": "Resum de la política sobre els rastrejadors només d'entrenament (CCBot, Bytespider i altres)",
+    "why": "Rastrejadors com CCBot recullen dades per a conjunts de dades d'entrenament. Bloquejar-los és una decisió sobre la llicència del contingut sense cap efecte en la visibilitat a la cerca.",
+    "fix": "Només és una decisió de política. Fes servir un WAF si cal fer-la complir.",
+    "messages": {
+      "fail": "El robots.txt prohibeix el rastreig a {agent}.",
+      "fail:disallowed": "El robots.txt prohibeix el rastreig a {agent}, un rastrejador que recull dades d'entrenament. És una decisió de política sense cap efecte documentat en la visibilitat a la cerca o a les respostes."
+    }
+  },
+  "ai-robots-policy-coherence": {
+    "title": "La política sobre rastrejadors d'IA és coherent (cerca permesa quan l'entrenament està bloquejat, no al revés)",
+    "why": "Els operadors separen els rastrejadors de cerca dels d'entrenament. Una política que bloqueja el rastrejador de cerca d'un operador i en permet el d'entrenament sol ser el contrari del que pretenen els propietaris.",
+    "fix": "Normalment la intenció és la contrària: permetre els bots de cerca i de respostes, i bloquejar els bots d'entrenament si es vol.",
+    "messages": {
+      "fail": "El robots.txt bloqueja un rastrejador de cerca amb IA i alhora permet el rastrejador d'entrenament del mateix operador.",
+      "fail:search-blocked-training-allowed": "El robots.txt bloqueja la cerca i alhora permet l'entrenament per a: {operators}. La intenció habitual és la contrària, de manera que probablement no és intencionat."
+    }
+  },
+  "ai-edge-ua-block-probe": {
+    "title": "El CDN, el WAF o l'origen bloqueja els agents d'usuari de cerca amb IA",
+    "why": "Google inclou la rastrejabilitat entre els requisits de les funcions d'IA, i els operadors de cerca amb IA documenten els seus agents d'usuari. Un CDN, un tallafoc o un origen que respon a aquests agents d'usuari amb errors o desafiaments els bloqueja independentment del robots.txt. La prova fa servir agents d'usuari, no les adreces IP dels operadors, de manera que els resultats són orientatius.",
+    "fix": "Permet els bots de cerca i de respostes verificats a les regles de bots del CDN o del WAF (per exemple, a AI Crawl Control de Cloudflare, posa Search en allow).",
+    "messages": {
+      "fail": "Una sol·licitud amb l'agent d'usuari {agent} s'ha tractat de manera diferent que una sol·licitud de navegador.",
+      "fail:ua-blocked": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una resposta HTTP {status} o un desafiament, mentre que un navegador ha rebut la pàgina. Això mostra un bloqueig basat en l'agent d'usuari; el rastrejador real, verificat per IP, pot rebre un tracte diferent.",
+      "fail:blocked-as-robots-says": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una resposta HTTP {status} o un desafiament, i el robots.txt també prohibeix el rastreig a {agent}, de manera que la vora de la xarxa i el robots.txt coincideixen.",
+      "fail:content-differs": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una pàgina el text de la qual només coincideix en un {similarity, number, percent} amb el del navegador."
+    }
+  },
+  "ai-cdn-cloudflare-detected": {
+    "title": "S'ha detectat Cloudflare; es poden aplicar els valors per defecte per als rastrejadors d'IA",
+    "why": "Cloudflare documenta controls per defecte per als rastrejadors d'IA a les zones noves. Detectar-lo explica bloquejos de rastrejadors d'IA que no apareixen al robots.txt de l'origen; la configuració de la zona no es pot llegir des de fora.",
+    "fix": "A AI Crawl Control, mantén permès Search. Per aturar l'entrenament sense perdre la cerca, fes servir «Disallow AI Training», no «Block», perquè ara Block també afecta rastrejadors d'ús mixt com Googlebot.",
+    "messages": {
+      "fail": "El lloc se serveix a través de Cloudflare, que té una configuració per als rastrejadors d'IA que els pot bloquejar a la vora de la xarxa i que no es pot llegir des de fora.",
+      "fail:cloudflare": "El lloc se serveix a través de Cloudflare. Les zones donades d'alta el 15 de setembre de 2026 o més tard bloquegen per defecte els rastrejadors d'entrenament i d'agents a les pàgines amb anuncis, i la configuració Block també s'aplica als rastrejadors d'ús mixt; revisa AI Crawl Control."
+    }
+  },
+  "ai-cdn-cloudflare-managed-robots": {
+    "title": "Hi ha un bloc del robots.txt gestionat de Cloudflare o de Bot Preference Sync",
+    "why": "Cloudflare pot afegir un bloc gestionat al principi del robots.txt. La llista per defecte que documenta només conté identificadors d'entrenament, de manera que no afecta la visibilitat a la cerca tret que s'editi per bloquejar rastrejadors de cerca.",
+    "fix": "Revisa la política sobre rastrejadors d'IA al tauler de Cloudflare. El robots.txt gestionat s'està substituint per Bot Preference Sync, que només escriu directives quan una categoria està configurada com a block o disallow.",
+    "messages": {
+      "fail": "El robots.txt conté un bloc gestionat de Cloudflare que prohibeix el rastreig a aquests rastrejadors: {agents}.",
+      "fail:search-engine-blocked": "El bloc gestionat de Cloudflare del robots.txt prohibeix el rastreig a rastrejadors de cercadors: {agents}.",
+      "fail:answer-crawler-blocked": "El bloc gestionat de Cloudflare del robots.txt prohibeix el rastreig a rastrejadors de cerca o de respostes amb IA: {agents}.",
+      "fail:training-blocked": "El bloc gestionat de Cloudflare del robots.txt només prohibeix el rastreig a rastrejadors d'entrenament ({agents}); la visibilitat a la cerca no se'n veu afectada."
+    }
+  },
+  "ai-content-signal-lines": {
+    "title": "Preferències Content-Signal declarades al robots.txt",
+    "why": "Les línies Content-Signal de Cloudflare al robots.txt expressen preferències sobre la cerca, l'entrada d'IA i l'entrenament d'IA. No són d'obligat compliment, i no s'ha demostrat que cap operador d'IA important les respecti.",
+    "fix": "Assegura't que els senyals coincideixen amb la intenció: search=yes i ai-train=no és el valor per defecte gestionat habitual. ai-input=no indica als operadors que no facin servir el contingut a les respostes d'IA.",
+    "messages": {
+      "fail": "El robots.txt declara preferències Content-Signal que cal revisar.",
+      "fail:invalid": "Les línies Content-Signal del robots.txt fan servir claus o valors desconeguts: {pairs}. Les entrades no reconegudes fan que la preferència sigui desconeguda.",
+      "fail:ai-input-no": "El robots.txt indica ai-input=no, una preferència contra l'ús del contingut a les respostes d'IA. Els senyals de contingut són preferències i no són d'obligat compliment."
+    }
+  },
+  "ai-aipref-signals": {
+    "title": "Senyals AIPREF de l'IETF (Content-Usage i __usage_ai-training) presents i vàlids",
+    "why": "Els esborranys AIPREF de l'IETF defineixen un vocabulari per a les preferències d'ús d'IA al robots.txt i a les capçaleres HTTP. Són Internet-Drafts sense estatus formal, i Google ha anunciat que té previst donar-hi suport.",
+    "fix": "Opcional. Google preveu admetre l'identificador d'entrenament compartit el 2027 i tractar-lo com una regla Disallow per a Google-Extended quan Google-Extended no estigui definit explícitament.",
+    "messages": {
+      "fail": "No s'ha pogut analitzar una preferència d'ús AIPREF: {problems}.",
+      "fail:parse-error": "No s'ha pogut analitzar una preferència d'ús AIPREF ({problems}), de manera que la preferència és desconeguda. Aquests senyals són Internet-Drafts."
+    }
+  },
+  "ai-pay-per-crawl-402": {
+    "title": "HTTP 402 Payment Required servit als rastrejadors d'IA",
+    "why": "El pay per crawl de Cloudflare respon als rastrejadors d'IA amb HTTP 402 Payment Required tret que paguin. Quan els rastrejadors de cerca o de respostes reben un 402, el lloc queda exclòs d'aquests espais.",
+    "fix": "Cobra només als rastrejadors d'entrenament si el lloc vol que la cerca amb IA el citi.",
+    "messages": {
+      "fail": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una resposta HTTP 402 Payment Required.",
+      "fail:search-agent-charged": "Una sol·licitud amb l'agent d'usuari {agent}, un rastrejador de cerca o de respostes, ha rebut una resposta HTTP 402 Payment Required, cosa que pot deixar les pàgines fora de les seves respostes.",
+      "fail:training-or-disallowed": "Una sol·licitud amb l'agent d'usuari {agent} ha rebut una resposta HTTP 402 Payment Required; l'agent recull dades d'entrenament o el robots.txt li prohibeix el rastreig."
+    }
+  },
+  "ai-bing-noarchive-nocache": {
+    "title": "noarchive o nocache restringeixen les respostes de Copilot de Bing",
+    "why": "Bing va anunciar el 2023 que noarchive deixa una pàgina fora de les respostes de Bing Chat (ara Copilot) i de l'entrenament de models, i que nocache limita Copilot a la URL, el títol i el fragment. Google ignora tots dos valors.",
+    "fix": "Elimina noarchive si es volen cites a Copilot. Molts CMS afegeixen noarchive per defecte per motius històrics relacionats amb la memòria cau.",
+    "messages": {
+      "fail": "Una directiva robots ({directive}) restringeix com fa servir Bing aquesta pàgina a les respostes de Copilot.",
+      "fail:noarchive": "La pàgina té noarchive per a Bingbot. Bing documenta que noarchive deixa la pàgina fora de les respostes de Copilot.",
+      "fail:nocache": "La pàgina té nocache per a Bingbot. Bing documenta que, aleshores, les respostes de Copilot només poden fer servir la URL, el títol i el fragment."
+    }
+  },
+  "ai-google-genai-control-context": {
+    "title": "Control d'IA generativa de Search Console (no es pot detectar des de fora)",
+    "why": "Google ofereix un control a Search Console sobre com s'utilitza el contingut a les funcions d'IA generativa. S'aplica a tot el lloc i no es veu des de fora, de manera que el seu estat només es pot saber des de la Search Console del propietari.",
+    "fix": "Deixa'l en Include tret que el propietari vulgui sortir de les funcions d'IA de Google. Els llocs exclosos no reben trànsit ni impressions d'aquestes funcions.",
+    "messages": {
+      "fail": "Search Console té una opció per a tot el lloc que el deixa fora de les AI Overviews, de l'AI Mode i de les AI Overviews a Discover. Ni les pàgines, ni el robots.txt, ni l'API de Search Console no la mostren, de manera que aquesta auditoria no en pot saber l'estat per a {property}; comprova-ho a la configuració de la propietat. No afecta l'entrenament, que controla l'identificador Google-Extended del robots.txt."
+    }
+  },
+  "ai-js-only-content": {
+    "title": "Contingut principal absent de l'HTML del servidor (invisible per als rastrejadors d'IA que no executen JavaScript)",
+    "why": "Google renderitza JavaScript, però un estudi basat en mesures va observar que GPTBot, ClaudeBot i PerplexityBot obtenen els fitxers JavaScript sense executar-los. El contingut principal absent de l'HTML del servidor és invisible per a aquests rastrejadors.",
+    "fix": "Renderitza al servidor o genera estàticament el contingut principal, els encapçalaments, els enllaços i el JSON-LD. Hidrata la interactivitat després.",
+    "messages": {
+      "fail": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio, number, percent}).",
+      "fail:mostly-rendered": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio, number, percent}). Probablement els rastrejadors que no executen JavaScript veuen poca part del contingut.",
+      "fail:h1-missing": "L'HTML en brut no té cap h1; l'h1 només apareix després de la renderització, de manera que probablement els rastrejadors que no executen JavaScript no veuen l'encapçalament principal.",
+      "fail:partly-rendered": "Paraules de text principal a l'HTML en brut: {rawWords}, enfront de {renderedWords} després de la renderització ({ratio, number, percent}); probablement part del contingut només existeix després d'executar JavaScript."
+    }
+  },
+  "ai-textual-content-for-media": {
+    "title": "Informació important només en imatges, vídeos, canvas o PDF sense equivalent textual",
+    "why": "Google inclou entre els aspectes fonamentals per a les funcions d'IA fer que el contingut important estigui disponible en format de text. Els fets que només es mostren en imatges, vídeos, canvas o PDF sense equivalent textual són difícils d'utilitzar per a qualsevol sistema.",
+    "fix": "Proporciona els fets com a text HTML, a més de text alternatiu i transcripcions.",
+    "messages": {
+      "fail": "{count} element(s) multimèdia ({kinds}) poden contenir fets que el text de la pàgina no indica; l'analista ho confirma.",
+      "fail:media-only-facts": "{count} element(s) multimèdia ({kinds}) del contingut principal no tenen cap equivalent textual a prop i poden contenir fets que el text de la pàgina no indica; l'analista ho confirma."
+    }
+  },
+  "ai-llms-txt": {
+    "title": "Presència i validesa de llms.txt (opcional, informatiu)",
+    "why": "llms.txt és una proposta de la comunitat per a un fitxer Markdown adreçat als models de llenguatge. Google afirma que la Cerca de Google no el fa servir, i cap cercador important no ha dit que faci servir el fitxer per al posicionament o per a les cites. La seva presència o absència s'indica com un fet.",
+    "fix": "Opcional. Si el mantens, mantén-lo vàlid i sincronitzat. No n'esperis visibilitat a la cerca.",
+    "messages": {
+      "fail": "Cal revisar el fitxer /llms.txt.",
+      "fail:content-type": "/llms.txt se serveix com a {contentType} en lloc de text/plain o text/markdown.",
+      "fail:structure": "/llms.txt no segueix l'estructura proposada: {problems}.",
+      "fail:disallowed-links": "/llms.txt enllaça a {count} camí(ns) del mateix lloc que el robots.txt prohibeix rastrejar a un rastrejador de cerca."
+    }
+  },
+  "ai-hidden-llm-instructions": {
+    "title": "Instruccions ocultes adreçades a sistemes d'IA (injecció d'indicacions)",
+    "why": "Les polítiques de Google contra el contingut brossa inclouen els intents de manipular les respostes d'IA generativa a la Cerca. El text amb forma d'instruccions adreçat a sistemes d'IA i col·locat en text ocult, comentaris o atributs és un d'aquests intents, i també pot segrestar els agents que llegeixen la pàgina.",
+    "fix": "Elimina el text d'indicacions ocult; fes les afirmacions de manera visible i veraç.",
+    "messages": {
+      "fail": "S'han trobat fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA ({count}); l'analista en confirma la intenció.",
+      "fail:hidden-instructions": "S'han trobat fragments de text ocult amb forma d'instruccions adreçats a sistemes d'IA en elements ocults, comentaris o atributs ({count}); l'analista confirma si l'objectiu és dirigir les respostes d'IA.",
+      "fail:invisible-text": "S'han trobat fragments de text ocult als lectors ({count}), entre els quals text escrit amb els caràcters invisibles del bloc Tags d'Unicode, que els models sí que poden llegir; l'analista confirma si l'objectiu és dirigir les respostes d'IA."
+    }
+  },
+  "ai-answer-readiness": {
+    "title": "Preparació per a respostes: les preguntes clau es responen amb claredat i es poden extreure",
+    "why": "Bing recomana encapçalaments clars, taules i respostes directes per al contingut que s'utilitza a les respostes d'IA. Google diu que no cal cap redacció especial per a les funcions d'IA. L'analista jutja si les preguntes clau es responen amb claredat.",
+    "fix": "Dona la resposta directa a prop de l'inici de cada secció, defineix els termes i fes servir encapçalaments, llistes i taules on el contingut sigui estructurat.",
+    "messages": {}
+  },
+  "ai-claims-evidence": {
+    "title": "Afirmacions avalades per estadístiques, citacions i fonts citades (característiques GEO)",
+    "why": "Un estudi basat en mesures sobre motors generatius va observar que afegir citacions, estadístiques i fonts citades augmentava la part de la pàgina que s'utilitzava a les respostes. Les afirmacions avalades per fonts també ajuden els lectors a verificar-les.",
+    "fix": "Avala les afirmacions clau amb dades amb la font indicada, citacions atribuïdes d'experts i enllaços a fonts primàries, quan sigui veraç i pertinent.",
+    "messages": {}
+  },
+  "ai-agent-readiness": {
+    "title": "Superfície d'interacció adequada per a agents (noms accessibles, etiquetes, disseny estable)",
+    "why": "web.dev documenta com els llocs poden donar suport als agents de navegador: noms accessibles i etiquetes, controls estàndard i un disseny estable. Lighthouse 13.6 té una categoria agentic-browsing amb una auditoria agent-accessibility-tree. Això afecta que els agents completin tasques, no les cites.",
+    "fix": "Fes servir botons i enllaços semàntics, label for/id, cap capa superposada que tapi elements i un disseny estable.",
+    "messages": {
+      "fail": "L'auditoria de Lighthouse {audit} ({title}) falla, cosa que fa que als agents els costi més operar la pàgina.",
+      "fail:layout-shift": "El desplaçament de disseny acumulat de laboratori és {value}, per sobre de 0,1, de manera que els controls es mouen mentre un agent hi actua."
+    }
+  },
+  "ai-webmcp-context": {
+    "title": "Eines WebMCP declarades (experimental)",
+    "why": "WebMCP és una API de navegador proposada per declarar eines que els agents poden cridar. Lighthouse 13.6 l'audita a la categoria agentic-browsing. És experimental i s'indica com a context.",
+    "fix": "Opcional i experimental; demana la confirmació de l'usuari per a les accions sensibles.",
+    "messages": {
+      "fail": "La pàgina declara eines WebMCP, una API proposada i experimental.",
+      "fail:declared": "La pàgina declara eines WebMCP, una API proposada que només està disponible amb una prova d'origen o activant una marca; les accions sensibles haurien de requerir la confirmació de l'usuari."
+    }
+  },
+  "ai-measurement-context": {
+    "title": "Com mesurar la visibilitat en IA (context per a l'informe)",
+    "why": "Google i Bing informen els propietaris del rendiment a les funcions d'IA a Search Console i a Bing Webmaster Tools, i les visites dels rastrejadors apareixen als registres del servidor. Cap eina de tercers no pot veure els sistemes de classificació interns, de manera que l'informe no presenta mai el seu propi mostreig com a visibilitat en IA.",
+    "fix": "Connecta GSC i BWT, i segmenta els referents d'IA a l'analítica web.",
+    "messages": {
+      "fail": "Search Console compta els clics i les impressions de les AI Overviews i de l'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API.",
+      "fail:all-sources": "Search Console compta els clics i les impressions de les AI Overviews i de l'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API. L'informe AI Performance de Bing tampoc no té API. Les visites que envien els assistents d'IA apareixen a l'activitat de rastrejadors, però les visites des de les AI Overviews i l'AI Mode arriben com a visites de la Cerca de Google i no es poden distingir.",
+      "fail:without-bing": "Search Console compta els clics i les impressions de les AI Overviews i de l'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API. Les dades de Bing Webmaster Tools (--bing) hi afegirien les dades de cerca de Bing i remetrien al seu informe AI Performance, que llista les citacions a Copilot.",
+      "fail:without-bots": "Search Console compta els clics i les impressions de les AI Overviews i de l'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API. Els registres d'accés o l'analítica de Cloudflare (--bots-from) mostrarien quins rastrejadors d'IA obtenen realment el lloc i les visites que envien els assistents d'IA.",
+      "fail:without-both": "Search Console compta els clics i les impressions de les AI Overviews i de l'AI Mode al tipus de cerca web, de manera que les anàlisis de Search Console de {property} els inclouen sense distingir-los, i el seu informe de rendiment d'IA generativa (només impressions) no té API. Les dades de Bing Webmaster Tools (--bing) i els registres d'accés o l'analítica de Cloudflare (--bots-from) hi afegirien les dades de cerca de Bing i les visites de rastrejadors d'IA i d'assistents d'IA que el lloc ha rebut realment."
+    }
+  },
+  "ai-bots-crawl-activity": {
+    "title": "Rastrejadors d'IA que han obtingut realment el lloc, verificats (context)",
+    "why": "El robots.txt només diu quins rastrejadors poden obtenir el lloc; els registres d'accés del propietari o l'analítica del CDN mostren quins ho han fet. Qualsevol pot enviar l'agent d'usuari d'un rastrejador, de manera que cada sol·licitud que diu ser d'un rastrejador es comprova amb la llista d'IP que publica l'operador o amb el DNS invers, i les dels operadors que no publiquen cap manera de comprovar-les (Meta, ByteDance, MistralAI-Training) s'indiquen com a sol·licituds que no es poden verificar, mai com a zero.",
+    "fix": "No hi ha res a corregir. Compara els rastrejadors que obtenen el lloc amb la política del robots.txt: bloqueja els rastrejadors d'entrenament si no vols aquest ús, i mantén permesos els rastrejadors de cerca i de respostes si vols que et citin a les respostes d'IA.",
+    "messages": {
+      "fail": "Els rastrejadors d'IA verificats han obtingut el lloc (sol·licituds: {verified}; {crawlers}). Sol·licituds amb agents d'usuari de rastrejadors d'IA que no s'han pogut verificar: {claims}.",
+      "fail:seen": "Els rastrejadors d'IA verificats han obtingut el lloc durant el període (sol·licituds: {verified}; {crawlers}). Sol·licituds amb agents d'usuari de rastrejadors d'IA que no s'han pogut verificar: {claims}.",
+      "fail:claims-only": "Sol·licituds amb agents d'usuari de rastrejadors d'IA: {claims}, però no se n'ha pogut verificar cap, de manera que les dades no mostren quins rastrejadors d'IA han visitat realment el lloc."
+    }
+  },
+  "ai-bots-blocked-at-edge": {
+    "title": "El servidor o el CDN rebutja rastrejadors de cerca i de respostes amb IA que el robots.txt permet",
+    "why": "Google inclou entre els requisits bàsics de les funcions d'IA que el rastreig estigui permès pel robots.txt i per qualsevol infraestructura de CDN o d'allotjament, i OpenAI diu que els llocs que exclouen el seu rastrejador de cerca no es mostren a les respostes de la cerca de ChatGPT. Les sol·licituds verificades d'aquests rastrejadors que reben 401, 402, 403, 429 o un desafiament mostren que la vora de la xarxa bloqueja el rastrejador real, cosa que una prova amb un agent d'usuari manllevat no pot demostrar.",
+    "fix": "Busca la regla del CDN, del tallafoc o de limitació de freqüència que respon al rastrejador i permet-lo, per exemple a AI Crawl Control de Cloudflare o amb una regla del WAF que ometi els bots verificats. Si el 402 ve del pay per crawl, eximeix-ne els rastrejadors de cerca i de respostes. Continua rebutjant les sol·licituds que no superin la verificació.",
+    "messages": {
+      "fail": "Sol·licituds identificades com a {agent} que s'han rebutjat tot i que el robots.txt el permet: {blocked} de {total} ({share, number, percent}; {statuses}).",
+      "fail:refused": "Sol·licituds verificades com a {agent} que s'han rebutjat tot i que el robots.txt permet el rastrejador: {blocked} de {total} ({share, number, percent}; {statuses}). El rastrejador no pot llegir aquestes pàgines.",
+      "fail:payment-required": "Sol·licituds verificades com a {agent} que han rebut HTTP 402 Payment Required o un altre rebuig: {blocked} de {total} ({share, number, percent}; {statuses}). La vora de la xarxa cobra o bloqueja un rastrejador que el robots.txt permet.",
+      "fail:unverified-claims": "Sol·licituds que s'identifiquen com a {agent} i que s'han rebutjat: {blocked} de {total} ({share, number, percent}; {statuses}). No s'han pogut verificar, de manera que pot ser que la vora de la xarxa estigui rebutjant suplantacions."
+    }
+  },
+  "ai-bots-search-not-seen": {
+    "title": "Cap visita verificada de cap rastrejador de cerca amb IA durant el període",
+    "why": "Cada cercador amb IA omple el seu índex amb el seu propi rastrejador: OAI-SearchBot per a la cerca de ChatGPT, Claude-SearchBot per a Claude, PerplexityBot per a Perplexity i DuckAssistBot per a les respostes amb IA de DuckDuckGo. Si cap d'ells no ha fet cap sol·licitud verificada durant el període tot i que el robots.txt els permet, cap no ha actualitzat la seva còpia del lloc en aquest temps.",
+    "fix": "Comprova que el robots.txt i el CDN permeten aquests rastrejadors (consulta ai-bots-blocked-at-edge), mantén actualitzat el mapa del lloc i aconsegueix enllaços al lloc des de pàgines que rastregen. Els llocs petits es rastregen amb menys freqüència, de manera que compara un període més llarg abans d'actuar.",
+    "messages": {
+      "fail": "Cap rastrejador de cerca amb IA no ha fet cap sol·licitud verificada en {days} dies de dades ({agents}).",
+      "fail:none-seen": "Cap dels rastrejadors de cerca amb IA que el robots.txt permet ({agents}) no ha fet cap sol·licitud verificada en {days} dies de dades.",
+      "fail:unverified-only": "Hi ha sol·licituds que diuen venir de rastrejadors de cerca amb IA ({agents}) en {days} dies de dades, però no se n'ha pogut verificar cap."
+    }
+  },
+  "ai-bots-referrals": {
+    "title": "Visites que envien els assistents d'IA (context)",
+    "why": "Els clics des d'assistents d'IA arriben amb l'amfitrió de l'assistent a la capçalera Referer, i els enllaços de ChatGPT poden portar utm_source=chatgpt.com. Comptar-los mostra quins assistents envien visitants. De manera predeterminada, els navegadors només envien l'origen entre llocs diferents, i les aplicacions o els enllaços noreferrer no envien res, de manera que les xifres són valors mínims.",
+    "fix": "No hi ha res a corregir. Segmenta aquests referents a l'analítica. Els clics des de les AI Overviews i l'AI Mode de Google es compten al tipus de cerca Web de Search Console i arriben com a visites de la Cerca de Google, de manera que cap registre no els pot separar.",
+    "messages": {
+      "fail": "Visites que han arribat des d'assistents d'IA: {visits} ({assistants}); amb utm_source=chatgpt.com: {tagged}. Els clics des de les AI Overviews i l'AI Mode de Google compten com a visites de la Cerca de Google i no es poden veure aquí."
+    }
+  }
+}

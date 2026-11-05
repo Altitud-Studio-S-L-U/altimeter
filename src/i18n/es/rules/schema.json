@@ -1,0 +1,639 @@
+{
+  "schema-extract-inventory": {
+    "title": "Extraer todos los elementos de datos estructurados en las tres sintaxis, en el HTML original y en el renderizado",
+    "why": "Google lee JSON-LD, microdatos y RDFa, en el head o en el body, tanto del HTML original como del renderizado. Un inventario de todos los elementos en ambas versiones es la entrada de todas las demás reglas de datos estructurados.",
+    "fix": "No hay corrección; es la base de evidencias que citan todas las demás reglas schema-*.",
+    "messages": {
+      "fail": "No se ha podido crear el inventario de datos estructurados de esta página."
+    }
+  },
+  "schema-jsonld-syntax-error": {
+    "title": "El bloque JSON-LD no es JSON válido",
+    "why": "Un bloque JSON-LD que no es JSON válido se descarta entero, y los informes de Google no incluyen los elementos que no pueden analizar, así que el fallo pasa desapercibido.",
+    "fix": "Serializa con un codificador JSON (JSON.stringify / json_encode) en lugar de plantillas de cadenas. Escapa «</» como «<\\/» dentro de las cadenas.",
+    "messages": {
+      "fail": "{count} bloque(s) JSON-LD no se pueden analizar como JSON y se descartan enteros: {error}"
+    }
+  },
+  "schema-jsonld-context": {
+    "title": "JSON-LD sin @context o con un @context que no es de schema.org",
+    "why": "Según JSON-LD 1.1, los términos solo se expanden a IRIs de schema.org mediante un @context. Sin un contexto de schema.org resoluble, los tipos y las propiedades no tienen un significado definido.",
+    "fix": "Usa \"@context\": \"https://schema.org\" en cada objeto de nivel superior o una sola vez en el contenedor @graph.",
+    "messages": {
+      "fail": "{count} elemento(s) JSON-LD no tienen un @context de schema.org: {items}",
+      "fail:missing-context": "{count} elemento(s) JSON-LD no tienen @context, así que sus términos no tienen significado de schema.org: {items}",
+      "fail:not-schema-org": "{count} elemento(s) JSON-LD declaran un @context que no se resuelve en schema.org: {items}"
+    }
+  },
+  "schema-microdata-rdfa-structure": {
+    "title": "Los microdatos o el RDFa tienen una estructura rota",
+    "why": "Los microdatos y RDFa expresan los elementos de datos estructurados mediante atributos de las etiquetas HTML. Las propiedades que están fuera de cualquier elemento o los tipos que no se pueden resolver no se leen como parte de la entidad prevista.",
+    "fix": "Envuelve las propiedades en el itemscope correcto con itemtype=\"https://schema.org/Type\" o migra a JSON-LD.",
+    "messages": {
+      "fail": "{count} problema(s) de estructura de microdatos o RDFa: {items}",
+      "fail:orphan-itemprop": "{count} atributo(s) itemprop están fuera de cualquier itemscope y no pertenecen a ningún elemento: {items}",
+      "fail:invalid-itemtype": "{count} valor(es) itemtype no son URLs absolutas de schema.org: {items}",
+      "fail:missing-itemtype": "{count} elemento(s) itemscope de nivel superior no tienen itemtype: {items}",
+      "fail:missing-itemref": "{count} valor(es) itemref nombran ids que no están en el documento: {items}",
+      "fail:unresolved-typeof": "{count} valor(es) typeof de RDFa no tienen ningún vocab en su ámbito: {items}"
+    }
+  },
+  "schema-unknown-type": {
+    "title": "@type no es un término del vocabulario actual de schema.org",
+    "why": "Los consumidores no reconocen un @type que no es un término del vocabulario actual de schema.org, a menudo por una errata, así que el elemento no cumple los requisitos de las funciones que exigen ese tipo.",
+    "fix": "Usa el nombre exacto del tipo de schema.org, respetando mayúsculas y minúsculas; la sugerencia del validador suele ser correcta.",
+    "messages": {
+      "fail": "{count} valor(es) de @type no están definidos en el vocabulario de schema.org: {items}"
+    }
+  },
+  "schema-unknown-property": {
+    "title": "La propiedad no está definida en schema.org",
+    "why": "Una propiedad que schema.org no define se ignora. Cuando es una propiedad obligatoria mal escrita de una función de Google, el elemento deja de ser apto.",
+    "fix": "Cámbiale el nombre por el de la propiedad definida o elimínala.",
+    "messages": {
+      "fail": "{count} propiedad(es) no están definidas en el vocabulario de schema.org y se ignoran: {items}"
+    }
+  },
+  "schema-domain-range-mismatch": {
+    "title": "Propiedad usada en un tipo fuera de su dominio o valor de un tipo inesperado",
+    "why": "schema.org describe los tipos esperados como orientación y acepta texto donde se espera una entidad. Las discrepancias solo importan cuando una función de Google exige un tipo concreto, algo que comprueban las reglas de cada función.",
+    "fix": "Mueve la propiedad al nodo correcto o anida un nodo con el tipo adecuado en lugar de una cadena.",
+    "messages": {
+      "fail": "{count} uso(s) de propiedades quedan fuera de los tipos esperados de schema.org: {items}",
+      "fail:domain": "{count} propiedad(es) se usan en tipos fuera de su dominio de schema.org: {items}",
+      "fail:range": "{count} valor(es) tienen un tipo fuera del rango de la propiedad en schema.org: {items}"
+    }
+  },
+  "schema-superseded-pending-term": {
+    "title": "Término de schema.org sustituido, retirado o pendiente",
+    "why": "schema.org marca algunos términos como sustituidos o retirados y otros como pendientes. Los términos sustituidos siguen funcionando, pero tienen reemplazo; los pendientes pueden cambiar.",
+    "fix": "Sustitúyelo por el término que lo reemplaza.",
+    "messages": {
+      "fail": "{count} término(s) de schema.org están sustituidos, retirados o pendientes: {items}",
+      "fail:superseded": "{count} término(s) están sustituidos en schema.org; usa el reemplazo: {items}",
+      "fail:retired": "{count} término(s) se han retirado a la sección attic de schema.org: {items}",
+      "fail:pending": "{count} término(s) están en la sección pending de schema.org y pueden cambiar: {items}"
+    }
+  },
+  "schema-url-values": {
+    "title": "Las propiedades con valores de URL no son válidas, son relativas, no son canónicas o filtran hosts de preproducción",
+    "why": "Las propiedades con valores de URL, como url, image, logo y sameAs, deben resolverse en el recurso previsto. Los valores que apuntan a hosts de preproducción, a URLs no canónicas o a URLs no válidas envían a los consumidores a un lugar equivocado. Los valores relativos se resuelven respecto a la página y son válidos.",
+    "fix": "Usa URLs https absolutas creadas a partir del origen canónico de producción.",
+    "messages": {
+      "fail": "{count} valor(es) de URL del marcado requieren atención: {items}",
+      "fail:invalid": "{count} valor(es) de URL no son URLs válidas: {items}",
+      "fail:unsupported-scheme": "{count} valor(es) de URL usan un esquema distinto de http o https: {items}",
+      "fail:relative": "{count} valor(es) de URL son relativos o relativos al protocolo; se resuelven respecto a la página, pero son frágiles: {items}",
+      "fail:insecure": "{count} valor(es) de URL del mismo sitio usan http en un sitio https: {items}",
+      "fail:staging-host": "{count} valor(es) de URL apuntan a un host local, de preproducción o IP: {items}",
+      "fail:not-canonical": "La url de WebPage difiere de la URL canónica de la página: {items}"
+    }
+  },
+  "schema-iso8601-values": {
+    "title": "Las fechas, horas y duraciones no son ISO 8601 válidas",
+    "why": "Google exige fechas, horas y duraciones ISO 8601 en los datos estructurados. Sin un desfase de zona horaria, Google supone uno, lo que puede desplazar las fechas.",
+    "fix": "Genera las fechas con un formateador ISO. En DateTime, incluye un desfase horario, por ejemplo, 2026-11-03T09:00:00+01:00.",
+    "messages": {
+      "fail": "{count} valor(es) de fecha, hora o duración no son ISO 8601 válidos: {items}",
+      "fail:invalid-date": "{count} valor(es) de fecha no son ISO 8601: {items}",
+      "fail:invalid-duration": "{count} valor(es) de duración no son duraciones ISO 8601: {items}",
+      "fail:invalid-time": "{count} valor(es) de horario de apertura no tienen el formato hh:mm ni hh:mm:ss: {items}",
+      "fail:missing-offset": "{count} valor(es) de fecha y hora no tienen desfase de zona horaria, así que Google supone uno: {items}"
+    }
+  },
+  "schema-date-logic": {
+    "title": "Las relaciones entre fechas son imposibles u obsoletas",
+    "why": "Google documenta que un fragmento de producto puede no mostrarse cuando priceValidUntil está en el pasado y que mantener activas ofertas de empleo caducadas puede provocar una acción manual. Un orden imposible de las fechas también hace que el marcado no sea fiable.",
+    "fix": "Genera las fechas a partir de las marcas de tiempo reales de publicación y modificación del CMS. Elimina o actualiza priceValidUntil. Da por caducadas las ofertas de empleo con un validThrough pasado, un 404/410 o eliminando el marcado.",
+    "messages": {
+      "fail": "{count} relación(es) entre fechas son imposibles u obsoletas: {items}",
+      "fail:modified-before-published": "{count} elemento(s) tienen un dateModified anterior a datePublished: {items}",
+      "fail:end-before-start": "{count} elemento(s) terminan antes de empezar: {items}",
+      "fail:valid-through-before-valid-from": "{count} elemento(s) tienen un validThrough anterior a validFrom: {items}",
+      "fail:published-in-future": "{count} fecha(s) de publicación son más de un día posteriores a la obtención de la página: {items}",
+      "fail:price-valid-until-past": "{count} oferta(s) tienen un priceValidUntil en el pasado, así que es posible que no se muestre el fragmento de producto: {items}",
+      "fail:video-expired": "{count} vídeo(s) tienen una fecha expires en el pasado mientras la página sigue activa: {items}"
+    }
+  },
+  "schema-enumeration-values": {
+    "title": "Los valores enumerados no son miembros de una enumeración de schema.org",
+    "why": "Google exige miembros de enumeraciones de schema.org para propiedades como availability, itemCondition y employmentType. El texto libre o varios valores contradictorios no se entienden.",
+    "fix": "Asigna a los estados del CMS la URL de la enumeración de schema.org correspondiente.",
+    "messages": {
+      "fail": "{count} valor(es) enumerados no son valores permitidos: {items}",
+      "fail:not-a-member": "{count} valor(es) no son miembros de la enumeración permitida: {items}",
+      "fail:multiple-values": "{count} elemento(s) dan varios valores a una propiedad de valor único: {items}"
+    }
+  },
+  "schema-placeholder-junk-values": {
+    "title": "Valores provisionales, de plantilla o basura en el marcado",
+    "why": "Las políticas de datos estructurados de Google exigen que el marcado describa la página con precisión. Los tokens de plantilla, las URLs de example.com o el texto provisional muestran que el marcado se publicó sin rellenar.",
+    "fix": "Corrige la plantilla para que los campos sin datos se omitan en lugar de emitirse vacíos.",
+    "messages": {
+      "fail": "{count} valor(es) provisionales o basura en el marcado: {items}",
+      "fail:empty-value": "{count} propiedad(es) se emiten vacías o nulas: {items}",
+      "fail:template-leak": "{count} valor(es) se han impreso a partir de variables sin definir: {items}",
+      "fail:template-token": "{count} valor(es) contienen tokens de plantilla sin renderizar: {items}",
+      "fail:placeholder-text": "{count} valor(es) son texto provisional o de relleno: {items}",
+      "fail:placeholder-phone": "{count} valor(es) de teléfono son provisionales: {items}",
+      "fail:example-domain": "{count} valor(es) siguen apuntando a un dominio de ejemplo: {items}",
+      "fail:html-in-text": "{count} valor(es) de texto contienen etiquetas o entidades HTML: {items}"
+    }
+  },
+  "schema-js-only-markup": {
+    "title": "Los datos estructurados y las etiquetas meta clave solo existen después del renderizado de JavaScript",
+    "why": "Google admite los datos estructurados insertados por JavaScript, pero documenta que el marcado Product generado dinámicamente hace que los rastreos de Shopping sean menos frecuentes y menos fiables. Los rastreadores que no ejecutan JavaScript, incluida la mayoría de los rastreadores de IA, no ven nada de ello.",
+    "fix": "Renderiza el JSON-LD en el servidor, sobre todo el precio y la disponibilidad de Product.",
+    "messages": {
+      "fail": "{count} elemento(s) de datos estructurados solo existen después del renderizado de JavaScript: {items}",
+      "fail:product-rendered-only": "{count} elemento(s) Product u Offer solo existen después del renderizado de JavaScript, lo que, según Google, hace que los rastreos de Shopping sean menos frecuentes y fiables: {items}",
+      "fail:rendered-only": "{count} elemento(s) solo existen después del renderizado de JavaScript; los rastreadores que no renderizan no los ven: {items}"
+    }
+  },
+  "schema-raw-rendered-conflict": {
+    "title": "El marcado original y el renderizado no coinciden",
+    "why": "Cuando el HTML del servidor y el DOM renderizado llevan valores de datos estructurados distintos, los consumidores que leen versiones distintas reciben datos diferentes, como precios o fechas.",
+    "fix": "Genera el marcado a partir de una única fuente de verdad y evita que el cliente lo vuelva a emitir con diferencias.",
+    "messages": {
+      "fail": "{count} valor(es) difieren entre el HTML original y el DOM renderizado: {items}"
+    }
+  },
+  "schema-id-dangling-or-conflicting": {
+    "title": "Las referencias @id no se resuelven o un mismo @id lleva datos contradictorios",
+    "why": "JSON-LD enlaza los nodos mediante @id. Las referencias a valores @id no definidos, o un mismo @id con propiedades contradictorias, dejan ambiguo el grafo de entidades.",
+    "fix": "Define cada entidad una sola vez con un IRI estable (por ejemplo, https://example.com/#organization) y haz referencia a ella en otros lugares mediante @id.",
+    "messages": {
+      "fail": "{count} problema(s) de @id: {items}",
+      "fail:dangling-reference": "{count} referencia(s) @id apuntan a un identificador de fragmento de esta página que no está definido en ningún sitio: {items}",
+      "fail:conflicting-types": "{count} valor(es) @id se definen con tipos no relacionados: {items}",
+      "fail:conflicting-values": "{count} valor(es) @id llevan valores contradictorios: {items}",
+      "fail:invalid-id": "{count} valor(es) @id no son IRIs válidos: {items}"
+    }
+  },
+  "schema-entity-consistency-sitewide": {
+    "title": "Las entidades Organization y WebSite del sitio no son coherentes entre páginas",
+    "why": "Google pide que el nombre de Organization coincida con el nombre del sitio y que el nombre del sitio se use de forma coherente. Los nombres, URLs o logotipos distintos para la misma organización en distintas páginas hacen que la entidad sea ambigua.",
+    "fix": "Publica un único nodo Organization canónico (con todos los datos en la página de inicio o en la página «Quiénes somos») y haz referencia a su @id desde publisher/provider/author/brand en las demás páginas.",
+    "messages": {
+      "fail": "Las entidades del sitio se describen de forma distinta en distintas páginas: {items}",
+      "fail:conflicting-organization": "Los valores del nodo Organization del sitio difieren entre páginas: {items}",
+      "fail:several-organization-ids": "La Organization del sitio usa {items} en distintas páginas.",
+      "fail:conflicting-website-name": "El nombre de WebSite difiere entre páginas."
+    }
+  },
+  "schema-inlanguage": {
+    "title": "Falta inLanguage en los datos estructurados o no es coherente con el idioma de la página",
+    "why": "schema.org define inLanguage con códigos BCP 47. Ninguna función de Google lo exige, pero un valor que contradice el idioma de la página es un dato erróneo para los consumidores.",
+    "fix": "Establece inLanguage con la etiqueta BCP 47 de la página (por ejemplo, «es», «ca-AD», «en-GB»).",
+    "messages": {
+      "fail": "{count} valor(es) de inLanguage no son válidos o contradicen el idioma de la página: {items}",
+      "fail:invalid-tag": "{count} valor(es) de inLanguage no son etiquetas BCP 47: {items}",
+      "fail:contradicts-html-lang": "{count} valor(es) de inLanguage contradicen el atributo lang del html: {items}"
+    }
+  },
+  "schema-main-entity-page-fit": {
+    "title": "El tipo de marcado principal no se ajusta al propósito de la página",
+    "why": "Las políticas de Google exigen que el marcado sea representativo de la página: JobPosting solo en páginas de una única oferta de empleo, Event solo para eventos en una ubicación física, QAPage solo para preguntas de usuarios con respuestas. Un tipo que no se ajusta al propósito de la página es un uso indebido.",
+    "fix": "Marca lo que realmente es lo principal de la página. Usa ItemList/CollectionPage en los listados, y usa el marcado de carrusel/ItemList solo donde Google lo documenta.",
+    "messages": {
+      "fail": "Es posible que el tipo de marcado principal no se ajuste al propósito de la página: {items}",
+      "fail:several-products": "La página lleva {items} en el nivel superior, como haría un listado; el marcado Product corresponde a las páginas de un solo producto.",
+      "fail:article-on-home": "La página de inicio lleva marcado {items}; comprueba si la página es un artículo.",
+      "fail:profile-page-on-home": "La página de inicio lleva marcado ProfilePage; comprueba si trata de una sola persona u organización."
+    }
+  },
+  "schema-visible-content-parity": {
+    "title": "Los valores marcados coinciden con el contenido visible de la página",
+    "why": "Las políticas de datos estructurados de Google prohíben marcar contenido que los usuarios no pueden ver y piden que el marcado coincida con el texto visible. Los valores como valoraciones, precios o respuestas que están ocultos o son distintos infringen las políticas.",
+    "fix": "Muestra a los usuarios la información marcada o elimínala del marcado.",
+    "messages": {
+      "fail": "{count} valor(es) marcados no se han encontrado en el texto de la página: {items}",
+      "fail:question-not-on-page": "{count} pregunta(s) marcadas no se han encontrado en el texto de la página: {items}"
+    }
+  },
+  "schema-misleading-or-spammy": {
+    "title": "El marcado es engañoso, irrelevante o suplanta una identidad",
+    "why": "Las políticas de datos estructurados de Google prohíben el marcado engañoso, irrelevante o que suplanta una identidad. Una acción manual por datos estructurados retira la posibilidad de mostrar resultados enriquecidos; Google afirma que no afecta al posicionamiento.",
+    "fix": "Elimina el marcado infractor. Si hay una acción manual, corrígelo y solicita una revisión en Search Console.",
+    "messages": {}
+  },
+  "schema-blocked-or-nonindexable-carrier": {
+    "title": "El marcado está en una página que Google no puede usar o sus imágenes están bloqueadas",
+    "why": "Google pide que no se bloqueen las páginas con datos estructurados mediante robots.txt, noindex o controles de acceso, y exige que las URLs de imagen de los datos estructurados se puedan rastrear e indexar.",
+    "fix": "Desbloquea la página y sus imágenes para Googlebot. Pon un marcado idéntico en todas las versiones duplicadas.",
+    "messages": {
+      "fail": "El marcado para funciones de Google está en una página o usa imágenes que Google no puede usar: {items}",
+      "fail:not-200": "La página que lleva el marcado {items} no responde 200.",
+      "fail:noindex": "La página que lleva el marcado {items} tiene una directiva noindex para Googlebot.",
+      "fail:disallowed": "La página que lleva el marcado {items} está bloqueada para Googlebot en robots.txt.",
+      "fail:image-blocked": "{count} imagen(es) de elementos para funciones de Google están bloqueadas para Googlebot-Image: {items}",
+      "fail:image-unavailable": "{count} imagen(es) de elementos para funciones de Google no se han cargado como imágenes: {items}"
+    }
+  },
+  "schema-organization": {
+    "title": "Completitud y corrección del marcado Organization",
+    "why": "Google usa el marcado Organization de la página de inicio o de la página «Quiénes somos» para entender la organización, por ejemplo, para elegir un logotipo y para los paneles de conocimiento. No hace falta en todas las páginas y no garantiza ninguna función visible.",
+    "fix": "Añade un único nodo Organization completo en la página de inicio con un @id estable y haz referencia a él desde las demás páginas.",
+    "messages": {
+      "fail": "El marcado Organization de la página de inicio o de la página «Quiénes somos» requiere atención: {items}",
+      "fail:missing": "No se ha encontrado marcado Organization en la página de inicio ni en la página «Quiénes somos».",
+      "fail:foreign-url": "La propiedad url de Organization apunta a otro host: {items}",
+      "fail:missing-recommended": "Al nodo Organization del sitio le faltan propiedades recomendadas: {items}"
+    }
+  },
+  "schema-organization-logo": {
+    "title": "El logotipo de Organization no cumple los requisitos de Google",
+    "why": "Google exige un logotipo de Organization de al menos 112 por 112 píxeles que se pueda rastrear e indexar, en un formato que admita Google Imágenes. Google no establece ningún requisito de relación de aspecto.",
+    "fix": "Usa un logotipo de mapa de bits o SVG más o menos cuadrado de ≥112×112 px que se vea bien sobre fondo blanco, en una URL estable y rastreable.",
+    "messages": {
+      "fail": "El logotipo de Organization no cumple los requisitos de Google: {items}",
+      "fail:blocked": "El logotipo de Organization está bloqueado para Googlebot-Image: {items}",
+      "fail:not-200": "El logotipo de Organization no responde 200: {items}",
+      "fail:not-image": "La URL del logotipo de Organization no devuelve una imagen admitida: {items}",
+      "fail:too-small": "El logotipo de Organization es más pequeño de 112x112 píxeles: {items}"
+    }
+  },
+  "schema-organization-identifiers": {
+    "title": "Los identificadores de la empresa están mal formados",
+    "why": "Google documenta propiedades de identificación como vatID, taxID, duns, leiCode e iso6523Code, y propiedades de dirección con códigos de país ISO 3166-1 alfa-2. Los valores mal formados no se pueden usar.",
+    "fix": "Usa los formatos documentados. Google prefiere iso6523Code («0199:<LEI>», «0060:<DUNS>») a duns/leiCode.",
+    "messages": {
+      "fail": "{count} identificador(es) de la empresa están mal formados: {items}",
+      "fail:malformed-identifier": "{count} identificador(es) no coinciden con su formato documentado: {items}",
+      "fail:country-not-alpha2": "{count} valor(es) de addressCountry no son códigos ISO 3166-1 alfa-2: {items}",
+      "fail:telephone-without-country-code": "A {count} número(s) de teléfono les falta el prefijo internacional.",
+      "fail:invalid-email": "{count} valor(es) de email no son direcciones de correo electrónico.",
+      "fail:tax-id-without-country": "Se indica un identificador fiscal sin país en la dirección.",
+      "fail:vat-prefix-mismatch": "Un número de IVA de la UE no empieza por el prefijo del país de la dirección."
+    }
+  },
+  "schema-site-name-website": {
+    "title": "Falta el marcado WebSite con el nombre del sitio en la página de inicio o está mal configurado",
+    "why": "Google lee el nombre del sitio del marcado WebSite de la página de inicio, es decir, del URI raíz del dominio o del subdominio, no de un subdirectorio. WebSite.url debería ser la página de inicio canónica. Cuando la raíz redirige, el nombre del sitio refleja la página a la que llega Googlebot.",
+    "fix": "Añade {\"@type\":\"WebSite\",\"name\":\"Brand\",\"alternateName\":[\"BRAND\",\"example.com\"],\"url\":\"https://example.com/\"} a la página de inicio, combinado con cualquier nodo WebSite que ya exista.",
+    "messages": {
+      "fail": "El marcado WebSite con el nombre del sitio de la página de inicio requiere atención: {items}",
+      "fail:missing": "La página de inicio a la que llega Googlebot no tiene ningún elemento WebSite con nombre; Google elegirá el nombre del sitio a partir de otras señales.",
+      "fail:several-websites": "La página de inicio tiene {items}; Google pide un solo nodo WebSite.",
+      "fail:url-other-host": "La propiedad url de WebSite apunta a otro host: {items}",
+      "fail:name-conflict": "El nombre del sitio difiere entre el marcado WebSite y otras fuentes: {items}"
+    }
+  },
+  "schema-sitelinks-searchbox-obsolete": {
+    "title": "El SearchAction del cuadro de búsqueda de enlaces de sitio está obsoleto",
+    "why": "Google retiró el cuadro de búsqueda de enlaces de sitio en todo el mundo en noviembre de 2024. El marcado SearchAction es inofensivo, y su ausencia nunca es un problema.",
+    "fix": "Limpieza opcional. Google indica que no hace falta eliminarlo y que no provoca errores en Search Console.",
+    "messages": {
+      "fail": "WebSite lleva marcado SearchAction para el cuadro de búsqueda de enlaces de sitio, que Google retiró en noviembre de 2024; es inofensivo."
+    }
+  },
+  "schema-localbusiness": {
+    "title": "Completitud y validez del marcado LocalBusiness",
+    "why": "Google documenta el marcado LocalBusiness con el nombre y la dirección obligatorios y propiedades recomendadas como geo, telephone, openingHoursSpecification y priceRange, usando el subtipo más específico.",
+    "fix": "Un LocalBusiness por cada ubicación física, en la página de esa ubicación, con el NAP completo, que coincida con la página visible y con el Perfil de Empresa en Google.",
+    "messages": {
+      "fail": "El marcado LocalBusiness requiere atención: {items}",
+      "fail:missing-required": "Al marcado LocalBusiness le faltan propiedades obligatorias: {items}",
+      "fail:address-not-structured": "La address de LocalBusiness es texto sin formato en lugar de un PostalAddress: {items}",
+      "fail:geo-precision": "Las coordenadas de LocalBusiness tienen menos de 5 decimales: {items}",
+      "fail:price-range-too-long": "El priceRange de LocalBusiness tiene 100 caracteres o más: {items}"
+    }
+  },
+  "schema-self-serving-reviews": {
+    "title": "Reseñas o valoraciones en beneficio propio en el marcado Organization o LocalBusiness del propio sitio",
+    "why": "Google no muestra resultados enriquecidos de reseñas para las reseñas que una empresa u organización publica sobre sí misma, incluidas las reseñas insertadas desde widgets.",
+    "fix": "Elimina aggregateRating/review del marcado Organization/LocalBusiness del propietario. Mantén el marcado de reseñas en Product, en obras creativas afines a Service o en reseñas de entidades de terceros cuando sean aptas.",
+    "messages": {
+      "fail": "{count} elemento(s) de reseña o valoración describen la propia organización del sitio, que Google no muestra como estrellas de reseña: {items}"
+    }
+  },
+  "schema-review-snippet": {
+    "title": "Requisitos de Review y AggregateRating",
+    "why": "Google documenta las propiedades obligatorias de Review y AggregateRating y los tipos de elemento que pueden describir. Las valoraciones fuera de la escala declarada o la falta de campos obligatorios hacen que el fragmento no sea apto.",
+    "fix": "Anida Review/AggregateRating dentro del Product/Recipe/etc. reseñado e indica la escala de forma explícita si no es 1–5.",
+    "messages": {
+      "fail": "{count} elemento(s) de reseña o valoración no cumplen los requisitos del fragmento de reseña: {items}",
+      "fail:missing-item-reviewed": "{count} elemento(s) de reseña o valoración no indican qué reseñan: {items}",
+      "fail:item-reviewed-without-name": "{count} elemento(s) reseñados no tienen nombre: {items}",
+      "fail:unsupported-item-type": "{count} elemento(s) de reseña o valoración describen un tipo que los fragmentos de reseña no admiten: {items}",
+      "fail:missing-author": "{count} reseña(s) no tienen autor.",
+      "fail:author-name-too-long": "{count} nombre(s) de autor de reseñas tienen 100 caracteres o más: {items}",
+      "fail:missing-rating": "{count} elemento(s) de reseña o valoración no tienen valor de valoración: {items}",
+      "fail:missing-count": "{count} valoración(es) agregada(s) no tienen ni ratingCount ni reviewCount.",
+      "fail:invalid-count": "{count} recuento(s) de valoraciones no son números enteros de al menos 1: {items}",
+      "fail:malformed-rating": "{count} valor(es) de valoración usan una coma decimal: {items}",
+      "fail:out-of-bounds": "{count} valor(es) de valoración quedan fuera de la escala declarada: {items}"
+    }
+  },
+  "schema-review-authenticity": {
+    "title": "Las reseñas parecen falsas, incentivadas sin indicarlo o no se muestran",
+    "why": "Desde julio de 2026, las directrices de Google sobre fragmentos de reseñas excluyen las reseñas falsas y las reseñas incentivadas que no lo indican. La regla informa de señales compatibles con ello, nunca de una acusación.",
+    "fix": "Marca solo las reseñas auténticas de usuarios que sean visibles en la página. Indica los incentivos de forma clara y destacada.",
+    "messages": {
+      "fail": "{count} señal(es) compatibles con reseñas que pueden no ser auténticas, para que las compruebe el analista: {items}",
+      "fail:placeholder-author": "{count} nombre(s) de autor de reseñas parecen marcadores de posición: {items}",
+      "fail:duplicate-text": "{count} texto(s) de reseñas repiten otra reseña: {items}",
+      "fail:aggregate-mismatch": "La valoración agregada difiere de la media de las reseñas marcadas: {items}"
+    }
+  },
+  "schema-product-snippet": {
+    "title": "Requisitos del fragmento de producto (mejoras de reseñas y precio)",
+    "why": "Google exige un nombre de producto y al menos una de las propiedades review, aggregateRating u offers para los fragmentos de producto, con los precios en un formato válido.",
+    "fix": "Indica el precio como un número simple (\"price\": 1299.00) con priceCurrency \"EUR\". Usa Offer para un solo vendedor y ProductGroup para las variantes.",
+    "messages": {
+      "fail": "No se cumplen {count} requisito(s) del fragmento de producto: {items}",
+      "fail:missing-name": "{count} elemento(s) Product no tienen nombre.",
+      "fail:missing-offer-or-review": "{count} elemento(s) Product no tienen ni offers ni review ni aggregateRating: {items}",
+      "fail:offer-without-price": "{count} oferta(s) no tienen precio: {items}",
+      "fail:malformed-price": "{count} valor(es) de precio no son números simples: {items}",
+      "fail:aggregate-offer-incomplete": "A {count} elemento(s) AggregateOffer les falta lowPrice o priceCurrency: {items}",
+      "fail:invalid-currency": "{count} valor(es) de priceCurrency no son códigos ISO 4217: {items}"
+    }
+  },
+  "schema-merchant-listing": {
+    "title": "Requisitos de las fichas de comercio (superficies de Shopping)",
+    "why": "Google documenta las propiedades obligatorias y recomendadas de las fichas de comercio en las superficies de Shopping, entre ellas un precio superior a cero, la disponibilidad y los identificadores de producto.",
+    "fix": "Renderiza en el servidor un nodo Product + Offer completo que coincida con el cuadro de compra visible. Añade un GTIN cuando el producto lo tenga.",
+    "messages": {
+      "fail": "No se cumplen {count} requisito(s) de las fichas de comercio: {items}",
+      "fail:missing-image": "{count} elemento(s) Product a la venta no tienen imagen: {items}",
+      "fail:missing-currency": "{count} oferta(s) no tienen priceCurrency: {items}",
+      "fail:price-not-positive": "{count} oferta(s) tienen un precio de cero o menos, que las fichas de comercio no aceptan: {items}",
+      "fail:missing-identifiers": "{count} elemento(s) Product no tienen gtin, mpn ni brand: {items}",
+      "fail:missing-availability": "{count} oferta(s) no tienen availability: {items}"
+    }
+  },
+  "schema-gtin-validity": {
+    "title": "Valores GTIN con una longitud o un dígito de control incorrectos",
+    "why": "Google acepta GTIN-8, 12, 13 y 14 en los datos estructurados. GS1 define las longitudes y el dígito de control; los valores no válidos no identifican ningún producto.",
+    "fix": "Usa el GTIN que asigna el fabricante u omite la propiedad. No te lo inventes nunca.",
+    "messages": {
+      "fail": "{count} valor(es) GTIN no son válidos: {items}",
+      "fail:not-numeric": "{count} valor(es) GTIN contienen caracteres que no son dígitos: {items}",
+      "fail:wrong-length": "{count} valor(es) GTIN tienen una longitud incorrecta: {items}",
+      "fail:repeated-digits": "{count} valor(es) GTIN son un único dígito repetido: {items}",
+      "fail:check-digit": "{count} valor(es) GTIN no superan la comprobación del dígito de control de GS1: {items}",
+      "fail:duplicate": "Productos distintos comparten {count} valor(es) GTIN: {items}"
+    }
+  },
+  "schema-product-variants": {
+    "title": "Marcado de ProductGroup y de variantes",
+    "why": "Google documenta ProductGroup con hasVariant, variesBy y productGroupID para los productos que se venden en variantes. Los ID que no coinciden o los valores variesBy no válidos rompen la agrupación.",
+    "fix": "Modela las variantes como ProductGroup.hasVariant[Product], con referencias inversas isVariantOf y Offers propios de cada variante.",
+    "messages": {
+      "fail": "{count} problema(s) de ProductGroup o de variantes: {items}",
+      "fail:missing-name": "Un ProductGroup no tiene nombre.",
+      "fail:invalid-varies-by": "Google no admite {count} valor(es) variesBy: {items}",
+      "fail:group-id-mismatch": "{count} variante(s) indican un ID de grupo distinto de productGroupID: {items}",
+      "fail:variant-without-id": "{count} variante(s) no tienen ni sku ni gtin: {items}",
+      "fail:duplicate-variant-id": "{count} identificador(es) de variante se usan dos veces: {items}",
+      "fail:variant-without-offer": "{count} variante(s) no tienen offers: {items}"
+    }
+  },
+  "schema-offer-price-specification": {
+    "title": "Los precios rebajados, tachados y para miembros están mal codificados",
+    "why": "Google documenta cómo marcar los precios rebajados, los precios tachados y los precios para miembros con UnitPriceSpecification y fechas de validez. Una codificación incorrecta muestra un precio equivocado.",
+    "fix": "Pon el precio vigente en offers.price y el precio anterior en un UnitPriceSpecification con priceType StrikethroughPrice.",
+    "messages": {
+      "fail": "{count} problema(s) de codificación de precios rebajados, tachados o para miembros: {items}",
+      "fail:unsupported-price-type": "{count} valor(es) de priceType no son StrikethroughPrice: {items}",
+      "fail:member-tier-with-price-type": "{count} especificación(es) de precio combinan validForMemberTier con priceType, que Google ignora: {items}",
+      "fail:points-without-member-tier": "{count} especificación(es) de precio indican membershipPointsEarned sin validForMemberTier.",
+      "fail:price-valid-until-on-specification": "{count} especificación(es) de precio llevan priceValidUntil, que corresponde al Offer.",
+      "fail:reference-quantity-incomplete": "A {count} valor(es) de referenceQuantity les falta value o unitCode.",
+      "fail:strikethrough-only": "{count} oferta(s) tienen un precio tachado, pero ningún precio vigente.",
+      "fail:not-discounted": "{count} precio(s) vigente(s) no son inferiores al precio tachado: {items}"
+    }
+  },
+  "schema-shipping-details": {
+    "title": "Marcado de envío (OfferShippingDetails a nivel de oferta y ShippingService a nivel de organización)",
+    "why": "Google documenta OfferShippingDetails a nivel de oferta y las políticas de envío a nivel de organización. La configuración de Merchant Center y de Search Console tiene prioridad sobre el marcado.",
+    "fix": "Define la política estándar una sola vez en Organization (en una página de política de envíos). Usa shippingDetails a nivel de oferta solo para las excepciones.",
+    "messages": {
+      "fail": "{count} problema(s) del marcado de envío: {items}"
+    }
+  },
+  "schema-return-policy": {
+    "title": "Marcado MerchantReturnPolicy",
+    "why": "Google documenta MerchantReturnPolicy a nivel de oferta o de organización. El marcado a nivel de oferta prevalece sobre el de organización, y la configuración de Merchant Center prevalece sobre ambos.",
+    "fix": "Añade una sola política a nivel de organización en la página de devoluciones. Sustitúyela en ofertas concretas solo para las excepciones.",
+    "messages": {
+      "fail": "{count} problema(s) del marcado de la política de devoluciones: {items}",
+      "fail:incomplete": "{count} política(s) de devoluciones no tienen ni applicableCountry con returnPolicyCategory ni merchantReturnLink.",
+      "fail:finite-without-days": "{count} plazo(s) de devolución limitados no tienen merchantReturnDays.",
+      "fail:member-program-outside-organization": "{count} elemento(s) MemberProgram no están definidos en Organization.hasMemberProgram: {items}"
+    }
+  },
+  "schema-article": {
+    "title": "Marcado Article / NewsArticle / BlogPosting",
+    "why": "Google documenta el marcado Article, NewsArticle y BlogPosting con el titular, la imagen, el autor y las fechas recomendados. No es obligatorio para las noticias destacadas ni para Discover.",
+    "fix": "Usa BlogPosting/NewsArticle con headline, un array de image, fechas ISO con desfase horario y nodos Person en author que enlacen a las páginas de los autores.",
+    "messages": {
+      "fail": "{count} problema(s) del marcado Article: {items}",
+      "fail:missing-image": "{count} elemento(s) de artículo no tienen imagen: {items}",
+      "fail:missing-date": "{count} elemento(s) de artículo de noticias o de blog no tienen datePublished: {items}",
+      "fail:author-not-entity": "{count} valor(es) de author son texto sin formato en lugar de un Person o una Organization: {items}",
+      "fail:author-type": "{count} autor(es) no son un Person ni una Organization: {items}",
+      "fail:merged-authors": "{count} autor(es) Person contienen varios nombres: {items}"
+    }
+  },
+  "schema-author-entity-quality": {
+    "title": "Las entidades de autor son imprecisas, están fusionadas o no son coherentes",
+    "why": "Google recomienda un Person o una Organization por autor, con un nombre y una url o un sameAs que lo identifique. Los nombres fusionados o los autores provisionales impiden la desambiguación. No es un mecanismo de posicionamiento.",
+    "fix": "Un nodo Person por autor con un @id estable, una url a la página de perfil del autor y sameAs a los perfiles externos.",
+    "messages": {
+      "fail": "{count} entidad(es) de autor pueden ser imprecisas, estar fusionadas o no ser coherentes: {items}",
+      "fail:broken-author-url": "{count} url(s) de autor responden con un error: {items}"
+    }
+  },
+  "schema-breadcrumb": {
+    "title": "Requisitos de BreadcrumbList",
+    "why": "Google documenta BreadcrumbList con al menos dos elementos y sus posiciones. Desde enero de 2025, Google solo muestra las rutas de exploración en los resultados para ordenador, así que el impacto se limita a los ordenadores.",
+    "fix": "Genera la ruta a partir de la jerarquía del sitio por la que navegan los usuarios, con URLs canónicas absolutas.",
+    "messages": {
+      "fail": "{count} problema(s) de BreadcrumbList: {items}",
+      "fail:too-few-items": "El BreadcrumbList tiene menos de dos elementos: {items}",
+      "fail:invalid-position": "{count} posición(es) de ListItem faltan, están repetidas o no son números enteros: {items}",
+      "fail:missing-name": "{count} elemento(s) ListItem no tienen nombre: {items}",
+      "fail:missing-item": "{count} elemento(s) ListItem que no son el último no tienen item: {items}",
+      "fail:broken-item-url": "{count} URL(s) de elementos de la ruta de exploración responden con un error: {items}",
+      "fail:redirecting-item-url": "{count} URL(s) de elementos de la ruta de exploración redirigen: {items}",
+      "fail:name-with-site-name": "{count} nombre(s) de la ruta de exploración incluyen el nombre del sitio como hacen los títulos de página: {items}. Google muestra cada nombre como un paso de la ruta, así que usa la etiqueta corta de la página."
+    }
+  },
+  "schema-profile-page": {
+    "title": "Requisitos del marcado ProfilePage y casos en los que es apto",
+    "why": "Google documenta ProfilePage para las páginas sobre una sola persona u organización, con mainEntity como propiedad obligatoria. Las páginas de equipo que enumeran a muchas personas no son páginas de perfil.",
+    "fix": "Añade ProfilePage + Person (con @id) en las páginas de autor o de equipo y haz referencia a ese @id desde Article.author.",
+    "messages": {
+      "fail": "{count} problema(s) de ProfilePage: {items}",
+      "fail:several-people": "El ProfilePage está en una página que describe {items}; las páginas de perfil tratan de una sola persona u organización."
+    }
+  },
+  "schema-video": {
+    "title": "Requisitos de VideoObject",
+    "why": "Google documenta las propiedades obligatorias de VideoObject, como name, thumbnailUrl y uploadDate, y solo indexa los vídeos en las páginas de visualización. Una miniatura bloqueada hace que el vídeo no sea apto.",
+    "fix": "Proporciona una URL de miniatura estable y contentUrl. Pon el marcado en la página en la que el vídeo es el contenido principal.",
+    "messages": {
+      "fail": "{count} problema(s) de VideoObject: {items}",
+      "fail:missing-required": "Al marcado VideoObject le faltan propiedades obligatorias: {items}"
+    }
+  },
+  "schema-image-metadata": {
+    "title": "Metadatos de licencia y créditos de ImageObject",
+    "why": "Google muestra los detalles de la licencia en Google Imágenes cuando el marcado ImageObject o los metadatos IPTC indican una licencia, una página para obtener la licencia, un creador o los créditos. Solo es relevante para los sitios que conceden licencias de imágenes.",
+    "fix": "Añade license y acquireLicensePage a las fotografías que se pueden licenciar. Añade creditText/creator para la atribución.",
+    "messages": {
+      "fail": "{count} problema(s) de licencia de ImageObject: {items}"
+    }
+  },
+  "schema-event": {
+    "title": "Requisitos de Event",
+    "why": "Google documenta el marcado Event con name, startDate y location obligatorios, para los eventos en una ubicación física. Usar Event para promociones o para el horario comercial es un uso indebido.",
+    "fix": "Un nodo Event por cada actuación o fecha, con la dirección completa del lugar. Usa eventStatus para las cancelaciones y los cambios de fecha en lugar de eliminar el evento.",
+    "messages": {
+      "fail": "{count} problema(s) de Event: {items}",
+      "fail:missing-required": "Al marcado Event le faltan propiedades obligatorias: {items}",
+      "fail:location-without-address": "{count} evento(s) tienen una location sin address: {items}",
+      "fail:virtual-only": "{count} evento(s) solo tienen una ubicación virtual; los resultados de eventos de Google necesitan una ubicación física: {items}"
+    }
+  },
+  "schema-jobposting": {
+    "title": "Requisitos y política de JobPosting",
+    "why": "Google documenta JobPosting para las páginas de una sola oferta de empleo, con propiedades obligatorias y validThrough. Mantener activas las ofertas caducadas puede provocar una acción manual.",
+    "fix": "Cuando se cierre una oferta, elimina el marcado, establece un validThrough pasado o devuelve 404/410, y notifícalo mediante la API Indexing (admitida para JobPosting).",
+    "messages": {
+      "fail": "{count} problema(s) de JobPosting: {items}",
+      "fail:expired": "{count} oferta(s) de empleo caducaron antes de que se obtuviera la página, pero la página está activa y es indexable: {items}",
+      "fail:missing-required": "Al marcado JobPosting le faltan propiedades obligatorias: {items}",
+      "fail:remote-without-applicant-location": "{count} oferta(s) de empleo en remoto no tienen applicantLocationRequirements: {items}",
+      "fail:several-jobs": "La página lleva {items}; JobPosting corresponde a las páginas de una sola oferta de empleo."
+    }
+  },
+  "schema-course-list": {
+    "title": "Requisitos de la lista de cursos (carrusel)",
+    "why": "Google retiró el resultado enriquecido de información de cursos en 2025; se mantiene el carrusel de lista de cursos, con un ItemList de al menos tres cursos.",
+    "fix": "Añade un ItemList en la página del catálogo de cursos que enlace a ≥3 páginas de detalle de Course, cada una con name, description y provider.",
+    "messages": {
+      "fail": "{count} problema(s) de la lista de cursos: {items}"
+    }
+  },
+  "schema-dataset": {
+    "title": "Requisitos de Dataset",
+    "why": "Google retiró de forma progresiva los resultados de Dataset de la Búsqueda en 2025 y aclaró que el marcado Dataset lo usa Dataset Search. Sus directrices exigen un nombre y una descripción de entre 50 y 5000 caracteres.",
+    "fix": "Añade Dataset con una descripción de 50–5000 caracteres y una distribución DataDownload.",
+    "messages": {
+      "fail": "{count} problema(s) de Dataset: {items}"
+    }
+  },
+  "schema-software-app": {
+    "title": "Requisitos de SoftwareApplication",
+    "why": "Google exige una valoración o una reseña y un precio de oferta para los resultados enriquecidos de aplicaciones de software. Las páginas sin valoraciones auténticas de usuarios no pueden cumplir los requisitos.",
+    "fix": "Añade el precio de Offer y valoraciones auténticas de usuarios que sean visibles en la página.",
+    "messages": {
+      "fail": "No se cumplen {count} requisito(s) de SoftwareApplication: {items}"
+    }
+  },
+  "schema-qapage": {
+    "title": "Requisitos de QAPage y casos en los que es apto",
+    "why": "Google documenta QAPage para las páginas en las que los usuarios hacen una pregunta y otros la responden. No es para las preguntas frecuentes que redacta el propio sitio; volver a etiquetar unas preguntas frecuentes como QAPage es un uso indebido.",
+    "fix": "Usa QAPage solo en hilos de preguntas y respuestas de la comunidad. Para los debates generales, usa DiscussionForumPosting.",
+    "messages": {
+      "fail": "{count} problema(s) de QAPage: {items}",
+      "fail:several-questions": "El QAPage contiene {items}; Google admite una pregunta por página.",
+      "fail:site-authored-candidate": "{count} pregunta(s) y sus respuestas no tienen autor, como en unas preguntas frecuentes redactadas por el sitio: {items}"
+    }
+  },
+  "schema-discussion-forum": {
+    "title": "Requisitos de DiscussionForumPosting / SocialMediaPosting",
+    "why": "Google documenta DiscussionForumPosting y SocialMediaPosting para el contenido de foros y redes sociales creado por los usuarios, no para los artículos que redacta el propio sitio.",
+    "fix": "Úsalos en hilos de foros o de la comunidad. Usa Article/BlogPosting para el contenido editorial.",
+    "messages": {
+      "fail": "{count} problema(s) del marcado de foros de debate: {items}"
+    }
+  },
+  "schema-paywalled-content": {
+    "title": "Marcado de contenido de pago",
+    "why": "Google documenta el marcado de muros de pago con isAccessibleForFree y cssSelector para que servir el contenido completo a Googlebot, pero no a los usuarios, no se trate como encubrimiento.",
+    "fix": "Envuelve la sección restringida en una clase (por ejemplo, .paywall) y declara hasPart {WebPageElement, isAccessibleForFree:false, cssSelector:'.paywall'}.",
+    "messages": {
+      "fail": "{count} problema(s) del marcado de muro de pago: {items}",
+      "fail:non-class-selector": "{count} valor(es) de cssSelector no son selectores de clase: {items}",
+      "fail:selector-unmatched": "{count} valor(es) de cssSelector no coinciden con ningún elemento de la página: {items}",
+      "fail:nested-sections": "{count} sección(es) de pago están dentro de otra: {items}"
+    }
+  },
+  "schema-recipe": {
+    "title": "Requisitos de Recipe (editores)",
+    "why": "Google documenta el marcado Recipe con name e image obligatorios y propiedades recomendadas para los resultados enriquecidos de recetas.",
+    "fix": "Usa instrucciones HowToStep y duraciones ISO. Proporciona imágenes en 3 relaciones de aspecto.",
+    "messages": {
+      "fail": "{count} problema(s) de Recipe: {items}",
+      "fail:missing-required": "Al marcado Recipe le faltan propiedades obligatorias: {items}",
+      "fail:calories-without-yield": "{count} receta(s) indican nutrition.calories sin recipeYield: {items}"
+    }
+  },
+  "schema-service-offercatalog": {
+    "title": "El marcado Service / OfferCatalog es solo vocabulario (sin resultado enriquecido de Google)",
+    "why": "Service y OfferCatalog son tipos de schema.org sin resultado enriquecido de Google. Describen la empresa para otros consumidores; las valoraciones en beneficio propio que llevan no se muestran.",
+    "fix": "Mantén el marcado Service exacto y vinculado al nodo Organization. No esperes ni prometas una función en las SERP.",
+    "messages": {
+      "fail": "{count} elemento(s) Service llevan valoraciones sobre los propios servicios del sitio, que los fragmentos de reseña no muestran: {items}"
+    }
+  },
+  "schema-faqpage-retired": {
+    "title": "El marcado FAQPage ya no genera resultados enriquecidos de Google (informativo)",
+    "why": "Google limitó los resultados enriquecidos de preguntas frecuentes a sitios gubernamentales y de salud conocidos en agosto de 2023, dejó de mostrarlos en la Búsqueda a partir del 7 de mayo de 2026 y retiró la documentación el 15 de junio de 2026. El marcado FAQPage válido es inofensivo; otros consumidores pueden leerlo.",
+    "fix": "No hace falta hacer nada. Mantenlo si es exacto y visible (otros consumidores pueden leerlo). No lo añadas nunca para conseguir resultados enriquecidos de Google.",
+    "messages": {
+      "fail": "La página lleva marcado FAQPage; Google ya no muestra resultados enriquecidos de preguntas frecuentes. El marcado válido es inofensivo."
+    }
+  },
+  "schema-retired-feature-markup": {
+    "title": "Marcado para funciones de Google retiradas o eliminadas",
+    "why": "Google ha retirado varios resultados enriquecidos, entre ellos HowTo, los anuncios especiales, la información de cursos, ClaimReview, el salario estimado, los vídeos educativos, las fichas de vehículos y los problemas de práctica. Su marcado es inofensivo y no consigue ninguna función de Google.",
+    "fix": "No hace falta eliminarlo. Google indica que el marcado no admitido no provoca problemas y que su uso fuera de la Búsqueda de Google no se ve afectado. Elimínalo solo para reducir el mantenimiento.",
+    "messages": {
+      "fail": "La página lleva marcado para funciones de Google retiradas: {items}. Es inofensivo."
+    }
+  },
+  "schema-carousel-itemlist": {
+    "title": "Marcado ItemList de carrusel en páginas de resumen",
+    "why": "Google documenta el marcado ItemList para carruseles en páginas de resumen, una función beta limitada por región y tipo de consulta, con al menos tres elementos en URLs distintas.",
+    "fix": "Pon ItemList solo en la página de resumen, con referencias a las URLs de las páginas de detalle.",
+    "messages": {
+      "fail": "{count} problema(s) de ItemList de carrusel: {items}"
+    }
+  },
+  "schema-feature-opportunity": {
+    "title": "Faltan funciones de Google aplicables al tipo de página",
+    "why": "La galería de búsqueda de Google enumera las funciones de datos estructurados que se admiten actualmente. Cuando una página cumple claramente los requisitos de una, como las fichas de comercio en una página de producto, la falta de marcado es una oportunidad.",
+    "fix": "Implementa la función para la que la página es apta con todas las propiedades obligatorias y con propiedades recomendadas exactas. Google prefiere «menos propiedades, pero completas y exactas» a muchas incompletas.",
+    "messages": {
+      "fail": "{count} página(s) pueden cumplir los requisitos de una función de Google que no marcan: {items}",
+      "fail:article-markup-missing": "{count} página(s) declaran og:type article, pero no llevan marcado Article: {items}",
+      "fail:product-markup-missing": "{count} página(s) declaran og:type product, pero no llevan marcado Product: {items}",
+      "fail:breadcrumb-missing": "{count} página(s) profundas no tienen marcado BreadcrumbList: {items}"
+    }
+  },
+  "schema-url-inspection-rich-results": {
+    "title": "El veredicto de Google sobre los resultados enriquecidos de la URL indexada",
+    "why": "La API de Inspección de URLs de Search Console devuelve el veredicto de Google sobre los resultados enriquecidos de la versión indexada de una URL. Los elementos con errores no pueden aparecer como resultados enriquecidos.",
+    "fix": "Corrige primero los elementos ERROR y después vuelve a solicitar la indexación en Search Console.",
+    "messages": {
+      "fail": "Google indica problemas en los resultados enriquecidos de {url}: {items}.",
+      "fail:errors": "Google ha encontrado {count} error(es) en los resultados enriquecidos de {url}, que impiden que se muestren: {items}.",
+      "fail:warnings": "Google ha encontrado {count} advertencia(s) en los resultados enriquecidos de {url}: {items}."
+    }
+  },
+  "schema-duplicate-feature-nodes": {
+    "title": "Varios nodos contradictorios para la misma entidad de una función en una página",
+    "why": "Varios nodos que describen la misma entidad con valores distintos, como dos nodos Product con precios distintos, obligan a los consumidores a elegir. Google pide añadir las propiedades al nodo existente.",
+    "fix": "Desactiva la fuente duplicada (tema, plugin o gestor de etiquetas) y mantén un nodo completo por entidad, vinculado mediante @id.",
+    "messages": {
+      "fail": "{count} entidad(es) se describen con varios nodos en la página: {items}",
+      "fail:conflicting-duplicate": "{count} entidad(es) se describen dos veces con valores distintos: {items}",
+      "fail:exact-duplicate": "{count} entidad(es) se describen dos veces con los mismos valores: {items}"
+    }
+  }
+}

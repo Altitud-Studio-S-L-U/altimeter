@@ -1,0 +1,315 @@
+{
+  "intl-hreflang-invalid-language-code": {
+    "messages": {
+      "fail": "{count} hreflang value(s) do not start with an ISO 639-1 language code: {values} ({sources}). Google ignores these annotations.",
+      "fail:empty": "{count} hreflang attribute(s) are empty ({sources}). Google ignores these annotations.",
+      "fail:language-not-two-letters": "{count} hreflang value(s) use a language subtag that is not two letters: {values} ({sources}). Google supports only ISO 639-1 codes, so these annotations are ignored.",
+      "fail:unknown-language": "{count} hreflang value(s) start with a code that is not in ISO 639-1: {values} ({sources}). Google ignores these annotations.",
+      "fail:withdrawn-language": "{count} hreflang value(s) use a language code withdrawn from ISO 639-1: {values} ({sources}). Use the current code instead: {replacement}.",
+      "fail:private-use": "{count} hreflang value(s) are private-use or grandfathered tags: {values} ({sources}). The only non-language value Google supports is x-default."
+    }
+  },
+  "intl-hreflang-region-only-value": {
+    "messages": {
+      "fail": "{count} hreflang value(s) are country codes used where a language code belongs: {values} ({sources}). Use a language-region pair instead.",
+      "fail:country-as-language": "{count} hreflang value(s) are country codes, not language codes: {values} ({sources}). Use a language-region pair instead, such as en-GB rather than uk.",
+      "fail:possible-country": "hreflang {values} names {language}, but the content of {target} reads as {detected}. If the value was meant as a country, use a language-region pair instead."
+    }
+  },
+  "intl-hreflang-invalid-region-code": {
+    "messages": {
+      "fail": "{count} hreflang value(s) have a region subtag that is not an assigned ISO 3166-1 alpha-2 code: {values} ({sources}). Google ignores the region part.",
+      "fail:reserved-region": "{count} hreflang value(s) use a reserved region code: {values} ({sources}). Google ignores the region part, so the variant loses its country targeting. Use {replacement}.",
+      "fail:unassigned-region": "{count} hreflang value(s) use a region code that is not assigned in ISO 3166-1: {values} ({sources}). Google ignores the region part.",
+      "fail:numeric-region": "{count} hreflang value(s) use a numeric UN M.49 region: {values} ({sources}). Google does not support it; list per-country values or a language-only catch-all instead.",
+      "fail:three-letter-region": "{count} hreflang value(s) use a three-letter region: {values} ({sources}). Google supports only ISO 3166-1 alpha-2 regions."
+    }
+  },
+  "intl-hreflang-invalid-script-or-syntax": {
+    "messages": {
+      "fail": "{count} hreflang value(s) do not follow language-Script-REGION: {values} ({sources}).",
+      "fail:whitespace": "{count} hreflang value(s) contain whitespace: {values} ({sources}).",
+      "fail:underscore": "{count} hreflang value(s) use an underscore as separator: {values} ({sources}). Google's format uses hyphens, such as en-GB.",
+      "fail:empty-subtag": "{count} hreflang value(s) have an empty subtag: {values} ({sources}).",
+      "fail:unknown-script": "{count} hreflang value(s) have a script subtag that is not an ISO 15924 code: {values} ({sources}).",
+      "fail:script-after-region": "{count} hreflang value(s) place the script after the region: {values} ({sources}). Use language-Script-REGION, such as zh-Hant-TW.",
+      "fail:variant": "{count} hreflang value(s) use a variant subtag, which is valid BCP 47 but not documented by Google for hreflang: {values} ({sources}).",
+      "fail:extension": "{count} hreflang value(s) use an extension subtag, which Google does not document for hreflang: {values} ({sources}).",
+      "fail:too-many-subtags": "{count} hreflang value(s) have more than three subtags: {values} ({sources}).",
+      "fail:malformed": "{count} hreflang value(s) contain characters or subtags outside language-Script-REGION: {values} ({sources})."
+    }
+  },
+  "intl-hreflang-relative-url": {
+    "messages": {
+      "fail": "{count} hreflang annotation(s) do not use a fully qualified URL: {hrefs}.",
+      "fail:empty-href": "{count} hreflang annotation(s) have no URL.",
+      "fail:protocol-relative": "{count} hreflang annotation(s) use protocol-relative URLs: {hrefs}. Google asks for fully qualified URLs including the scheme.",
+      "fail:relative": "{count} hreflang annotation(s) use relative URLs: {hrefs}. Google requires fully qualified URLs including the scheme.",
+      "fail:unsupported-scheme": "{count} hreflang annotation(s) use a scheme other than http or https: {hrefs}."
+    }
+  },
+  "intl-hreflang-outside-head": {
+    "messages": {
+      "fail": "{count} hreflang link element(s) end up in the body, where Google ignores them.",
+      "fail:raw-body": "{count} hreflang link element(s) are parsed into the body because the head ends early at line {line} ({cause}). Google ignores links outside the head.",
+      "fail:rendered-body": "{count} hreflang link element(s) sit in the body of the rendered DOM, moved there by a script. Google ignores links outside the head."
+    }
+  },
+  "intl-hreflang-rendered-only": {
+    "messages": {
+      "fail": "The hreflang links in the rendered DOM differ from those in the HTML as served.",
+      "fail:rendered-only": "The {count} hreflang link element(s) exist only after JavaScript runs. Crawlers that do not render never see them, and Google does not document whether it reads injected hreflang.",
+      "fail:differs": "Rendering changes the hreflang links: {added} added and {removed} removed compared with the HTML as served."
+    }
+  },
+  "intl-hreflang-combined-link-attributes": {
+    "messages": {
+      "fail": "{count} link element(s) combine hreflang with other alternate semantics.",
+      "fail:media": "{count} link element(s) combine hreflang with a media attribute. Use separate link elements for language versions and for mobile URLs.",
+      "fail:canonical": "{count} rel=canonical link(s) carry an hreflang attribute. Google does not use such links for canonicalization; declare the canonical and the language versions separately.",
+      "fail:type": "{count} link element(s) combine hreflang with a non-HTML type. Declare language versions in their own rel=alternate hreflang links."
+    }
+  },
+  "intl-hreflang-http-header-format": {
+    "messages": {
+      "fail": "The HTTP Link header's hreflang entries are malformed or incomplete.",
+      "fail:parse-error": "{count} Link header value(s) with hreflang do not parse as RFC 8288 link-values.",
+      "fail:missing-self": "The Link header lists {count} hreflang entr(ies) but none for the response's own URL, {url}."
+    }
+  },
+  "intl-hreflang-missing-self-reference": {
+    "messages": {
+      "fail": "The hreflang set of {url} does not include the page itself.",
+      "fail:near-miss": "The hreflang set does not list {url} exactly; the closest entry ({value}) points to {closest}. A self entry must match the page URL, including scheme and trailing slash.",
+      "fail:absent": "{count, plural, one {The only hreflang entry does not point to the page itself, {url}.} other {None of the # hreflang entries points to the page itself, {url}.}} Each version must list itself as well as the other versions."
+    }
+  },
+  "intl-hreflang-one-url-many-languages": {
+    "messages": {
+      "fail": "{target} is declared in {count} different languages ({languages}). One URL should carry one language."
+    }
+  },
+  "intl-hreflang-missing-return-link": {
+    "messages": {
+      "fail": "{count} hreflang link(s) are not reciprocated, for example {pairs}. Google ignores annotations between pages that do not link to each other; {working} pair(s) do reciprocate and {unverified} could not be checked."
+    }
+  },
+  "intl-hreflang-duplicate-locale-in-cluster": {
+    "messages": {
+      "fail": "hreflang {value} maps to {count} different URLs: {urls}.",
+      "fail:within-page": "{declaredBy} maps hreflang {value} to {count} different URLs: {urls}.",
+      "fail:across-cluster": "Members of one hreflang cluster map {value} to {count} different URLs ({urls}), as declared by {declaredBy}."
+    }
+  },
+  "intl-hreflang-cluster-inconsistent-sets": {
+    "messages": {
+      "fail": "Members of an hreflang cluster declare different sets.",
+      "fail:conflicting-values": "Members of one hreflang cluster assign different values to {count} URL(s), such as {targets}.",
+      "fail:missing-entries": "{count} of {members} cluster members omit URLs the others list ({missing}). Partial sets still work for the pairs that reciprocate."
+    }
+  },
+  "intl-hreflang-x-default-missing": {
+    "messages": {
+      "fail": "The hreflang cluster of {url} ({members} URLs) has no x-default.",
+      "fail:no-x-default": "The hreflang cluster of {url} ({members} URLs) has no x-default. Google recommends one as a fallback for visitors whose language is not listed.",
+      "fail:redirecting-root": "The home page cluster ({members} URLs) has no x-default while the root {root} redirects to a locale URL. Google recommends x-default especially for auto-redirecting home pages; it may point to the root or to a default locale page."
+    }
+  },
+  "intl-hreflang-x-default-inconsistent": {
+    "messages": {
+      "fail": "Members of one hreflang cluster declare {count} different x-default URLs: {urls}."
+    }
+  },
+  "intl-hreflang-no-language-catchall": {
+    "messages": {
+      "fail": "Every hreflang value for the language {code} carries a region ({values}), and the cluster has no language-only {code} value or x-default, so speakers of that language in other countries have no matching version."
+    }
+  },
+  "intl-hreflang-source-conflict": {
+    "messages": {
+      "fail": "The hreflang annotations of two sources disagree ({first}, {second}).",
+      "fail:conflicting-target": "Two hreflang sources ({first}, {second}) give different URLs for the same values: {values}.",
+      "fail:incomplete-source": "Some hreflang values appear in only one of two sources ({first}, {second}): {values}. Using several methods is fine; keep them identical."
+    }
+  },
+  "intl-hreflang-sitemap-format": {
+    "messages": {
+      "fail": "{count} sitemap hreflang annotation(s) are malformed ({sitemaps}).",
+      "fail:namespace": "{count} sitemap(s) contain hreflang links that are not in the xhtml namespace (xmlns:xhtml=\"http://www.w3.org/1999/xhtml\"), so they are not read: {sitemaps}.",
+      "fail:missing-self": "{count} sitemap entr(ies) list alternates but no xhtml:link to their own loc ({sitemaps}).",
+      "fail:relative-href": "{count} sitemap xhtml:link URL(s) are not fully qualified ({sitemaps}).",
+      "fail:invalid-value": "{count} sitemap xhtml:link value(s) do not follow Google's hreflang format ({sitemaps}).",
+      "fail:alternate-not-listed": "{count} alternate URL(s) in the sitemaps have no <url> entry of their own ({sitemaps}).",
+      "fail:not-reciprocal": "{count} sitemap entr(ies) do not list back the URLs that name them as alternates ({sitemaps})."
+    }
+  },
+  "intl-hreflang-target-not-200": {
+    "messages": {
+      "fail": "{count} hreflang target(s) do not answer 200: {urls} ({status}).",
+      "fail:redirect": "{count} hreflang target(s) redirect ({status}): {urls}. Point the annotations at the final URLs.",
+      "fail:error": "{count} hreflang target(s) answer with an error status ({status}): {urls}.",
+      "fail:unreachable": "{count} hreflang target(s) gave no response ({status}): {urls}."
+    }
+  },
+  "intl-localized-urls-unreachable": {
+    "messages": {
+      "fail": "The localized URL {url} cannot be reached directly.",
+      "fail:redirected-away": "The {language} URL {url}, requested without Accept-Language or cookies, redirects to {final}. Crawlers that request it this way never reach this version.",
+      "fail:redirect-loop": "The {language} URL {url} redirects in a loop when requested without Accept-Language or cookies."
+    }
+  },
+  "intl-hreflang-target-noindex": {
+    "messages": {
+      "fail": "{count} hreflang target(s) are noindex: {urls}. These versions cannot be shown in Search, so the alternates are unused."
+    }
+  },
+  "intl-hreflang-target-blocked-by-robots": {
+    "messages": {
+      "fail": "{count} hreflang target(s) are disallowed for Googlebot in robots.txt: {urls}. Google cannot read their return links or content."
+    }
+  },
+  "intl-hreflang-target-not-canonical": {
+    "messages": {
+      "fail": "{count} hreflang target(s) canonicalize to other URLs: {urls} -> {canonicals}. hreflang should connect canonical URLs."
+    }
+  },
+  "intl-hreflang-mixed-protocol-or-host": {
+    "messages": {
+      "fail": "{count} hreflang target(s) use a protocol or host other than the site's: {urls}.",
+      "fail:http-scheme": "{count} hreflang target(s) use http:// although the site serves {origin}: {urls}.",
+      "fail:host-variant": "{count} hreflang target(s) use a host variant that redirects: {urls}. Use the host the site serves, {origin}."
+    }
+  },
+  "intl-hreflang-on-non-canonical-page": {
+    "messages": {
+      "fail": "{url} declares hreflang but is not an indexable canonical page.",
+      "fail:not-200": "{url} declares hreflang but answers with status {status}.",
+      "fail:canonical-elsewhere": "{url} declares hreflang but its canonical points to {canonical}. Only canonical URLs should carry and receive hreflang annotations.",
+      "fail:noindex": "{url} declares hreflang but is noindex ({directive}), so its annotations are unused."
+    }
+  },
+  "intl-canonical-cross-language": {
+    "messages": {
+      "fail": "{url} ({language}) canonicalizes to {canonical} ({canonicalLanguage}), a page in another language.",
+      "fail:hreflang-languages": "{url} is a {language} version but canonicalizes to {canonical}, the {canonicalLanguage} version. This asks Google to drop the {language} version in favour of the other.",
+      "fail:detected-languages": "{url} reads as {language} but canonicalizes to {canonical}, which reads as {canonicalLanguage}. This asks Google to drop the {language} page in favour of the other."
+    }
+  },
+  "intl-hreflang-value-vs-content-language": {
+    "messages": {
+      "fail": "hreflang declares this page as {declared}, but its main content reads as {detected} ({words} words).",
+      "fail:short-content": "hreflang declares this page as {declared}, but its main content reads as {detected}. With only {words} words the detection is not conclusive."
+    }
+  },
+  "intl-html-lang-missing-or-invalid": {
+    "messages": {
+      "fail": "The html element's lang attribute is missing or invalid.",
+      "fail:missing": "The html element has no lang attribute. Screen readers, hyphenation and translation prompts rely on it; Google does not use it to detect language.",
+      "fail:set-by-script": "The lang attribute ({value}) is set only by JavaScript; the HTML as served has none.",
+      "fail:empty": "The html element's lang attribute is empty.",
+      "fail:malformed": "The lang attribute \"{value}\" is not a well-formed BCP 47 language tag.",
+      "fail:unknown-language": "The lang attribute \"{value}\" starts with a two-letter code that is not an ISO 639-1 language."
+    }
+  },
+  "intl-html-lang-vs-content": {
+    "messages": {
+      "fail": "lang=\"{lang}\" declares {declared}, but the main content reads as {detected}. Google detects language from content; assistive technology and other engines read the attribute."
+    }
+  },
+  "intl-content-language-signal-conflict": {
+    "messages": {
+      "fail": "Content-Language declares {declared}, which does not match {other}.",
+      "fail:meta-pragma": "The page uses <meta http-equiv=\"content-language\"> ({value}), which HTML marks non-conforming. Use the lang attribute instead.",
+      "fail:conflicts-with-lang": "Content-Language declares {declared}, but the lang attribute says {other}.",
+      "fail:conflicts-with-content": "Content-Language declares {declared}, but the main content reads as {other}."
+    }
+  },
+  "intl-mixed-language-page": {
+    "messages": {
+      "fail": "About {share, number, percent} of the main content reads as {secondary} on a page that is mostly {primary}. Confirm whether this is intentional, such as a quotation or bilingual legal text."
+    }
+  },
+  "intl-untranslated-variant": {
+    "messages": {
+      "fail": "{url} and {other} are declared as different languages ({languages}) but look untranslated.",
+      "fail:near-identical": "{url} and {other} are declared as different languages ({languages}) but their main content is {similarity, number, percent} identical.",
+      "fail:same-language": "{url} and {other} are declared as different languages ({languages}) but both read as {detected}."
+    }
+  },
+  "intl-metadata-translation-parity": {
+    "messages": {
+      "fail": "The {field} of this page is not localized.",
+      "fail:identical-to-other-locale": "The {field} is identical to the {field} of {other}, a version in another language.",
+      "fail:field-language": "The text of the {field} reads as {detected} on a page in {expected}."
+    }
+  },
+  "intl-og-locale": {
+    "messages": {
+      "fail": "og:locale is malformed or does not match the page language.",
+      "fail:missing-non-english": "The page is in {language} but has no og:locale, so social previews assume en_US.",
+      "fail:malformed": "og:locale value(s) {value} are not in language_TERRITORY form, such as es_ES.",
+      "fail:language-mismatch": "og:locale {value} does not match the page language, {language}."
+    }
+  },
+  "intl-auto-redirect-by-language": {
+    "messages": {
+      "fail": "{url} redirects to {count} different URLs depending on Accept-Language ({targets}). Localized URLs should serve the same content to every visitor; IP-based behaviour was not tested."
+    }
+  },
+  "intl-root-locale-redirector": {
+    "messages": {
+      "fail": "The root's locale redirect is configured in a way caches can mishandle.",
+      "fail:permanent-redirect": "The root redirects by Accept-Language with a cacheable {status} to {count} different targets. Browsers and caches may keep the first target permanently; a temporary redirect avoids that.",
+      "fail:missing-vary": "{count} locale redirect(s) of the root can be stored by shared caches without Vary: Accept-Language, so a cache may send visitors to the wrong locale."
+    }
+  },
+  "intl-locale-adaptive-same-url": {
+    "messages": {
+      "fail": "{url} serves different languages ({languages}) at the same URL depending on Accept-Language.",
+      "fail:content-language": "{url} serves main content in different languages ({languages}) at the same URL depending on Accept-Language. Crawlers that send no Accept-Language may never see the other versions.",
+      "fail:lang-attribute": "{url} serves different documents (lang {languages}) at the same URL depending on Accept-Language."
+    }
+  },
+  "intl-separate-urls-per-locale": {
+    "messages": {
+      "fail": "{count} locale URL(s) select the language with a URL parameter, for example {urls}. Google recommends distinct URLs per language version, not parameters."
+    }
+  },
+  "intl-geo-meta-tags-ignored": {
+    "messages": {
+      "fail": "The page uses {count} locational meta element(s) ({names}). Google ignores them for targeting; they are neither a signal nor an error."
+    }
+  },
+  "intl-tld-geotargeting-classification": {
+    "messages": {
+      "fail": "The domain uses the country-code TLD .{tld}, which Google associates with {country}, while hreflang targets other regions ({regions}).",
+      "fail:cctld-foreign-regions": "The domain uses the country-code TLD .{tld}, which Google associates with {country}, while hreflang also targets {regions}. For context only."
+    }
+  },
+  "intl-url-structure-assessment": {
+    "messages": {
+      "fail": "Locale versions use more than one URL structure ({schemes}).",
+      "fail:mixed-schemes": "Locale versions use more than one URL structure ({schemes}). Google documents each structure without ranking them; this is context for maintenance, not a defect."
+    }
+  },
+  "intl-area-served-format": {
+    "messages": {
+      "fail": "areaServed is used incorrectly.",
+      "fail:invalid-parent": "areaServed is set on a node of type {type}, which does not take this property.",
+      "fail:url-value": "areaServed is a URL of this site ({value}) instead of a place name or Place.",
+      "fail:invalid-value-type": "areaServed holds a {value}, which is not a Place, AdministrativeArea or GeoShape."
+    }
+  },
+  "intl-notranslate-in-use": {
+    "messages": {
+      "fail": "The page sends notranslate in its robots {source} directives, so Google does not offer a translated version of it in results."
+    }
+  },
+  "intl-language-switcher-crawlable": {
+    "messages": {
+      "fail": "The page does not link to its other language versions with crawlable links.",
+      "fail:homepages-only": "The language links go to locale home pages ({count}) instead of the equivalent page in each language.",
+      "fail:no-crawlable-links": "None of the {count} other language version(s) of this page is linked with an <a href>; {controls} language control(s) without links were found. Confirm how visitors switch language."
+    }
+  }
+}

@@ -1,0 +1,472 @@
+{
+  "perf-crux-lcp-p75": {
+    "title": "LCP de camp al p75 (per factor de forma)",
+    "why": "Largest Contentful Paint és una de les Core Web Vitals. web.dev defineix com a bo un valor de 2,5 s o menys i com a deficient un de més de 4 s al percentil 75 dels usuaris reals de Chrome, per tipus de dispositiu. Google fa servir les Core Web Vitals en els seus senyals d'experiència de pàgina, sense publicar-ne el pes.",
+    "fix": "Diagnostica amb les subparts de l'LCP (perf-crux-lcp-subparts) i les regles d'LCP de laboratori; corregeix primer la subpart dominant.",
+    "messages": {
+      "fail": "L'LCP de camp al p75 és {value} (dispositiu: {formFactor}; dades de CrUX: {scope}; franja: {band}); es considera bo un valor de 2500 ms o menys.",
+      "fail:origin-level": "L'LCP de camp al p75 és {value} (dispositiu: {formFactor}; franja: {band}); es considera bo un valor de 2500 ms o menys. Són dades de CrUX ({scope}) que cobreixen totes les pàgines de l'origen, no només aquesta URL."
+    }
+  },
+  "perf-crux-inp-p75": {
+    "title": "INP de camp al p75 (per factor de forma)",
+    "why": "Interaction to Next Paint va substituir First Input Delay com a Core Web Vital el març del 2024. web.dev defineix com a bo un valor de 200 ms o menys i com a deficient un de més de 500 ms al percentil 75.",
+    "fix": "Divideix les tasques llargues (scheduler.yield amb setTimeout com a alternativa), retalla el JS innecessari i els serveis de tercers, redueix la feina de renderització i la mida del DOM; investiga el gestor del botó d'acceptar dels gestors de consentiment.",
+    "messages": {
+      "fail": "L'INP de camp al p75 és {value} (dispositiu: {formFactor}; dades de CrUX: {scope}; franja: {band}); es considera bo un valor de 200 ms o menys.",
+      "fail:origin-level": "L'INP de camp al p75 és {value} (dispositiu: {formFactor}; franja: {band}); es considera bo un valor de 200 ms o menys. Són dades de CrUX ({scope}) que cobreixen totes les pàgines de l'origen, no només aquesta URL."
+    }
+  },
+  "perf-crux-cls-p75": {
+    "title": "CLS de camp al p75 (per factor de forma)",
+    "why": "Cumulative Layout Shift és una de les Core Web Vitals. web.dev defineix com a bo un valor de 0,1 o menys i com a deficient un de més de 0,25 al percentil 75. El CLS de camp cobreix tota la vida de la pàgina, de manera que pot ser pitjor que el CLS de laboratori.",
+    "fix": "Dona mides a les imatges, els iframes i els anuncis, reserva espai per a la interfície injectada tard (bàners de galetes) o superposa-la, fes servir animacions amb transform, ajusta les fonts de reserva i mantén les pàgines aptes per a la bfcache.",
+    "messages": {
+      "fail": "El CLS de camp al p75 és {value, number, ::.00} (dispositiu: {formFactor}; dades de CrUX: {scope}; franja: {band}); es considera bo un valor de 0,1 o menys.",
+      "fail:origin-level": "El CLS de camp al p75 és {value, number, ::.00} (dispositiu: {formFactor}; franja: {band}); es considera bo un valor de 0,1 o menys. Són dades de CrUX ({scope}) que cobreixen totes les pàgines de l'origen, no només aquesta URL."
+    }
+  },
+  "perf-crux-cwv-assessment": {
+    "title": "L'avaluació de les Core Web Vitals se supera amb les dades de camp (per tipus de dispositiu)",
+    "why": "Una pàgina supera l'avaluació de les Core Web Vitals quan l'LCP, l'INP i el CLS són tots bons al percentil 75 a CrUX. Search Console agrupa URL similars, mentre que l'API de CrUX informa exactament d'una URL o d'un origen. Google no publica el pes de l'avaluació en el posicionament.",
+    "fix": "Corregeix la mètrica o les mètriques que fallen; una pàgina només és tan bona com la seva pitjor Core Web Vital.",
+    "messages": {
+      "fail": "L'avaluació de les Core Web Vitals amb dades de camp (dispositiu: {formFactor}; dades de CrUX: {scope}) no és bona: {metrics}.",
+      "fail:origin-level": "L'avaluació de les Core Web Vitals amb dades de camp (dispositiu: {formFactor}) no és bona: {metrics}. Són dades de CrUX ({scope}) que cobreixen totes les pàgines de l'origen, no només aquesta URL."
+    }
+  },
+  "perf-crux-data-availability": {
+    "title": "Disponibilitat de dades de camp i indicació de les dades de l'origen com a alternativa",
+    "why": "CrUX només informa de dades per a pàgines públiques i indexables amb prou trànsit d'usuaris reals. Saber si hi ha dades de la URL, de l'origen o cap dada indica al lector com ha d'interpretar cada mètrica de camp.",
+    "fix": "No cal fer res. El poc trànsit no és un defecte. Fes servir dades de laboratori i RUM per a les pàgines sense dades de camp.",
+    "messages": {
+      "fail": "CrUX no té dades de camp per a aquesta URL ni per al seu origen. CrUX només cobreix pàgines públiques amb prou trànsit de Chrome d'usuaris que hi han donat el consentiment, de manera que això no és un defecte.",
+      "fail:origin-only": "CrUX no té dades de camp de la URL d'aquesta pàgina; només hi ha dades de l'origen ({formFactors}), que cobreixen totes les pàgines de l'origen.",
+      "fail:not-eligible-status": "CrUX no té dades de camp per a aquesta URL ni per al seu origen. La URL respon HTTP {status}, i CrUX només inclou pàgines públiques que responen 200.",
+      "fail:not-eligible-noindex": "CrUX no té dades de camp per a aquesta URL ni per al seu origen. La pàgina té noindex, cosa que la deixa fora de CrUX.",
+      "fail:no-field-data": "CrUX no té dades de camp per a aquesta URL ni per al seu origen. CrUX només cobreix pàgines públiques amb prou trànsit de Chrome d'usuaris que hi han donat el consentiment, de manera que això no és un defecte."
+    }
+  },
+  "perf-crux-fcp-p75": {
+    "title": "FCP de camp al p75 (mètrica complementària)",
+    "why": "First Contentful Paint és una mètrica de diagnòstic, no una Core Web Vital. web.dev defineix com a bo un valor d'1,8 s o menys. Ajuda a explicar un LCP lent.",
+    "fix": "Redueix el TTFB i el CSS/JS que bloqueja la renderització; insereix en línia el CSS crític.",
+    "messages": {
+      "fail": "L'FCP de camp al p75 és {value} (dispositiu: {formFactor}; dades de CrUX: {scope}; franja: {band}); es considera bo un valor de 1800 ms o menys. L'FCP és una mètrica de diagnòstic, no una Core Web Vital.",
+      "fail:origin-level": "L'FCP de camp al p75 és {value} (dispositiu: {formFactor}; franja: {band}); es considera bo un valor de 1800 ms o menys. Són dades de CrUX ({scope}) que cobreixen totes les pàgines de l'origen. L'FCP és una mètrica de diagnòstic, no una Core Web Vital."
+    }
+  },
+  "perf-crux-ttfb-p75": {
+    "title": "TTFB de camp al p75 (mètrica complementària)",
+    "why": "Time to First Byte és una mètrica de diagnòstic, no una Core Web Vital. web.dev defineix com a bo un valor de 800 ms o menys. Un TTFB lent endarrereix totes les mètriques posteriors, incloent-hi l'LCP.",
+    "fix": "CDN amb memòria cau de l'HTML a la vora de la xarxa; evita les redireccions, evita els paràmetres de consulta únics que invaliden la memòria cau, redueix el processament al servidor i considera 103 Early Hints.",
+    "messages": {
+      "fail": "El TTFB de camp al p75 és {value} (dispositiu: {formFactor}; dades de CrUX: {scope}; franja: {band}); es considera bo un valor de 800 ms o menys. El TTFB és una mètrica de diagnòstic, no una Core Web Vital, i inclou les redireccions i l'establiment de la connexió.",
+      "fail:origin-level": "El TTFB de camp al p75 és {value} (dispositiu: {formFactor}; franja: {band}); es considera bo un valor de 800 ms o menys. Són dades de CrUX ({scope}) que cobreixen totes les pàgines de l'origen. El TTFB és una mètrica de diagnòstic, no una Core Web Vital."
+    }
+  },
+  "perf-crux-lcp-subparts": {
+    "title": "Subparts de l'LCP d'imatge de camp: coll d'ampolla dominant",
+    "why": "CrUX divideix l'LCP d'imatge en temps fins al primer byte, retard de càrrega del recurs, durada de càrrega del recurs i retard de renderització de l'element. web.dev dona proporcions orientatives per a cadascuna, que indiquen el coll d'ampolla que cal corregir.",
+    "fix": "Retard de càrrega: fes que la imatge LCP es pugui descobrir a l'HTML, afegeix fetchpriority=high i treu la càrrega diferida. Durada de càrrega: imatges més petites i en formats moderns, CDN. Retard de renderització: retalla el CSS/JS que bloqueja la renderització i evita la CSR i l'ocultació antiparpelleig. TTFB: servidor/CDN.",
+    "messages": {
+      "fail": "L'LCP de camp al p75 és {lcp} (dispositiu: {formFactor}; dades de CrUX: {scope}). Subparts de l'LCP d'imatge per sobre de la seva proporció orientativa: {subparts}. Les subparts són percentils independents, de manera que les proporcions són aproximades."
+    }
+  },
+  "perf-crux-navigation-types": {
+    "title": "Navegacions enrere/endavant no servides des de la bfcache",
+    "why": "CrUX indica quantes navegacions enrere i endavant se serveixen des de la memòria cau endavant/enrere. web.dev inclou la bfcache entre les millores més efectives, perquè les pàgines restaurades es carreguen a l'instant.",
+    "fix": "Executa perf-bfcache-eligibility. Elimina els detectors d'unload, evita no-store quan no calgui i tanca les connexions obertes a pagehide.",
+    "messages": {
+      "fail": "Amb dades de CrUX ({scope}) per al dispositiu {formFactor}, un {backForward, number, percent} de les navegacions són navegacions enrere/endavant que no s'han restaurat des de la memòria cau endavant/enrere, enfront d'un {restored, number, percent} que sí. El llindar del 5\u00a0% és una heurística de l'eina."
+    }
+  },
+  "perf-crux-softnav-experimental": {
+    "title": "Variants experimentals de les CWV amb navegacions suaus (SPA)",
+    "why": "CrUX publica variants experimentals de mètriques que inclouen les navegacions suaus a les aplicacions d'una sola pàgina. No formen part de l'avaluació de les Core Web Vitals.",
+    "fix": "Per a les SPA, explica la diferència entre l'experiència de cada ruta i les CWV de les càrregues completes.",
+    "messages": {
+      "fail": "Amb dades de CrUX ({scope}) per al dispositiu {formFactor}, les mètriques experimentals que inclouen les navegacions suaus queden en una franja diferent: {metrics}. Són experimentals i no formen part de l'avaluació de les Core Web Vitals."
+    }
+  },
+  "perf-lab-run-protocol": {
+    "title": "Protocol i variància de les mesures de laboratori",
+    "why": "Lighthouse documenta que els resultats de laboratori varien entre execucions a causa de la xarxa, la càrrega de la màquina, les proves A/B i els anuncis, i recomana la mediana de diverses execucions. El protocol d'execució i la seva variància es registren perquè les xifres de laboratori es puguin interpretar.",
+    "fix": "No s'aplica (metodologia). No executis mai diverses instàncies de Lighthouse en paral·lel en una mateixa màquina.",
+    "messages": {
+      "fail": "El protocol d'execució de Lighthouse limita l'estabilitat dels valors de laboratori.",
+      "fail:few-runs": "Els valors de laboratori provenen de la mediana de les execucions vàlides de Lighthouse ({validRuns} de {runs}); {recommended} execucions donen una mediana més estable.",
+      "fail:run-warnings": "Lighthouse ha indicat {count} advertiment(s) d'execució, de manera que pot ser que els valors de laboratori no siguin fiables."
+    }
+  },
+  "perf-lab-performance-score": {
+    "title": "Puntuació de rendiment de Lighthouse (només context)",
+    "why": "La puntuació de rendiment de Lighthouse és un resum ponderat de laboratori. La Cerca de Google fa servir les Core Web Vitals de camp, no la puntuació de Lighthouse, de manera que la puntuació només és context.",
+    "fix": "Millora les mètriques subjacents; no optimitzis la puntuació en si mateixa.",
+    "messages": {
+      "fail": "La puntuació de rendiment de Lighthouse és {score} ({conditions}). És un resum de laboratori, no una dada que Google faci servir per al posicionament.",
+      "fail:poor": "La puntuació de rendiment de Lighthouse és {score} ({conditions}), a la franja 0-49. És un resum de laboratori, no una dada que Google faci servir per al posicionament.",
+      "fail:needs-improvement": "La puntuació de rendiment de Lighthouse és {score} ({conditions}), a la franja 50-89. És un resum de laboratori, no una dada que Google faci servir per al posicionament."
+    }
+  },
+  "perf-lab-lcp": {
+    "title": "LCP de laboratori (mòbil, simulat)",
+    "why": "L'LCP de laboratori de Lighthouse mostra el procés de càrrega d'una primera visita en un dispositiu emulat. És un diagnòstic: l'avaluació de les Core Web Vitals fa servir dades de camp.",
+    "fix": "Consulta les regles perf-lcp-*.",
+    "messages": {
+      "fail": "L'LCP de laboratori és {value} ({conditions}), per sobre del llindar de 2500 ms per a un valor bo.",
+      "fail:field-precedence": "L'LCP de laboratori és {value} ({conditions}), per sobre de 2500 ms. Hi ha dades de camp, de manera que el resultat de camp decideix l'estat i aquest valor de laboratori és un diagnòstic."
+    }
+  },
+  "perf-lab-tbt-inp-proxy": {
+    "title": "Total Blocking Time de laboratori (indicador indirecte del risc d'INP)",
+    "why": "Total Blocking Time mesura el bloqueig del fil principal durant la càrrega i és l'indicador indirecte de laboratori de la capacitat de resposta. No és una Core Web Vital, i una execució de navegació no mesura cap interacció.",
+    "fix": "Divideix les tasques llargues, ajorna el JS no crític i elimina el JS no utilitzat i els serveis de tercers.",
+    "messages": {
+      "fail": "El Total Blocking Time de laboratori és {value} ({conditions}). El TBT mesura el bloqueig del fil principal durant la càrrega; és una evidència de laboratori del risc d'INP, no l'INP de camp.",
+      "fail:field-precedence": "El Total Blocking Time de laboratori és {value} ({conditions}). Hi ha INP de camp, de manera que el resultat de camp decideix l'estat i aquest valor de laboratori és un diagnòstic."
+    }
+  },
+  "perf-lab-cls": {
+    "title": "CLS de laboratori durant la càrrega",
+    "why": "El CLS de laboratori només cobreix els desplaçaments de disseny durant la càrrega de la pàgina i sol ser més baix que el CLS de camp, de manera que un resultat de laboratori net no refuta un valor de camp deficient.",
+    "fix": "Consulta perf-cls-culprits.",
+    "messages": {
+      "fail": "El CLS de laboratori és {value, number, ::.000} ({conditions}), per sobre de 0,1. El CLS de laboratori només cobreix la càrrega de la pàgina.",
+      "fail:field-precedence": "El CLS de laboratori és {value, number, ::.000} ({conditions}), per sobre de 0,1. Hi ha CLS de camp, de manera que el resultat de camp decideix l'estat i aquest valor de laboratori és un diagnòstic."
+    }
+  },
+  "perf-lcp-lazy-loaded": {
+    "title": "La imatge LCP es carrega de manera diferida",
+    "why": "web.dev documenta que carregar de manera diferida la imatge LCP la retarda fins que es coneix el disseny, cosa que alenteix l'LCP. Les imatges de l'àrea de visualització inicial s'haurien de carregar de manera immediata. Lighthouse 13.6 ho indica a lcp-discovery-insight.",
+    "fix": "Treu loading=lazy de les imatges que probablement són a l'àrea de visualització inicial, sobretot de la imatge LCP o destacada; treu-li també el carregador diferit de JS.",
+    "messages": {
+      "fail": "La imatge LCP de laboratori es carrega de manera diferida (loading=lazy) sense precàrrega, de manera que la seva sol·licitud espera el disseny.",
+      "fail:loading-lazy": "La imatge LCP de laboratori es carrega de manera diferida (loading=lazy) sense precàrrega, de manera que la seva sol·licitud espera el disseny.",
+      "fail:script-lazy-load": "La URL de la imatge LCP només apareix en un atribut de dades de càrrega diferida del seu <img>, de manera que només es carrega després que un script la hi posi."
+    }
+  },
+  "perf-lcp-not-discoverable": {
+    "title": "Recurs LCP no descobrible a l'HTML inicial",
+    "why": "web.dev documenta que l'escàner de precàrrega no pot trobar una imatge LCP que només es referencia des del CSS, del JavaScript o d'atributs de dades, cosa que la retarda. Lighthouse 13.6 ho indica a lcp-discovery-insight.",
+    "fix": "Renderitza l'<img> destacada al servidor amb src/srcset; per a les imatges referenciades des del CSS o el JS, afegeix <link rel=preload as=image fetchpriority=high> al <head>.",
+    "messages": {
+      "fail": "Ni l'analitzador des de l'HTML del servidor ni cap precàrrega no sol·liciten la imatge LCP de laboratori ({url}), de manera que el navegador la descobreix tard.",
+      "fail:conflicting-signals": "Lighthouse indica que l'analitzador no va sol·licitar la imatge LCP ({url}) des de l'HTML del servidor, tot i que l'HTML del servidor la referencia; comprova com s'insereix la imatge."
+    }
+  },
+  "perf-lcp-fetchpriority": {
+    "title": "La imatge LCP no té fetchpriority=high",
+    "why": "web.dev recomana fetchpriority=\"high\" a la imatge LCP perquè el navegador la sol·liciti abans que les altres imatges. És una indicació, i fer-ne un ús excessiu n'elimina el benefici.",
+    "fix": "Afegeix fetchpriority=high només a la imatge destacada o LCP (una o dues imatges com a màxim); fes servir fetchpriority=low per a les diapositives ocultes del carrusel.",
+    "messages": {
+      "fail": "La imatge LCP de laboratori es pot descobrir, però no té fetchpriority=high al seu <img> ni a la seva precàrrega.",
+      "fail:overuse": "{count} imatges de l'HTML tenen fetchpriority=high; més de dues competeixen per l'amplada de banda amb la imatge LCP."
+    }
+  },
+  "perf-lcp-breakdown-lab": {
+    "title": "Fase dominant del desglossament de l'LCP de laboratori",
+    "why": "Lighthouse 13.6 indica les subparts de l'LCP de laboratori a lcp-breakdown-insight. La subpart dominant mostra si cal corregir el servidor, el descobriment, la baixada o la renderització.",
+    "fix": "Centra't en la fase dominant (consulta perf-crux-lcp-subparts).",
+    "messages": {
+      "fail": "L'LCP de laboratori és {lcp}. Subparts de l'LCP per sobre de la seva proporció orientativa en el desglossament de laboratori: {subparts}."
+    }
+  },
+  "perf-lcp-client-side-rendered": {
+    "title": "El contingut LCP depèn de la renderització al client",
+    "why": "web.dev documenta que, quan el contingut LCP el construeix JavaScript al client, el retard de renderització de l'element augmenta amb el temps de baixada i d'execució dels scripts.",
+    "fix": "Renderitza al servidor o prerenderitza (SSG) el contingut de la part visible sense desplaçament; hidrata'l després.",
+    "messages": {
+      "fail": "No s'ha trobat el contingut LCP a l'HTML del servidor i l'LCP de laboratori arriba {gap} després de l'FCP; pot ser que el renderitzin scripts.",
+      "fail:app-shell": "L'HTML del servidor té el body buit i el contingut LCP només apareix després que s'executin els scripts; l'LCP de laboratori arriba {gap} després de l'FCP.",
+      "fail:content-differs": "No s'ha trobat el contingut LCP a l'HTML del servidor i l'LCP de laboratori arriba {gap} després de l'FCP. Pot ser que el renderitzin scripts, o que variï per personalització o per ubicació."
+    }
+  },
+  "perf-lcp-antiflicker-hiding": {
+    "title": "Contingut ocultat per un antiparpelleig de proves A/B o per un carregador",
+    "why": "web.dev esmenta l'ocultació del contingut mentre es carreguen scripts de proves A/B o de personalització com una causa del retard de renderització de l'element LCP.",
+    "fix": "Elimina el fragment de codi antiparpelleig o executa els experiments al servidor o a la vora de la xarxa.",
+    "messages": {
+      "fail": "Un fragment de codi que oculta la pàgina ({snippet}) la manté invisible mentre es carreguen els scripts, i el retard de renderització de l'element LCP de laboratori és {delay}."
+    }
+  },
+  "perf-render-blocking": {
+    "title": "Recursos que bloquegen la renderització al <head>",
+    "why": "Els scripts i els fulls d'estil síncrons del head endarrereixen la primera renderització. Lighthouse 13.6 els indica a render-blocking-insight, que va substituir render-blocking-resources.",
+    "fix": "Fes servir defer o async als scripts; insereix en línia el CSS crític petit i carrega la resta sense bloquejar; redueix la mida del CSS.",
+    "messages": {
+      "fail": "Scripts externs del head que bloquegen l'analitzador: {count} ({scripts}).",
+      "fail:parser-blocking-script": "Scripts externs del head que bloquegen l'analitzador (sense async, defer ni type=module): {count} ({scripts}).",
+      "fail:consent-script": "Scripts de consentiment del head que es carreguen de manera síncrona: {count} ({scripts}). Algunes eines de consentiment s'han d'executar primer; comprova si el proveïdor ofereix un carregador asíncron que continuï bloquejant les etiquetes fins al consentiment.",
+      "fail:render-blocking-requests": "Lighthouse estima que treure del camí crític les sol·licituds que bloquegen la renderització estalvia {savings} d'FCP de laboratori: {requests}."
+    }
+  },
+  "perf-document-redirects": {
+    "title": "Redireccions a la sol·licitud del document",
+    "why": "Cada redirecció a la sol·licitud del document afegeix un viatge d'anada i tornada complet abans que arribi l'HTML, que compta en el TTFB i l'LCP. Lighthouse 13.6 ho indica a document-latency-insight.",
+    "fix": "Enllaça internament a les URL finals i redueix les cadenes http->https->www a un sol salt.",
+    "messages": {
+      "fail": "{from} redirigeix {hops, plural, one {# vegada} other {# vegades}} abans que respongui {to}; cada salt s'afegeix al TTFB i a l'LCP."
+    }
+  },
+  "perf-server-response-time": {
+    "title": "Resposta lenta del servidor per al document",
+    "why": "Una resposta lenta del document endarrereix tot el que ve després. Lighthouse 13.6 marca a document-latency-insight les respostes del servidor de més de 600 ms. Una mostra des de la ubicació del col·lector no és el TTFB dels usuaris.",
+    "fix": "Emmagatzema l'HTML a la memòria cau de la vora del CDN, optimitza l'aplicació del servidor i la base de dades, evita la feina per sol·licitud que no es pot emmagatzemar a la memòria cau i fes servir Early Hints durant el temps de processament del servidor.",
+    "messages": {
+      "fail": "La resposta del document ha trigat {lab} al laboratori, per sobre del llindar de 600 ms de Lighthouse (mostra del col·lector: {collector}). Són mesures des d'una sola ubicació, no el TTFB dels usuaris."
+    }
+  },
+  "perf-text-compression": {
+    "title": "Recursos de text servits sense compressió",
+    "why": "L'HTML, el CSS i el JavaScript servits sense gzip, Brotli ni zstd triguen més a baixar-se. Lighthouse 13.6 ho indica a document-latency-insight per al document.",
+    "fix": "Activa Brotli (o zstd) amb gzip com a alternativa al servidor o al CDN per als tipus MIME de text.",
+    "messages": {
+      "fail": "Les respostes de text s'envien sense compressió gzip, Brotli ni zstd.",
+      "fail:document": "La resposta HTML ({size} descodificada) s'envia sense compressió gzip, Brotli ni zstd.",
+      "fail:assets": "Recursos de text propis que s'envien sense compressió: {count} ({urls})."
+    }
+  },
+  "perf-http-protocol": {
+    "title": "Recursos estàtics servits amb HTTP/1.1",
+    "why": "HTTP/2 i HTTP/3 multiplexen les sol·licituds en una sola connexió. Lighthouse 13.6 indica a modern-http-insight els orígens que serveixen moltes sol·licituds estàtiques amb HTTP/1.1.",
+    "fix": "Activa HTTP/2 (i, idealment, HTTP/3) a l'origen o al CDN.",
+    "messages": {
+      "fail": "Els recursos estàtics de {origins} es carreguen amb HTTP/1.x, amb sis o més sol·licituds per origen fent cua en unes poques connexions.",
+      "fail:third-party": "Els orígens de tercers {origins} serveixen sis o més sol·licituds estàtiques amb HTTP/1.x; això queda fora del control del lloc."
+    }
+  },
+  "perf-static-cache-ttl": {
+    "title": "Recursos estàtics amb una vida de memòria cau curta o inexistent",
+    "why": "Els recursos estàtics amb una vida de memòria cau curta o inexistent es tornen a baixar en les visites repetides. Lighthouse 13.6 ho indica a cache-insight. El benefici només s'aplica a les visites repetides.",
+    "fix": "Afegeix una empremta als noms de fitxer dels recursos i serveix-los amb Cache-Control: public, max-age=31536000, immutable (immutable és opcional); serveix l'HTML amb no-cache més un ETag.",
+    "messages": {
+      "fail": "Recursos estàtics propis amb una vida de memòria cau inferior a 30 dies o sense: {count} ({urls}).",
+      "fail:fingerprinted": "Recursos estàtics propis amb una vida de memòria cau inferior a 30 dies o sense: {count} ({urls}). D'aquests, amb noms de fitxer amb empremta, que es poden emmagatzemar a la memòria cau durant un any: {hashed}."
+    }
+  },
+  "perf-html-no-store": {
+    "title": "HTML servit amb Cache-Control: no-store",
+    "why": "Cache-Control: no-store a l'HTML impedeix l'emmagatzematge a la memòria cau i, en navegadors que no són les versions recents de Chrome, deixa la pàgina fora de la memòria cau endavant/enrere. És adequat per a pàgines personalitzades o privades.",
+    "fix": "Fes servir no-cache o max-age=0 per garantir l'actualitat tret que la pàgina contingui dades sensibles.",
+    "messages": {
+      "fail": "L'HTML se serveix amb Cache-Control: {value} tot i que res no l'identifica com a personalitzat; no-store impedeix que la pàgina s'emmagatzemi a la memòria cau del navegador i a les memòries cau compartides.",
+      "fail:sets-cookie": "L'HTML se serveix amb no-store i estableix galetes. Si la pàgina no està personalitzada, una política que admeti la memòria cau permetria emmagatzemar-la a la memòria cau del navegador i a les compartides."
+    }
+  },
+  "perf-bfcache-eligibility": {
+    "title": "Pàgina no apta per a la memòria cau endavant/enrere",
+    "why": "web.dev inclou la memòria cau endavant/enrere entre les millores més efectives per a l'LCP i el CLS en les navegacions per l'historial. Lighthouse 13.6 en prova l'aptitud a l'auditoria bf-cache.",
+    "fix": "Elimina els gestors d'unload, evita els no-store innecessaris, tanca IndexedDB/WebSocket/fetch a pagehide i evita window.opener (fes servir noopener).",
+    "messages": {
+      "fail": "Motius corregibles que, segons Lighthouse, deixen la pàgina fora de la memòria cau endavant/enrere: {count} ({reasons})."
+    }
+  },
+  "perf-unload-handlers": {
+    "title": "Hi ha detectors d'esdeveniments unload",
+    "why": "Els detectors d'unload deixen les pàgines fora de la memòria cau endavant/enrere en alguns navegadors. Chrome ha declarat obsolet unload, de manera que l'impacte que queda és sobretot en altres navegadors.",
+    "fix": "Substitueix-los per pagehide/visibilitychange. Opcionalment, envia Permissions-Policy: unload=() (només Chromium).",
+    "messages": {
+      "fail": "La pàgina registra {count, plural, one {# detector} other {# detectors}} d'unload. Chrome ja no dispara unload per defecte, però {count, plural, one {aquest detector encara pot} other {aquests detectors encara poden}} deixar la pàgina fora de la memòria cau endavant/enrere d'altres navegadors."
+    }
+  },
+  "perf-unsized-images": {
+    "title": "Imatges sense dimensions explícites",
+    "why": "web.dev documenta que les imatges sense atributs width i height (o sense aspect-ratio) causen desplaçaments de disseny quan es carreguen. Lighthouse 13.6 les indica a l'auditoria unsized-images.",
+    "fix": "Afegeix els atributs width i height (mantén la mateixa relació d'aspecte entre les opcions de srcset) o estableix aspect-ratio al CSS.",
+    "messages": {
+      "fail": "{count, plural, one {# imatge no té} other {# imatges no tenen}} dimensions explícites (a la primera àrea de visualització de l'execució de laboratori: {aboveFold}).",
+      "fail:below-fold": "{count, plural, one {# imatge no té dimensions explícites i no és a la primera àrea de visualització de l'execució de laboratori.} other {# imatges no tenen dimensions explícites, i cap no és a la primera àrea de visualització de l'execució de laboratori.}}"
+    }
+  },
+  "perf-cls-culprits": {
+    "title": "Causants dels desplaçaments de disseny durant la càrrega",
+    "why": "Lighthouse 13.6 atribueix a cls-culprits-insight els desplaçaments de disseny a causes com els elements multimèdia sense mida, el contingut injectat i les fonts web. Sovint, l'element desplaçat no n'és la causa.",
+    "fix": "Corregeix la causa que indica l'anàlisi: dimensions, espai reservat, mètriques de les fonts de reserva, animacions amb transform.",
+    "messages": {
+      "fail": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score, number, ::.000} (clústers per sobre de 0,05: {clusters}). Causes arrel que atribueix Lighthouse: {causes}.",
+      "fail:no-root-cause": "El pitjor clúster de desplaçaments de disseny de laboratori té una puntuació de {score, number, ::.000} (clústers per sobre de 0,05: {clusters}) i Lighthouse no hi ha atribuït cap causa arrel; l'element que s'ha mogut no n'és necessàriament la causa."
+    }
+  },
+  "perf-embed-reserved-space": {
+    "title": "Anuncis, iframes i elements incrustats sense espai reservat",
+    "why": "web.dev recomana reservar espai per als anuncis, els iframes i els elements incrustats, perquè el contingut que es carrega en contenidors sense mida desplaça la pàgina.",
+    "fix": "Reserva la mida més probable amb min-height/aspect-ratio; mantén l'espai reservat quan no s'ompli cap anunci; col·loca els espais dinàmics més avall a l'àrea de visualització.",
+    "messages": {
+      "fail": "Elements incrustats sense espai reservat: {count}.",
+      "fail:attributed-shift": "Elements incrustats sense width i height ni alçada reservada: {count}. Lighthouse atribueix un desplaçament de disseny de laboratori a un iframe injectat.",
+      "fail:unsized-embed": "Elements incrustats sense width i height ni una alçada reservada en línia: {count}. Un full d'estil o un contenidor encara pot reservar l'espai."
+    }
+  },
+  "perf-non-composited-animations": {
+    "title": "Animacions de propietats que provoquen recàlculs de disseny",
+    "why": "Les animacions de propietats que provoquen recàlculs de disseny, com top, margin o width, s'executen al fil principal i poden causar desplaçaments de disseny. Lighthouse 13.6 les indica a non-composited-animations.",
+    "fix": "Anima transform/opacity en lloc seu; respecta prefers-reduced-motion.",
+    "messages": {
+      "fail": "{count, plural, one {# element executa} other {# elements executen}} animacions que el navegador no pot compondre: {reasons}."
+    }
+  },
+  "perf-font-display": {
+    "title": "Les fonts web bloquegen la renderització del text",
+    "why": "Les fonts web sense font-display: swap o optional amaguen el text fins que es carrega la font. Lighthouse 13.6 ho indica a font-display-insight.",
+    "fix": "Fes servir font-display: swap per a la marca i els titulars, i optional per al text del cos; afegeix size-adjust i substitucions de mètriques a la font de reserva per reduir el CLS.",
+    "messages": {
+      "fail": "{count} font(s) web mantenen el text invisible mentre es carreguen: {fonts}."
+    }
+  },
+  "perf-font-preload-crossorigin": {
+    "title": "Precàrrega o preconnexió de fonts sense crossorigin",
+    "why": "Les fonts s'obtenen en mode CORS, de manera que una precàrrega o una preconnexió per a una font sense l'atribut crossorigin no es reutilitza i la font es baixa dues vegades.",
+    "fix": "Afegeix crossorigin (anonymous) a les precàrregues de fonts i a la preconnexió a l'origen de les fonts.",
+    "messages": {
+      "fail": "{count} indicació(ns) de precàrrega o de preconnexió de fonts no tenen l'atribut crossorigin, de manera que la sol·licitud de la font no en pot reutilitzar cap."
+    }
+  },
+  "perf-font-format": {
+    "title": "Fonts no servides en WOFF2 o massa fitxers de fonts",
+    "why": "WOFF2 és el format de font més petit amb una compatibilitat àmplia, i molts fitxers de fonts a la càrrega inicial competeixen amb els recursos crítics.",
+    "fix": "Serveix només WOFF2, fes subconjunts amb unicode-range i fes servir menys famílies o gruixos, o una font variable quan estalviï bytes.",
+    "messages": {
+      "fail": "{count, plural, one {# fitxer de fonts no és} other {# fitxers de fonts no són}} WOFF2: {fonts}.",
+      "fail:not-woff2": "{count, plural, one {# fitxer de fonts no és} other {# fitxers de fonts no són}} WOFF2: {fonts}.",
+      "fail:many-files": "La pàgina carrega {count} fitxers de fonts ({size}) al laboratori; el criteri de més de sis és una heurística de l'eina, no un límit."
+    }
+  },
+  "perf-preconnect-hints": {
+    "title": "Higiene de les indicacions de preconnexió",
+    "why": "web.dev recomana preconnect només per als orígens que es fan servir aviat, perquè les connexions que no s'utilitzen es tanquen al cap d'uns 10 segons i massa indicacions competeixen entre si.",
+    "fix": "Fes preconnect només als 1-3 orígens crítics que es fan servir aviat; per als altres, fes servir dns-prefetch en un <link> separat.",
+    "messages": {
+      "fail": "Les indicacions de preconnexió de la pàgina no corresponen a les sol·licituds que fa.",
+      "fail:too-many": "La pàgina declara {count} indicacions de preconnexió. El criteri de més de quatre és una heurística: cadascuna obre una connexió que competeix amb les sol·licituds crítiques.",
+      "fail:combined-rel": "{count} element(s) link combinen preconnect i dns-prefetch en un sol atribut rel; es recomanen elements link separats.",
+      "fail:unused": "Els orígens amb preconnexió no han rebut cap sol·licitud de laboratori en els primers 10 segons: {origins}.",
+      "fail:missing": "Lighthouse estima que una preconnexió acceleraria les sol·licituds a {origins}."
+    }
+  },
+  "perf-critical-request-chains": {
+    "title": "Cadenes de sol·licituds crítiques profundes",
+    "why": "Les cadenes llargues de sol·licituds dependents al camí crític endarrereixen la primera renderització i l'LCP. Lighthouse 13.6 les indica a network-dependency-tree-insight, que va substituir critical-request-chains i uses-rel-preconnect.",
+    "fix": "Aplana les cadenes (@import de CSS, CSS o fonts carregats per JS) i precarrega els recursos crítics que es descobreixen tard.",
+    "messages": {
+      "fail": "La cadena de sol·licituds crítiques més profunda és de {depth} sol·licituds després del document (cadena més llarga: {duration}, laboratori)."
+    }
+  },
+  "perf-image-delivery": {
+    "title": "Les imatges es lliuren amb una mida i un format eficients",
+    "why": "Lighthouse 13.6 indica a image-delivery-insight les imatges massa grans, sense comprimir o en formats antics. Les directrius de Google Imatges també recomanen imatges adaptatives amb srcset i una alternativa img. L'impacte és més gran a la imatge LCP.",
+    "fix": "Serveix srcset/sizes adaptatius, AVIF/WebP i una qualitat raonable; substitueix els GIF animats per vídeo.",
+    "messages": {
+      "fail": "Les imatges es podrien lliurar amb menys bytes (estimació de laboratori).",
+      "fail:lcp-image": "La imatge LCP {url} podria ser uns {savings} més petita amb canvis de mida, de format o de compressió (estimació de laboratori).",
+      "fail:images": "{count, plural, one {# imatge podria} other {# imatges podrien}} estalviar uns {savings} en total amb canvis de mida, de format o de compressió (estimació de laboratori)."
+    }
+  },
+  "perf-long-tasks": {
+    "title": "Tasques llargues al fil principal durant la càrrega",
+    "why": "Les tasques del fil principal de més de 50 ms bloquegen la gestió de l'entrada i la renderització. web.dev documenta com dividir-les per millorar la capacitat de resposta.",
+    "fix": "Divideix la feina i cedeix el control; divideix el codi; ajorna la hidratació dels components de sota la part visible; elimina les etiquetes en desús.",
+    "messages": {
+      "fail": "Les tasques llargues ({count}) bloquegen el fil principal durant {blocking} més enllà dels 50 ms de cadascuna a la càrrega de laboratori. Scripts amb més temps d'execució: {scripts}."
+    }
+  },
+  "perf-forced-reflow": {
+    "title": "Càlcul de disseny síncron forçat (layout thrashing)",
+    "why": "Llegir propietats de disseny després de canviar estils força un càlcul de disseny síncron. Lighthouse 13.6 ho indica a forced-reflow-insight.",
+    "fix": "Agrupa les lectures del DOM abans de les escriptures; evita llegir propietats de disseny just després de les mutacions.",
+    "messages": {
+      "fail": "Hi ha scripts que forcen càlculs de disseny síncrons durant la càrrega de laboratori: {sources}."
+    }
+  },
+  "perf-dom-size": {
+    "title": "DOM gran o càlcul d'estils i de disseny costós",
+    "why": "Els DOM grans alenteixen el càlcul d'estils i el disseny, cosa que afecta la capacitat de resposta. Lighthouse 13.6 ho indica a dom-size-insight.",
+    "fix": "Elimina el marcatge duplicat ocult (per exemple, menús separats per a mòbil i ordinador), pagina o virtualitza les llistes llargues i fes servir content-visibility:auto per a les seccions fora de pantalla.",
+    "messages": {
+      "fail": "El DOM renderitzat té {count} elements, per sobre de 1400.",
+      "fail:costly-rendering": "Lighthouse ha registrat un recàlcul de disseny o d'estils costós a la traça de laboratori; el DOM renderitzat només té {count} elements, de manera que revisa els scripts i els estils que l'han provocat en lloc de la mida del DOM.",
+      "fail:warn": "El DOM renderitzat té {count} elements, per sobre del nivell d'avís antic de 800."
+    }
+  },
+  "perf-third-party-cost": {
+    "title": "Els scripts de tercers i dels gestors d'etiquetes consumeixen temps del fil principal i bytes",
+    "why": "Lighthouse 13.6 atribueix a third-parties-insight el temps del fil principal i la mida de transferència a entitats de tercers. Els scripts de tercers pesats alenteixen la càrrega i la capacitat de resposta.",
+    "fix": "Elimina les etiquetes del gestor d'etiquetes que no es fan servir, carrega els serveis de tercers no crítics després d'una interacció o quan el navegador estigui inactiu, allotja la CMP al teu servidor o fes-hi preconnexió, i fes servir façanes per als elements incrustats pesats.",
+    "messages": {
+      "fail": "El codi de tercers ocupa temps del fil principal a la càrrega de laboratori: {entities}.",
+      "fail:bytes": "El codi de tercers afegeix mida de transferència a la càrrega de laboratori: {entities}.",
+      "fail:consent-manager": "El gestor de consentiment costa {entities} a la càrrega de laboratori. Pot ser legalment obligatori, de manera que busca una opció de càrrega més lleugera en lloc d'eliminar-lo."
+    }
+  },
+  "perf-third-party-facades": {
+    "title": "Elements incrustats pesats carregats de manera immediata (candidats a façana)",
+    "why": "Els elements incrustats pesats, com els reproductors de vídeo i els ginys de xat, es poden substituir per una façana lleugera que carrega l'element incrustat quan hi ha interacció. Lighthouse 13 va eliminar la seva auditoria de façanes, de manera que l'eina ho calcula per si mateixa.",
+    "fix": "Fes servir una façana (per exemple, lite-youtube-embed o un carregador de xat) que carregui l'element incrustat real en fer-hi clic.",
+    "messages": {
+      "fail": "Hi ha elements incrustats que carreguen tot el seu codi abans de qualsevol interacció: {embeds}. Una façana el carrega quan el visitant el demana."
+    }
+  },
+  "perf-unused-code": {
+    "title": "JavaScript i CSS no utilitzats",
+    "why": "Lighthouse 13.6 indica a unused-javascript i unused-css-rules el JavaScript i el CSS que es baixen però no s'utilitzen durant la càrrega. El codi que s'utilitza més tard durant la sessió també compta com a no utilitzat.",
+    "fix": "Divideix el codi per ruta, elimina les biblioteques que no es fan servir, purga el CSS no utilitzat i elimina les etiquetes obsoletes.",
+    "messages": {
+      "fail": "El codi que carrega la pàgina no s'utilitza durant la càrrega de laboratori.",
+      "fail:javascript": "Uns {size} de JavaScript no s'utilitzen durant la càrrega de laboratori, que no té interaccions: {files}.",
+      "fail:css": "Uns {size} de CSS no s'utilitzen durant la càrrega de laboratori, que no té interaccions: {files}."
+    }
+  },
+  "perf-legacy-duplicated-js": {
+    "title": "Polyfills antics i mòduls duplicats",
+    "why": "Lighthouse 13.6 indica a legacy-javascript-insight els polyfills per a funcions que els navegadors moderns ja admeten, i a duplicated-javascript-insight els mòduls empaquetats dues vegades.",
+    "fix": "Configura l'empaquetador per als navegadors Baseline i elimina les dependències duplicades.",
+    "messages": {
+      "fail": "Els scripts inclouen codi que els navegadors moderns no necessiten.",
+      "fail:legacy": "Els scripts inclouen uns {size} de polyfills i transformacions per a funcions que els navegadors de destinació admeten: {files}.",
+      "fail:duplicated": "Els scripts empaqueten els mateixos mòduls més d'una vegada, uns {size}: {files}."
+    }
+  },
+  "perf-minification": {
+    "title": "CSS/JS sense minificar",
+    "why": "Lighthouse 13.6 indica a unminified-css i unminified-javascript el CSS i el JavaScript que serien més petits si es minifiquessin. La compressió ja elimina la major part de la diferència.",
+    "fix": "Activa la minificació a la compilació.",
+    "messages": {
+      "fail": "Minificar el CSS i el JavaScript estalviaria uns {size} (estimació de laboratori)."
+    }
+  },
+  "perf-total-byte-weight": {
+    "title": "Pes total de la pàgina i nombre de sol·licituds",
+    "why": "Lighthouse 13.6 marca a total-byte-weight les pàgines de més d'uns 4 MB. El pes per si sol no és un factor de posicionament; el que més importa són els bytes del camí crític.",
+    "fix": "Troba els elements que més hi contribueixen (imatges, vídeo, JS) i tracta'ls amb les regles específiques.",
+    "messages": {
+      "fail": "La càrrega de laboratori transfereix {size} en almenys {requests} sol·licituds, per sobre de 4000 KiB.",
+      "fail:note": "La càrrega de laboratori transfereix {size} en almenys {requests} sol·licituds, per sobre de 2667 KiB."
+    }
+  },
+  "perf-speculation-rules": {
+    "title": "Navegacions instantànies amb regles d'especulació",
+    "why": "Chrome admet regles d'especulació que obtenen per avançat o prerenderitzen les pàgines següents probables per a una navegació gairebé instantània. La seva absència no és un defecte; les regles que coincideixen amb URL que canvien l'estat sí que ho són.",
+    "fix": "Considera regles de document amb un nivell d'anticipació moderat per a les pàgines següents probables; exclou els enllaços de tancament de sessió i els que canvien l'estat; gestiona l'analítica en l'activació.",
+    "messages": {
+      "fail": "Les regles d'especulació poden obtenir per avançat o prerenderitzar enllaços que canvien l'estat: {urls}.",
+      "fail:state-changing-urls": "Les regles d'especulació poden obtenir per avançat o prerenderitzar enllaços que canvien l'estat: {urls}. Exclou-los perquè l'especulació no pugui tancar la sessió dels visitants ni canviar una cistella.",
+      "fail:invalid-json": "Un script de regles d'especulació no és JSON vàlid, de manera que els navegadors l'ignoren."
+    }
+  },
+  "perf-html-cdn": {
+    "title": "HTML no servit des d'un CDN o una memòria cau a la vora de la xarxa",
+    "why": "Servir l'HTML des d'un CDN o d'una memòria cau a la vora de la xarxa escurça el TTFB per als usuaris llunyans. La detecció es basa en les capçaleres de resposta i és heurística, de manera que la regla diu que no s'han detectat marcadors de CDN, no que no hi hagi cap CDN.",
+    "fix": "Serveix a través d'un CDN; emmagatzema breument l'HTML estàtic o anònim a la memòria cau de la vora de la xarxa; evita els paràmetres de consulta únics que eludeixen la memòria cau.",
+    "messages": {
+      "fail": "No s'han detectat marcadors de CDN a les capçaleres de resposta de les pàgines HTML auditades ({count}). Alguns CDN eliminen els seus marcadors, de manera que això no demostra que no es faci servir cap CDN."
+    }
+  },
+  "perf-consent-lab-bias": {
+    "title": "El bàner de consentiment afecta les mesures de laboratori",
+    "why": "Lighthouse mesura un visitant que hi entra per primer cop i que sempre veu el bàner de consentiment, mentre que les dades de camp barregen usuaris nous i recurrents. Quan l'element LCP és a la interfície de consentiment, l'LCP de laboratori s'anota.",
+    "fix": "Si el bàner és l'element LCP en mòbil, fes-lo més petit o renderitza'l aviat al servidor; prova també l'estat acceptat amb una capçalera de galeta.",
+    "messages": {
+      "fail": "L'element LCP de laboratori ({element}) és dins d'un diàleg de consentiment. El laboratori mesura un visitant que hi entra per primer cop, mentre que les dades de camp barregen visitants que ja l'han respost."
+    }
+  }
+}

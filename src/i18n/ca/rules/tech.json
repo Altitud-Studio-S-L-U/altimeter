@@ -1,0 +1,375 @@
+{
+  "tech-https-final-url": {
+    "title": "La pàgina se serveix amb HTTPS",
+    "why": "Google prefereix les URL HTTPS com a canòniques i inclou el lliurament segur a les seves directrius sobre l'experiència de pàgina, tot i que diu que HTTPS no millora el posicionament més enllà d'això. Els navegadors marquen les pàgines HTTP com a no segures.",
+    "fix": "Serveix totes les pàgines amb HTTPS i un certificat vàlid, i redirigeix HTTP a HTTPS amb un 301/308. Des de Chrome 154 (octubre del 2026), Chrome avisa per defecte abans de carregar llocs HTTP públics.",
+    "messages": {
+      "fail": "{count} pàgina(es) auditada(es) acaben en una URL http://, per exemple {url}.",
+      "fail:served-over-http": "{count} pàgina(es) auditada(es) acaben en una URL http://, per exemple {url}."
+    }
+  },
+  "tech-tls-certificate-valid": {
+    "title": "El certificat TLS és vàlid, no ha caducat, coincideix amb el nom d'amfitrió i serveix una cadena completa",
+    "why": "Google documenta que un certificat no vàlid fa que prefereixi clarament la versió HTTP com a canònica, i els navegadors bloquegen la pàgina amb un avís a pantalla completa.",
+    "fix": "Instal·la un certificat que cobreixi tots els noms d'amfitrió que se serveixen, serveix la cadena intermèdia completa i automatitza la renovació (ACME).",
+    "messages": {
+      "fail": "No s'ha pogut verificar el certificat TLS de l'amfitrió {host} ({code}).",
+      "fail:expired": "El certificat TLS de l'amfitrió {host} ha caducat ({code}).",
+      "fail:not-yet-valid": "El certificat TLS de l'amfitrió {host} encara no és vàlid ({code}).",
+      "fail:hostname-mismatch": "El certificat TLS no cobreix l'amfitrió {host} ({code}).",
+      "fail:self-signed": "{host} serveix un certificat autosignat ({code}).",
+      "fail:revoked": "El certificat TLS de l'amfitrió {host} està revocat ({code}).",
+      "fail:incomplete-chain": "{host} no envia els certificats intermedis necessaris per verificar el seu certificat ({code}). Els clients que no obtenen els intermedis que falten rebutgen la connexió.",
+      "fail:untrusted-root": "La cadena de certificats de l'amfitrió {host} acaba en una arrel que no és de confiança ({code}, emissor: {issuer}). Un servidor intermediari d'intercepció a la xarxa des d'on es fa l'auditoria produeix el mateix resultat.",
+      "fail:verification-failed": "El certificat TLS de l'amfitrió {host} no ha superat la verificació ({code}).",
+      "fail:expires-soon": "El certificat TLS de l'amfitrió {host} caduca d'aquí a {days} dia(es), el {validTo}, un moment tardà del seu període de validesa per a una renovació automatitzada."
+    }
+  },
+  "tech-http-to-https-redirect": {
+    "title": "HTTP redirigeix a HTTPS amb un sol salt permanent",
+    "why": "Google recomana redireccions permanents al servidor d'HTTP a HTTPS perquè els senyals es consolidin a la URL HTTPS. Un 200 en HTTP deixa un duplicat; una redirecció temporal és un senyal més feble.",
+    "fix": "Configura al servidor un 301 o un 308 d'http://host/* a https://host/* que mantingui el camí i la consulta.",
+    "messages": {
+      "fail": "La versió http:// de {url} no passa a HTTPS amb una sola redirecció permanent.",
+      "fail:served-over-http": "{url} respon {status} amb HTTP simple en lloc de redirigir a HTTPS, de manera que la URL HTTP és un duplicat.",
+      "fail:path-dropped": "{url} redirigeix a {target} i perd el camí en lloc de mantenir-lo a HTTPS.",
+      "fail:temporary-redirect": "{url} passa a HTTPS amb una redirecció temporal {status} en lloc d'un 301 o un 308.",
+      "fail:indirect-upgrade": "{url} redirigeix primer a {target} en lloc de passar la mateixa URL a HTTPS.",
+      "fail:long-chain": "{url} necessita {hops} redireccions per arribar a la pàgina HTTPS."
+    }
+  },
+  "tech-https-to-http-downgrade": {
+    "title": "Cap redirecció no va d'HTTPS a HTTP",
+    "why": "Google documenta que les redireccions d'HTTPS a HTTP fan que prefereixi clarament la URL HTTP com a canònica. Sovint la causa és un servidor intermediari que finalitza el TLS mentre l'aplicació creu que s'executa amb HTTP.",
+    "fix": "Corregeix les redireccions del servidor i de l'aplicació perquè emetin capçaleres Location https absolutes (comprova com es gestiona X-Forwarded-Proto darrere de servidors intermediaris i CDN).",
+    "messages": {
+      "fail": "{count} redirecció(ns) van d'HTTPS a HTTP, per exemple de {from} a {to}."
+    }
+  },
+  "tech-mixed-content-active": {
+    "title": "Cap contingut mixt bloquejable (actiu) a les pàgines HTTPS",
+    "why": "Els navegadors bloquegen els scripts, els fulls d'estil i els iframes carregats amb HTTP a les pàgines HTTPS, cosa que pot trencar la renderització per als usuaris i per al renderitzador de Google. Google inclou les dependències no segures que no són imatges entre els motius pels quals pot preferir HTTP com a canònica.",
+    "fix": "Carrega cada recurs amb https o allotja'l tu mateix. Com a solució provisional, una directiva CSP upgrade-insecure-requests.",
+    "messages": {
+      "fail": "Aquesta pàgina HTTPS carrega {count} recurs(os) bloquejable(s) (scripts, fulls d'estil, marcs o altres) amb un esquema no segur, que els navegadors bloquegen: {urls}.",
+      "fail:insecure-form": "Aquesta pàgina HTTPS té {count} formulari(s) que s'envien a una URL no segura d'un altre lloc: {urls}."
+    }
+  },
+  "tech-mixed-content-passive": {
+    "title": "Cap contingut mixt opcionalment bloquejable (passiu)",
+    "why": "Els navegadors passen a HTTPS les imatges, l'àudio i el vídeo sol·licitats amb HTTP a les pàgines HTTPS i els descarten quan no existeix cap versió HTTPS. Google exclou les imatges de les dependències no segures que afecten l'elecció de la canònica.",
+    "fix": "Canvia les URL dels elements multimèdia a URL https o relatives.",
+    "messages": {
+      "fail": "Aquesta pàgina HTTPS fa referència a {count} URL d'imatge, d'àudio o de vídeo amb http:, que els navegadors passen a HTTPS o descarten: {urls}.",
+      "fail:upgrade-failed": "Aquesta pàgina HTTPS fa referència a {count} URL d'elements multimèdia amb http:, i almenys una ha fallat quan el navegador l'ha passada a HTTPS: {urls}."
+    }
+  },
+  "tech-hsts-header": {
+    "title": "Capçalera HSTS present a les respostes HTTPS (informació de confiança, no és un factor de posicionament)",
+    "why": "Google inclou HSTS com una manera de reforçar la preferència per la canònica HTTPS; Google també ha dit que la capçalera no afecta la Cerca. Es registra com a context de seguretat.",
+    "fix": "Afegeix Strict-Transport-Security i augmenta max-age per fases (300 → 604800 → 2592000 → 31536000) després de comprovar que tots els subdominis funcionen amb HTTPS.",
+    "messages": {
+      "fail": "La capçalera Strict-Transport-Security no és prou forta (max-age {maxAge}).",
+      "fail:missing": "La resposta HTTPS no té capçalera Strict-Transport-Security. Això és context de seguretat, no un factor de la Cerca.",
+      "fail:invalid": "La capçalera Strict-Transport-Security no té un max-age vàlid, de manera que els navegadors l'ignoren.",
+      "fail:disabled": "La capçalera Strict-Transport-Security estableix max-age=0, cosa que elimina la política.",
+      "fail:short-max-age": "El max-age de Strict-Transport-Security és de {maxAge, plural, one {# segon} other {# segons}}, per sota d'un any (includeSubDomains: {includeSubDomains}, preload: {preload})."
+    }
+  },
+  "tech-hsts-preload-eligibility": {
+    "title": "Preparació per a la precàrrega HSTS (només si el propietari s'hi adhereix)",
+    "why": "La llista de precàrrega HSTS fixa HTTPS per a un domini dins dels navegadors. És difícil de desfer i trenca els subdominis que només funcionen amb HTTP, de manera que només es comprova quan el lloc ja declara preload.",
+    "fix": "Compleix tots els requisits de la llista abans d'enviar la sol·licitud, o elimina «preload» si no vols assumir aquest compromís.",
+    "messages": {
+      "fail": "La capçalera declara preload, però no es compleixen {count} requisit(s) de la llista de precàrrega HSTS: {unmet}."
+    }
+  },
+  "tech-security-headers-info": {
+    "title": "Inventari de capçaleres de seguretat (només informatiu, sense impacte a la Cerca)",
+    "why": "Les capçaleres de seguretat com Content-Security-Policy protegeixen els usuaris, però no estan documentades com a senyals de la Cerca. L'inventari és context; una política que bloqueja recursos propis s'indica mitjançant tech-console-errors.",
+    "fix": "Afegeix aquestes capçaleres per a la seguretat dels usuaris. No esperis cap canvi a la Cerca.",
+    "messages": {
+      "fail": "Una capçalera de seguretat de la resposta HTML té un valor inesperat.",
+      "fail:invalid-nosniff": "X-Content-Type-Options és «{value}»; els navegadors només reconeixen nosniff.",
+      "fail:csp-inline-scripts": "La Content-Security-Policy permet executar scripts inline ({directive} permet 'unsafe-inline' sense nonce ni hash), de manera que no protegeix la pàgina contra el cross-site scripting. Lighthouse ho mostra com a diagnòstic de bones pràctiques; no és un senyal de la Cerca de Google."
+    }
+  },
+  "tech-framing-protection": {
+    "title": "La inserció en marcs per part d'altres llocs està restringida (X-Frame-Options o CSP frame-ancestors)",
+    "why": "X-Frame-Options i CSP frame-ancestors impedeixen que altres llocs incrustin pàgines en marcs, cosa que protegeix els usuaris del segrest de clics. És un control de seguretat; cap documentació de la Cerca no el tracta.",
+    "fix": "Envia Content-Security-Policy: frame-ancestors 'self' (o X-Frame-Options: SAMEORIGIN), i permet orígens de socis concrets quan calgui.",
+    "messages": {
+      "fail": "Altres llocs poden incrustar aquesta pàgina en un marc.",
+      "fail:missing": "La resposta HTML no envia ni X-Frame-Options ni una directiva CSP frame-ancestors, de manera que altres llocs poden incrustar la pàgina en un marc.",
+      "fail:permissive-frame-ancestors": "La directiva CSP «{value}» permet que qualsevol lloc incrusti la pàgina en un marc.",
+      "fail:unsupported-x-frame-options": "X-Frame-Options és «{value}», que els navegadors actuals no apliquen; fes servir DENY, SAMEORIGIN o CSP frame-ancestors."
+    }
+  },
+  "tech-intrusive-interstitial": {
+    "title": "Cap intersticial o diàleg intrusiu no tapa el contingut principal en carregar la pàgina al mòbil",
+    "why": "Les directrius de Google sobre l'experiència de pàgina demanen als llocs que evitin els intersticials i els diàlegs que dificulten l'accés al contingut, sobretot al mòbil. Els intersticials que exigeix la llei, com el consentiment de galetes i les verificacions d'edat, n'estan exempts.",
+    "fix": "Substitueix les promocions a pantalla completa per bàners petits. Superposa els avisos legalment obligatoris al contingut en lloc de redirigir a una pàgina separada.",
+    "messages": {
+      "fail": "Una capa superposada cobreix un {coverage, number, percent} de la pantalla del telèfon mentre es carrega la pàgina.",
+      "fail:promotion": "Una capa superposada promocional cobreix un {coverage, number, percent} de la pantalla del telèfon mentre es carrega la pàgina. Google demana que els bàners ocupin una petita part de la pantalla.",
+      "fail:access-dialog": "Una capa superposada d'inici de sessió o de subscripció cobreix un {coverage, number, percent} de la pantalla del telèfon en carregar-se. Això és correcte per al contingut que no és públic; confirma que no amaga contingut pensat per indexar-se.",
+      "fail:overlay": "Una capa superposada cobreix un {coverage, number, percent} de la pantalla del telèfon en carregar-se. Confirma si és un avís que exigeix la llei, que Google eximeix, o un intersticial que amaga el contingut."
+    }
+  },
+  "tech-cmp-blocks-content": {
+    "title": "El bàner de consentiment no amaga ni reté el contingut principal als rastrejadors",
+    "why": "Googlebot no fa clic als botons de consentiment. El contingut que només és present després del consentiment, o una redirecció a una pàgina de consentiment, no s'indexa. El contingut que un bàner tapa visualment però que és present al DOM sí que s'indexa.",
+    "fix": "Renderitza el contingut al servidor i superposa-hi el bàner. No condicionis mai el contingut del DOM al consentiment.",
+    "messages": {
+      "fail": "El bàner de consentiment reté el contingut de la pàgina a un visitant que no ha donat el consentiment.",
+      "fail:consent-redirect": "La pàgina redirigeix a una pàgina de consentiment ({target}) abans de mostrar-ne el contingut, de manera que els rastrejadors que no donen el consentiment no hi arriben mai.",
+      "fail:content-withheld": "Abans del consentiment, la renderització conté {renderedWords, plural, one {# paraula} other {# paraules}} enfront de {rawWords} a l'HTML servit, mentre es mostra un contenidor de consentiment."
+    }
+  },
+  "tech-consent-mode-ordering": {
+    "title": "Els valors per defecte del mode de consentiment s'estableixen abans de les etiquetes de Google (informatiu)",
+    "why": "La documentació del mode de consentiment de Google demana que els estats de consentiment per defecte s'estableixin abans que es carreguin les etiquetes de Google. És una qüestió de mesurament i de compliment normatiu, no un senyal de la Cerca.",
+    "fix": "Estableix els valors per defecte del consentiment abans que es carreguin les etiquetes, i tria el mode bàsic o l'avançat de manera deliberada.",
+    "messages": {
+      "fail": "Les etiquetes de Google s'executen sense que s'hagin establert abans els valors per defecte del consentiment.",
+      "fail:no-consent-default": "Hi ha una etiqueta de Google a l'HTML, però no s'ha trobat cap ordre de consentiment per defecte.",
+      "fail:default-after-tags": "L'ordre per defecte del mode de consentiment arriba després de la primera etiqueta de Google; s'hauria d'executar abans."
+    }
+  },
+  "tech-viewport-meta": {
+    "title": "El meta viewport per a mòbils està definit (width i initial-scale)",
+    "why": "Sense una metaetiqueta viewport, els navegadors mòbils componen les pàgines amb l'amplada d'ordinador, i Google indexa la renderització mòbil. Lighthouse 13.6 indica el problema com a viewport-insight.",
+    "fix": "Afegeix <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> al head.",
+    "messages": {
+      "fail": "La pàgina no té una àrea de visualització optimitzada per a mòbils.",
+      "fail:missing": "La pàgina no té cap element meta viewport, de manera que els navegadors mòbils la componen amb l'amplada d'ordinador.",
+      "fail:fixed-width": "El meta viewport estableix una amplada fixa («{content}») en lloc de width=device-width.",
+      "fail:not-mobile-optimized": "El meta viewport «{content}» no té ni width=device-width ni un initial-scale d'almenys 1."
+    }
+  },
+  "tech-viewport-zoom-allowed": {
+    "title": "El meta viewport no desactiva el zoom",
+    "why": "Desactivar el zoom amb user-scalable=no o amb un maximum-scale baix incompleix els requisits de redimensionament de les WCAG i l'auditoria d'accessibilitat meta-viewport de Lighthouse. No és un senyal de la Cerca.",
+    "fix": "Elimina user-scalable=no i les restriccions de maximum-scale.",
+    "messages": {
+      "fail": "El meta viewport restringeix el zoom («{content}»).",
+      "fail:user-scalable-no": "El meta viewport desactiva el zoom («{content}»), cosa que incompleix el requisit d'accessibilitat de permetre el redimensionament.",
+      "fail:maximum-scale": "El meta viewport limita el zoom a {maximum}x («{content}»); per a l'accessibilitat cal almenys 2x.",
+      "fail:maximum-scale-below-5": "El meta viewport limita el zoom a {maximum}x («{content}»); axe recomana permetre fins a 5x."
+    }
+  },
+  "tech-content-fits-viewport": {
+    "title": "El contingut no és més ample que l'àrea de visualització mòbil",
+    "why": "El contingut més ample que l'àrea de visualització mòbil obliga a desplaçar-se horitzontalment. Google indexa la renderització mòbil i les seves directrius sobre l'experiència de pàgina inclouen la usabilitat mòbil.",
+    "fix": "Limita els elements amples (max-width:100%, overflow-x:auto a les taules i al codi, imatges adaptatives).",
+    "messages": {
+      "fail": "A la renderització de telèfon, el document fa {scrollWidth} px d'amplada en una àrea de visualització de {viewportWidth} px, de manera que es desplaça lateralment {overflow} px."
+    }
+  },
+  "tech-legible-font-size": {
+    "title": "El text és llegible al mòbil",
+    "why": "El text petit és difícil de llegir als telèfons. Lighthouse va eliminar la seva auditoria font-size a la versió 13 i Search Console ja no informa sobre la usabilitat mòbil, de manera que això només és context d'experiència d'usuari.",
+    "fix": "Fes servir una mida de lletra base d'almenys 16 px per al text del cos al mòbil.",
+    "messages": {
+      "fail": "Només un {share, number, percent} del text visible a la renderització de telèfon és de 12 px o més."
+    }
+  },
+  "tech-tap-target-size": {
+    "title": "Les àrees tàctils compleixen el mínim de 24×24 px CSS (WCAG 2.2 / target-size de Lighthouse)",
+    "why": "Les WCAG 2.2 estableixen una mida mínima de les àrees tàctils de 24 per 24 píxels CSS, que comprova l'auditoria d'accessibilitat target-size de Lighthouse, la qual, a Lighthouse 12, va substituir l'auditoria SEO de les àrees de toc.",
+    "fix": "Amplia les àrees actives (padding) o separa més els controls.",
+    "messages": {
+      "fail": "Lighthouse ha trobat {count} àrea(es) tàctil(s) de menys de 24 per 24 píxels CSS sense prou separació."
+    }
+  },
+  "tech-favicon-declared": {
+    "title": "La pàgina d'inici declara un favicon que Google pot fer servir",
+    "why": "Google mostra un favicon al costat dels resultats i el llegeix d'un element link de la pàgina d'inici de cada domini o subdomini. Sense un valor rel compatible, els resultats mostren una icona genèrica.",
+    "fix": "Afegeix <link rel=\"icon\" href=\"/favicon.png\"> (un PNG quadrat de 48 px o més) al head de la pàgina d'inici.",
+    "messages": {
+      "fail": "La pàgina d'inici no declara cap favicon que Google pugui fer servir.",
+      "fail:missing": "La pàgina d'inici no té cap element link amb rel icon, shortcut icon o apple-touch-icon, de manera que Google no té cap favicon declarat per mostrar.",
+      "fail:outside-head": "Els elements link del favicon de la pàgina d'inici són fora del head, on pot ser que Google no els llegeixi.",
+      "fail:favicon-ico-only": "La pàgina d'inici no declara cap enllaç de favicon; només respon /favicon.ico, una alternativa que Google no documenta."
+    }
+  },
+  "tech-favicon-file-valid": {
+    "title": "El fitxer del favicon és rastrejable, quadrat, d'almenys 8 px i en un format compatible",
+    "why": "Google requereix un favicon quadrat d'almenys 8 per 8 píxels, rastrejable per Googlebot-Image, en un dels formats que enumera: BMP, GIF, ICO, PNG, JPEG, PPM o TIFF. Recomana que sigui més gran de 48 per 48 píxels.",
+    "fix": "Proporciona un PNG o un ICO quadrat de més de 48×48 (per exemple, de 96 o 192 px) en una URL estable que Googlebot-Image pugui obtenir.",
+    "messages": {
+      "fail": "Cap favicon declarat no és utilitzable per Google ({url}).",
+      "fail:not-200": "El favicon declarat {url} no respon 200.",
+      "fail:not-an-image": "El favicon declarat {url} no és un fitxer d'imatge.",
+      "fail:svg-only": "La pàgina d'inici només declara favicons SVG, un format que les directrius de Google sobre favicons no inclouen; afegeix-hi una alternativa PNG o ICO.",
+      "fail:unsupported-format": "El favicon declarat {url} està en {format}, un format que les directrius de Google sobre favicons no inclouen.",
+      "fail:not-square": "El favicon declarat {url} no és quadrat.",
+      "fail:too-small": "El favicon declarat {url} és més petit de 8 per 8 píxels.",
+      "fail:noindex": "El favicon declarat {url} s'envia amb noindex o noimageindex.",
+      "fail:blocked-for-googlebot-image": "El robots.txt prohibeix a Googlebot-Image el rastreig del favicon declarat {url}.",
+      "fail:small": "El favicon utilitzable més gran fa {size} ({url}); Google recomana que sigui més gran de 48 per 48 píxels.",
+      "fail:broken-alternate": "Hi ha un favicon utilitzable, però la icona declarada {url} no és utilitzable ({problem})."
+    }
+  },
+  "tech-duplicate-conflicting-head-tags": {
+    "title": "Cap metadada del head duplicada o contradictòria (canonical, robots, description, Open Graph)",
+    "why": "Quan les metadades del head estan duplicades amb valors diferents, els rastrejadors en trien una i l'elecció no és previsible; per a les regles robots, Google aplica la més restrictiva.",
+    "fix": "Emet cada etiqueta de metadades una sola vegada. Normalment això vol dir eliminar el duplicat que injecta un connector o un tema.",
+    "messages": {
+      "fail": "{count} etiqueta(es) de metadades es declaren més d'una vegada amb valors diferents: {tags}."
+    }
+  },
+  "tech-doctype-standards-mode": {
+    "title": "El document fa servir <!DOCTYPE html> (sense mode quirks ni limited-quirks)",
+    "why": "Sense <!DOCTYPE html>, els navegadors renderitzen en mode quirks, que canvia les regles de disseny i pot trencar la renderització mòbil. L'auditoria doctype de Lighthouse ho comprova. Per si sol no afecta la indexació.",
+    "fix": "Comença totes les pàgines amb <!DOCTYPE html>.",
+    "messages": {
+      "fail": "El document no es renderitza en mode estàndard.",
+      "fail:missing": "El document no té doctype, de manera que els navegadors el renderitzen en mode {mode}.",
+      "fail:quirks": "El doctype «{doctype}» posa els navegadors en mode quirks.",
+      "fail:limited-quirks": "El doctype «{doctype}» posa els navegadors en mode limited-quirks.",
+      "fail:legacy-doctype": "El doctype «{doctype}» és una declaració antiga; fes servir <!DOCTYPE html>."
+    }
+  },
+  "tech-charset-declared-early": {
+    "title": "Codificació UTF-8 declarada en els primers 1024 bytes, a la capçalera o amb la BOM",
+    "why": "L'estàndard HTML requereix que la codificació de caràcters es declari amb una BOM, amb la capçalera Content-Type o amb un element meta dins dels primers 1024 bytes. Una declaració tardana o contradictòria pot desfigurar el text.",
+    "fix": "Posa <meta charset=\"utf-8\"> com a primer fill del head i envia Content-Type: text/html; charset=utf-8.",
+    "messages": {
+      "fail": "La codificació de caràcters no es declara com a UTF-8 prou aviat.",
+      "fail:missing": "Ni una marca d'ordre de bytes, ni la capçalera Content-Type ni cap element meta no declaren la codificació de caràcters.",
+      "fail:late-meta": "L'única declaració de codificació ({label}) és un element meta després dels primers 1024 bytes, massa tard per a l'exploració prèvia del navegador.",
+      "fail:not-utf8": "El document declara la codificació {label}; els documents HTML haurien de fer servir UTF-8.",
+      "fail:header-meta-conflict": "Content-Type declara {header}, mentre que un element meta declara {meta}.",
+      "fail:conflicting-meta": "Els elements meta declaren codificacions diferents: {meta}."
+    }
+  },
+  "tech-iframe-main-content": {
+    "title": "El contingut principal no es lliura dins d'iframes; els iframes tenen títol",
+    "why": "El contingut dins dels iframes pertany a la URL inserida, de manera que el contingut principal lliurat així pot no atribuir-se a la pàgina. Els marcs necessiten un title per a l'accessibilitat (frame-title de Lighthouse).",
+    "fix": "Renderitza el contingut principal a la mateixa pàgina i dona als iframes un title descriptiu.",
+    "messages": {
+      "fail": "Cal revisar els iframes d'aquesta pàgina.",
+      "fail:missing-title": "{count} iframe(s) visible(s) no tenen title, aria-label ni aria-labelledby.",
+      "fail:content-in-iframe": "La pàgina té {words, plural, one {# paraula} other {# paraules}} de text propi i {count, plural, one {# iframe que no és un element incrustat habitual} other {# iframes que no són elements incrustats habituals}}; pot ser que el contingut principal sigui en un marc. Ho ha de confirmar l'analista."
+    }
+  },
+  "tech-noscript-content": {
+    "title": "El contingut noscript és una alternativa raonable, no un contingut divergent",
+    "why": "Google renderitza JavaScript, de manera que el contingut noscript no és una via d'indexació fiable. El contingut extens o divergent que només és a noscript s'indica com a context.",
+    "fix": "Renderitza el contingut real a l'HTML i reserva noscript per a alternatives com els píxels de seguiment o els avisos «activa el JS».",
+    "messages": {
+      "fail": "{count} bloc(s) noscript contenen text o enllaços substancials que la pàgina renderitzada no mostra. Ho ha de confirmar l'analista."
+    }
+  },
+  "tech-lighthouse-seo-category": {
+    "title": "Resultat de la categoria SEO de Lighthouse 13.6 (context)",
+    "why": "Lighthouse 13.6 executa un petit conjunt d'auditories SEO: is-crawlable, document-title, meta-description, http-status-code, link-text, crawlable-anchors, robots-txt, image-alt, hreflang, canonical i structured-data. Una puntuació de 100 només vol dir que aquestes comprovacions bàsiques es superen. Cada auditoria correspon a una regla del catàleg que n'indica la troballa.",
+    "fix": "Corregeix el problema de fons mitjançant la regla corresponent de l'eina.",
+    "messages": {
+      "fail": "Puntuació SEO de Lighthouse: {score}; {count} auditoria(es) fallen: {audits}. Cadascuna la compta la seva pròpia regla."
+    }
+  },
+  "tech-lighthouse-a11y-overlap": {
+    "title": "Auditories d'accessibilitat de Lighthouse que coincideixen amb el SEO (context)",
+    "why": "Algunes auditories d'accessibilitat de Lighthouse comproven els mateixos elements que llegeixen els rastrejadors, com document-title, image-alt, html-has-lang, link-name i frame-title. L'accessibilitat no és un factor de posicionament documentat de Google.",
+    "fix": "Corregeix-les com a defectes d'accessibilitat. El text alternatiu i els noms dels enllaços també donen a Google context de l'ancoratge i de la imatge.",
+    "messages": {
+      "fail": "Puntuació d'accessibilitat de Lighthouse: {score}; auditories que fallen i que els rastrejadors també llegeixen: {searchAudits}; altres: {otherAudits}."
+    }
+  },
+  "tech-maintenance-503": {
+    "title": "Les respostes de manteniment o d'interrupció fan servir 503 amb Retry-After; el robots.txt, mai 503",
+    "why": "Google recomana 503 amb Retry-After per a les interrupcions temporals i el manteniment. Una pàgina de manteniment servida amb 200 pot substituir el contingut indexat, i un 503 al robots.txt atura el rastreig de tot el lloc.",
+    "fix": "Serveix 503 + Retry-After per a interrupcions d'1-2 dies com a màxim. Per a tancaments més llargs, mantén una pàgina d'inici provisional indexable. Fes que el robots.txt continuï responent 200.",
+    "messages": {
+      "fail": "Cal revisar una resposta de manteniment o d'interrupció ({url}).",
+      "fail:missing-retry-after": "{url} respon 503 sense capçalera Retry-After.",
+      "fail:invalid-retry-after": "{url} respon 503 amb un valor de Retry-After que no és ni una data ni un nombre de segons.",
+      "fail:maintenance-page-200": "{url} respon 200 amb una pàgina de {words} paraules el títol o l'encapçalament de la qual anuncia un manteniment; una pàgina d'interrupció hauria de respondre 503. Ho ha de confirmar l'analista."
+    }
+  },
+  "tech-internal-links-to-http": {
+    "title": "Els enllaços interns d'un lloc HTTPS no fan servir http://",
+    "why": "En un lloc HTTPS, els enllaços interns http:// costen una redirecció a cada rastreig i envien un senyal canònic mixt. HSTS amaga el problema als usuaris que tornen amb el navegador.",
+    "fix": "Fes servir URL https:// o relatives a l'arrel.",
+    "messages": {
+      "fail": "{count} enllaç(os) intern(s) o formulari(s) de pàgines HTTPS fan servir http://, per exemple {urls}."
+    }
+  },
+  "tech-social-og-required": {
+    "title": "Elements bàsics d'Open Graph presents a l'HTML del servidor",
+    "why": "El protocol Open Graph defineix og:title, og:type, og:image i og:url per a les previsualitzacions d'enllaços a les plataformes socials i de missatgeria, que llegeixen l'HTML del servidor. Google pot fer servir og:title i og:site_name com a dades per als enllaços de títol i els noms de lloc.",
+    "fix": "Emet og:title, og:type, og:url, og:image i og:description al servidor a cada pàgina que es pugui compartir.",
+    "messages": {
+      "fail": "Els elements bàsics d'Open Graph estan incomplets a l'HTML servit.",
+      "fail:missing": "A l'HTML servit falten o estan buits: {tags}.",
+      "fail:rendered-only": "{tags} només apareixen després que s'executi JavaScript; els rastrejadors de previsualitzacions llegeixen l'HTML servit.",
+      "fail:invalid-type": "og:type és «{value}», que no és un tipus d'objecte d'Open Graph.",
+      "fail:relative-url": "La URL d'Open Graph «{value}» no és absoluta.",
+      "fail:late-head": "El head acaba després de {bytes} bytes; WhatsApp només llegeix les etiquetes Open Graph dins dels primers 300 KB."
+    }
+  },
+  "tech-social-og-image": {
+    "title": "og:image es pot obtenir i compleix els límits de mida de les plataformes",
+    "why": "Facebook, LinkedIn i WhatsApp documenten límits de mida i de format per a les imatges de previsualització; les imatges massa petites, massa grans, en SVG o inaccessibles per als seus bots produeixen previsualitzacions petites o inexistents.",
+    "fix": "Serveix un JPEG o un PNG de 1200×630 de menys de 600 KB en una URL HTTPS absoluta a la qual puguin accedir els bots.",
+    "messages": {
+      "fail": "L'og:image {url} no compleix els requisits de previsualització ({problems}).",
+      "fail:not-https": "L'og:image {url} no se serveix amb HTTPS.",
+      "fail:not-200": "L'og:image {url} respon {status} en lloc de 200.",
+      "fail:svg": "L'og:image {url} és un SVG, que les plataformes de previsualització no mostren.",
+      "fail:unsupported-format": "L'og:image {url} no és un fitxer JPEG, PNG, WebP ni GIF.",
+      "fail:too-large": "L'og:image {url} fa {bytes} bytes, per sobre del límit de 5 MB de LinkedIn i X.",
+      "fail:too-small": "L'og:image {url} fa {size}, per sota del mínim de 200 per 200 píxels.",
+      "fail:over-600kb": "L'og:image {url} fa {bytes} bytes; WhatsApp necessita 600 KB o menys.",
+      "fail:below-recommended": "L'og:image {url} fa {size}; Facebook recomana almenys 1200 per 630 píxels.",
+      "fail:aspect-ratio": "L'og:image {url} fa {size}, fora de la relació 1,91:1 que fan servir les previsualitzacions."
+    }
+  },
+  "tech-social-og-image-meta": {
+    "title": "og:image:alt i og:image:width/height declarats i exactes",
+    "why": "og:image:width, og:image:height i og:image:alt permeten que les plataformes renderitzin la previsualització la primera vegada que es comparteix i que la descriguin als usuaris de lectors de pantalla.",
+    "fix": "Afegeix og:image:alt, og:image:width i og:image:height després de cada og:image.",
+    "messages": {
+      "fail": "Les propietats estructurades d'og:image estan incompletes.",
+      "fail:missing": "El primer og:image no té {tags}.",
+      "fail:dimension-mismatch": "og:image:width i og:image:height declaren {declared}, però la imatge fa {actual}."
+    }
+  },
+  "tech-social-og-url-canonical": {
+    "title": "og:url coincideix amb la URL canònica",
+    "why": "Les plataformes emmagatzemen a la memòria cau les previsualitzacions i agreguen les comparticions per og:url. Un og:url diferent de la canònica, com una plantilla que sempre apunta a la pàgina d'inici, fusiona pàgines diferents.",
+    "fix": "Genera og:url a partir de la mateixa font que la canònica.",
+    "messages": {
+      "fail": "og:url és {ogUrl}, però la URL canònica és {canonical}."
+    }
+  },
+  "tech-console-errors": {
+    "title": "Cap error de JavaScript que trenqui la renderització",
+    "why": "Google renderitza les pàgines amb un Chrome recent. Els errors de JavaScript que impedeixen renderitzar el contingut principal o els enllaços afecten el que indexa Google. Els errors amb una renderització intacta són menors.",
+    "fix": "Corregeix els scripts que fallen i renderitza el contingut crític al servidor perquè un error de JS no buidi la pàgina.",
+    "messages": {
+      "fail": "{count} error(s) de JavaScript durant la renderització, amb el contingut intacte. Primer: {first}",
+      "fail:content-missing": "{count} error(s) de JavaScript durant la renderització, i la pàgina renderitzada ha perdut la major part del contingut. Primer: {first}",
+      "fail:csp-blocks-first-party": "La Content Security Policy ha rebutjat un recurs propi durant la renderització. Primer: {first}"
+    }
+  },
+  "tech-failed-render-requests": {
+    "title": "Cap subrecurs necessari per a la renderització no falla ni està bloquejat",
+    "why": "Google necessita les mateixes respostes de CSS, JavaScript i API que els usuaris per renderitzar una pàgina. Les sol·licituds crítiques per a la renderització que fallen o estan bloquejades fan que Google vegi una pàgina trencada o buida.",
+    "fix": "Corregeix els recursos que fallen i permet que Googlebot rastregi el CSS, el JS i les API que necessita la pàgina.",
+    "messages": {
+      "fail": "{count} sol·licitud(s) de subrecursos han fallat durant la renderització, incloses algunes de crítiques per a la renderització: {urls}.",
+      "fail:non-critical": "{count} sol·licitud(s) de subrecursos no crítics han fallat durant la renderització: {urls}."
+    }
+  },
+  "tech-chrome-best-practices-trust": {
+    "title": "Auditories de confiança i compatibilitat de bones pràctiques de Lighthouse (context)",
+    "why": "Les auditories de bones pràctiques de Lighthouse cobreixen HTTPS, les API obsoletes, els errors de la consola i la compatibilitat amb els navegadors. La puntuació de la categoria no és una mètrica de la Cerca i s'indica com a context.",
+    "fix": "Consulta la regla corresponent de l'eina.",
+    "messages": {
+      "fail": "Puntuació de bones pràctiques de Lighthouse: {score}; {count} auditoria(es) fallen: {audits}. La puntuació no és una mètrica de la Cerca."
+    }
+  }
+}

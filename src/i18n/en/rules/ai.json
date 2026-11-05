@@ -1,0 +1,250 @@
+{
+  "ai-robots-wildcard-disallow-all": {
+    "messages": {
+      "fail": "The * group in robots.txt disallows the whole site, and AI search or answer crawlers without a group of their own inherit that block.",
+      "fail:ai-search-inherits-block": "The * group disallows /, so {count} AI search or answer crawlers without their own group inherit the block ({agents}), while a search engine has its own group that allows crawling."
+    }
+  },
+  "ai-robots-oai-searchbot": {
+    "messages": {
+      "fail": "robots.txt keeps {agent} out of the site.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and inherits a disallow ({blocked} of {sampled} sampled paths blocked). OpenAI says sites that opt out of OAI-SearchBot are not shown in ChatGPT search answers.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows it ({blocked} of {sampled} sampled paths blocked). This reads as a deliberate choice; OpenAI says such sites are not shown in ChatGPT search answers."
+    }
+  },
+  "ai-robots-gptbot": {
+    "messages": {
+      "fail": "robots.txt disallows {agent}.",
+      "fail:disallowed": "robots.txt disallows {agent}, OpenAI's training crawler. This expresses a no-training preference and does not affect ChatGPT search, which OAI-SearchBot controls."
+    }
+  },
+  "ai-robots-chatgpt-user": {
+    "messages": {
+      "fail": "robots.txt disallows {agent}.",
+      "fail:disallowed": "robots.txt disallows {agent}. OpenAI says robots.txt rules may not apply to fetches a ChatGPT user starts, so the effect is not guaranteed either way."
+    }
+  },
+  "ai-robots-claude-searchbot": {
+    "messages": {
+      "fail": "robots.txt keeps {agent} out of the site.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and inherits a disallow ({blocked} of {sampled} sampled paths blocked). Anthropic says blocking it prevents indexing for Claude's search.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows it ({blocked} of {sampled} sampled paths blocked). This reads as a deliberate choice; Anthropic says it prevents indexing for Claude's search."
+    }
+  },
+  "ai-robots-claude-user": {
+    "messages": {
+      "fail": "robots.txt disallows {agent} on /.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and inherits a disallow on /. Anthropic says Claude-User honours robots.txt, so pages cannot be fetched when Claude users ask about them.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows /. This reads as a deliberate choice; Anthropic says Claude-User honours it."
+    }
+  },
+  "ai-robots-claudebot": {
+    "messages": {
+      "fail": "robots.txt disallows {agent}.",
+      "fail:disallowed": "robots.txt disallows {agent}, Anthropic's training crawler. This signals exclusion from future training data and does not stop Claude-SearchBot or Claude-User."
+    }
+  },
+  "ai-robots-legacy-tokens": {
+    "messages": {
+      "fail": "robots.txt names the token {token}, which no current crawler documentation lists; the current token is {current}.",
+      "fail:legacy-token": "robots.txt has a group for {token}, a token that is no longer documented, and no group for its current token {current}.",
+      "fail:near-miss-token": "robots.txt names {token}, which looks like a spelling variant of {current}; crawlers match product tokens exactly, so the group may not apply to {current}."
+    }
+  },
+  "ai-robots-perplexitybot": {
+    "messages": {
+      "fail": "robots.txt keeps {agent} out of the site.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and inherits a disallow ({blocked} of {sampled} sampled paths blocked), so pages may not be surfaced and linked in Perplexity.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows it ({blocked} of {sampled} sampled paths blocked). This reads as a deliberate choice."
+    }
+  },
+  "ai-robots-google-extended": {
+    "messages": {
+      "fail": "robots.txt restricts Google-Extended.",
+      "fail:disallowed": "robots.txt disallows {agent}. This opts out of Gemini training and grounding only; it does not affect Google Search or AI Overviews.",
+      "fail:usage-ai-training": "robots.txt has a __usage_ai-training group with a disallow and no Google-Extended group. Google plans to read that group as a Google-Extended disallow."
+    }
+  },
+  "ai-robots-applebot": {
+    "messages": {
+      "fail": "robots.txt restricts Apple's crawlers.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and inherits a disallow on / (from the Googlebot group or *), which keeps pages out of Siri, Spotlight and Safari results.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows /. This reads as a deliberate choice.",
+      "fail:disallowed": "robots.txt disallows {agent}. Applebot-Extended does not crawl; it only opts out of Apple foundation-model training."
+    }
+  },
+  "ai-robots-amazon": {
+    "messages": {
+      "fail": "robots.txt restricts Amazon's crawlers.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and every group it may follow disallows /, which affects Alexa and Amazon search eligibility.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows /. This reads as a deliberate choice.",
+      "fail:disallowed": "robots.txt disallows {agent} on /. This does not affect Amzn-SearchBot."
+    }
+  },
+  "ai-robots-meta": {
+    "messages": {
+      "fail": "robots.txt restricts Meta's crawlers.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and inherits a disallow on /, which keeps pages out of Meta AI search citations.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows /. This reads as a deliberate choice.",
+      "fail:disallowed": "robots.txt disallows {agent} on /. Meta documents that user-requested fetchers and link previews may bypass robots.txt, and blocking facebookexternalhit breaks link previews."
+    }
+  },
+  "ai-robots-duckassistbot": {
+    "messages": {
+      "fail": "robots.txt disallows {agent} on /.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and inherits a disallow on /, so pages cannot be cited in DuckAssist answers. DuckDuckGo says this does not affect organic rankings.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows /. This reads as a deliberate choice."
+    }
+  },
+  "ai-robots-mistral": {
+    "messages": {
+      "fail": "robots.txt restricts Mistral's crawlers.",
+      "fail:blocked-by-inheritance": "{agent} has no group of its own and inherits a disallow on /, which may keep pages out of Mistral search citations. Mistral does not document how it reads robots.txt.",
+      "fail:blocked-by-name": "robots.txt names {agent} and disallows /. This reads as a deliberate choice.",
+      "fail:disallowed": "robots.txt disallows {agent} on /."
+    }
+  },
+  "ai-robots-training-only-crawlers": {
+    "messages": {
+      "fail": "robots.txt disallows {agent}.",
+      "fail:disallowed": "robots.txt disallows {agent}, a crawler that collects training data. This is a policy choice with no documented effect on search or answer visibility."
+    }
+  },
+  "ai-robots-policy-coherence": {
+    "messages": {
+      "fail": "robots.txt blocks an AI search crawler while allowing the same operator's training crawler.",
+      "fail:search-blocked-training-allowed": "robots.txt blocks search while allowing training for: {operators}. The usual intent is the reverse, so this is likely unintended."
+    }
+  },
+  "ai-edge-ua-block-probe": {
+    "messages": {
+      "fail": "A request with the {agent} user agent was treated differently from a browser request.",
+      "fail:ua-blocked": "A request with the {agent} user agent got HTTP {status} or a challenge while a browser got the page. This shows user-agent based blocking; the real crawler, verified by IP, may be treated differently.",
+      "fail:blocked-as-robots-says": "A request with the {agent} user agent got HTTP {status} or a challenge, and robots.txt also disallows {agent}, so the edge and robots.txt agree.",
+      "fail:content-differs": "A request with the {agent} user agent got a page whose text overlaps the browser's by only {similarity, number, percent}."
+    }
+  },
+  "ai-cdn-cloudflare-detected": {
+    "messages": {
+      "fail": "The site is served through Cloudflare, whose AI crawler settings can block crawlers at the edge and cannot be read from outside.",
+      "fail:cloudflare": "The site is served through Cloudflare. Zones onboarded on or after 15 Sep 2026 block training and agent crawlers on pages with ads by default, and Block settings also apply to mixed-use crawlers; check AI Crawl Control."
+    }
+  },
+  "ai-cdn-cloudflare-managed-robots": {
+    "messages": {
+      "fail": "robots.txt contains a Cloudflare managed block that disallows crawlers: {agents}.",
+      "fail:search-engine-blocked": "The Cloudflare managed block in robots.txt disallows search engine crawlers: {agents}.",
+      "fail:answer-crawler-blocked": "The Cloudflare managed block in robots.txt disallows AI search or answer crawlers: {agents}.",
+      "fail:training-blocked": "The Cloudflare managed block in robots.txt disallows only training crawlers ({agents}); search visibility is not affected."
+    }
+  },
+  "ai-content-signal-lines": {
+    "messages": {
+      "fail": "robots.txt declares Content-Signal preferences that need review.",
+      "fail:invalid": "Content-Signal lines in robots.txt use unknown keys or values: {pairs}. Unrecognised entries leave the preference unknown.",
+      "fail:ai-input-no": "robots.txt states ai-input=no, a preference against using the content in AI answers. Content signals are preferences and are not enforced."
+    }
+  },
+  "ai-aipref-signals": {
+    "messages": {
+      "fail": "An AIPREF usage preference could not be parsed: {problems}.",
+      "fail:parse-error": "An AIPREF usage preference could not be parsed ({problems}), so the preference is unknown. These signals are Internet-Drafts."
+    }
+  },
+  "ai-pay-per-crawl-402": {
+    "messages": {
+      "fail": "A request with the {agent} user agent got HTTP 402 Payment Required.",
+      "fail:search-agent-charged": "A request with the {agent} user agent, a search or answer crawler, got HTTP 402 Payment Required, which can keep pages out of its answers.",
+      "fail:training-or-disallowed": "A request with the {agent} user agent got HTTP 402 Payment Required; the agent collects training data or robots.txt disallows it."
+    }
+  },
+  "ai-bing-noarchive-nocache": {
+    "messages": {
+      "fail": "A robots directive ({directive}) restricts how Bing uses this page in Copilot answers.",
+      "fail:noarchive": "The page carries noarchive for Bingbot. Bing documents that noarchive keeps the page out of Copilot answers.",
+      "fail:nocache": "The page carries nocache for Bingbot. Bing documents that Copilot answers may then use only the URL, title and snippet."
+    }
+  },
+  "ai-js-only-content": {
+    "messages": {
+      "fail": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}).",
+      "fail:mostly-rendered": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}). Crawlers that do not run JavaScript likely see little of the content.",
+      "fail:h1-missing": "The raw HTML has no h1; the h1 appears only after rendering, so crawlers that do not run JavaScript likely miss the main heading.",
+      "fail:partly-rendered": "The raw HTML holds {rawWords, plural, one {# word} other {# words}} of main text against {renderedWords} after rendering ({ratio, number, percent}); part of the content likely exists only after JavaScript."
+    }
+  },
+  "ai-textual-content-for-media": {
+    "messages": {
+      "fail": "{count} media elements ({kinds}) may hold facts the page text does not state; the analyst confirms.",
+      "fail:media-only-facts": "{count} media elements ({kinds}) in the main content have no text equivalent nearby and may hold facts the page text does not state; the analyst confirms."
+    }
+  },
+  "ai-llms-txt": {
+    "messages": {
+      "fail": "The /llms.txt file needs review.",
+      "fail:content-type": "/llms.txt is served as {contentType} rather than text/plain or text/markdown.",
+      "fail:structure": "/llms.txt does not follow the proposed layout: {problems}.",
+      "fail:disallowed-links": "/llms.txt links to {count} same-site paths that robots.txt disallows for a search crawler."
+    }
+  },
+  "ai-hidden-llm-instructions": {
+    "messages": {
+      "fail": "{count, plural, one {# piece of hidden, instruction-like text aimed at AI systems was found} other {# pieces of hidden, instruction-like text aimed at AI systems were found}}; the analyst confirms intent.",
+      "fail:hidden-instructions": "{count, plural, one {# piece of hidden, instruction-like text aimed at AI systems was found} other {# pieces of hidden, instruction-like text aimed at AI systems were found}} in hidden elements, comments or attributes; the analyst confirms whether they try to steer AI answers.",
+      "fail:invisible-text": "{count, plural, one {# piece of text hidden from readers was found} other {# pieces of text hidden from readers were found}}, including text written in invisible Unicode tag characters, which models can still read; the analyst confirms whether they try to steer AI answers."
+    }
+  },
+  "ai-agent-readiness": {
+    "messages": {
+      "fail": "The Lighthouse audit {audit} ({title}) fails, which makes the page harder for agents to operate.",
+      "fail:layout-shift": "Lab cumulative layout shift is {value}, above 0.1, so controls move while an agent acts on them."
+    }
+  },
+  "ai-webmcp-context": {
+    "messages": {
+      "fail": "The page declares WebMCP tools, a proposed and experimental API.",
+      "fail:declared": "The page declares WebMCP tools, a proposed API behind an origin trial or flag; sensitive actions should require user confirmation."
+    }
+  },
+  "ai-bots-crawl-activity": {
+    "messages": {
+      "fail": "Verified AI crawlers fetched the site {verified, plural, one {# time} other {# times}} ({crawlers}); {claims, plural, one {# more request used an AI crawler user agent without being verified} other {# more requests used AI crawler user agents without being verified}}.",
+      "fail:seen": "Verified AI crawlers fetched the site {verified, plural, one {# time} other {# times}} in the window ({crawlers}); {claims, plural, one {# more request used an AI crawler user agent without being verified} other {# more requests used AI crawler user agents without being verified}}.",
+      "fail:claims-only": "{claims, plural, one {# request used an AI crawler user agent, but it could not be verified} other {# requests used AI crawler user agents, but none could be verified}}, so the data does not show which AI crawlers really visited."
+    }
+  },
+  "ai-bots-blocked-at-edge": {
+    "messages": {
+      "fail": "{agent} was refused {blocked} of {total} times ({share, number, percent}; {statuses}) although robots.txt allows it.",
+      "fail:refused": "Verified {agent} requests were refused {blocked} of {total} times ({share, number, percent}; {statuses}) although robots.txt allows the crawler, so it cannot read those pages.",
+      "fail:payment-required": "Verified {agent} requests got HTTP 402 Payment Required or another refusal {blocked} of {total} times ({share, number, percent}; {statuses}): the edge charges or blocks a crawler that robots.txt allows.",
+      "fail:unverified-claims": "Requests claiming to be {agent} were refused {blocked} of {total} times ({share, number, percent}; {statuses}); they could not be verified, so the edge may be refusing impostors."
+    }
+  },
+  "ai-bots-search-not-seen": {
+    "messages": {
+      "fail": "No AI search crawler made a verified request in {days} days of data ({agents}).",
+      "fail:none-seen": "None of the AI search crawlers robots.txt allows ({agents}) made a verified request in {days} days of data.",
+      "fail:unverified-only": "Requests claimed to come from AI search crawlers ({agents}) in {days} days of data, but none could be verified."
+    }
+  },
+  "ai-bots-referrals": {
+    "messages": {
+      "fail": "{visits, plural, one {# visit came} other {# visits came}} from AI assistants ({assistants}), and {tagged} carried utm_source=chatgpt.com. Clicks from Google's AI Overviews and AI Mode count as Google Search and cannot be seen here."
+    }
+  },
+  "ai-google-genai-control-context": {
+    "messages": {
+      "fail": "Search Console has a site-wide setting that keeps a site out of AI Overviews, AI Mode and AI Overviews in Discover. Neither the pages, robots.txt nor the Search Console API show it, so this audit cannot tell its state for {property}; check it in the property's settings. It does not change training, which the Google-Extended token in robots.txt controls."
+    }
+  },
+  "ai-measurement-context": {
+    "messages": {
+      "fail": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API.",
+      "fail:all-sources": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API. Bing's AI Performance report has no API either. Visits that AI assistants refer appear in the crawler activity, but visits from AI Overviews and AI Mode arrive as Google search and cannot be told apart.",
+      "fail:without-bing": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API. Bing Webmaster Tools data (--bing) would add Bing's search data and point to its AI Performance report, which lists citations in Copilot.",
+      "fail:without-bots": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API. Access logs or Cloudflare analytics (--bots-from) would show which AI crawlers really fetch the site and the visits AI assistants refer.",
+      "fail:without-both": "Search Console counts clicks and impressions from AI Overviews and AI Mode in the web search type, so the Search Console analyses for {property} include them without telling them apart, and its generative AI performance report (impressions only) has no API. Bing Webmaster Tools data (--bing) and access logs or Cloudflare analytics (--bots-from) would add Bing's search data and the AI crawler visits and assistant referrals the site really received."
+    }
+  }
+}

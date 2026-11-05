@@ -1,0 +1,267 @@
+{
+  "tech-https-final-url": {
+    "messages": {
+      "fail": "{count} audited page(s) end on an http:// URL, for example {url}.",
+      "fail:served-over-http": "{count} audited page(s) end on an http:// URL, for example {url}."
+    }
+  },
+  "tech-tls-certificate-valid": {
+    "messages": {
+      "fail": "The TLS certificate for {host} did not verify ({code}).",
+      "fail:expired": "The TLS certificate for {host} has expired ({code}).",
+      "fail:not-yet-valid": "The TLS certificate for {host} is not valid yet ({code}).",
+      "fail:hostname-mismatch": "The TLS certificate does not cover the host {host} ({code}).",
+      "fail:self-signed": "{host} serves a self-signed certificate ({code}).",
+      "fail:revoked": "The TLS certificate for {host} is revoked ({code}).",
+      "fail:incomplete-chain": "{host} does not send the intermediate certificates needed to verify its certificate ({code}). Clients that do not fetch missing intermediates reject the connection.",
+      "fail:untrusted-root": "The certificate chain for {host} ends in a root that is not trusted ({code}, issuer {issuer}). An intercepting proxy on the auditing network produces the same result.",
+      "fail:verification-failed": "The TLS certificate for {host} failed verification ({code}).",
+      "fail:expires-soon": "The TLS certificate for {host} expires in {days} day(s), on {validTo}, which is late in its lifetime for an automated renewal."
+    }
+  },
+  "tech-http-to-https-redirect": {
+    "messages": {
+      "fail": "The http:// version of {url} is not upgraded to HTTPS in one permanent redirect.",
+      "fail:served-over-http": "{url} answers {status} over plain HTTP instead of redirecting to HTTPS, so the HTTP URL is a duplicate.",
+      "fail:path-dropped": "{url} redirects to {target}, dropping the path instead of keeping it on HTTPS.",
+      "fail:temporary-redirect": "{url} upgrades to HTTPS with a temporary {status} redirect instead of 301 or 308.",
+      "fail:indirect-upgrade": "{url} first redirects to {target} instead of upgrading the same URL to HTTPS.",
+      "fail:long-chain": "{url} takes {hops} redirects to reach the HTTPS page."
+    }
+  },
+  "tech-https-to-http-downgrade": {
+    "messages": {
+      "fail": "{count} redirect(s) go from HTTPS to HTTP, for example {from} to {to}."
+    }
+  },
+  "tech-mixed-content-active": {
+    "messages": {
+      "fail": "This HTTPS page loads {count} script, stylesheet, frame or other blockable resource(s) over an insecure scheme, which browsers block: {urls}.",
+      "fail:insecure-form": "This HTTPS page has {count} form(s) that submit to an insecure URL on another site: {urls}."
+    }
+  },
+  "tech-mixed-content-passive": {
+    "messages": {
+      "fail": "This HTTPS page references {count} image, audio or video URL(s) over http:, which browsers upgrade or drop: {urls}.",
+      "fail:upgrade-failed": "This HTTPS page references {count} media URL(s) over http:, and at least one failed when the browser upgraded it to HTTPS: {urls}."
+    }
+  },
+  "tech-hsts-header": {
+    "messages": {
+      "fail": "The Strict-Transport-Security header is not strong (max-age {maxAge}).",
+      "fail:missing": "The HTTPS response has no Strict-Transport-Security header. This is security context, not a Search factor.",
+      "fail:invalid": "The Strict-Transport-Security header has no valid max-age, so browsers ignore it.",
+      "fail:disabled": "The Strict-Transport-Security header sets max-age=0, which removes the policy.",
+      "fail:short-max-age": "Strict-Transport-Security max-age is {maxAge, plural, one {# second} other {# seconds}}, below one year (includeSubDomains: {includeSubDomains}, preload: {preload})."
+    }
+  },
+  "tech-hsts-preload-eligibility": {
+    "messages": {
+      "fail": "The header declares preload, but {count} requirement(s) of the HSTS preload list are not met: {unmet}."
+    }
+  },
+  "tech-security-headers-info": {
+    "messages": {
+      "fail": "A security header on the HTML response has an unexpected value.",
+      "fail:invalid-nosniff": "X-Content-Type-Options is \"{value}\"; browsers only recognise nosniff.",
+      "fail:csp-inline-scripts": "The Content-Security-Policy lets inline scripts run ({directive} allows 'unsafe-inline' with no nonce or hash), so it does not protect the page against cross-site scripting. Lighthouse lists this as a best-practices diagnostic; it is not a Search signal."
+    }
+  },
+  "tech-framing-protection": {
+    "messages": {
+      "fail": "Other sites can embed this page in a frame.",
+      "fail:missing": "The HTML response sends neither X-Frame-Options nor a CSP frame-ancestors directive, so other sites can embed the page in a frame.",
+      "fail:permissive-frame-ancestors": "The CSP directive \"{value}\" allows any site to embed the page in a frame.",
+      "fail:unsupported-x-frame-options": "X-Frame-Options is \"{value}\", which current browsers do not apply; use DENY, SAMEORIGIN or CSP frame-ancestors."
+    }
+  },
+  "tech-cmp-blocks-content": {
+    "messages": {
+      "fail": "The consent banner withholds the page content from a visitor who has not consented.",
+      "fail:consent-redirect": "The page redirects to a consent page ({target}) before showing its content, so crawlers that do not consent never reach it.",
+      "fail:content-withheld": "Before consent, the render holds {renderedWords, plural, one {# word} other {# words}} against {rawWords} in the served HTML, while a consent container is shown."
+    }
+  },
+  "tech-consent-mode-ordering": {
+    "messages": {
+      "fail": "Google tags run without consent defaults set before them.",
+      "fail:no-consent-default": "A Google tag is in the HTML, but no consent default command was found.",
+      "fail:default-after-tags": "The consent mode default command comes after the first Google tag; it should run before."
+    }
+  },
+  "tech-viewport-meta": {
+    "messages": {
+      "fail": "The page has no mobile-optimized viewport.",
+      "fail:missing": "The page has no viewport meta element, so mobile browsers lay it out at desktop width.",
+      "fail:fixed-width": "The viewport sets a fixed width (\"{content}\") instead of width=device-width.",
+      "fail:not-mobile-optimized": "The viewport \"{content}\" has neither width=device-width nor an initial-scale of at least 1."
+    }
+  },
+  "tech-viewport-zoom-allowed": {
+    "messages": {
+      "fail": "The viewport restricts zoom (\"{content}\").",
+      "fail:user-scalable-no": "The viewport disables zoom (\"{content}\"), which fails the accessibility requirement to allow resizing.",
+      "fail:maximum-scale": "The viewport limits zoom to {maximum}x (\"{content}\"); at least 2x is required for accessibility.",
+      "fail:maximum-scale-below-5": "The viewport limits zoom to {maximum}x (\"{content}\"); axe recommends allowing up to 5x."
+    }
+  },
+  "tech-content-fits-viewport": {
+    "messages": {
+      "fail": "In the phone render the document is {scrollWidth}px wide in a {viewportWidth}px viewport, so it scrolls sideways by {overflow}px."
+    }
+  },
+  "tech-legible-font-size": {
+    "messages": {
+      "fail": "Only {share, number, percent} of the visible text in the phone render is 12px or larger."
+    }
+  },
+  "tech-tap-target-size": {
+    "messages": {
+      "fail": "Lighthouse found {count} touch target(s) smaller than 24 by 24 CSS pixels without enough spacing."
+    }
+  },
+  "tech-favicon-declared": {
+    "messages": {
+      "fail": "The home page does not declare a favicon Google can use.",
+      "fail:missing": "The home page has no link element with rel icon, shortcut icon or apple-touch-icon, so Google has no declared favicon to show.",
+      "fail:outside-head": "The home page's favicon link elements are outside the head, where Google may not read them.",
+      "fail:favicon-ico-only": "The home page declares no favicon link; only /favicon.ico answers, a fallback Google does not document."
+    }
+  },
+  "tech-favicon-file-valid": {
+    "messages": {
+      "fail": "No declared favicon is usable by Google ({url}).",
+      "fail:not-200": "The declared favicon {url} does not answer 200.",
+      "fail:not-an-image": "The declared favicon {url} is not an image file.",
+      "fail:svg-only": "The home page declares only SVG favicons, a format Google's favicon guidelines do not list; add a PNG or ICO fallback.",
+      "fail:unsupported-format": "The declared favicon {url} is in {format}, a format Google's favicon guidelines do not list.",
+      "fail:not-square": "The declared favicon {url} is not square.",
+      "fail:too-small": "The declared favicon {url} is smaller than 8 by 8 pixels.",
+      "fail:noindex": "The declared favicon {url} is sent with noindex or noimageindex.",
+      "fail:blocked-for-googlebot-image": "robots.txt disallows the declared favicon {url} for Googlebot-Image.",
+      "fail:small": "The largest usable favicon is {size} ({url}); Google recommends larger than 48 by 48 pixels.",
+      "fail:broken-alternate": "A usable favicon exists, but the declared icon {url} is not usable ({problem})."
+    }
+  },
+  "tech-duplicate-conflicting-head-tags": {
+    "messages": {
+      "fail": "{count} metadata tag(s) are declared more than once with different values: {tags}."
+    }
+  },
+  "tech-doctype-standards-mode": {
+    "messages": {
+      "fail": "The document does not render in standards mode.",
+      "fail:missing": "The document has no doctype, so browsers render it in {mode} mode.",
+      "fail:quirks": "The doctype \"{doctype}\" puts browsers in quirks mode.",
+      "fail:limited-quirks": "The doctype \"{doctype}\" puts browsers in limited-quirks mode.",
+      "fail:legacy-doctype": "The doctype \"{doctype}\" is a legacy declaration; use <!DOCTYPE html>."
+    }
+  },
+  "tech-charset-declared-early": {
+    "messages": {
+      "fail": "The character encoding is not declared as UTF-8 early enough.",
+      "fail:missing": "Neither a byte order mark, the Content-Type header nor a meta element declares the character encoding.",
+      "fail:late-meta": "The only encoding declaration ({label}) is a meta element after the first 1024 bytes, too late for the browser's prescan.",
+      "fail:not-utf8": "The document declares the encoding {label}; HTML documents should use UTF-8.",
+      "fail:header-meta-conflict": "Content-Type declares {header} while a meta element declares {meta}.",
+      "fail:conflicting-meta": "Meta elements declare different encodings: {meta}."
+    }
+  },
+  "tech-iframe-main-content": {
+    "messages": {
+      "fail": "Iframes on this page need review.",
+      "fail:missing-title": "{count} visible iframe(s) have no title, aria-label or aria-labelledby.",
+      "fail:content-in-iframe": "The page has {words, plural, one {# word} other {# words}} of its own text and {count, plural, one {# iframe that is not a common embed} other {# iframes that are not common embeds}}; the main content may be in a frame. To be confirmed by the analyst."
+    }
+  },
+  "tech-noscript-content": {
+    "messages": {
+      "fail": "{count} noscript block(s) hold substantial text or links that the rendered page does not show. To be confirmed by the analyst."
+    }
+  },
+  "tech-lighthouse-seo-category": {
+    "messages": {
+      "fail": "Lighthouse SEO score {score}; {count} audit(s) fail: {audits}. Each is counted by its own rule."
+    }
+  },
+  "tech-lighthouse-a11y-overlap": {
+    "messages": {
+      "fail": "Lighthouse accessibility score {score}; failing audits that crawlers also read: {searchAudits}; others: {otherAudits}."
+    }
+  },
+  "tech-chrome-best-practices-trust": {
+    "messages": {
+      "fail": "Lighthouse best-practices score {score}; {count} audit(s) fail: {audits}. The score is not a Search metric."
+    }
+  },
+  "tech-maintenance-503": {
+    "messages": {
+      "fail": "A maintenance or outage response needs review ({url}).",
+      "fail:missing-retry-after": "{url} answers 503 without a Retry-After header.",
+      "fail:invalid-retry-after": "{url} answers 503 with a Retry-After value that is neither a date nor a number of seconds.",
+      "fail:maintenance-page-200": "{url} answers 200 with a {words}-word page whose title or heading announces maintenance; an outage page should answer 503. To be confirmed by the analyst."
+    }
+  },
+  "tech-internal-links-to-http": {
+    "messages": {
+      "fail": "{count} internal link(s) or form(s) on HTTPS pages use http://, for example {urls}."
+    }
+  },
+  "tech-social-og-required": {
+    "messages": {
+      "fail": "Open Graph basics are incomplete in the served HTML.",
+      "fail:missing": "The served HTML lacks or leaves empty: {tags}.",
+      "fail:rendered-only": "{tags} appear only after JavaScript runs; preview crawlers read the served HTML.",
+      "fail:invalid-type": "og:type is \"{value}\", which is not an Open Graph object type.",
+      "fail:relative-url": "The Open Graph URL \"{value}\" is not absolute.",
+      "fail:late-head": "The head ends after {bytes} bytes; WhatsApp reads Open Graph tags only within the first 300 KB."
+    }
+  },
+  "tech-social-og-image": {
+    "messages": {
+      "fail": "The og:image {url} does not meet preview requirements ({problems}).",
+      "fail:not-https": "The og:image {url} is not served over HTTPS.",
+      "fail:not-200": "The og:image {url} answers {status} instead of 200.",
+      "fail:svg": "The og:image {url} is an SVG, which preview platforms do not show.",
+      "fail:unsupported-format": "The og:image {url} is not a JPEG, PNG, WebP or GIF file.",
+      "fail:too-large": "The og:image {url} is {bytes} bytes, above the 5 MB limit of LinkedIn and X.",
+      "fail:too-small": "The og:image {url} is {size}, below the 200 by 200 pixel minimum.",
+      "fail:over-600kb": "The og:image {url} is {bytes} bytes; WhatsApp needs 600 KB or less.",
+      "fail:below-recommended": "The og:image {url} is {size}; Facebook recommends at least 1200 by 630 pixels.",
+      "fail:aspect-ratio": "The og:image {url} is {size}, outside the 1.91:1 ratio previews use."
+    }
+  },
+  "tech-social-og-image-meta": {
+    "messages": {
+      "fail": "og:image structured properties are incomplete.",
+      "fail:missing": "The first og:image has no {tags}.",
+      "fail:dimension-mismatch": "og:image:width and og:image:height declare {declared}, but the image is {actual}."
+    }
+  },
+  "tech-social-og-url-canonical": {
+    "messages": {
+      "fail": "og:url is {ogUrl}, but the canonical URL is {canonical}."
+    }
+  },
+  "tech-console-errors": {
+    "messages": {
+      "fail": "{count} JavaScript error(s) during the render, with the content intact. First: {first}",
+      "fail:content-missing": "{count} JavaScript error(s) during the render, and the rendered page lost most of its content. First: {first}",
+      "fail:csp-blocks-first-party": "The Content Security Policy refused a first-party resource during the render. First: {first}"
+    }
+  },
+  "tech-failed-render-requests": {
+    "messages": {
+      "fail": "{count} subresource request(s) failed during the render, including rendering-critical ones: {urls}.",
+      "fail:non-critical": "{count} non-critical subresource request(s) failed during the render: {urls}."
+    }
+  },
+  "tech-intrusive-interstitial": {
+    "messages": {
+      "fail": "An overlay covers {coverage, number, percent} of the phone screen as the page loads.",
+      "fail:promotion": "A promotional overlay covers {coverage, number, percent} of the phone screen as the page loads. Google asks that banners use a small fraction of the screen.",
+      "fail:access-dialog": "A login or subscription overlay covers {coverage, number, percent} of the phone screen at load. That is fine for content that is not public; confirm it does not hide content meant to be indexed.",
+      "fail:overlay": "An overlay covers {coverage, number, percent} of the phone screen at load. Confirm whether it is a notice the law requires, which Google exempts, or an interstitial that hides the content."
+    }
+  }
+}
