@@ -4,22 +4,29 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing release tag to publish, for example v0.1.0
+        description: Existing release tag to build, for example v0.1.0
         required: true
         type: string
+      npm:
+        description: Also publish to npm (the npm environment admits only runs from a v* tag)
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
-  publish:
-    name: publish
+  package:
+    name: package
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: npm
     permissions:
       contents: write
       id-token: write
+      attestations: write
+    outputs:
+      file: ${{ steps.pack.outputs.file }}
     steps:
       - name: Validate the tag
         env:
@@ -36,7 +43,6 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26
-          registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm audit signatures
       # Ubuntu 24.04 restricts the unprivileged user namespaces that Chrome's sandbox needs; Altimeter never disables that sandbox.
@@ -47,12 +53,56 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: test "v$(node -p "require('./package.json').version")" = "$TAG"
       - run: npm run build
-      - name: Publish to npm with provenance
-        run: npm publish --provenance --access public
-      - name: Create the GitHub release
+      - name: Pack
+        id: pack
+        run: echo "file=$(npm pack --silent)" >> "$GITHUB_OUTPUT"
+      - name: Attest the build provenance of the package
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ steps.pack.outputs.file }}
+      - name: Attach the package and its provenance to the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ inputs.tag }}
+          FILE: ${{ steps.pack.outputs.file }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
         run: |
-          node scripts/release-notes.mjs "$TAG" > "$RUNNER_TEMP/notes.md"
-          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
+          # One attestation bundle per line, as gh attestation download writes them.
+          node -e 'process.stdout.write(JSON.stringify(JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"))) + "\n")' "$BUNDLE" > "$FILE.intoto.jsonl"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$FILE" "$FILE.intoto.jsonl" --clobber
+          else
+            node scripts/release-notes.mjs "$TAG" > "$RUNNER_TEMP/notes.md"
+            gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" "$FILE" "$FILE.intoto.jsonl"
+          fi
+      - if: inputs.npm
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package
+          path: ${{ steps.pack.outputs.file }}
+          if-no-files-found: error
+
+  npm:
+    name: npm
+    needs: package
+    if: inputs.npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          registry-url: https://registry.npmjs.org
+      - name: Publish the attested package to npm with provenance
+        env:
+          FILE: ${{ needs.package.outputs.file }}
+        run: npm publish "$FILE" --provenance --access public

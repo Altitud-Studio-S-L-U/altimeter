@@ -37,6 +37,8 @@ altimeter doctor
 
 `altimeter doctor` reports Node.js, Chrome, the Chrome UX Report key and the Claude Code and Codex CLIs it can use. It only asks the CLIs for their version.
 
+The release workflow builds the package from the release tag and attests its build provenance, which the release attaches as well; `gh attestation verify altitud-studio-altimeter-0.1.0.tgz --repo Altitud-Studio-S-L-U/altimeter` checks a downloaded package against it.
+
 ## Audit a site
 
 ```sh
