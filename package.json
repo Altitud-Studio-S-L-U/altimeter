@@ -71,5 +71,10 @@
     "puppeteer-core": "25.16.0",
     "saxes": "6.0.0",
     "undici": "8.12.3"
+  },
+  "overrides": {
+    "@sentry/bundler-plugins": {
+      "glob": "^14.0.2"
+    }
   }
 }
