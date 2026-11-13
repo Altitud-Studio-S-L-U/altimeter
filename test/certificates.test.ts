@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { X509Certificate } from 'node:crypto';
+import { createPrivateKey, X509Certificate } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 import { test } from 'node:test';
 import { connect, createServer, type TLSSocket } from 'node:tls';
@@ -27,7 +27,7 @@ test('issues a CA and a server leaf with the extensions TLS clients check', () =
   }
   assert.equal(leaf.chain, `${leaf.cert}${ca.cert}`);
   assert.deepEqual(spkiHashes(leaf.chain), [leaf.spki, ca.spki]);
-  assert.match(leaf.key, /^-----BEGIN PRIVATE KEY-----\n/u);
+  assert.equal(createPrivateKey(leaf.key).type, 'private', 'the leaf key is a PEM private key');
 });
 
 test('puts an IPv4 literal in the subjectAltName as an IP address', () => {

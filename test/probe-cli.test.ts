@@ -203,7 +203,7 @@ describe('altimeter ai-probe', () => {
       [[], /exactly one domain/u],
       [[origin, 'second.example'], /exactly one domain/u],
       [['ftp://example.com'], /host name such as example\.com/u],
-      [['https://user:pass@example.com'], /host name such as example\.com/u],
+      [['https://user:password@example.com'], /host name such as example\.com/u],
       [[origin, '--runs', '0'], /--runs must be a whole number from 1 to 5/u],
       [[origin, '--runs', '6'], /--runs must be a whole number from 1 to 5/u],
       [[origin, '--engines', 'gpt'], /--engines must be claude, codex/u],
