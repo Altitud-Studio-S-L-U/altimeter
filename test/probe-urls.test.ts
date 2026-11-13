@@ -23,10 +23,10 @@ describe('URLs read from engine output', () => {
   });
 
   test('are refused with another scheme, credentials, a bare host, an IPv6 literal or more than 2,048 characters', () => {
-    for (const bad of ['javascript:alert(1)', 'data:text/html,hi', 'ftp://example.com/', 'https://user:pass@example.com/', 'https://localhost/', 'http://[::1]/', `https://example.com/${'a'.repeat(2100)}`]) {
+    for (const bad of ['javascript:alert(1)', 'data:text/html,hi', 'ftp://example.com/', 'https://user:password@example.com/', 'https://localhost/', 'http://[::1]/', `https://example.com/${'a'.repeat(2100)}`]) {
       assert.equal(parseUrl(bad), undefined, bad);
     }
-    assert.deepEqual(urlsInText('javascript:alert(1) https://user:pw@example.com/ ftp://example.com/ file:///etc/passwd'), []);
+    assert.deepEqual(urlsInText('javascript:alert(1) https://user:password@example.com/ ftp://example.com/ file:///etc/passwd'), []);
     assert.equal(parseUrl('https://127.0.0.1:8080/x')?.href, 'https://127.0.0.1:8080/x');
   });
 
