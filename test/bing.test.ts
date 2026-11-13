@@ -11,7 +11,8 @@ import { BingWebmasterError, bingDate, chooseBingSite, fetchBingData, redactKey,
 import type { GscData } from '../src/owner/gsc.ts';
 import { page, site } from './support/facts.ts';
 
-const key = '5A1B2C3D4E5F60718293A4B5C6D7E8F9';
+// Shaped like a Bing Webmaster key (32 hexadecimal characters) and visibly synthetic.
+const key = 'A1'.repeat(16);
 const origin = 'https://example.com';
 const weeks = ['2026-10-17', '2026-10-24', '2026-10-31'];
 const zeroWidth = String.fromCodePoint(0x200b);
